@@ -176,7 +176,6 @@ const reportHookError = async (
   hook: string,
 ): Promise<void> => {
   log.error('hook failed', { err, hook });
-  console.error('[emailrpc] hook error:', err);
   const errorParams = {
     ...baseCtx,
     error:
@@ -516,7 +515,7 @@ export const createClient = <R extends AnyEmailRouter, const P extends readonly 
       const plugin = plugins[i]!;
       if (plugin.onClose) {
         const [, err] = await handlePromise((async () => plugin.onClose!())());
-        if (err) console.error(`[emailrpc] plugin "${plugin.name}".onClose failed:`, err);
+        if (err) baseLogger.error('plugin close failed', { err, plugin: plugin.name });
       }
     }
   };

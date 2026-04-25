@@ -478,7 +478,6 @@ describe('client hooks', () => {
   it('a thrown hook in the middle of onAfterSend does not stop subsequent hooks', async () => {
     const router = createTestRouter();
     const calls: string[] = [];
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const mail = createClient({
       router,
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
@@ -499,7 +498,6 @@ describe('client hooks', () => {
     });
     await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
     expect(calls).toEqual(['a', 'c']);
-    spy.mockRestore();
   });
 });
 
@@ -688,24 +686,26 @@ describe('error pipeline', () => {
     ).rejects.toBe(original);
   });
 
-  it('logs hook errors via console.error without affecting the failure', async () => {
+  it('logs hook errors through structured logger without affecting the failure', async () => {
+    const log = memoryLogger();
     const router = createTestRouter();
     const mail = createClient({
       router,
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
       defaults: { from: 'a@b.com' },
+      logger: log,
       hooks: {
         onError: () => {
           throw new Error('hook boom');
         },
       },
     });
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     await expect(
       mail.welcome.send({ to: 'lucas@x.com', input: { name: 123 as unknown as string } }),
     ).rejects.toThrow();
-    expect(spy).toHaveBeenCalledWith('[emailrpc] hook error:', expect.any(Error));
-    spy.mockRestore();
+    const rec = log.records.find((r) => r.message === 'hook failed');
+    expect(rec?.level).toBe('error');
+    expect(rec?.payload.hook).toBe('onError');
   });
 });
 
@@ -714,7 +714,6 @@ describe('error pipeline (extra)', () => {
     const router = createTestRouter();
     const provider = mockProvider();
     const errors: Array<{ phase: string }> = [];
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const mail = createClient({
       router,
       providers: [{ name: 'mock', provider, priority: 1 }],
@@ -733,16 +732,16 @@ describe('error pipeline (extra)', () => {
     ).rejects.toThrow('execute abort');
     expect(provider.sent).toEqual([]);
     expect(errors).toEqual([{ phase: 'hook' }]);
-    spy.mockRestore();
   });
 
   it('passes through EmailRpcError thrown inside an onError handler without rewrapping', async () => {
+    const log = memoryLogger();
     const router = createTestRouter();
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const mail = createClient({
       router,
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
       defaults: { from: 'a@b.com' },
+      logger: log,
       hooks: {
         onError: () => {
           throw new EmailRpcError({ message: 'rpc-handler-err', code: 'UNKNOWN' });
@@ -752,8 +751,9 @@ describe('error pipeline (extra)', () => {
     await expect(
       mail.welcome.send({ to: 'lucas@x.com', input: { name: 123 as unknown as string } }),
     ).rejects.toThrow();
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
+    const rec = log.records.find((r) => r.message === 'hook failed');
+    expect(rec?.level).toBe('error');
+    expect(rec?.payload.hook).toBe('onError');
   });
 
   it('wraps a raw error thrown by user middleware as code UNKNOWN with phase middleware', async () => {
@@ -798,7 +798,6 @@ describe('error pipeline (extra)', () => {
         .template({ render: async () => ({ html: '<p/>' }) }),
     });
     const phases: string[] = [];
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const mail = createClient({
       router,
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
@@ -816,14 +815,13 @@ describe('error pipeline (extra)', () => {
       mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } }),
     ).rejects.toThrow('boom');
     expect(phases).toEqual(['hook']);
-    spy.mockRestore();
   });
 });
 
 describe('plugin lifecycle (extra)', () => {
   it('continues onClose even if one plugin onClose throws', async () => {
     const order: string[] = [];
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const log = memoryLogger();
     const t = emailRpc.init();
     const router = t.router({
       welcome: t
@@ -836,6 +834,7 @@ describe('plugin lifecycle (extra)', () => {
       router,
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
       defaults: { from: 'a@b.com' },
+      logger: log,
       plugins: [
         { name: 'a', onClose: () => { order.push('a'); } },
         { name: 'b', onClose: () => { throw new Error('close boom'); } },
@@ -844,8 +843,9 @@ describe('plugin lifecycle (extra)', () => {
     });
     await mail.close();
     expect(order).toEqual(['c', 'a']);
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('plugin "b".onClose failed:'), expect.any(Error));
-    spy.mockRestore();
+    const rec = log.records.find((r) => r.message === 'plugin close failed');
+    expect(rec?.level).toBe('error');
+    expect(rec?.payload.plugin).toBe('b');
   });
 });
 
