@@ -16,6 +16,9 @@
     "eqeqeq": "allow",
     "import/no-cycle": "error",
     "typescript/consistent-type-definitions": ["error", "type"],
+    "typescript/no-non-null-assertion": "error",
+    "no-console": "error",
+    "no-else-return": ["error", { "allowElseIf": false }],
     "func-style": ["error", "expression"],
     "react/self-closing-comp": [
       "error",
@@ -28,7 +31,28 @@
     {
       "files": ["*.test.ts", "*.spec.ts"],
       "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
+        "@typescript-eslint/no-explicit-any": "off",
+        "typescript/no-non-null-assertion": "off",
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["packages/core/src/logger.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["packages/core/src/client.ts"],
+      "rules": {
+        "typescript/no-non-null-assertion": "warn"
+      }
+    },
+    {
+      "files": ["examples/**/*.ts"],
+      "rules": {
+        "no-console": "off",
+        "typescript/no-non-null-assertion": "off"
       }
     }
   ]
