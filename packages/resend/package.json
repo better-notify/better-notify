@@ -1,0 +1,35 @@
+{
+  "name": "@emailrpc/resend",
+  "version": "0.1.0",
+  "description": "Resend provider for emailRpc.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "files": ["dist", "README.md", "LICENSE"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rolldown -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "@emailrpc/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@internal/rolldown-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "@internal/eslint-config": "workspace:*",
+    "rolldown": "^1.0.0-beta.49",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

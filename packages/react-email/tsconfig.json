@@ -1,0 +1,10 @@
+{
+  "extends": "@internal/tsconfig/base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*", "test/**/*"]
+}

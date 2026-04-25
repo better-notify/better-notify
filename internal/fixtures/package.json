@@ -1,0 +1,17 @@
+{
+  "name": "@internal/fixtures",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@emailrpc/core": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@internal/tsconfig": "workspace:*",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@emailrpc/react-email",
+  "version": "0.1.0",
+  "description": "React Email adapter for emailRpc.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "files": ["dist", "README.md", "LICENSE"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rolldown -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "@emailrpc/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "@react-email/components": "^0.0.30",
+    "@react-email/render": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-email/components": { "optional": true }
+  },
+  "devDependencies": {
+    "@internal/rolldown-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "@internal/eslint-config": "workspace:*",
+    "rolldown": "^1.0.0-beta.49",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

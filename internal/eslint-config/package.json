@@ -1,0 +1,14 @@
+{
+  "name": "@internal/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "dependencies": {
+    "eslint": "^9.17.0",
+    "typescript-eslint": "^8.18.2"
+  }
+}
