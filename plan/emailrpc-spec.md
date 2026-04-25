@@ -743,7 +743,6 @@ Middleware runs in a chain, oRPC/tRPC-style:
 
 ```ts
 const t = emailRpc.init<Ctx>()
-  .use(loggerMw())                    // global
   .use(eventLoggerMw({ storage }))    // ships events to your observability sink
 
 const passwordReset = t
@@ -776,7 +775,6 @@ For purely observational concerns — analytics, audit logs, metrics, alerting �
 
 | Middleware          | Purpose                                                              |
 | ------------------- | -------------------------------------------------------------------- |
-| `loggerMw`          | Structured logs via pino/console                                     |
 | `eventLoggerMw`     | Hand send + result to a user-supplied sink (Datadog, Postgres, etc.) |
 | `suppressionListMw` | Block sends to bounced/complained addresses                          |
 | `rateLimitMw`       | Per-recipient or per-route throttling (Redis-backed)                 |
@@ -1289,7 +1287,7 @@ Errors are JSON-serializable for queue persistence and downstream observability.
 
 ## 15. Observability
 
-- **Structured logs** via pino (or any logger via the `loggerMw`).
+- **Structured logs** are built into core. `createClient`, `createWorker`, and `createWebhookRouter` accept a `logger?: LoggerLike` option; the default is `consoleLogger({ level: 'warn' })`. Pass any structurally compatible logger (pino via the `fromPino` helper, winston, bunyan, or your own) to swap implementations. Every internal log line carries `{ component, route, messageId }` bindings via per-send child loggers; errors are placed under the `err` payload key so pino's `stdSerializers.err` works without configuration.
 - **Metrics**: counters and histograms are exposed via the hooks API (§9). A Prometheus-shaped helper ships in `@emailrpc/core/middleware`. Counters for sends/failures by route + provider, histograms for render and send latency.
 - **Tracing**: OpenTelemetry middleware emits spans for `validate`, `render`, `provider.send`, plus webhook handler spans.
 
