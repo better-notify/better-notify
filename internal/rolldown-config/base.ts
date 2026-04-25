@@ -1,12 +1,12 @@
 import { defineConfig, type RolldownOptions } from 'rolldown';
 import { dts } from 'rolldown-plugin-dts';
 
-export interface BaseConfigOptions {
+export type BaseConfigOptions = {
   entries: Record<string, string>;
   external?: (string | RegExp)[];
-}
+};
 
-export function baseConfig(opts: BaseConfigOptions): RolldownOptions {
+export const baseConfig = (opts: BaseConfigOptions): RolldownOptions => {
   return defineConfig({
     input: opts.entries,
     output: [
@@ -22,4 +22,4 @@ export function baseConfig(opts: BaseConfigOptions): RolldownOptions {
     plugins: [dts({ resolve: true })],
     treeshake: true,
   });
-}
+};

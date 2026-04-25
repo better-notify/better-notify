@@ -1,7 +1,7 @@
 import { EmailRpcNotImplementedError } from '@emailrpc/core';
 import type { QueueAdapter } from '@emailrpc/core/queue';
 
-export interface BullmqOptions {
+export type BullmqOptions = {
   connection: { url: string } | { host: string; port: number; password?: string };
   prefix?: string;
   defaultJobOptions?: {
@@ -10,8 +10,8 @@ export interface BullmqOptions {
     removeOnComplete?: { age: number };
     removeOnFail?: { age: number };
   };
-}
+};
 
-export function bullmq(_opts: BullmqOptions): QueueAdapter {
+export const bullmq = (_opts: BullmqOptions): QueueAdapter => {
   throw new EmailRpcNotImplementedError('@emailrpc/bullmq queue adapter (v0.3)');
-}
+};

@@ -22,11 +22,11 @@ export type MockProvider = Provider & {
   reset(): void;
 };
 
-function normalizeAddress(addr: Address): string {
+const normalizeAddress = (addr: Address): string => {
   return typeof addr === 'string' ? addr : addr.address;
-}
+};
 
-export function mockProvider(): MockProvider {
+export const mockProvider = (): MockProvider => {
   const records: MockProviderRecord[] = [];
 
   return {
@@ -54,7 +54,7 @@ export function mockProvider(): MockProvider {
       records.length = 0;
     },
   };
-}
+};
 
 export type CreateTestSenderOptions<R extends AnyEmailRouter> = {
   router: R;
@@ -62,17 +62,17 @@ export type CreateTestSenderOptions<R extends AnyEmailRouter> = {
   hooks?: HookRecorder;
 };
 
-export function createTestSender<R extends AnyEmailRouter>(
+export const createTestSender = <R extends AnyEmailRouter>(
   _opts: CreateTestSenderOptions<R>,
-): Sender<R> {
+): Sender<R> => {
   throw new EmailRpcNotImplementedError('createTestSender() (Layer 2 test utilities)');
-}
+};
 
 export type HookRecorder = {
   readonly calls: Array<{ name: string; route: string; [k: string]: unknown }>;
   reset(): void;
 };
 
-export function recordHooks(): HookRecorder {
+export const recordHooks = (): HookRecorder => {
   throw new EmailRpcNotImplementedError('recordHooks() (Layer 2 test utilities)');
-}
+};

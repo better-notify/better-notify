@@ -38,4 +38,16 @@ describe('validate', () => {
       /route "welcome"/,
     );
   });
+
+  it('awaits a Promise-returning standard schema validate', async () => {
+    const asyncSchema = {
+      '~standard': {
+        version: 1 as const,
+        vendor: 'test',
+        validate: (input: unknown) => Promise.resolve({ value: input as { ok: true } }),
+      },
+    };
+    const value = await validate(asyncSchema, { ok: true });
+    expect(value).toEqual({ ok: true });
+  });
 });

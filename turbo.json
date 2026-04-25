@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "ui": "stream",
+  "ui": "tui",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -13,6 +13,16 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": []
+    },
+    "start": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": false
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
     },
     "//#oxlint": {
       "outputs": []

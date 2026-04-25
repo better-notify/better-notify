@@ -158,7 +158,7 @@ export type EmailDefinitionOf<B> =
       : never
     : never;
 
-export function createEmailBuilder<Ctx>(ctx: { context?: Ctx }): EmailBuilder<Ctx> {
+export const createEmailBuilder = <Ctx>(ctx: { context?: Ctx }): EmailBuilder<Ctx> => {
   return new EmailBuilder<Ctx>({
     ctx: ctx.context,
     schema: undefined,
@@ -169,6 +169,6 @@ export function createEmailBuilder<Ctx>(ctx: { context?: Ctx }): EmailBuilder<Ct
     tags: {},
     priority: 'normal',
   });
-}
+};
 
 export type { Slots, CompleteSchema, CompleteAdapter, RequireSlots, Has, SetSlot };

@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "turbo run start"
+    "start": "turbo run start --filter=@welcome-text/cli",
+    "dev": "turbo run dev --filter=@welcome-text/cli"
   },
   "engines": {
     "node": ">=22"

@@ -34,8 +34,8 @@ export type Sender<R extends AnyEmailRouter> = {
 };
 
 /** @deprecated Use createClient from @emailrpc/core instead. */
-export function createSender<R extends AnyEmailRouter, Ctx = {}>(
+export const createSender = <R extends AnyEmailRouter, Ctx = {}>(
   _opts: CreateSenderOptions<R, Ctx>,
-): Sender<R> {
+): Sender<R> => {
   throw new EmailRpcNotImplementedError('createSender is deprecated, use createClient instead');
-}
+};

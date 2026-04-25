@@ -9,13 +9,13 @@ export type ErrorCode =
   | 'NOT_IMPLEMENTED'
   | 'UNKNOWN';
 
-export interface EmailRpcErrorOptions {
+export type EmailRpcErrorOptions = {
   message: string;
   code?: ErrorCode;
   route?: string;
   messageId?: string;
   cause?: unknown;
-}
+};
 
 export class EmailRpcError extends Error {
   readonly code: ErrorCode;
@@ -41,9 +41,9 @@ export class EmailRpcError extends Error {
   }
 }
 
-export interface EmailRpcValidationErrorOptions extends EmailRpcErrorOptions {
+export type EmailRpcValidationErrorOptions = EmailRpcErrorOptions & {
   issues: ReadonlyArray<StandardSchemaV1.Issue>;
-}
+};
 
 export class EmailRpcValidationError extends EmailRpcError {
   readonly issues: ReadonlyArray<StandardSchemaV1.Issue>;

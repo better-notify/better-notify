@@ -1,8 +1,9 @@
-import { describe, expect, it, expectTypeOf } from 'vitest';
+import { describe, expect, it, expectTypeOf, vi } from 'vitest';
 import { z } from 'zod';
 import { emailRpc } from './index.js';
 import { createClient } from './client.js';
 import { mockProvider } from './test.js';
+import { EmailRpcError } from './errors.js';
 import type { TemplateAdapter } from './template.js';
 import type { ProviderEntry, SendOptions } from './client.js';
 import type { Provider } from './provider.js';
@@ -14,7 +15,7 @@ const stubAdapter: TemplateAdapter<{ name: string }> = {
   }),
 };
 
-function createTestRouter() {
+const createTestRouter = () => {
   const t = emailRpc.init();
   return t.router({
     welcome: t
@@ -23,7 +24,7 @@ function createTestRouter() {
       .subject(({ input }) => `Welcome, ${input.name}!`)
       .template(stubAdapter),
   });
-}
+};
 
 describe('client types', () => {
   it('SendOptions infers provider names from the providers tuple', () => {
@@ -477,6 +478,210 @@ describe('proxy behavior', () => {
     });
 
     expect(Object.isFrozen(mail.welcome)).toBe(true);
+  });
+});
+
+describe('error pipeline', () => {
+  it('wraps render failures in EmailRpcError with code RENDER and fires onError', async () => {
+    const failingAdapter: TemplateAdapter<{ name: string }> = {
+      render: async () => {
+        throw new Error('boom');
+      },
+    };
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template(failingAdapter),
+    });
+    const errors: Array<{ phase: string; route: string; code: string }> = [];
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onError: ({ route, phase, error }) => {
+          errors.push({ route, phase, code: error.code });
+        },
+      },
+    });
+
+    await expect(mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } })).rejects
+      .toMatchObject({ code: 'RENDER', route: 'welcome' });
+    expect(errors).toEqual([{ route: 'welcome', phase: 'render', code: 'RENDER' }]);
+  });
+
+  it('wraps render failures even without an onError hook', async () => {
+    const failingAdapter: TemplateAdapter<{ name: string }> = {
+      render: async () => {
+        throw new Error('boom');
+      },
+    };
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template(failingAdapter),
+    });
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } }),
+    ).rejects.toMatchObject({ code: 'RENDER' });
+  });
+
+  it('throws when the providers tuple is empty', async () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [] as readonly ProviderEntry[],
+      defaults: { from: 'a@b.com' },
+    });
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } }),
+    ).rejects.toThrow('No providers registered');
+  });
+
+  it('wraps non-EmailRpcError provider failures with code PROVIDER', async () => {
+    const router = createTestRouter();
+    const failingProvider: Provider = {
+      name: 'failing',
+      send: async () => {
+        throw new Error('smtp down');
+      },
+    };
+    const errors: Array<{ phase: string; code: string }> = [];
+    const mail = createClient({
+      router,
+      providers: [{ name: 'failing', provider: failingProvider, priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onError: ({ phase, error }) => {
+          errors.push({ phase, code: error.code });
+        },
+      },
+    });
+
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } }),
+    ).rejects.toMatchObject({ code: 'PROVIDER', route: 'welcome' });
+    expect(errors).toEqual([{ phase: 'send', code: 'PROVIDER' }]);
+  });
+
+  it('passes through EmailRpcError thrown by the provider as-is', async () => {
+    const router = createTestRouter();
+    const original = new EmailRpcError({ message: 'rate limited', code: 'PROVIDER' });
+    const failingProvider: Provider = {
+      name: 'failing',
+      send: async () => {
+        throw original;
+      },
+    };
+    const mail = createClient({
+      router,
+      providers: [{ name: 'failing', provider: failingProvider, priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } }),
+    ).rejects.toBe(original);
+  });
+
+  it('logs hook errors via console.error without affecting the failure', async () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onError: () => {
+          throw new Error('hook boom');
+        },
+      },
+    });
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 123 as unknown as string } }),
+    ).rejects.toThrow();
+    expect(spy).toHaveBeenCalledWith('[emailrpc] hook error:', expect.any(Error));
+    spy.mockRestore();
+  });
+});
+
+describe('handlePromise', () => {
+  it('wraps non-Error rejections into an Error instance', async () => {
+    const { handlePromise } = await import('./client.js');
+    const [value, err] = await handlePromise(Promise.reject('plain string'));
+    expect(value).toBeNull();
+    expect(err).toBeInstanceOf(Error);
+    expect(err!.message).toBe('plain string');
+  });
+});
+
+describe('address normalization', () => {
+  it('normalizes Address objects on from and to into envelope strings', async () => {
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .from({ name: 'Sender', address: 'sender@x.com' })
+        .template(stubAdapter),
+    });
+    const provider = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+    });
+    const result = await mail.welcome.send({
+      to: { name: 'Lucas', address: 'lucas@x.com' },
+      input: { name: 'Lucas' },
+    });
+    expect(result.envelope).toEqual({ from: 'sender@x.com', to: ['lucas@x.com'] });
+  });
+});
+
+describe('proxy with symbol keys', () => {
+  it('returns undefined for symbol property access', () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+    });
+    expect((mail as unknown as Record<symbol, unknown>)[Symbol.iterator]).toBeUndefined();
+  });
+});
+
+describe('tags', () => {
+  it('serializes definition tags as X-EmailRpc-Tag-* headers', async () => {
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .tags({ tier: 'pro', count: 3, beta: true })
+        .template(stubAdapter),
+    });
+    const provider = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+    await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
+    const headers = provider.sent[0]!.headers;
+    expect(headers['X-EmailRpc-Tag-tier']).toBe('pro');
+    expect(headers['X-EmailRpc-Tag-count']).toBe('3');
+    expect(headers['X-EmailRpc-Tag-beta']).toBe('true');
   });
 });
 

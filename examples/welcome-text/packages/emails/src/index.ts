@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { emailRpc, type TemplateAdapter } from '@emailrpc/core';
 
-function textTemplate<TInput>(body: (input: TInput) => string): TemplateAdapter<TInput> {
+const textTemplate = <TInput>(body: (input: TInput) => string): TemplateAdapter<TInput> => {
   return {
     render: async (input) => {
       const text = body(input);
@@ -11,11 +11,11 @@ function textTemplate<TInput>(body: (input: TInput) => string): TemplateAdapter<
       };
     },
   };
-}
+};
 
-function escapeHtml(s: string): string {
+const escapeHtml = (s: string): string => {
   return s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-}
+};
 
 const welcomeInputSchema = z.object({
   name: z.string().min(1),

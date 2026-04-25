@@ -1,4 +1,4 @@
-export interface EmailRpcConfig {
+export type EmailRpcConfig = {
   router: string;
   provider: string;
   storage?: string;
@@ -9,8 +9,8 @@ export interface EmailRpcConfig {
   reports?: {
     auth?: string;
   };
-}
+};
 
-export function defineConfig(config: EmailRpcConfig): EmailRpcConfig {
+export const defineConfig = (config: EmailRpcConfig): EmailRpcConfig => {
   return config;
-}
+};

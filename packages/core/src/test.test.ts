@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { mockProvider } from './test.js';
+import { z } from 'zod';
+import { createTestSender, mockProvider, recordHooks } from './test.js';
+import { emailRpc } from './init.js';
+import { EmailRpcNotImplementedError } from './errors.js';
+import type { TemplateAdapter } from './template.js';
 
 describe('mockProvider', () => {
   it('records sent messages', async () => {
@@ -68,5 +72,28 @@ describe('mockProvider', () => {
       { route: 'welcome', messageId: 'test-id', attempt: 1 },
     );
     expect(provider.sent[0]!.to).toEqual(['lucas@x.com']);
+  });
+});
+
+describe('test utility stubs', () => {
+  it('createTestSender() throws EmailRpcNotImplementedError', () => {
+    const adapter: TemplateAdapter<{ name: string }> = {
+      render: async () => ({ html: '' }),
+    };
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template(adapter),
+    });
+    expect(() => createTestSender({ router, provider: mockProvider() })).toThrow(
+      EmailRpcNotImplementedError,
+    );
+  });
+
+  it('recordHooks() throws EmailRpcNotImplementedError', () => {
+    expect(() => recordHooks()).toThrow(EmailRpcNotImplementedError);
   });
 });

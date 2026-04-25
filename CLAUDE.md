@@ -63,6 +63,21 @@ Errors all subclass `EmailRpcError` and are JSON-serializable for queue persiste
 
 Adapter split rule (spec §3.2): **a feature ships as its own package only if it pulls a non-trivial peer dependency.** Otherwise it lives in `core` under a subpath export. Don't create new packages for thin wrappers.
 
+## Bootstrapping new packages and examples
+
+Use the turbo generators in `turbo/generators/config.ts` — do not hand-author scaffolds:
+
+```sh
+pnpm gen        # interactive picker
+# or:
+pnpm exec turbo gen run package   # new @emailrpc/* package under packages/
+pnpm exec turbo gen run example   # new example under examples/ (apps/cli + packages/emails)
+```
+
+Run `pnpm install` after generating so workspace links resolve.
+
+Examples follow a non-recursive turbo pattern: the example root's `start`/`dev` scripts invoke `turbo run <task> --filter=@<name>/cli`, **never** plain `turbo run start` (that recurses because turbo matches the example root itself). The `start` and `dev` tasks are declared in the **root** `turbo.json` (`dependsOn: ["^build"]`, `cache: false`; `dev` is `persistent: true` and uses `tsx --watch`) — nested example `turbo.json` files are not needed. The root `package.json` has a `dev` script wired to the canonical demo example so `pnpm dev` from the repo root just works.
+
 ## Build
 
 Rolldown bundles each package via the shared `internal/rolldown-config/base.ts`. Output is **ESM-only** at this stage (`dist/*.js` + bundled `*.d.ts` via `rolldown-plugin-dts`); CJS returns at v1.0 once the public API is frozen. The base config externalizes `node:*`, `@emailrpc/*`, and `@standard-schema/*` so workspace siblings are never inlined.

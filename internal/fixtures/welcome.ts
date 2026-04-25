@@ -8,18 +8,18 @@
 import { z } from 'zod';
 import { emailRpc, type TemplateAdapter } from '@emailrpc/core';
 
-interface AppContext {
+type AppContext = {
   requestId: string;
   locale: 'en' | 'pt-BR' | 'nl';
-}
+};
 
 const t = emailRpc.init<AppContext>();
 
-interface WelcomeProps {
+type WelcomeProps = {
   name: string;
   verifyUrl: string;
   locale: 'en' | 'pt-BR' | 'nl';
-}
+};
 
 const welcomeAdapter: TemplateAdapter<WelcomeProps> = {
   render: async ({ name, verifyUrl }) => ({

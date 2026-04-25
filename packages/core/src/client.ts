@@ -75,27 +75,27 @@ export type EmailClient<R extends AnyEmailRouter, P extends readonly ProviderEnt
     ? { [K in keyof M & string]: RouteMethods<InputOf<EmailRouter<M>, K>, P> }
     : never;
 
-export async function handlePromise<T>(promise: Promise<T>): Promise<[T, null] | [null, Error]> {
+export const handlePromise = async <T>(promise: Promise<T>): Promise<[T, null] | [null, Error]> => {
   try {
     return [await promise, null];
   } catch (err) {
     return [null, err instanceof Error ? err : new Error(String(err))];
   }
-}
+};
 
-function normalizeAddress(addr: Address): string {
+const normalizeAddress = (addr: Address): string => {
   return typeof addr === 'string' ? addr : addr.address;
-}
+};
 
-function resolveSubject<T>(
+const resolveSubject = <T>(
   resolver: SubjectResolver<T>,
   input: T,
   adapterSubject: string | undefined,
-): string {
+): string => {
   if (adapterSubject) return adapterSubject;
   if (typeof resolver === 'function') return resolver({ input });
   return resolver;
-}
+};
 
 type SendPipelineContext = {
   providersByName: Map<string, Provider>;
@@ -105,17 +105,17 @@ type SendPipelineContext = {
   route: string;
 };
 
-async function fireHookSafe(fn: (() => void | Promise<void>) | undefined): Promise<void> {
+const fireHookSafe = async (fn: (() => void | Promise<void>) | undefined): Promise<void> => {
   if (!fn) return;
   const [, err] = await handlePromise(new Promise<void>((resolve) => resolve(fn())));
   if (err) console.error('[emailrpc] hook error:', err);
-}
+};
 
-async function executeRender(
+const executeRender = async (
   def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>,
   rawInput: unknown,
   opts?: RenderOptions,
-): Promise<RenderedOutput | string> {
+): Promise<RenderedOutput | string> => {
   const input = await validate(def.schema, rawInput, { route: def.id });
   const rendered = await def.template.render(input);
 
@@ -123,7 +123,7 @@ async function executeRender(
 
   if (opts.format === 'html') return rendered.html;
   return rendered.text ?? '';
-}
+};
 
 type RawSendArgs = {
   to: Address | Address[];
@@ -135,16 +135,16 @@ type RawSendArgs = {
   input: unknown;
 };
 
-function toAddressArray(value: Address | Address[]): Address[] {
+const toAddressArray = (value: Address | Address[]): Address[] => {
   return Array.isArray(value) ? value : [value];
-}
+};
 
-async function executeSend(
+const executeSend = async (
   def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>,
   args: RawSendArgs,
   opts: { provider?: string } | undefined,
   ctx: SendPipelineContext,
-): Promise<SendResult> {
+): Promise<SendResult> => {
   const messageId = crypto.randomUUID();
 
   const [input, validateErr] = await handlePromise(
@@ -312,11 +312,11 @@ async function executeSend(
   );
 
   return result;
-}
+};
 
-export function createClient<R extends AnyEmailRouter, const P extends readonly ProviderEntry[]>(
+export const createClient = <R extends AnyEmailRouter, const P extends readonly ProviderEntry[]>(
   options: CreateClientOptions<R, P>,
-): EmailClient<R, P> {
+): EmailClient<R, P> => {
   const { router, providers } = options;
   const cache = new Map<string, unknown>();
 
@@ -352,4 +352,4 @@ export function createClient<R extends AnyEmailRouter, const P extends readonly 
       return methods;
     },
   });
-}
+};

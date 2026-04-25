@@ -34,9 +34,9 @@ export type AnyEmailRouter = {
  * Compile-time guarantee: every value must be an `EmailBuilder` with
  * `input`, `subject`, and `template` slots filled.
  */
-export function createRouter<const M extends Record<string, unknown>>(
+export const createRouter = <const M extends Record<string, unknown>>(
   map: M & ValidateRouter<M>,
-): EmailRouter<M> {
+): EmailRouter<M> => {
   const emails = {} as { [K in keyof M]: EmailDefinitionOf<M[K]> };
   for (const key of Object.keys(map) as (keyof M & string)[]) {
     const builder = map[key] as {
@@ -71,7 +71,7 @@ export function createRouter<const M extends Record<string, unknown>>(
     emails,
     routes: Object.keys(map) as (keyof M & string)[],
   };
-}
+};
 
 type SchemaOf<B> =
   B extends EmailBuilder<any, infer S>
