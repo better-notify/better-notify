@@ -2,11 +2,12 @@ import { describe, expect, it, expectTypeOf, vi } from 'vitest';
 import { z } from 'zod';
 import { emailRpc } from './index.js';
 import { createClient } from './client.js';
-import { mockProvider } from './test.js';
+import { mockProvider, memoryLogger } from './test.js';
 import { EmailRpcError } from './errors.js';
 import type { TemplateAdapter } from './template.js';
 import type { ProviderEntry, SendOptions } from './client.js';
 import type { Provider } from './provider.js';
+import type { Middleware } from './middleware.js';
 
 const stubAdapter: TemplateAdapter<{ name: string }> = {
   render: async (input) => ({
@@ -407,6 +408,99 @@ describe('client hooks', () => {
     const result = await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
     expect(result.accepted).toEqual(['lucas@x.com']);
   });
+
+  it('fires onExecute with the rendered message', async () => {
+    const router = createTestRouter();
+    let captured: { subject: string; html: string } | undefined;
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onExecute: ({ rendered }) => {
+          captured = { subject: rendered.subject, html: rendered.html };
+        },
+      },
+    });
+    await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
+    expect(captured?.subject).toBe('Welcome, Lucas!');
+  });
+
+  it('throw in onBeforeSend aborts the send and re-emits via onError(phase: hook)', async () => {
+    const router = createTestRouter();
+    const provider = mockProvider();
+    const errors: Array<{ phase: string }> = [];
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onBeforeSend: () => {
+          throw new Error('hook abort');
+        },
+        onError: ({ phase }) => {
+          errors.push({ phase });
+        },
+      },
+    });
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } }),
+    ).rejects.toThrow('hook abort');
+    expect(provider.sent).toEqual([]);
+    expect(errors).toEqual([{ phase: 'hook' }]);
+  });
+
+  it('multi-hook registration runs all in order', async () => {
+    const router = createTestRouter();
+    const calls: string[] = [];
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onAfterSend: [
+          () => {
+            calls.push('a');
+          },
+          () => {
+            calls.push('b');
+          },
+          () => {
+            calls.push('c');
+          },
+        ],
+      },
+    });
+    await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
+    expect(calls).toEqual(['a', 'b', 'c']);
+  });
+
+  it('a thrown hook in the middle of onAfterSend does not stop subsequent hooks', async () => {
+    const router = createTestRouter();
+    const calls: string[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onAfterSend: [
+          () => {
+            calls.push('a');
+          },
+          () => {
+            throw new Error('boom');
+          },
+          () => {
+            calls.push('c');
+          },
+        ],
+      },
+    });
+    await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
+    expect(calls).toEqual(['a', 'c']);
+    spy.mockRestore();
+  });
 });
 
 describe('type inference', () => {
@@ -615,6 +709,146 @@ describe('error pipeline', () => {
   });
 });
 
+describe('error pipeline (extra)', () => {
+  it('throw in onExecute aborts the send and re-emits via onError(phase: hook)', async () => {
+    const router = createTestRouter();
+    const provider = mockProvider();
+    const errors: Array<{ phase: string }> = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onExecute: () => {
+          throw new Error('execute abort');
+        },
+        onError: ({ phase }) => {
+          errors.push({ phase });
+        },
+      },
+    });
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } }),
+    ).rejects.toThrow('execute abort');
+    expect(provider.sent).toEqual([]);
+    expect(errors).toEqual([{ phase: 'hook' }]);
+    spy.mockRestore();
+  });
+
+  it('passes through EmailRpcError thrown inside an onError handler without rewrapping', async () => {
+    const router = createTestRouter();
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onError: () => {
+          throw new EmailRpcError({ message: 'rpc-handler-err', code: 'UNKNOWN' });
+        },
+      },
+    });
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 123 as unknown as string } }),
+    ).rejects.toThrow();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('wraps a raw error thrown by user middleware as code UNKNOWN with phase middleware', async () => {
+    const t = emailRpc.init();
+    const breakingMw: Middleware = async () => {
+      throw new Error('mw broke');
+    };
+    const router = t.router({
+      welcome: t
+        .use(breakingMw)
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template({ render: async () => ({ html: '<p/>' }) }),
+    });
+    const errors: Array<{ phase: string; code: string }> = [];
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onError: ({ phase, error }) => {
+          errors.push({ phase, code: error.code });
+        },
+      },
+    });
+    await expect(
+      mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } }),
+    ).rejects.toMatchObject({ code: 'UNKNOWN', route: 'welcome' });
+    expect(errors).toEqual([{ phase: 'middleware', code: 'UNKNOWN' }]);
+  });
+
+  it('does NOT double-fire onError when an inner hook (onExecute) re-throws and middleware wraps it', async () => {
+    const t = emailRpc.init();
+    const passthroughMw: Middleware = async ({ next }) => next();
+    const router = t.router({
+      welcome: t
+        .use(passthroughMw)
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template({ render: async () => ({ html: '<p/>' }) }),
+    });
+    const phases: string[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onExecute: () => {
+          throw new Error('boom');
+        },
+        onError: ({ phase }) => {
+          phases.push(phase);
+        },
+      },
+    });
+    await expect(
+      mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } }),
+    ).rejects.toThrow('boom');
+    expect(phases).toEqual(['hook']);
+    spy.mockRestore();
+  });
+});
+
+describe('plugin lifecycle (extra)', () => {
+  it('continues onClose even if one plugin onClose throws', async () => {
+    const order: string[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template({ render: async () => ({ html: '<p/>' }) }),
+    });
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      plugins: [
+        { name: 'a', onClose: () => { order.push('a'); } },
+        { name: 'b', onClose: () => { throw new Error('close boom'); } },
+        { name: 'c', onClose: () => { order.push('c'); } },
+      ],
+    });
+    await mail.close();
+    expect(order).toEqual(['c', 'a']);
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('plugin "b".onClose failed:'), expect.any(Error));
+    spy.mockRestore();
+  });
+});
+
 describe('handlePromise', () => {
   it('wraps non-Error rejections into an Error instance', async () => {
     const { handlePromise } = await import('./client.js');
@@ -682,6 +916,103 @@ describe('tags', () => {
     expect(headers['X-EmailRpc-Tag-tier']).toBe('pro');
     expect(headers['X-EmailRpc-Tag-count']).toBe('3');
     expect(headers['X-EmailRpc-Tag-beta']).toBe('true');
+  });
+});
+
+describe('client middleware (onion)', () => {
+  it('runs middleware in onion order', async () => {
+    const calls: string[] = [];
+    const mw1: Middleware = async ({ next }) => {
+      calls.push('mw1 enter');
+      const r = await next();
+      calls.push('mw1 exit');
+      return r;
+    };
+    const mw2: Middleware = async ({ next }) => {
+      calls.push('mw2 enter');
+      const r = await next();
+      calls.push('mw2 exit');
+      return r;
+    };
+
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .use(mw1)
+        .use(mw2)
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template({ render: async () => ({ html: '<p/>' }) }),
+    });
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+    await mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } });
+
+    expect(calls).toEqual(['mw1 enter', 'mw2 enter', 'mw2 exit', 'mw1 exit']);
+  });
+
+  it('short-circuit middleware skips render and provider.send', async () => {
+    const provider = mockProvider();
+    const shortCircuit: Middleware = async () => ({
+      messageId: 'fake',
+      accepted: [],
+      rejected: ['x@y.com'],
+      envelope: { from: 'a@b.com', to: ['x@y.com'] },
+      timing: { renderMs: 0, sendMs: 0 },
+    });
+
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .use(shortCircuit)
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template({
+          render: async () => {
+            throw new Error('should not render');
+          },
+        }),
+    });
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+    const result = await mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } });
+    expect(result.rejected).toEqual(['x@y.com']);
+    expect(provider.sent).toEqual([]);
+  });
+
+  it('middleware can mutate ctx visible to downstream middleware', async () => {
+    let observed: unknown;
+    const setMw: Middleware = async ({ next }) => next({ tenantId: 'acme' });
+    const readMw: Middleware = async ({ ctx, next }) => {
+      observed = ctx;
+      return next();
+    };
+
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .use(setMw)
+        .use(readMw)
+        .email()
+        .input(z.object({ name: z.string() }))
+        .subject('hi')
+        .template({ render: async () => ({ html: '<p/>' }) }),
+    });
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+    await mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } });
+    expect(observed).toMatchObject({ tenantId: 'acme' });
   });
 });
 
@@ -757,5 +1088,115 @@ describe('integration: full end-to-end', () => {
     });
     expect(output.html).toContain('Welcome Lucas');
     expect(output.text).toContain('Verify');
+  });
+});
+
+type LoggerTestOpts = {
+  logger?: import('./logger.js').LoggerLike;
+  providerThrows?: Error;
+  onAfterSend?: () => void;
+};
+
+const makeClientForLoggerTests = (opts: LoggerTestOpts) => {
+  const t = emailRpc.init();
+  const router = t.router({
+    welcome: t
+      .email()
+      .input(z.object({ name: z.string() }))
+      .subject('hi')
+      .from('a@b.com')
+      .template({ render: async () => ({ html: '<p>hi</p>' }) }),
+  });
+  const provider: Provider = opts.providerThrows
+    ? {
+        name: 'mock',
+        send: async () => {
+          throw opts.providerThrows!;
+        },
+      }
+    : mockProvider();
+  const client = createClient({
+    router,
+    providers: [{ name: 'mock', provider, priority: 1 }],
+    logger: opts.logger,
+    hooks: opts.onAfterSend ? { onAfterSend: opts.onAfterSend } : undefined,
+  });
+  return { client };
+};
+
+describe('client logger integration', () => {
+  it('logs send entry, send ok with messageId/route bindings on success', async () => {
+    const log = memoryLogger();
+    const { client } = makeClientForLoggerTests({ logger: log });
+    await client.welcome.send({ to: 'a@b.com', input: { name: 'x' } });
+    const start = log.records.find((r) => r.message === 'send start');
+    const ok = log.records.find((r) => r.message === 'send ok');
+    expect(start?.level).toBe('debug');
+    expect(start?.bindings).toMatchObject({ component: 'client', route: 'welcome' });
+    expect(start?.bindings.messageId).toEqual(expect.any(String));
+    expect(ok?.level).toBe('info');
+    expect(ok?.payload).toMatchObject({
+      providerName: expect.any(String),
+      durationMs: expect.any(Number),
+    });
+  });
+
+  it('logs validate failed at warn with err', async () => {
+    const log = memoryLogger();
+    const { client } = makeClientForLoggerTests({ logger: log });
+    await expect(
+      client.welcome.send({ to: 'a@b.com', input: { name: 123 as unknown as string } }),
+    ).rejects.toThrow();
+    const rec = log.records.find((r) => r.message === 'validate failed');
+    expect(rec?.level).toBe('warn');
+    expect(rec?.payload.err).toBeInstanceOf(Error);
+  });
+
+  it('logs send failed at error with err and durationMs when provider rejects', async () => {
+    const log = memoryLogger();
+    const { client } = makeClientForLoggerTests({
+      logger: log,
+      providerThrows: new Error('smtp down'),
+    });
+    await expect(
+      client.welcome.send({ to: 'a@b.com', input: { name: 'x' } }),
+    ).rejects.toThrow();
+    const rec = log.records.find((r) => r.message === 'send failed');
+    expect(rec?.level).toBe('error');
+    expect(rec?.payload.err).toBeInstanceOf(Error);
+    expect(rec?.payload.durationMs).toEqual(expect.any(Number));
+  });
+
+  it('logs hook failed at error and does not propagate', async () => {
+    const log = memoryLogger();
+    const { client } = makeClientForLoggerTests({
+      logger: log,
+      onAfterSend: () => {
+        throw new Error('hook boom');
+      },
+    });
+    await expect(
+      client.welcome.send({ to: 'a@b.com', input: { name: 'x' } }),
+    ).resolves.toBeDefined();
+    const rec = log.records.find((r) => r.message === 'hook failed');
+    expect(rec?.level).toBe('error');
+    expect(rec?.payload.hook).toBe('onAfterSend');
+  });
+
+  it('default logger emits no records on success and one console.error on failure', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const { client: ok } = makeClientForLoggerTests({});
+    await ok.welcome.send({ to: 'a@b.com', input: { name: 'x' } });
+    expect(infoSpy).not.toHaveBeenCalled();
+    expect(errSpy).not.toHaveBeenCalled();
+
+    const { client: bad } = makeClientForLoggerTests({ providerThrows: new Error('x') });
+    await expect(
+      bad.welcome.send({ to: 'a@b.com', input: { name: 'x' } }),
+    ).rejects.toThrow();
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+    infoSpy.mockRestore();
   });
 });
