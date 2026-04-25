@@ -1,4 +1,5 @@
 import { EmailRpcNotImplementedError } from './errors.js';
+import type { LoggerLike, LogLevel } from './logger.js';
 import type { ProviderResult, Provider } from './provider.js';
 import type { AnyEmailRouter } from './router.js';
 import type { Sender } from './sender.js';
@@ -76,8 +77,6 @@ export type HookRecorder = {
 export const recordHooks = (): HookRecorder => {
   throw new EmailRpcNotImplementedError('recordHooks() (Layer 2 test utilities)');
 };
-
-import type { LoggerLike, LogLevel } from './logger.js';
 
 export type LogRecord = {
   level: LogLevel;

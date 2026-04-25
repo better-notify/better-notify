@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { createTestSender, mockProvider, recordHooks } from './test.js';
+import { createTestSender, memoryLogger, mockProvider, recordHooks } from './test.js';
 import { emailRpc } from './init.js';
 import { EmailRpcNotImplementedError } from './errors.js';
 import type { TemplateAdapter } from './template.js';
@@ -97,8 +97,6 @@ describe('test utility stubs', () => {
     expect(() => recordHooks()).toThrow(EmailRpcNotImplementedError);
   });
 });
-
-import { memoryLogger } from './test.js';
 
 describe('memoryLogger', () => {
   it('records calls with merged bindings', () => {
