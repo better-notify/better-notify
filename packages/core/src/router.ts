@@ -1,6 +1,6 @@
-import type { AnyStandardSchema, InferInput, InferOutput } from './schema.js'
-import type { TemplateAdapter } from './template.js'
-import type { EmailBuilder, EmailDefinitionOf } from './builder.js'
+import type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';
+import type { TemplateAdapter } from './template.js';
+import type { EmailBuilder, EmailDefinitionOf } from './builder.js';
 
 /**
  * Type-level validator: each value of M must be a complete EmailBuilder.
@@ -13,16 +13,16 @@ export type ValidateRouter<M> = {
     ? S extends { input: AnyStandardSchema; subject: unknown; template: TemplateAdapter<any> }
       ? M[K]
       : `Email "${K & string}" is incomplete: input, subject, and template are required.`
-    : `Value at "${K & string}" is not an EmailBuilder.`
-}
+    : `Value at "${K & string}" is not an EmailBuilder.`;
+};
 
 export interface EmailRouter<M> {
-  readonly _brand: 'EmailRouter'
-  readonly emails: { readonly [K in keyof M]: EmailDefinitionOf<M[K]> }
-  readonly routes: ReadonlyArray<keyof M & string>
+  readonly _brand: 'EmailRouter';
+  readonly emails: { readonly [K in keyof M]: EmailDefinitionOf<M[K]> };
+  readonly routes: ReadonlyArray<keyof M & string>;
 }
 
-export type AnyEmailRouter = EmailRouter<Record<string, unknown>>
+export type AnyEmailRouter = EmailRouter<any>;
 
 /**
  * Build a router from a map of completed email builders.
@@ -33,12 +33,22 @@ export type AnyEmailRouter = EmailRouter<Record<string, unknown>>
 export function createRouter<const M extends Record<string, unknown>>(
   map: M & ValidateRouter<M>,
 ): EmailRouter<M> {
-  const emails = {} as { [K in keyof M]: EmailDefinitionOf<M[K]> }
+  const emails = {} as { [K in keyof M]: EmailDefinitionOf<M[K]> };
   for (const key of Object.keys(map) as (keyof M & string)[]) {
-    const builder = map[key] as { _state?: { schema?: unknown; subject?: unknown; template?: unknown; from?: unknown; replyTo?: unknown; tags?: unknown; priority?: unknown } }
-    const state = builder._state
+    const builder = map[key] as {
+      _state?: {
+        schema?: unknown;
+        subject?: unknown;
+        template?: unknown;
+        from?: unknown;
+        replyTo?: unknown;
+        tags?: unknown;
+        priority?: unknown;
+      };
+    };
+    const state = builder._state;
     if (!state || !state.schema || !state.subject || !state.template) {
-      throw new Error(`Email "${key}" is incomplete: input/subject/template are required.`)
+      throw new Error(`Email "${key}" is incomplete: input/subject/template are required.`);
     }
     emails[key] = {
       _ctx: undefined as never,
@@ -50,32 +60,35 @@ export function createRouter<const M extends Record<string, unknown>>(
       replyTo: state.replyTo,
       tags: state.tags,
       priority: state.priority,
-    } as EmailDefinitionOf<M[typeof key]>
+    } as EmailDefinitionOf<M[typeof key]>;
   }
   return {
     _brand: 'EmailRouter',
     emails,
     routes: Object.keys(map) as (keyof M & string)[],
-  }
+  };
 }
 
-type SchemaOf<B> = B extends EmailBuilder<any, any, infer S>
-  ? S extends { input: infer TSchema }
-    ? TSchema extends AnyStandardSchema
-      ? TSchema
+type SchemaOf<B> =
+  B extends EmailBuilder<any, any, infer S>
+    ? S extends { input: infer TSchema }
+      ? TSchema extends AnyStandardSchema
+        ? TSchema
+        : never
       : never
-    : never
-  : never
+    : never;
 
 /** Extract the input type for a given route id from a router. */
-export type InputOf<R extends EmailRouter<any>, K extends keyof RouterOf<R>> =
-  InferInput<SchemaOf<RouterOf<R>[K]>>
+export type InputOf<R extends EmailRouter<any>, K extends keyof RouterOf<R>> = InferInput<
+  SchemaOf<RouterOf<R>[K]>
+>;
 
 /** Extract the parsed (output) type for a given route id from a router. */
-export type OutputOf<R extends EmailRouter<any>, K extends keyof RouterOf<R>> =
-  InferOutput<SchemaOf<RouterOf<R>[K]>>
+export type OutputOf<R extends EmailRouter<any>, K extends keyof RouterOf<R>> = InferOutput<
+  SchemaOf<RouterOf<R>[K]>
+>;
 
-type RouterOf<R> = R extends EmailRouter<infer M> ? M : never
+type RouterOf<R> = R extends EmailRouter<infer M> ? M : never;
 
 /** Backwards-compat alias used internally — any value-position key map. */
-export type RouterMap = Record<string, unknown>
+export type RouterMap = Record<string, unknown>;
