@@ -97,3 +97,31 @@ describe('test utility stubs', () => {
     expect(() => recordHooks()).toThrow(EmailRpcNotImplementedError);
   });
 });
+
+import { memoryLogger } from './test.js';
+
+describe('memoryLogger', () => {
+  it('records calls with merged bindings', () => {
+    const log = memoryLogger();
+    const child = log.child({ route: 'welcome' });
+    child.info('start', { messageId: 'm1' });
+    child.error('boom', { err: new Error('x') });
+    expect(log.records).toHaveLength(2);
+    expect(log.records[0]).toMatchObject({
+      level: 'info',
+      message: 'start',
+      bindings: { route: 'welcome' },
+      payload: { messageId: 'm1' },
+    });
+    expect(log.records[1]!.payload).toMatchObject({ err: expect.any(Error) });
+  });
+
+  it('shares records across child generations and clear() resets', () => {
+    const log = memoryLogger();
+    log.child({ a: 1 }).child({ b: 2 }).warn('w');
+    expect(log.records).toHaveLength(1);
+    expect(log.records[0]!.bindings).toEqual({ a: 1, b: 2 });
+    log.clear();
+    expect(log.records).toHaveLength(0);
+  });
+});
