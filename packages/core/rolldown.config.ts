@@ -12,5 +12,6 @@ export default baseConfig({
     middleware: 'src/middleware.ts',
     test: 'src/test.ts',
     config: 'src/config.ts',
+    logger: 'src/logger.ts',
   },
 });

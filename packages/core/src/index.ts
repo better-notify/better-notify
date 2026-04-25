@@ -1,5 +1,5 @@
 export { emailRpc } from './init.js';
-export type { RootBuilder, InitOptions, InitHooks, EmailRpc } from './init.js';
+export type { RootBuilder, InitOptions, EmailRpc } from './init.js';
 
 export { EmailBuilder } from './builder.js';
 export type {
@@ -30,7 +30,27 @@ export type {
   SendArgs,
   RenderOptions,
   EmailClient,
+  HookFn,
+  RouteUnion,
+  BeforeSendCtx,
+  ExecuteCtx,
+  AfterSendCtx,
+  ErrorCtx,
+  ErrorPhase,
 } from './client.js';
+
+export type { Plugin } from './plugin.js';
+
+export { dryRunMw, tagInjectMw } from './middleware.js';
+export type {
+  Middleware,
+  AnyMiddleware,
+  MiddlewareParams,
+  TagInjectMwOptions,
+} from './middleware.js';
+
+export { consoleLogger, fromPino } from './logger.js';
+export type { LoggerLike, LogLevel, ConsoleLoggerOptions } from './logger.js';
 
 export { validate } from './schema.js';
 export type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';

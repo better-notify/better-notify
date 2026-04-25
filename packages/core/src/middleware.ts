@@ -1,20 +1,18 @@
 import { EmailRpcNotImplementedError } from './errors.js';
 import type { SendResult } from './types.js';
 
-export type MiddlewareParams<TInput, TCtx> = {
+export type MiddlewareParams<TInput, TCtxIn, TCtxOut = TCtxIn> = {
   input: TInput;
-  ctx: TCtx;
+  ctx: TCtxIn;
   route: string;
-  next: (newCtx?: Partial<TCtx>) => Promise<SendResult>;
+  next: (newCtx?: Partial<TCtxOut>) => Promise<SendResult>;
 };
 
-export type Middleware<TInput = unknown, TCtx = unknown> = (
-  params: MiddlewareParams<TInput, TCtx>,
+export type Middleware<TInput = unknown, TCtxIn = unknown, TCtxOut = TCtxIn> = (
+  params: MiddlewareParams<TInput, TCtxIn, TCtxOut>,
 ) => Promise<SendResult>;
 
-export const loggerMw = (): Middleware => {
-  throw new EmailRpcNotImplementedError('loggerMw()');
-};
+export type AnyMiddleware = Middleware<any, any, any>;
 
 export const eventLoggerMw = (_opts: { storage: unknown }): Middleware => {
   throw new EmailRpcNotImplementedError('eventLoggerMw()');
@@ -33,13 +31,23 @@ export const idempotencyMw = (_opts: { store: unknown }): Middleware => {
 };
 
 export const dryRunMw = (): Middleware => {
-  throw new EmailRpcNotImplementedError('dryRunMw()');
+  return async () => ({
+    messageId: 'dry-run',
+    accepted: [],
+    rejected: [],
+    envelope: { from: '', to: [] },
+    timing: { renderMs: 0, sendMs: 0 },
+  });
 };
 
 export const tracingMw = (): Middleware => {
   throw new EmailRpcNotImplementedError('tracingMw()');
 };
 
-export const tagInjectMw = (_opts: { tags: Record<string, string> }): Middleware => {
-  throw new EmailRpcNotImplementedError('tagInjectMw()');
+export type TagInjectMwOptions = {
+  tags: Record<string, string>;
+};
+
+export const tagInjectMw = (opts: TagInjectMwOptions): Middleware => {
+  return async ({ next }) => next({ tagsToInject: opts.tags } as never);
 };
