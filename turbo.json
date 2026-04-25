@@ -7,15 +7,21 @@
       "outputs": ["dist/**"]
     },
     "typecheck": {
-      "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "dependsOn": ["^build"]
     },
     "test": {
       "dependsOn": ["^build"],
       "outputs": []
     },
-    "lint": {
+    "//#oxlint": {
       "outputs": []
+    },
+    "//#oxlint:fix": {
+      "cache": false
+    },
+    "//#oxfmt": {
+      "cache": false
     }
   }
 }

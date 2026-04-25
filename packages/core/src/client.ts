@@ -1,11 +1,21 @@
 import { validate } from './schema.js';
 import { EmailRpcError } from './errors.js';
 import type { Provider } from './provider.js';
-import type { Address, SendResult, RenderedMessage, SendContext } from './types.js';
+import type { Address, Attachment, SendResult, RenderedMessage, SendContext } from './types.js';
 import type { RenderedOutput, TemplateAdapter } from './template.js';
 import type { AnyEmailRouter, EmailRouter, InputOf } from './router.js';
 import type { EmailDefinition, SubjectResolver } from './builder.js';
 import type { AnyStandardSchema } from './schema.js';
+
+export type SendArgs<TInput> = {
+  to: Address | Address[];
+  cc?: Address | Address[];
+  bcc?: Address | Address[];
+  replyTo?: Address;
+  headers?: Record<string, string>;
+  attachments?: Attachment[];
+  input: TInput;
+};
 
 export type ProviderEntry = {
   name: string;
@@ -35,10 +45,7 @@ export type ClientHooks = {
   }) => void | Promise<void>;
 };
 
-export type CreateClientOptions<
-  R extends AnyEmailRouter,
-  P extends readonly ProviderEntry[],
-> = {
+export type CreateClientOptions<R extends AnyEmailRouter, P extends readonly ProviderEntry[]> = {
   router: R;
   providers: P;
   defaults?: {
@@ -58,7 +65,7 @@ export type RenderOptions = {
 };
 
 type RouteMethods<TInput, P extends readonly ProviderEntry[]> = {
-  send(input: TInput, opts?: SendOptions<P>): Promise<SendResult>;
+  send(args: SendArgs<TInput>, opts?: SendOptions<P>): Promise<SendResult>;
   render(input: TInput): Promise<RenderedOutput>;
   render(input: TInput, opts: RenderOptions): Promise<string>;
 };
@@ -68,9 +75,7 @@ export type EmailClient<R extends AnyEmailRouter, P extends readonly ProviderEnt
     ? { [K in keyof M & string]: RouteMethods<InputOf<EmailRouter<M>, K>, P> }
     : never;
 
-export async function handlePromise<T>(
-  promise: Promise<T>,
-): Promise<[T, null] | [null, Error]> {
+export async function handlePromise<T>(promise: Promise<T>): Promise<[T, null] | [null, Error]> {
   try {
     return [await promise, null];
   } catch (err) {
@@ -102,12 +107,12 @@ type SendPipelineContext = {
 
 async function fireHookSafe(fn: (() => void | Promise<void>) | undefined): Promise<void> {
   if (!fn) return;
-  const [, err] = await handlePromise(Promise.resolve(fn()));
+  const [, err] = await handlePromise(new Promise<void>((resolve) => resolve(fn())));
   if (err) console.error('[emailrpc] hook error:', err);
 }
 
 async function executeRender(
-  def: EmailDefinition<unknown, string, AnyStandardSchema, TemplateAdapter<unknown>>,
+  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>,
   rawInput: unknown,
   opts?: RenderOptions,
 ): Promise<RenderedOutput | string> {
@@ -120,16 +125,30 @@ async function executeRender(
   return rendered.text ?? '';
 }
 
+type RawSendArgs = {
+  to: Address | Address[];
+  cc?: Address | Address[];
+  bcc?: Address | Address[];
+  replyTo?: Address;
+  headers?: Record<string, string>;
+  attachments?: Attachment[];
+  input: unknown;
+};
+
+function toAddressArray(value: Address | Address[]): Address[] {
+  return Array.isArray(value) ? value : [value];
+}
+
 async function executeSend(
-  def: EmailDefinition<unknown, string, AnyStandardSchema, TemplateAdapter<unknown>>,
-  rawInput: unknown,
+  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>,
+  args: RawSendArgs,
   opts: { provider?: string } | undefined,
   ctx: SendPipelineContext,
 ): Promise<SendResult> {
   const messageId = crypto.randomUUID();
 
   const [input, validateErr] = await handlePromise(
-    validate(def.schema, rawInput, { route: ctx.route }),
+    validate(def.schema, args.input, { route: ctx.route }),
   );
   if (validateErr) {
     await fireHookSafe(
@@ -190,16 +209,7 @@ async function executeSend(
     });
   }
 
-  const toRaw = (input as Record<string, unknown>).to;
-  if (!toRaw) {
-    throw new EmailRpcError({
-      message: `Route "${ctx.route}" input is missing a "to" field.`,
-      code: 'VALIDATION',
-      route: ctx.route,
-      messageId,
-    });
-  }
-  const toAddresses: Address[] = Array.isArray(toRaw) ? toRaw : [toRaw as Address];
+  const toAddresses = toAddressArray(args.to);
 
   const message: RenderedMessage = {
     from: fromAddr,
@@ -207,15 +217,16 @@ async function executeSend(
     subject,
     html: rendered!.html,
     text: rendered!.text ?? '',
-    headers: { ...ctx.defaults?.headers },
-    attachments: [],
+    headers: { ...ctx.defaults?.headers, ...args.headers },
+    attachments: args.attachments ?? [],
     inlineAssets: {},
   };
 
-  if (def.replyTo ?? ctx.defaults?.replyTo) {
-    (message as RenderedMessage & { replyTo?: Address }).replyTo =
-      def.replyTo ?? ctx.defaults?.replyTo;
-  }
+  if (args.cc) message.cc = toAddressArray(args.cc);
+  if (args.bcc) message.bcc = toAddressArray(args.bcc);
+
+  const replyTo = args.replyTo ?? def.replyTo ?? ctx.defaults?.replyTo;
+  if (replyTo) message.replyTo = replyTo;
 
   if (def.tags) {
     for (const [k, v] of Object.entries(def.tags)) {
@@ -303,10 +314,9 @@ async function executeSend(
   return result;
 }
 
-export function createClient<
-  R extends AnyEmailRouter,
-  const P extends readonly ProviderEntry[],
->(options: CreateClientOptions<R, P>): EmailClient<R, P> {
+export function createClient<R extends AnyEmailRouter, const P extends readonly ProviderEntry[]>(
+  options: CreateClientOptions<R, P>,
+): EmailClient<R, P> {
   const { router, providers } = options;
   const cache = new Map<string, unknown>();
 
@@ -319,15 +329,15 @@ export function createClient<
       if (typeof key !== 'string') return undefined;
 
       const def = (router.emails as Record<string, unknown>)[key] as
-        | EmailDefinition<unknown, string, AnyStandardSchema, TemplateAdapter<unknown>>
+        | EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>
         | undefined;
       if (!def) return undefined;
 
       if (cache.has(key)) return cache.get(key);
 
       const methods = Object.freeze({
-        send: (input: unknown, sendOpts?: { provider?: string }) =>
-          executeSend(def, input, sendOpts, {
+        send: (sendArgs: RawSendArgs, sendOpts?: { provider?: string }) =>
+          executeSend(def, sendArgs, sendOpts, {
             providersByName,
             defaultProvider,
             defaults: options.defaults,

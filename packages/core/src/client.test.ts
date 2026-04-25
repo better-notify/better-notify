@@ -3,12 +3,11 @@ import { z } from 'zod';
 import { emailRpc } from './index.js';
 import { createClient } from './client.js';
 import { mockProvider } from './test.js';
-import type { RenderedOutput } from './template.js';
 import type { TemplateAdapter } from './template.js';
 import type { ProviderEntry, SendOptions } from './client.js';
 import type { Provider } from './provider.js';
 
-const stubAdapter: TemplateAdapter<{ to: string; name: string }> = {
+const stubAdapter: TemplateAdapter<{ name: string }> = {
   render: async (input) => ({
     html: `<p>Hello ${input.name}</p>`,
     text: `Hello ${input.name}`,
@@ -19,8 +18,8 @@ function createTestRouter() {
   const t = emailRpc.init();
   return t.router({
     welcome: t
-      .email('welcome')
-      .input(z.object({ to: z.string().email(), name: z.string() }))
+      .email()
+      .input(z.object({ name: z.string() }))
       .subject(({ input }) => `Welcome, ${input.name}!`)
       .template(stubAdapter),
   });
@@ -53,7 +52,7 @@ describe('executeRender', () => {
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
     });
 
-    const output = await mail.welcome.render({ to: 'lucas@x.com', name: 'Lucas' });
+    const output = await mail.welcome.render({ name: 'Lucas' });
     expect(output.html).toBe('<p>Hello Lucas</p>');
     expect(output.text).toBe('Hello Lucas');
   });
@@ -65,22 +64,19 @@ describe('executeRender', () => {
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
     });
 
-    const html = await mail.welcome.render(
-      { to: 'lucas@x.com', name: 'Lucas' },
-      { format: 'html' },
-    );
+    const html = await mail.welcome.render({ name: 'Lucas' }, { format: 'html' });
     expect(html).toBe('<p>Hello Lucas</p>');
   });
 
   it('returns empty string when format is text and adapter has no text', async () => {
-    const noTextAdapter: TemplateAdapter<{ to: string; name: string }> = {
+    const noTextAdapter: TemplateAdapter<{ name: string }> = {
       render: async () => ({ html: '<p>hi</p>' }),
     };
     const t = emailRpc.init();
     const router = t.router({
       welcome: t
-        .email('welcome')
-        .input(z.object({ to: z.string().email(), name: z.string() }))
+        .email()
+        .input(z.object({ name: z.string() }))
         .subject('Hi')
         .template(noTextAdapter),
     });
@@ -89,10 +85,7 @@ describe('executeRender', () => {
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
     });
 
-    const text = await mail.welcome.render(
-      { to: 'lucas@x.com', name: 'Lucas' },
-      { format: 'text' },
-    );
+    const text = await mail.welcome.render({ name: 'Lucas' }, { format: 'text' });
     expect(text).toBe('');
   });
 
@@ -103,9 +96,9 @@ describe('executeRender', () => {
       providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
     });
 
-    await expect(
-      mail.welcome.render({ to: 'not-an-email', name: 'Lucas' }),
-    ).rejects.toThrow('Validation failed');
+    await expect(mail.welcome.render({ name: 123 as unknown as string })).rejects.toThrow(
+      'Validation failed',
+    );
   });
 });
 
@@ -119,7 +112,10 @@ describe('executeSend', () => {
       defaults: { from: 'hello@example.com' },
     });
 
-    const result = await mail.welcome.send({ to: 'lucas@x.com', name: 'Lucas' });
+    const result = await mail.welcome.send({
+      to: 'lucas@x.com',
+      input: { name: 'Lucas' },
+    });
 
     expect(result.messageId).toBeDefined();
     expect(result.accepted).toEqual(['lucas@x.com']);
@@ -146,12 +142,15 @@ describe('executeSend', () => {
       defaults: { from: 'default@example.com' },
     });
 
-    const result = await mail.welcome.send({ to: 'lucas@x.com', name: 'Lucas' });
+    const result = await mail.welcome.send({
+      to: 'lucas@x.com',
+      input: { name: 'Lucas' },
+    });
     expect(result.envelope.from).toBe('default@example.com');
   });
 
   it('uses adapter subject over definition subject when adapter returns one', async () => {
-    const adapterWithSubject: TemplateAdapter<{ to: string; name: string }> = {
+    const adapterWithSubject: TemplateAdapter<{ name: string }> = {
       render: async () => ({
         html: '<p>hi</p>',
         subject: 'From Adapter',
@@ -160,8 +159,8 @@ describe('executeSend', () => {
     const t = emailRpc.init();
     const router = t.router({
       welcome: t
-        .email('welcome')
-        .input(z.object({ to: z.string().email(), name: z.string() }))
+        .email()
+        .input(z.object({ name: z.string() }))
         .subject('From Definition')
         .template(adapterWithSubject),
     });
@@ -172,7 +171,7 @@ describe('executeSend', () => {
       defaults: { from: 'a@b.com' },
     });
 
-    await mail.welcome.send({ to: 'lucas@x.com', name: 'Lucas' });
+    await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
     expect(provider.sent[0]!.subject).toBe('From Adapter');
   });
 
@@ -184,7 +183,7 @@ describe('executeSend', () => {
     });
 
     await expect(
-      mail.welcome.send({ to: 'bad', name: 'Lucas' }),
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 123 as unknown as string } }),
     ).rejects.toThrow('Validation failed');
   });
 
@@ -196,7 +195,362 @@ describe('executeSend', () => {
     });
 
     await expect(
-      mail.welcome.send({ to: 'lucas@x.com', name: 'Lucas' }),
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } }),
     ).rejects.toThrow('from');
+  });
+
+  it('accepts an array of recipients', async () => {
+    const router = createTestRouter();
+    const provider = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+
+    const result = await mail.welcome.send({
+      to: ['a@x.com', 'b@x.com'],
+      input: { name: 'Lucas' },
+    });
+    expect(result.envelope.to).toEqual(['a@x.com', 'b@x.com']);
+  });
+
+  it('forwards cc, bcc, replyTo, headers, and attachments to the provider', async () => {
+    const router = createTestRouter();
+    const provider = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com', headers: { 'X-Default': '1' } },
+    });
+
+    await mail.welcome.send({
+      to: 'lucas@x.com',
+      cc: 'team@x.com',
+      bcc: ['legal@x.com', 'audit@x.com'],
+      replyTo: 'support+ticket-42@x.com',
+      headers: { 'X-Custom': 'yes' },
+      attachments: [{ filename: 'a.txt', content: 'hello' }],
+      input: { name: 'Lucas' },
+    });
+
+    const sent = provider.sent[0]!;
+    expect(sent.cc).toEqual(['team@x.com']);
+    expect(sent.bcc).toEqual(['legal@x.com', 'audit@x.com']);
+    expect(sent.replyTo).toBe('support+ticket-42@x.com');
+    expect(sent.headers['X-Default']).toBe('1');
+    expect(sent.headers['X-Custom']).toBe('yes');
+    expect(sent.attachments).toBe(1);
+  });
+
+  it('per-send replyTo overrides def and defaults', async () => {
+    const t = emailRpc.init();
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(z.object({ name: z.string() }))
+        .replyTo('def@x.com')
+        .subject('s')
+        .template(stubAdapter),
+    });
+    const provider = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com', replyTo: 'defaults@x.com' },
+    });
+
+    await mail.welcome.send({
+      to: 'lucas@x.com',
+      replyTo: 'override@x.com',
+      input: { name: 'Lucas' },
+    });
+    expect(provider.sent[0]!.replyTo).toBe('override@x.com');
+  });
+
+  it('per-send headers override default headers on key collision', async () => {
+    const router = createTestRouter();
+    const provider = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      defaults: { from: 'a@b.com', headers: { 'X-Source': 'default' } },
+    });
+
+    await mail.welcome.send({
+      to: 'lucas@x.com',
+      headers: { 'X-Source': 'send' },
+      input: { name: 'Lucas' },
+    });
+    expect(provider.sent[0]!.headers['X-Source']).toBe('send');
+  });
+});
+
+describe('provider selection', () => {
+  it('uses the lowest-priority provider by default', async () => {
+    const router = createTestRouter();
+    const primary = mockProvider();
+    const secondary = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [
+        { name: 'secondary', provider: secondary, priority: 2 },
+        { name: 'primary', provider: primary, priority: 1 },
+      ],
+      defaults: { from: 'a@b.com' },
+    });
+
+    await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
+    expect(primary.sent).toHaveLength(1);
+    expect(secondary.sent).toHaveLength(0);
+  });
+
+  it('overrides to a named provider', async () => {
+    const router = createTestRouter();
+    const primary = mockProvider();
+    const secondary = mockProvider();
+    const mail = createClient({
+      router,
+      providers: [
+        { name: 'primary', provider: primary, priority: 1 },
+        { name: 'secondary', provider: secondary, priority: 2 },
+      ],
+      defaults: { from: 'a@b.com' },
+    });
+
+    await mail.welcome.send(
+      { to: 'lucas@x.com', input: { name: 'Lucas' } },
+      { provider: 'secondary' },
+    );
+    expect(primary.sent).toHaveLength(0);
+    expect(secondary.sent).toHaveLength(1);
+  });
+
+  it('throws for unknown provider name', async () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+    });
+
+    await expect(
+      mail.welcome.send(
+        { to: 'lucas@x.com', input: { name: 'Lucas' } },
+        { provider: 'nonexistent' as never },
+      ),
+    ).rejects.toThrow('not registered');
+  });
+});
+
+describe('client hooks', () => {
+  it('fires onBeforeSend and onAfterSend', async () => {
+    const router = createTestRouter();
+    const calls: string[] = [];
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onBeforeSend: ({ route, messageId }) => {
+          calls.push(`before:${route}:${messageId}`);
+        },
+        onAfterSend: ({ route, durationMs }) => {
+          calls.push(`after:${route}`);
+          expect(durationMs).toBeGreaterThanOrEqual(0);
+        },
+      },
+    });
+
+    await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toMatch(/^before:welcome:/);
+    expect(calls[1]).toBe('after:welcome');
+  });
+
+  it('fires onError on validation failure', async () => {
+    const router = createTestRouter();
+    const errors: Array<{ phase: string; route: string }> = [];
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onError: ({ route, phase }) => {
+          errors.push({ route, phase });
+        },
+      },
+    });
+
+    await expect(
+      mail.welcome.send({ to: 'lucas@x.com', input: { name: 123 as unknown as string } }),
+    ).rejects.toThrow();
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toEqual({ route: 'welcome', phase: 'validate' });
+  });
+
+  it('hook errors do not affect the send result', async () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+      defaults: { from: 'a@b.com' },
+      hooks: {
+        onAfterSend: () => {
+          throw new Error('hook boom');
+        },
+      },
+    });
+
+    const result = await mail.welcome.send({ to: 'lucas@x.com', input: { name: 'Lucas' } });
+    expect(result.accepted).toEqual(['lucas@x.com']);
+  });
+});
+
+describe('type inference', () => {
+  it('client routes have correct send args type', () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [
+        { name: 'ses', provider: mockProvider(), priority: 1 },
+        { name: 'smtp', provider: mockProvider(), priority: 2 },
+      ] as const,
+    });
+
+    expectTypeOf(mail.welcome.send).parameter(0).toMatchTypeOf<{
+      to:
+        | string
+        | { name?: string; address: string }
+        | Array<string | { name?: string; address: string }>;
+      input: { name: string };
+    }>();
+
+    expectTypeOf(mail.welcome.render).parameter(0).toMatchTypeOf<{ name: string }>();
+  });
+
+  it('send options autocomplete provider names', () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [
+        { name: 'ses', provider: mockProvider(), priority: 1 },
+        { name: 'smtp', provider: mockProvider(), priority: 2 },
+      ] as const,
+    });
+
+    expectTypeOf(mail.welcome.send)
+      .parameter(1)
+      .toMatchTypeOf<{ provider?: 'ses' | 'smtp' } | undefined>();
+  });
+});
+
+describe('proxy behavior', () => {
+  it('caches route methods — same object on repeated access', () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+    });
+
+    const a = mail.welcome;
+    const b = mail.welcome;
+    expect(a).toBe(b);
+  });
+
+  it('returns undefined for routes not in the router', () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+    });
+
+    expect((mail as never as Record<string, unknown>).nonexistent).toBeUndefined();
+  });
+
+  it('route methods are frozen', () => {
+    const router = createTestRouter();
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider: mockProvider(), priority: 1 }],
+    });
+
+    expect(Object.isFrozen(mail.welcome)).toBe(true);
+  });
+});
+
+describe('integration: full end-to-end', () => {
+  it('builds a router, creates a client, sends and renders', async () => {
+    const t = emailRpc.init();
+
+    const adapter: TemplateAdapter<{ name: string; verifyUrl: string }> = {
+      render: async (input) => ({
+        html: `<h1>Welcome ${input.name}</h1><a href="${input.verifyUrl}">Verify</a>`,
+        text: `Welcome ${input.name}! Verify: ${input.verifyUrl}`,
+      }),
+    };
+
+    const router = t.router({
+      welcome: t
+        .email()
+        .input(
+          z.object({
+            name: z.string(),
+            verifyUrl: z.string().url(),
+          }),
+        )
+        .subject(({ input }) => `Welcome, ${input.name}!`)
+        .from('hello@example.com')
+        .template(adapter),
+    });
+
+    const provider = mockProvider();
+    const hookCalls: string[] = [];
+
+    const mail = createClient({
+      router,
+      providers: [{ name: 'mock', provider, priority: 1 }],
+      hooks: {
+        onBeforeSend: () => {
+          hookCalls.push('before');
+        },
+        onAfterSend: () => {
+          hookCalls.push('after');
+        },
+      },
+    });
+
+    const result = await mail.welcome.send({
+      to: 'lucas@x.com',
+      input: {
+        name: 'Lucas',
+        verifyUrl: 'https://example.com/verify/abc',
+      },
+    });
+
+    expect(result.messageId).toBeDefined();
+    expect(result.accepted).toEqual(['lucas@x.com']);
+    expect(result.envelope).toEqual({
+      from: 'hello@example.com',
+      to: ['lucas@x.com'],
+    });
+
+    expect(provider.sent).toHaveLength(1);
+    expect(provider.sent[0]).toMatchObject({
+      route: 'welcome',
+      to: ['lucas@x.com'],
+      subject: 'Welcome, Lucas!',
+      html: '<h1>Welcome Lucas</h1><a href="https://example.com/verify/abc">Verify</a>',
+    });
+
+    expect(hookCalls).toEqual(['before', 'after']);
+
+    const output = await mail.welcome.render({
+      name: 'Lucas',
+      verifyUrl: 'https://example.com/verify/abc',
+    });
+    expect(output.html).toContain('Welcome Lucas');
+    expect(output.text).toContain('Verify');
   });
 });

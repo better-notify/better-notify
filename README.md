@@ -6,15 +6,15 @@ End-to-end typed email infrastructure for Node.js. Define email contracts once, 
 
 ## Packages
 
-| Package | Status | Purpose |
-| --- | --- | --- |
-| `@emailrpc/core` | alpha | Contracts, builder, router, template adapter interface, Standard Schema validation |
-| `@emailrpc/react-email` | stub | React Email adapter |
-| `@emailrpc/mjml` | stub | MJML adapter |
-| `@emailrpc/handlebars` | stub | Handlebars adapter |
-| `@emailrpc/ses` | stub | AWS SES provider |
-| `@emailrpc/resend` | stub | Resend provider |
-| `@emailrpc/bullmq` | stub | BullMQ queue adapter |
+| Package                 | Status | Purpose                                                                            |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------- |
+| `@emailrpc/core`        | alpha  | Contracts, builder, router, template adapter interface, Standard Schema validation |
+| `@emailrpc/react-email` | stub   | React Email adapter                                                                |
+| `@emailrpc/mjml`        | stub   | MJML adapter                                                                       |
+| `@emailrpc/handlebars`  | stub   | Handlebars adapter                                                                 |
+| `@emailrpc/ses`         | stub   | AWS SES provider                                                                   |
+| `@emailrpc/resend`      | stub   | Resend provider                                                                    |
+| `@emailrpc/bullmq`      | stub   | BullMQ queue adapter                                                               |
 
 ## Development
 

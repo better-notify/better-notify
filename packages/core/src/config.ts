@@ -1,16 +1,16 @@
 export interface EmailRpcConfig {
-  router: string
-  provider: string
-  storage?: string
+  router: string;
+  provider: string;
+  storage?: string;
   templates?: {
-    engine?: 'react' | 'mjml' | 'handlebars'
-    dir?: string
-  }
+    engine?: 'react' | 'mjml' | 'handlebars';
+    dir?: string;
+  };
   reports?: {
-    auth?: string
-  }
+    auth?: string;
+  };
 }
 
 export function defineConfig(config: EmailRpcConfig): EmailRpcConfig {
-  return config
+  return config;
 }

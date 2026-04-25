@@ -1,4 +1,4 @@
-import { baseConfig } from '@internal/rolldown-config'
+import { baseConfig } from '@internal/rolldown-config';
 
 export default baseConfig({
   entries: {
@@ -13,4 +13,4 @@ export default baseConfig({
     test: 'src/test.ts',
     config: 'src/config.ts',
   },
-})
+});

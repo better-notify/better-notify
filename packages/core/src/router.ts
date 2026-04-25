@@ -1,6 +1,6 @@
 import type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';
 import type { TemplateAdapter } from './template.js';
-import type { EmailBuilder, EmailDefinitionOf } from './builder.js';
+import type { EmailBuilder, EmailDefinition, EmailDefinitionOf } from './builder.js';
 
 /**
  * Type-level validator: each value of M must be a complete EmailBuilder.
@@ -9,20 +9,24 @@ import type { EmailBuilder, EmailDefinitionOf } from './builder.js';
  *   EmailBuilder cannot satisfy, so the assignment site reports the error.
  */
 export type ValidateRouter<M> = {
-  [K in keyof M]: M[K] extends EmailBuilder<any, any, infer S>
+  [K in keyof M]: M[K] extends EmailBuilder<any, infer S>
     ? S extends { input: AnyStandardSchema; subject: unknown; template: TemplateAdapter<any> }
       ? M[K]
       : `Email "${K & string}" is incomplete: input, subject, and template are required.`
     : `Value at "${K & string}" is not an EmailBuilder.`;
 };
 
-export interface EmailRouter<M> {
+export type EmailRouter<M> = {
   readonly _brand: 'EmailRouter';
   readonly emails: { readonly [K in keyof M]: EmailDefinitionOf<M[K]> };
   readonly routes: ReadonlyArray<keyof M & string>;
-}
+};
 
-export type AnyEmailRouter = EmailRouter<any>;
+export type AnyEmailRouter = {
+  readonly _brand: 'EmailRouter';
+  readonly emails: Record<string, EmailDefinition<any, any, any>>;
+  readonly routes: ReadonlyArray<string>;
+};
 
 /**
  * Build a router from a map of completed email builders.
@@ -70,7 +74,7 @@ export function createRouter<const M extends Record<string, unknown>>(
 }
 
 type SchemaOf<B> =
-  B extends EmailBuilder<any, any, infer S>
+  B extends EmailBuilder<any, infer S>
     ? S extends { input: infer TSchema }
       ? TSchema extends AnyStandardSchema
         ? TSchema

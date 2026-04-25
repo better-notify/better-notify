@@ -1,9 +1,9 @@
-import { defineConfig, type RolldownOptions } from 'rolldown'
-import { dts } from 'rolldown-plugin-dts'
+import { defineConfig, type RolldownOptions } from 'rolldown';
+import { dts } from 'rolldown-plugin-dts';
 
 export interface BaseConfigOptions {
-  entries: Record<string, string>
-  external?: (string | RegExp)[]
+  entries: Record<string, string>;
+  external?: (string | RegExp)[];
 }
 
 export function baseConfig(opts: BaseConfigOptions): RolldownOptions {
@@ -18,13 +18,8 @@ export function baseConfig(opts: BaseConfigOptions): RolldownOptions {
       },
     ],
     platform: 'node',
-    external: [
-      /^node:/,
-      /^@emailrpc\//,
-      /^@standard-schema\//,
-      ...(opts.external ?? []),
-    ],
+    external: [/^node:/, /^@emailrpc\//, /^@standard-schema\//, ...(opts.external ?? [])],
     plugins: [dts({ resolve: true })],
     treeshake: true,
-  })
+  });
 }

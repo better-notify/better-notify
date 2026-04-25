@@ -5,33 +5,32 @@
  * tsc reads it via the workspace include below.
  */
 
-import { z } from 'zod'
-import { emailRpc, type TemplateAdapter } from '@emailrpc/core'
+import { z } from 'zod';
+import { emailRpc, type TemplateAdapter } from '@emailrpc/core';
 
 interface AppContext {
-  requestId: string
-  locale: 'en' | 'pt-BR' | 'nl'
+  requestId: string;
+  locale: 'en' | 'pt-BR' | 'nl';
 }
 
-const t = emailRpc.init<AppContext>()
+const t = emailRpc.init<AppContext>();
 
 interface WelcomeProps {
-  name: string
-  verifyUrl: string
-  locale: 'en' | 'pt-BR' | 'nl'
+  name: string;
+  verifyUrl: string;
+  locale: 'en' | 'pt-BR' | 'nl';
 }
 
 const welcomeAdapter: TemplateAdapter<WelcomeProps> = {
   render: async ({ name, verifyUrl }) => ({
     html: `<a href="${verifyUrl}">Hi ${name}</a>`,
   }),
-}
+};
 
 export const welcome = t
-  .email('welcome')
+  .email()
   .input(
     z.object({
-      to: z.string().email(),
       name: z.string().min(1),
       verifyUrl: z.string().url(),
       locale: z.enum(['en', 'pt-BR', 'nl']).default('en'),
@@ -39,14 +38,17 @@ export const welcome = t
   )
   .from('hello@example.com')
   .replyTo('support@example.com')
-  .subject(({ input }) =>
-    ({ en: `Welcome, ${input.name}!`, 'pt-BR': `Bem-vindo, ${input.name}!`, nl: `Welkom, ${input.name}!` })[
-      input.locale
-    ],
+  .subject(
+    ({ input }) =>
+      ({
+        en: `Welcome, ${input.name}!`,
+        'pt-BR': `Bem-vindo, ${input.name}!`,
+        nl: `Welkom, ${input.name}!`,
+      })[input.locale],
   )
   .template(welcomeAdapter)
   .tags({ category: 'transactional', flow: 'onboarding' })
-  .priority('normal')
+  .priority('normal');
 
-export const emails = t.router({ welcome })
-export type EmailRouter = typeof emails
+export const emails = t.router({ welcome });
+export type EmailRouter = typeof emails;

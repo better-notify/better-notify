@@ -1,11 +1,11 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['test/**/*.test.ts'],
+    include: ['src/**/*.test.ts'],
     typecheck: {
       enabled: true,
-      include: ['test/**/*.test.ts'],
+      include: ['src/**/*.test.ts'],
     },
   },
-})
+});

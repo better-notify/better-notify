@@ -1,12 +1,7 @@
-export { emailRpc } from './init.js'
-export type {
-  RootBuilder,
-  InitOptions,
-  InitHooks,
-  EmailRpc,
-} from './init.js'
+export { emailRpc } from './init.js';
+export type { RootBuilder, InitOptions, InitHooks, EmailRpc } from './init.js';
 
-export { EmailBuilder } from './builder.js'
+export { EmailBuilder } from './builder.js';
 export type {
   AnyEmailBuilder,
   CompleteEmailBuilder,
@@ -14,9 +9,9 @@ export type {
   EmailDefinitionOf,
   IsComplete,
   SubjectResolver,
-} from './builder.js'
+} from './builder.js';
 
-export { createRouter } from './router.js'
+export { createRouter } from './router.js';
 export type {
   EmailRouter,
   AnyEmailRouter,
@@ -24,23 +19,26 @@ export type {
   ValidateRouter,
   InputOf,
   OutputOf,
-} from './router.js'
+} from './router.js';
 
-export { validate } from './schema.js'
+export { createClient, handlePromise } from './client.js';
 export type {
-  AnyStandardSchema,
-  InferInput,
-  InferOutput,
-} from './schema.js'
+  ProviderEntry,
+  ClientHooks,
+  CreateClientOptions,
+  SendOptions,
+  SendArgs,
+  RenderOptions,
+  EmailClient,
+} from './client.js';
 
-export type { TemplateAdapter, RenderedOutput, AnyTemplateAdapter } from './template.js'
+export { validate } from './schema.js';
+export type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';
 
-export {
-  EmailRpcError,
-  EmailRpcValidationError,
-  EmailRpcNotImplementedError,
-} from './errors.js'
-export type { ErrorCode, EmailRpcErrorOptions, EmailRpcValidationErrorOptions } from './errors.js'
+export type { TemplateAdapter, RenderedOutput, AnyTemplateAdapter } from './template.js';
+
+export { EmailRpcError, EmailRpcValidationError, EmailRpcNotImplementedError } from './errors.js';
+export type { ErrorCode, EmailRpcErrorOptions, EmailRpcValidationErrorOptions } from './errors.js';
 
 export type {
   Address,
@@ -52,4 +50,4 @@ export type {
   SendContext,
   SendResult,
   Tags,
-} from './types.js'
+} from './types.js';

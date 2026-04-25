@@ -2,8 +2,7 @@
   "extends": "@internal/tsconfig/base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "noEmit": true,
-    "allowImportingTsExtensions": true
+    "outDir": "dist"
   },
-  "include": ["src/**/*"]
+  "include": ["src"]
 }

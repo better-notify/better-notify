@@ -1,0 +1,20 @@
+{
+  "name": "@welcome-text/emails",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "fmt": "oxfmt src"
+  },
+  "dependencies": {
+    "@emailrpc/core": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@internal/tsconfig": "workspace:*",
+    "typescript": "^5.7.2"
+  }
+}

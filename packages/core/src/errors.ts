@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec'
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 export type ErrorCode =
   | 'VALIDATION'
@@ -7,27 +7,27 @@ export type ErrorCode =
   | 'RENDER'
   | 'SUPPRESSED'
   | 'NOT_IMPLEMENTED'
-  | 'UNKNOWN'
+  | 'UNKNOWN';
 
 export interface EmailRpcErrorOptions {
-  message: string
-  code?: ErrorCode
-  route?: string
-  messageId?: string
-  cause?: unknown
+  message: string;
+  code?: ErrorCode;
+  route?: string;
+  messageId?: string;
+  cause?: unknown;
 }
 
 export class EmailRpcError extends Error {
-  readonly code: ErrorCode
-  readonly route: string | undefined
-  readonly messageId: string | undefined
+  readonly code: ErrorCode;
+  readonly route: string | undefined;
+  readonly messageId: string | undefined;
 
   constructor(opts: EmailRpcErrorOptions) {
-    super(opts.message, { cause: opts.cause })
-    this.name = 'EmailRpcError'
-    this.code = opts.code ?? 'UNKNOWN'
-    this.route = opts.route
-    this.messageId = opts.messageId
+    super(opts.message, { cause: opts.cause });
+    this.name = 'EmailRpcError';
+    this.code = opts.code ?? 'UNKNOWN';
+    this.route = opts.route;
+    this.messageId = opts.messageId;
   }
 
   toJSON() {
@@ -37,25 +37,25 @@ export class EmailRpcError extends Error {
       code: this.code,
       route: this.route,
       messageId: this.messageId,
-    }
+    };
   }
 }
 
 export interface EmailRpcValidationErrorOptions extends EmailRpcErrorOptions {
-  issues: ReadonlyArray<StandardSchemaV1.Issue>
+  issues: ReadonlyArray<StandardSchemaV1.Issue>;
 }
 
 export class EmailRpcValidationError extends EmailRpcError {
-  readonly issues: ReadonlyArray<StandardSchemaV1.Issue>
+  readonly issues: ReadonlyArray<StandardSchemaV1.Issue>;
 
   constructor(opts: EmailRpcValidationErrorOptions) {
-    super({ ...opts, code: 'VALIDATION' })
-    this.name = 'EmailRpcValidationError'
-    this.issues = opts.issues
+    super({ ...opts, code: 'VALIDATION' });
+    this.name = 'EmailRpcValidationError';
+    this.issues = opts.issues;
   }
 
   override toJSON() {
-    return { ...super.toJSON(), issues: this.issues }
+    return { ...super.toJSON(), issues: this.issues };
   }
 }
 
@@ -64,7 +64,7 @@ export class EmailRpcNotImplementedError extends EmailRpcError {
     super({
       message: `${feature} is not implemented in v0.1.0; ships in a later release.`,
       code: 'NOT_IMPLEMENTED',
-    })
-    this.name = 'EmailRpcNotImplementedError'
+    });
+    this.name = 'EmailRpcNotImplementedError';
   }
 }
