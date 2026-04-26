@@ -25,7 +25,8 @@
       {
         "html": false
       }
-    ]
+    ],
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }]
   },
   "overrides": [
     {
@@ -40,12 +41,6 @@
       "files": ["packages/core/src/logger.ts"],
       "rules": {
         "no-console": "off"
-      }
-    },
-    {
-      "files": ["packages/core/src/client.ts"],
-      "rules": {
-        "typescript/no-non-null-assertion": "warn"
       }
     },
     {

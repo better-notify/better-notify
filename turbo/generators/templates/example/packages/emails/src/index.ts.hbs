@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { emailRpc, type TemplateAdapter } from '@emailrpc/core';
+import { createEmailRpc, type TemplateAdapter } from '@emailrpc/core';
 
 function textTemplate<TInput>(body: (input: TInput) => string): TemplateAdapter<TInput> {
   return {
@@ -11,10 +11,10 @@ const helloInputSchema = z.object({
   name: z.string().min(1),
 });
 
-const t = emailRpc.init();
+const rpc = createEmailRpc();
 
-export const emails = t.router({
-  hello: t
+export const emails = rpc.catalog({
+  hello: rpc
     .email()
     .input(helloInputSchema)
     .from('hello@example.com')
@@ -26,4 +26,4 @@ export const emails = t.router({
     ),
 });
 
-export type EmailRouter = typeof emails;
+export type EmailCatalog = typeof emails;

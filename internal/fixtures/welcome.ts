@@ -1,19 +1,12 @@
-/**
- * §4.2 spec example, used as a compile-time smoke test that the public
- * @emailrpc/core surface lets a downstream consumer write the canonical
- * "welcome" definition with full inference. Not published, not bundled —
- * tsc reads it via the workspace include below.
- */
-
 import { z } from 'zod';
-import { emailRpc, type TemplateAdapter } from '@emailrpc/core';
+import { createEmailRpc, type TemplateAdapter } from '@emailrpc/core';
 
 type AppContext = {
   requestId: string;
   locale: 'en' | 'pt-BR' | 'nl';
 };
 
-const t = emailRpc.init<AppContext>();
+const rpc = createEmailRpc<AppContext>();
 
 type WelcomeProps = {
   name: string;
@@ -22,12 +15,12 @@ type WelcomeProps = {
 };
 
 const welcomeAdapter: TemplateAdapter<WelcomeProps> = {
-  render: async ({ name, verifyUrl }) => ({
+  render: async ({ input: { name, verifyUrl } }) => ({
     html: `<a href="${verifyUrl}">Hi ${name}</a>`,
   }),
 };
 
-export const welcome = t
+export const welcome = rpc
   .email()
   .input(
     z.object({
@@ -50,5 +43,5 @@ export const welcome = t
   .tags({ category: 'transactional', flow: 'onboarding' })
   .priority('normal');
 
-export const emails = t.router({ welcome });
-export type EmailRouter = typeof emails;
+export const emails = rpc.catalog({ welcome });
+export type EmailCatalog = typeof emails;

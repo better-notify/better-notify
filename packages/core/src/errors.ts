@@ -3,9 +3,11 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 export type ErrorCode =
   | 'VALIDATION'
   | 'PROVIDER'
+  | 'CONFIG'
   | 'TIMEOUT'
   | 'RENDER'
   | 'SUPPRESSED'
+  | 'RATE_LIMITED'
   | 'NOT_IMPLEMENTED'
   | 'UNKNOWN';
 
@@ -56,6 +58,27 @@ export class EmailRpcValidationError extends EmailRpcError {
 
   override toJSON() {
     return { ...super.toJSON(), issues: this.issues };
+  }
+}
+
+export type EmailRpcRateLimitedErrorOptions = Omit<EmailRpcErrorOptions, 'code'> & {
+  key: string;
+  retryAfterMs: number;
+};
+
+export class EmailRpcRateLimitedError extends EmailRpcError {
+  readonly key: string;
+  readonly retryAfterMs: number;
+
+  constructor(opts: EmailRpcRateLimitedErrorOptions) {
+    super({ ...opts, code: 'RATE_LIMITED' });
+    this.name = 'EmailRpcRateLimitedError';
+    this.key = opts.key;
+    this.retryAfterMs = opts.retryAfterMs;
+  }
+
+  override toJSON() {
+    return { ...super.toJSON(), key: this.key, retryAfterMs: this.retryAfterMs };
   }
 }
 

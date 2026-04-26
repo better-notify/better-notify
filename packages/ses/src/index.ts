@@ -1,15 +1,19 @@
 import { EmailRpcNotImplementedError } from '@emailrpc/core';
-import type { Provider } from '@emailrpc/core/provider';
+import type { Transport } from '@emailrpc/core/transports';
 import type { WebhookAdapter } from '@emailrpc/core/webhook';
 
-export type SesOptions = {
+export type SesTransportOptions = {
   region: string;
   configurationSetName?: string;
-  credentials?: { accessKeyId: string; secretAccessKey: string; sessionToken?: string };
+  credentials?: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
+  };
 };
 
-export const ses = (_opts: SesOptions): Provider => {
-  throw new EmailRpcNotImplementedError('@emailrpc/ses provider (v0.3)');
+export const sesTransport = (_opts: SesTransportOptions): Transport => {
+  throw new EmailRpcNotImplementedError('@emailrpc/ses transport (v0.3)');
 };
 
 export type SesAdapterOptions = {

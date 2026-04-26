@@ -1,0 +1,39 @@
+{
+  "name": "@emailrpc/smtp",
+  "version": "0.1.0",
+  "description": "Nodemailer-backed SMTP transport for emailRpc.",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@emailrpc/core": "workspace:*",
+    "nodemailer": "8.0.6"
+  },
+  "devDependencies": {
+    "@internal/rolldown-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "@types/nodemailer": "8.0.0",
+    "rolldown": "1.0.0-rc.17",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

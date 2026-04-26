@@ -16,6 +16,7 @@ export default defineConfig({
         '**/*.test-d.ts',
         'packages/core/src/types.ts',
         'packages/core/src/template.ts',
+        'packages/core/src/plugin.ts',
       ],
       reporter: ['text', 'html', 'lcov'],
     },

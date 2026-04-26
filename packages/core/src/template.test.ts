@@ -1,14 +1,16 @@
 import { describe, expect, it, expectTypeOf } from 'vitest';
 import { z } from 'zod';
-import { emailRpc } from './index.js';
+import { createEmailRpc } from './index.js';
 import type { TemplateAdapter } from './template.js';
 
 describe('TemplateAdapter', () => {
   it('attaches when its TInput matches the schema output', () => {
-    const t = emailRpc.init();
+    const t = createEmailRpc();
     const schema = z.object({ name: z.string(), url: z.string().url() });
     const adapter: TemplateAdapter<{ name: string; url: string }> = {
-      render: async ({ name, url }) => ({ html: `<a href="${url}">Hi ${name}</a>` }),
+      render: async ({ input: { name, url } }) => ({
+        html: `<a href="${url}">Hi ${name}</a>`,
+      }),
     };
 
     const def = t.email().input(schema).subject('Hi').template(adapter);
@@ -17,7 +19,7 @@ describe('TemplateAdapter', () => {
   });
 
   it('refuses adapters whose TInput is wider than the schema output', () => {
-    const t = emailRpc.init();
+    const t = createEmailRpc();
     const schema = z.object({ name: z.string() });
     const adapter: TemplateAdapter<{ name: string; required: number }> = {
       render: async () => ({ html: '' }),
@@ -28,7 +30,7 @@ describe('TemplateAdapter', () => {
   });
 
   it('infers TInput from the schema for inline adapters', async () => {
-    const t = emailRpc.init();
+    const t = createEmailRpc();
     const schema = z.object({ name: z.string(), url: z.string() });
 
     const def = t
@@ -36,13 +38,16 @@ describe('TemplateAdapter', () => {
       .input(schema)
       .subject('Hi')
       .template({
-        render: async (input) => {
+        render: async ({ input }) => {
           expectTypeOf(input).toEqualTypeOf<{ name: string; url: string }>();
           return { html: `<a href="${input.url}">Hi ${input.name}</a>` };
         },
       });
 
-    const rendered = await def._state.template!.render({ name: 'Lucas', url: 'https://x.com' });
+    const rendered = await def._state.template!.render({
+      input: { name: 'Lucas', url: 'https://x.com' },
+      ctx: {},
+    });
     expect(rendered.html).toContain('Lucas');
   });
 });

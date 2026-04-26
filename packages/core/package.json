@@ -26,9 +26,9 @@
       "types": "./dist/webhook.d.ts",
       "default": "./dist/webhook.js"
     },
-    "./provider": {
-      "types": "./dist/provider.d.ts",
-      "default": "./dist/provider.js"
+    "./transports": {
+      "types": "./dist/transports.d.ts",
+      "default": "./dist/transports.js"
     },
     "./template": {
       "types": "./dist/template.d.ts",
@@ -38,13 +38,13 @@
       "types": "./dist/queue.d.ts",
       "default": "./dist/queue.js"
     },
-    "./middleware": {
-      "types": "./dist/middleware.d.ts",
-      "default": "./dist/middleware.js"
+    "./middlewares": {
+      "types": "./dist/middlewares.d.ts",
+      "default": "./dist/middlewares.js"
     },
-    "./test": {
-      "types": "./dist/test.d.ts",
-      "default": "./dist/test.js"
+    "./plugins": {
+      "types": "./dist/plugins.d.ts",
+      "default": "./dist/plugins.js"
     },
     "./config": {
       "types": "./dist/config.d.ts",
@@ -53,6 +53,18 @@
     "./logger": {
       "types": "./dist/logger.d.ts",
       "default": "./dist/logger.js"
+    },
+    "./stores": {
+      "types": "./dist/stores.d.ts",
+      "default": "./dist/stores.js"
+    },
+    "./sinks": {
+      "types": "./dist/sinks.d.ts",
+      "default": "./dist/sinks.js"
+    },
+    "./tracers": {
+      "types": "./dist/tracers.d.ts",
+      "default": "./dist/tracers.js"
     }
   },
   "scripts": {

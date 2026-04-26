@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   EmailRpcError,
   EmailRpcNotImplementedError,
+  EmailRpcRateLimitedError,
   EmailRpcValidationError,
 } from './errors.js';
 
@@ -74,6 +75,40 @@ describe('EmailRpcValidationError', () => {
       route: 'welcome',
       messageId: 'm1',
       issues,
+    });
+  });
+});
+
+describe('EmailRpcRateLimitedError', () => {
+  it('forces code to RATE_LIMITED and exposes key + retryAfterMs', () => {
+    const err = new EmailRpcRateLimitedError({
+      message: 'too many',
+      route: 'welcome',
+      key: 'tenant-1',
+      retryAfterMs: 1500,
+    });
+    expect(err.code).toBe('RATE_LIMITED');
+    expect(err.name).toBe('EmailRpcRateLimitedError');
+    expect(err.key).toBe('tenant-1');
+    expect(err.retryAfterMs).toBe(1500);
+  });
+
+  it('toJSON includes key and retryAfterMs alongside base fields', () => {
+    const err = new EmailRpcRateLimitedError({
+      message: 'too many',
+      route: 'welcome',
+      messageId: 'm1',
+      key: 'tenant-1',
+      retryAfterMs: 1500,
+    });
+    expect(err.toJSON()).toEqual({
+      name: 'EmailRpcRateLimitedError',
+      message: 'too many',
+      code: 'RATE_LIMITED',
+      route: 'welcome',
+      messageId: 'm1',
+      key: 'tenant-1',
+      retryAfterMs: 1500,
     });
   });
 });

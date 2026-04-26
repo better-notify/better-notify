@@ -21,6 +21,8 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
 
+    "jsx": "react-jsx",
+
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,

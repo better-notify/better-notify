@@ -1,6 +1,6 @@
 # emailRpc — Technical Specification
 
-> End-to-end typed email infrastructure for Node.js. Define email contracts once, get a typed sender, queue worker, webhook router — all driven by the same router type.
+> End-to-end typed email infrastructure for Node.js. Define email contracts once, get a typed sender, queue worker, webhook router — all driven by the same `EmailCatalog` type.
 
 **Version:** 0.1.0 (spec)
 **Status:** Draft
@@ -13,7 +13,7 @@
 
 ### Goals
 
-- **End-to-end type safety.** A single `EmailRouter` type drives the sender, queue, worker, webhook handlers. No string-based job names, no untyped template variables.
+- **End-to-end type safety.** A single `EmailCatalog` type drives the sender, queue, worker, webhook handlers. No string-based job names, no untyped template variables.
 - **Schema-first.** Every email declares its input schema (Zod / Valibot / ArkType via Standard Schema). Inputs are validated at the edge of the system — at `mail.welcome(...)` call time, at queue worker pickup, and at template render.
 - **Typed template variables.** Template props are inferred from the input schema. If you change the schema, the template stops type-checking until you update it.
 - **Pluggable everything.** Provider, queue, storage, and renderer are interfaces. Defaults ship for the common case (SMTP via nodemailer, BullMQ on Redis, Postgres event log, React Email).
@@ -47,11 +47,15 @@ Six layers, each consuming the layer above through types:
 ├─────────┼───────────────────────────────────────────────  │
 │ Layer 2 │ Sender (typed client) (mail.welcome({...}))     │
 ├─────────┼───────────────────────────────────────────────  │
-│ Layer 1 │ Contracts             (router + email defs)     │
+│ Layer 1 │ Contracts             (catalog + email defs)    │
 └───────────────────────────────────────────────────────────┘
 ```
 
-Layer 1 is the source of truth. Every other layer derives its types from `typeof router`. Middleware and hooks are co-located at Layer 4 but distinct: middleware can change outcomes, hooks can only react to them (see §9.8).
+Layer 1 is the source of truth. Every other layer derives its types from `typeof catalog`. Middleware and hooks are co-located at Layer 4 but distinct: middleware can change outcomes, hooks can only react to them (see §9.8).
+
+### 2.1 Nested catalog composition
+
+`rpc.catalog({...})` accepts both email procedures and sub-catalogs at any key, recursing into a single dot-pathed surface. The flattened identifier of an email is its dot-joined key path from the root. This identifier is the canonical email ID, used in logger `route` fields, queue job names, webhook event correlation, and render output cache keys. Renaming a sub-catalog key is therefore a breaking change for queued jobs and observability dashboards. Context (`Ctx`) must match across merged catalogs; merging catalogs built with different context types is a compile-time error.
 
 ---
 
@@ -117,11 +121,23 @@ Core uses Node's `exports` field to expose internal modules:
     ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
     "./sender": { "import": "./dist/sender.js", "types": "./dist/sender.d.ts" },
     "./worker": { "import": "./dist/worker.js", "types": "./dist/worker.d.ts" },
-    "./webhook": { "import": "./dist/webhook.js", "types": "./dist/webhook.d.ts" },
-    "./provider": { "import": "./dist/provider.js", "types": "./dist/provider.d.ts" },
-    "./template": { "import": "./dist/template.js", "types": "./dist/template.d.ts" },
+    "./webhook": {
+      "import": "./dist/webhook.js",
+      "types": "./dist/webhook.d.ts",
+    },
+    "./provider": {
+      "import": "./dist/provider.js",
+      "types": "./dist/provider.d.ts",
+    },
+    "./template": {
+      "import": "./dist/template.js",
+      "types": "./dist/template.d.ts",
+    },
     "./queue": { "import": "./dist/queue.js", "types": "./dist/queue.d.ts" },
-    "./middleware": { "import": "./dist/middleware.js", "types": "./dist/middleware.d.ts" },
+    "./middleware": {
+      "import": "./dist/middleware.js",
+      "types": "./dist/middleware.d.ts",
+    },
     "./test": { "import": "./dist/test.js", "types": "./dist/test.d.ts" },
     "./config": { "import": "./dist/config.js", "types": "./dist/config.d.ts" },
   },
@@ -132,7 +148,7 @@ Core uses Node's `exports` field to expose internal modules:
 Typical project imports:
 
 ```ts
-import { emailRpc } from '@emailrpc/core';
+import { createEmailRpc } from '@emailrpc/core';
 import { createSender } from '@emailrpc/core/sender';
 import { smtp, multi } from '@emailrpc/core/provider';
 import { suppressionListMw, rateLimitMw } from '@emailrpc/core/middleware';
@@ -234,12 +250,12 @@ Each package ships only its `dist/` plus `README.md`, `LICENSE`, and `package.js
 
 ## 4. Layer 1 — Contracts
 
-### 4.1 `init()` and the builder
+### 4.1 `createEmailRpc()` and the builder
 
 ```ts
-import { emailRpc } from '@emailrpc/core';
+import { createEmailRpc } from '@emailrpc/core';
 
-const t = emailRpc.init<Context>();
+const rpc = createEmailRpc<Context>();
 ```
 
 `Context` is the type passed through middleware (similar to tRPC's `createContext`). Defaults to `{}`. Common context: request id, user, locale, tenant id.
@@ -251,7 +267,7 @@ import { z } from 'zod';
 import { WelcomeEmail } from './templates/welcome';
 
 export const welcome = t
-  .email() // no id arg — the router map key becomes the route id
+  .email() // no id arg — the catalog map key becomes the route id
   .input(
     z.object({
       // Schema describes TEMPLATE PROPS only.
@@ -262,7 +278,7 @@ export const welcome = t
       locale: z.enum(['en', 'pt-BR', 'nl']).default('en'),
     }),
   )
-  .from('hello@guidemi.com') // optional override of router default
+  .from('hello@guidemi.com') // optional override of catalog default
   .replyTo('support@guidemi.com') // optional; per-send replyTo wins (§6.1)
   .subject(
     ({ input }) =>
@@ -279,22 +295,22 @@ export const welcome = t
 
 Each builder method returns a new builder type with the relevant slot filled. Calling `.input()` twice is a type error. Required slots before the builder is "complete": `input`, `subject`, `template`. Everything else has defaults.
 
-**Why `.email()` takes no id.** The route id is the router map key (`welcome:` in §4.3). Stamping it twice — once as `.email('welcome')`, again as the map key — was a footgun: a typo would silently produce wrong queue job names. The id is assigned at `t.router({...})` time and surfaces on `def.id`, in hook context, in error messages, and on the wire-format job.
+**Why `.email()` takes no id.** The procedure id is the catalog map key (`welcome:` in §4.3). Stamping it twice — once as `.email('welcome')`, again as the map key — was a footgun: a typo would silently produce wrong queue job names. The id is assigned at `rpc.catalog({...})` time and surfaces on `def.id`, in hook context, in error messages, and on the wire-format job.
 
-### 4.3 The router
+### 4.3 The catalog
 
 ```ts
-export const emails = t.router({
+export const emails = rpc.catalog({
   welcome,
   passwordReset,
   invoicePaid,
   bookingConfirmation,
 });
 
-export type EmailRouter = typeof emails;
+export type EmailCatalog = typeof emails;
 ```
 
-The router is the contract. Export the **type** for use by the sender, worker. Export the **value** for use by the runtime that actually executes sends.
+The catalog is the contract. Export the **type** for use by the sender, worker. Export the **value** for use by the runtime that actually executes sends. Sub-catalogs nested under any key flatten into dot-pathed IDs (see §2.1).
 
 ### 4.4 Standard Schema support
 
@@ -333,29 +349,36 @@ mail.welcome({ to, name, verifyUrl })
 
 That's it. Core's responsibilities for templates are: validate input, invoke the adapter, take the HTML it returns, and send it. Anything between steps 2 and 3 — JSX rendering, MJML compilation, string interpolation, AI-generated copy, whatever — is the adapter's problem.
 
-### 5.2 The `TemplateAdapter` interface
+### 5.2 The `TemplateAdapter` type
 
-The interface is one method:
+The contract is one method:
 
 ```ts
 // @emailrpc/core/template
-export interface TemplateAdapter<TInput> {
-  render(input: TInput): Promise<{
+export type TemplateAdapter<TInput, TCtx = unknown> = {
+  readonly render: (args: { input: TInput; ctx: TCtx }) => Promise<{
     html: string;
     text?: string;
+    subject?: string;
   }>;
-}
+};
 ```
 
-That's the entire surface. No context object, no streaming, no inline-asset declarations baked in. If those become necessary they can be additive optional methods later, without breaking existing adapters.
+`render` receives `{ input, ctx }`. `TInput` is the validated schema output. `TCtx` is the catalog-level context declared via `createEmailRpc<Ctx>()` and provided at runtime via `createClient({ ctx })`.
 
 ### 5.3 Type-level guarantee
 
-The `.template()` builder method requires a `TemplateAdapter<TInput>` where `TInput` is the inferred type of the procedure's input schema:
+The `.template()` builder method accepts either a `TemplateAdapter` or a render function. The render-function form is the recommended shape:
 
 ```ts
-template<A extends TemplateAdapter<TInput>>(adapter: A): EmailBuilder<TInput, A>
+template<A extends TemplateAdapter<InferOutput<S>, Ctx>>(
+  adapter:
+    | A
+    | ((args: { input: InferOutput<S>; ctx: Ctx }) => RenderedOutput | Promise<RenderedOutput>),
+): EmailBuilder<...>
 ```
+
+Because `.template()` is a builder method, the function form's `args` parameter is contextually typed by the builder — `input` and `ctx` are inferred without explicit generics at the call site. This is the same pattern oRPC uses for its `.handler()`.
 
 This means:
 
@@ -411,29 +434,12 @@ const welcome = t
   .email('welcome')
   .input(welcomeInput)
   .subject(({ input }) => `Welcome, ${input.name}!`)
-  .template(reactEmail(WelcomeEmail));
+  .template(({ input, ctx }) =>
+    reactEmail(WelcomeEmail, { name: input.name, link: `${ctx.baseUrl}/verify` }),
+  );
 ```
 
-The adapter implementation is small enough to show in full:
-
-```ts
-// @emailrpc/react-email
-import { render } from '@react-email/render'
-import type { ComponentType } from 'react'
-import type { TemplateAdapter } from '@emailrpc/core/template'
-
-export function reactEmail<TInput extends object>(
-  Component: ComponentType<TInput>
-): TemplateAdapter<TInput> {
-  return {
-    render: async (input) => {
-      const html = await render(<Component {...input} />)
-      const text = await render(<Component {...input} />, { plainText: true })
-      return { html, text }
-    },
-  }
-}
-```
+`reactEmail(Component, props, opts?)` is a one-shot helper that takes already-resolved props and returns `Promise<RenderedOutput>`. The `.template()` lambda gives you fully-typed `{ input, ctx }`; you compute props from them and hand them to `reactEmail`. No mapper indirection, no schema duplication.
 
 ### 5.5 Writing your own adapter
 
@@ -449,7 +455,7 @@ export function fnTemplate<TInput>(opts: {
   text?: (input: TInput) => string
 }): TemplateAdapter<TInput> {
   return {
-    render: async (input) => ({
+    render: async ({ input }) => ({
       html: opts.html(input),
       text: opts.text?.(input),
     }),
@@ -471,7 +477,7 @@ import type { TemplateAdapter } from '@emailrpc/core/template';
 export function handlebarsTemplate<TInput>(source: string): TemplateAdapter<TInput> {
   const compiled = Handlebars.compile(source);
   return {
-    render: async (input) => ({ html: compiled(input) }),
+    render: async ({ input }) => ({ html: compiled(input) }),
   };
 }
 ```
@@ -488,7 +494,7 @@ export function mjmlTemplate<TInput>(source: string): TemplateAdapter<TInput> {
   if (errors.length > 0) throw new Error(`MJML compilation: ${errors[0].message}`);
   const tmpl = Handlebars.compile(compiledHtml);
   return {
-    render: async (input) => ({ html: tmpl(input) }),
+    render: async ({ input }) => ({ html: tmpl(input) }),
   };
 }
 ```
@@ -569,7 +575,7 @@ Locale is a regular input field. By convention `locale` (or `lang`) is plumbed t
 - the template adapter (passed as part of the input),
 - the message's `Content-Language` header.
 
-A small helper `t.email().locales(['en', 'pt-BR', 'nl'])` enforces a closed set on the schema and provides type-safe subject maps.
+A small helper `rpc.email().locales(['en', 'pt-BR', 'nl'])` enforces a closed set on the schema and provides type-safe subject maps.
 
 ---
 
@@ -577,10 +583,10 @@ A small helper `t.email().locales(['en', 'pt-BR', 'nl'])` enforces a closed set 
 
 ```ts
 import { createSender } from '@emailrpc/core/sender';
-import type { EmailRouter } from './emails';
+import type { EmailCatalog } from './emails';
 
-const mail = createSender<EmailRouter>({
-  router: emails, // runtime router
+const mail = createSender<EmailCatalog>({
+  catalog: emails, // runtime catalog
   provider: smtp({ host, port, auth, pool: true }),
   defaults: {
     from: 'hello@guidemi.com',
@@ -594,7 +600,7 @@ const mail = createSender<EmailRouter>({
 
 ### 6.1 Surface
 
-For each route in the router, three callable shapes are exposed. **Transport fields are on the call args; template props live under `input`.**
+For each route in the catalog, three callable shapes are exposed. **Transport fields are on the call args; template props live under `input`.**
 
 ```ts
 mail.welcome.send({
@@ -615,13 +621,13 @@ mail.welcome.render(input, { format: 'html' | 'text' });       // returns string
 
 Notes on the split:
 
-- **`input` is the schema's domain.** Template adapters receive `input` directly (`render(input)`); the subject resolver receives `{ input }`. Validation runs against `input` only.
+- **`input` is the schema's domain.** Template adapters receive `{ input, ctx }`; the subject resolver receives `{ input }`. Validation runs against `input` only.
 - **`to` / `cc` / `bcc` / `replyTo` / `headers` / `attachments` are transport.** They are not validated by the email schema — they accept the raw `Address`, header, and attachment shapes from `@emailrpc/core`.
 - **`from` is NOT a per-send arg.** Set it on the contract via `.from(...)` or on the client via `defaults.from`. Per-send `from` is rare enough to defer.
 - **`tags` is NOT a per-send arg.** Tags are contract-level metadata so analytics groupings stay stable across sends.
 - **`render` only takes `input`.** Rendering doesn't involve a recipient.
 
-Plus a router-level `mail.$send(routeName, args)` for dynamic dispatch (weaker typing — used only when route name is genuinely runtime-determined).
+Plus a catalog-level `mail.$send(routeName, args)` for dynamic dispatch (weaker typing — used only when route name is genuinely runtime-determined).
 
 ### 6.2 Return types
 
@@ -710,30 +716,32 @@ smtp({
 
 **`resend`** — Resend HTTP API. Useful when you want a hosted relay but the emailRpc abstraction.
 
-**`multi`** — failover or round-robin across providers:
+**`multiTransport`** — failover, round-robin, or random across transports:
 
 ```ts
-multi({
-  strategy: 'failover', // or 'round-robin' | 'weighted'
-  providers: [
-    {
-      provider: smtp({
-        /* primary */
-      }),
-      weight: 1,
-    },
-    {
-      provider: smtp({
-        /* backup */
-      }),
-      weight: 1,
-    },
+multiTransport({
+  strategy: 'failover', // or 'round-robin' | 'random'
+  transports: [
+    { transport: smtpTransport({ /* primary */ }) },
+    { transport: smtpTransport({ /* backup */ }) },
   ],
-  isRetriable: (err) => err.code === 'ETIMEDOUT' || err.responseCode >= 500,
+  maxAttemptsPerTransport: 2,
+  backoff: { initialMs: 200, factor: 2, maxMs: 2000 },
+  isRetriable: (err) =>
+    (err as { code?: string }).code === 'ETIMEDOUT' ||
+    ((err as { responseCode?: number }).responseCode ?? 0) >= 500,
 });
 ```
 
-**`mock`** (in `emailrpc/test`) — in-memory provider that records sends for assertions.
+Strategies (in `@emailrpc/core/README.md`):
+
+- `'failover'` — every send starts at `transports[0]` and walks forward.
+- `'round-robin'` — in-process counter rotates the start index each send.
+- `'random'` — uniformly-random start index per send.
+
+Weighted distribution is deferred to v0.3. The `MultiTransportStrategy` union expands without a breaking change.
+
+**`createTransport`** — generic factory for users implementing their own transport. Wires user-supplied `send` (and optional `verify`/`close`) into a `Transport`. Defaults `verify` to `() => ({ ok: true })` and `close` to a no-op.
 
 ---
 
@@ -742,10 +750,10 @@ multi({
 Middleware runs in a chain, oRPC/tRPC-style:
 
 ```ts
-const t = emailRpc.init<Ctx>()
+const rpc = createEmailRpc<Ctx>()
   .use(eventLoggerMw({ storage }))    // ships events to your observability sink
 
-const passwordReset = t
+const passwordReset = rpc
   .email('passwordReset')
   .use(rateLimitMw({ key: 'recipient', max: 3, window: '1h' }))
   .use(suppressionListMw({ list: suppression }))
@@ -787,7 +795,7 @@ For purely observational concerns — analytics, audit logs, metrics, alerting �
 
 ## 9. Hooks
 
-Hooks are declarative lifecycle callbacks attached to a router or a single email procedure. They cover the four phases of every send — `onBeforeSend`, `onExecute`, `onAfterSend`, `onError` — plus a queue-specific pair (`onEnqueue`, `onDequeue`). Unlike middleware (Layer 4), hooks **cannot mutate the pipeline** — they observe and react. This separation is deliberate: middleware is for behavior that changes the outcome (suppression, rate limiting, retries); hooks are for side effects that respond to it (analytics, notifications, audit logs).
+Hooks are declarative lifecycle callbacks attached to a catalog or a single email procedure. They cover the four phases of every send — `onBeforeSend`, `onExecute`, `onAfterSend`, `onError` — plus a queue-specific pair (`onEnqueue`, `onDequeue`). Unlike middleware (Layer 4), hooks **cannot mutate the pipeline** — they observe and react. This separation is deliberate: middleware is for behavior that changes the outcome (suppression, rate limiting, retries); hooks are for side effects that respond to it (analytics, notifications, audit logs).
 
 If you've used Hono's hooks, Drizzle's lifecycle callbacks, or oRPC's interceptors, the model is the same.
 
@@ -843,12 +851,12 @@ type OnErrorHook<TInput, TCtx> = (
 
 `willRetry` is `true` when the send is queued and the retry policy hasn't been exhausted — useful for distinguishing "transient SMTP timeout, will retry" from "final failure, alert humans".
 
-### 9.3 Router-level hooks
+### 9.3 Catalog-level hooks
 
-Attached when initializing the router. Apply to **every** procedure in the router.
+Attached when initializing the catalog. Apply to **every** procedure in the catalog.
 
 ```ts
-const t = emailRpc.init<Ctx>({
+const rpc = createEmailRpc<Ctx>({
   hooks: {
     onBeforeSend: ({ route, input, messageId }) => {
       logger.info('email.before', { route, messageId, to: input.to });
@@ -875,8 +883,7 @@ const t = emailRpc.init<Ctx>({
 You can also use the fluent form, which is preferable when hooks need to be added conditionally or composed across multiple files:
 
 ```ts
-const t = emailRpc
-  .init<Ctx>()
+const rpc = createEmailRpc<Ctx>()
   .onBeforeSend(({ route, input }) => {
     /* ... */
   })
@@ -890,10 +897,10 @@ const t = emailRpc
 
 ### 9.4 Procedure-level hooks
 
-Attached on a single email definition. Apply only to that route. Run **after** all router-level hooks of the same kind.
+Attached on a single email definition. Apply only to that route. Run **after** all catalog-level hooks of the same kind.
 
 ```ts
-const passwordReset = t
+const passwordReset = rpc
   .email('passwordReset')
   .input(passwordResetInput)
   .subject('Reset your password')
@@ -928,10 +935,10 @@ const passwordReset = t
 
 ### 9.5 Multiple hooks of the same kind
 
-Both router and procedure level support **multiple** hooks of each kind. They run in registration order, sequentially, awaited:
+Both catalog and procedure level support **multiple** hooks of each kind. They run in registration order, sequentially, awaited:
 
 ```ts
-t.email('welcome')
+rpc.email('welcome')
   .onAfterSend(trackInAmplitude)
   .onAfterSend(updateOnboardingFunnel)
   .onAfterSend(notifySlackForFirst100Users);
@@ -946,16 +953,16 @@ Putting it all together, here's the precise order for `mail.welcome(input)`:
 ```
 1. Schema validation (input → parsed)             [throws → onError(phase: 'validate')]
 2. Context built
-3. Router  onBeforeSend hooks  (in order)
+3. Catalog  onBeforeSend hooks  (in order)
 4. Procedure onBeforeSend hooks (in order)
 5. Middleware chain entered (global → procedure)  [throws → onError(phase: 'middleware')]
 6. Template render                                [throws → onError(phase: 'render')]
-7. Router  onExecute hooks
+7. Catalog  onExecute hooks
 8. Procedure onExecute hooks
 9. provider.send()                                [throws → onError(phase: 'send')]
 10. Middleware chain unwinds
 11. Procedure onAfterSend hooks (in order)
-12. Router  onAfterSend hooks
+12. Catalog  onAfterSend hooks
 13. SendResult returned
 ```
 
@@ -1004,7 +1011,7 @@ Rule of thumb: **if removing the hook would change whether the email goes out, i
 
 ### 9.9 Type inference
 
-Hooks are fully typed against the procedure's input. On a router-level hook, `input` is typed as the union of all routes' inputs, narrowable by `route`:
+Hooks are fully typed against the procedure's input. On a catalog-level hook, `input` is typed as the union of all routes' inputs, narrowable by `route`:
 
 ```ts
 .onAfterSend(({ route, input }) => {
@@ -1028,9 +1035,18 @@ On a procedure-level hook, `input` is typed exactly as that procedure's parsed i
 import { createTestSender, recordHooks } from '@emailrpc/core/test';
 
 const hooks = recordHooks();
-const mail = createTestSender({ router: emails, provider: mockProvider(), hooks });
+const mail = createTestSender({
+  catalog: emails,
+  provider: mockProvider(),
+  hooks,
+});
 
-await mail.welcome({ to: 'lucas@x.com', name: 'Lucas', verifyUrl: '...', locale: 'en' });
+await mail.welcome({
+  to: 'lucas@x.com',
+  name: 'Lucas',
+  verifyUrl: '...',
+  locale: 'en',
+});
 
 expect(hooks.calls).toEqual([
   { name: 'onBeforeSend', route: 'welcome', input: expect.any(Object) },
@@ -1084,7 +1100,7 @@ import { createWorker } from '@emailrpc/core/worker';
 import { emails } from './emails';
 
 const worker = createWorker({
-  router: emails, // typed
+  catalog: emails, // typed
   provider: smtp({
     /* same config as sender */
   }),
@@ -1143,8 +1159,8 @@ Most providers can POST inbound events (bounces, complaints, opens, clicks, deli
 ```ts
 import { z } from 'zod';
 
-const webhooks = t.webhookRouter({
-  bounced: t
+const webhooks = rpc.webhookRouter({
+  bounced: rpc
     .webhook()
     .input(
       z.object({
@@ -1162,20 +1178,20 @@ const webhooks = t.webhookRouter({
       await events.record({ kind: 'bounced', ...input });
     }),
 
-  complained: t
+  complained: rpc
     .webhook()
     .input(ComplaintSchema)
     .handler(async ({ input }) => {
       await suppression.add(input.recipient, { reason: 'complaint' });
     }),
 
-  delivered: t
+  delivered: rpc
     .webhook()
     .input(DeliveredSchema)
     .handler(async ({ input }) => events.record({ kind: 'delivered', ...input })),
 
-  opened: t.webhook().input(OpenedSchema).handler(/*...*/),
-  clicked: t.webhook().input(ClickedSchema).handler(/*...*/),
+  opened: rpc.webhook().input(OpenedSchema).handler(/*...*/),
+  clicked: rpc.webhook().input(ClickedSchema).handler(/*...*/),
 });
 ```
 
@@ -1233,7 +1249,7 @@ A single config file at the project root, optional but recommended:
 import { defineConfig } from '@emailrpc/core/config';
 
 export default defineConfig({
-  router: './src/emails/index.ts',
+  catalog: './src/emails/index.ts',
   provider: './src/email/provider.ts',
   storage: './src/email/storage.ts',
   templates: {
@@ -1301,9 +1317,14 @@ Errors are JSON-serializable for queue persistence and downstream observability.
 import { mockProvider, createTestSender } from '@emailrpc/core/test';
 
 const provider = mockProvider();
-const mail = createTestSender({ router: emails, provider });
+const mail = createTestSender({ catalog: emails, provider });
 
-await mail.welcome({ to: 'lucas@x.com', name: 'Lucas', verifyUrl: '...', locale: 'en' });
+await mail.welcome({
+  to: 'lucas@x.com',
+  name: 'Lucas',
+  verifyUrl: '...',
+  locale: 'en',
+});
 
 expect(provider.sent).toHaveLength(1);
 expect(provider.sent[0]).toMatchObject({
@@ -1362,7 +1383,7 @@ These are deliberate decisions to make before implementation starts:
 
 1. **Schema evolution for queued jobs.** When a route's input schema changes while jobs are in flight, do we (a) reject on validation failure and DLQ, (b) attempt a registered "migration" function, or (c) version routes themselves (`welcome@v1`, `welcome@v2`)? Current lean: (a) for v1, (c) post-v1.
 
-2. **Multi-tenancy.** Is tenant a first-class concept in the router, or just context that middleware partitions by? Current lean: context-only; ship a tenant-aware suppression list adapter rather than baking tenancy into the core.
+2. **Multi-tenancy.** Is tenant a first-class concept in the catalog, or just context that middleware partitions by? Current lean: context-only; ship a tenant-aware suppression list adapter rather than baking tenancy into the core.
 
 3. **Batch sends.** `mail.welcome.batch([input1, input2, ...])` — provider-batched where supported (SES, Resend), per-message otherwise? Yes, but defer to v0.3.
 
@@ -1378,19 +1399,24 @@ A concrete end-to-end example showing what adoption looks like:
 
 ```ts
 // src/emails/index.ts
-import { emailRpc } from '@emailrpc/core';
+import { createEmailRpc } from '@emailrpc/core';
 import { z } from 'zod';
 import { OrderConfirmation } from './templates/order-confirmation';
 import { GuideDelivery } from './templates/guide-delivery';
 
-const t = emailRpc.init<{ orderId?: string }>({
+const rpc = createEmailRpc<{ orderId?: string }>({
   hooks: {
-    // Router-level: every email gets these
+    // Catalog-level: every email gets these
     onAfterSend: async ({ route, result, durationMs, messageId }) => {
       await analytics.track('email.sent', { route, messageId, durationMs });
     },
     onError: async ({ route, error, willRetry, messageId, args }) => {
-      logger.error('email.failed', { route, messageId, code: error.code, willRetry });
+      logger.error('email.failed', {
+        route,
+        messageId,
+        code: error.code,
+        willRetry,
+      });
       if (!willRetry) {
         await slack.notify('#ops-alerts', `❌ Final email failure: ${route} → ${args.to}`);
       }
@@ -1398,7 +1424,7 @@ const t = emailRpc.init<{ orderId?: string }>({
   },
 });
 
-const orderConfirmation = t
+const orderConfirmation = rpc
   .email()
   .input(
     z.object({
@@ -1431,7 +1457,7 @@ const orderConfirmation = t
     });
   });
 
-const guideDelivery = t
+const guideDelivery = rpc
   .email()
   .input(
     z.object({
@@ -1461,8 +1487,8 @@ const guideDelivery = t
     }
   });
 
-export const emails = t.router({ orderConfirmation, guideDelivery });
-export type EmailRouter = typeof emails;
+export const emails = rpc.catalog({ orderConfirmation, guideDelivery });
+export type EmailCatalog = typeof emails;
 ```
 
 ```ts
@@ -1473,7 +1499,7 @@ import { bullmq } from '@emailrpc/bullmq';
 import { emails } from '../emails';
 
 export const mail = createSender({
-  router: emails,
+  catalog: emails,
   provider: smtp({
     host: process.env.SMTP_HOST!,
     port: 587,
@@ -1495,7 +1521,10 @@ export async function onOrderPaid(order: WooOrder) {
     input: {
       customerName: `${order.billing.first_name} ${order.billing.last_name}`,
       orderId: String(order.id),
-      items: order.line_items.map((i) => ({ name: i.name, price: Number(i.total) })),
+      items: order.line_items.map((i) => ({
+        name: i.name,
+        price: Number(i.total),
+      })),
       total: Number(order.total),
       locale: order.meta.locale === 'en' ? 'en' : 'pt-BR',
     },

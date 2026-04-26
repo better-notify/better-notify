@@ -1,35 +1,43 @@
-import { createClient } from '@emailrpc/core';
-import { mockProvider } from '@emailrpc/core/test';
-import { emails } from '@welcome-text/emails';
+import { runSingle } from './examples/single';
+import { runSmtp } from './examples/smtp';
+import { runMultiFailover } from './examples/multi-failover';
+import { runMultiRoundRobin } from './examples/multi-round-robin';
+import { runMultiRandom } from './examples/multi-random';
+import { runDryRun } from './examples/dry-run';
+import { runRateLimited } from './examples/rate-limited';
+import { runObservability } from './examples/with-observability';
+import { runKitchenSink } from './examples/kitchen-sink';
+import { runReactEmail } from './examples/react-email';
 
-const provider = mockProvider();
+const examples: Record<string, () => Promise<void>> = {
+  single: runSingle,
+  smtp: runSmtp,
+  'multi-failover': runMultiFailover,
+  'multi-round-robin': runMultiRoundRobin,
+  'multi-random': runMultiRandom,
+  'dry-run': runDryRun,
+  'rate-limited': runRateLimited,
+  observability: runObservability,
+  'kitchen-sink': runKitchenSink,
+  'react-email': runReactEmail,
+};
 
-const mail = createClient({
-  router: emails,
-  providers: [{ name: 'mock', provider, priority: 1 }],
-});
+const main = async (): Promise<void> => {
+  const requested = process.argv[2] ?? process.env.EXAMPLE ?? 'single';
+  const fn = examples[requested];
 
-const result = await mail.welcome.send({
-  to: 'lucas@example.com',
-  input: {
-    name: 'Lucas',
-    verifyUrl: 'https://example.com/verify?token=abc123',
-  },
-});
+  if (!fn) {
+    console.error(`Unknown example: ${requested}`);
+    console.error(`Available: ${Object.keys(examples).join(', ')}`);
+    console.error(`Usage: pnpm --filter @welcome-text/cli start <example>`);
+    process.exit(1);
+  }
 
-console.log('Message ID:', result.messageId);
-console.log('From:      ', result.envelope.from);
-console.log('To:        ', result.envelope.to.join(', '));
-console.log('Accepted:  ', result.accepted.join(', '));
-console.log('Render:    ', `${result.timing.renderMs.toFixed(1)}ms`);
-console.log('Send:      ', `${result.timing.sendMs.toFixed(1)}ms`);
-console.log('---');
-console.log('Subject:   ', provider.sent[0]!.subject);
-console.log(provider.sent[0]!.text);
+  console.log(`▶ running example: ${requested}`);
+  console.log('---');
+  await fn();
+  console.log('---');
+  console.log('done.');
+};
 
-const html = await mail.welcome.render(
-  { name: 'Lucas', verifyUrl: 'https://example.com/verify?token=abc123' },
-  { format: 'html' },
-);
-console.log('---');
-console.log('HTML preview:', html.slice(0, 80) + '...');
+await main();

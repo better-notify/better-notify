@@ -6,7 +6,10 @@ import { EmailRpcValidationError } from './errors.js';
 describe('validate', () => {
   it('returns the parsed value on success', async () => {
     const schema = z.object({ to: z.string().email(), name: z.string() });
-    const value = await validate(schema, { to: 'user@example.com', name: 'Lucas' });
+    const value = await validate(schema, {
+      to: 'user@example.com',
+      name: 'Lucas',
+    });
     expect(value).toEqual({ to: 'user@example.com', name: 'Lucas' });
   });
 

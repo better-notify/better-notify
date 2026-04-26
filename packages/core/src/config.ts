@@ -1,6 +1,6 @@
 export type EmailRpcConfig = {
   router: string;
-  provider: string;
+  transport: string;
   storage?: string;
   templates?: {
     engine?: 'react' | 'mjml' | 'handlebars';

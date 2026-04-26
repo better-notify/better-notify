@@ -4,11 +4,8 @@ export type RenderedOutput = {
   subject?: string;
 };
 
-export type TemplateAdapter<TInput> = {
-  // Function property (not method shorthand) so input is checked contravariantly.
-  // With method shorthand TypeScript uses bivariance, which would let an
-  // adapter requiring extra fields satisfy a schema that doesn't supply them.
-  readonly render: (input: TInput) => Promise<RenderedOutput>;
+export type TemplateAdapter<TInput, TCtx = unknown> = {
+  readonly render: (args: { input: TInput; ctx: TCtx }) => Promise<RenderedOutput>;
 };
 
-export type AnyTemplateAdapter = TemplateAdapter<any>;
+export type AnyTemplateAdapter = TemplateAdapter<any, any>;

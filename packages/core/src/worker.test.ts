@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createWorker } from './worker.js';
-import { emailRpc } from './init.js';
+import { createEmailRpc } from './factory.js';
 import { EmailRpcNotImplementedError } from './errors.js';
 import type { TemplateAdapter } from './template.js';
-import type { Provider } from './provider.js';
+import type { Transport } from './transports/types.js';
 import type { QueueAdapter } from './queue.js';
 
 describe('worker stubs', () => {
@@ -12,16 +12,16 @@ describe('worker stubs', () => {
     const adapter: TemplateAdapter<{ name: string }> = {
       render: async () => ({ html: '' }),
     };
-    const t = emailRpc.init();
-    const router = t.router({
+    const t = createEmailRpc();
+    const catalog = t.catalog({
       welcome: t
         .email()
         .input(z.object({ name: z.string() }))
         .subject('hi')
         .template(adapter),
     });
-    const provider = {} as Provider;
+    const transport = {} as Transport;
     const queue = {} as QueueAdapter;
-    expect(() => createWorker({ router, provider, queue })).toThrow(EmailRpcNotImplementedError);
+    expect(() => createWorker({ catalog, transport, queue })).toThrow(EmailRpcNotImplementedError);
   });
 });

@@ -1,14 +1,24 @@
 import { validate } from './schema.js';
 import { EmailRpcError } from './errors.js';
-import type { Provider } from './provider.js';
-import type { Address, Attachment, SendResult, RenderedMessage, SendContext } from './types.js';
+import type { Transport, TransportEntry } from './transports/types.js';
+import type {
+  Address,
+  Attachment,
+  FromInput,
+  RawSendArgs,
+  SendResult,
+  RenderedMessage,
+  SendContext,
+} from './types.js';
 import type { RenderedOutput, TemplateAdapter } from './template.js';
-import type { AnyEmailRouter, EmailRouter, InputOf } from './router.js';
-import type { EmailDefinition, SubjectResolver } from './builder.js';
-import type { AnyStandardSchema } from './schema.js';
-import type { Plugin } from './plugin.js';
-import type { AnyMiddleware } from './middleware.js';
+import type { AnyEmailCatalog, CtxOf, EmailCatalog, InputOf } from './catalog.js';
+import { isEmailCatalog } from './catalog.js';
+import type { EmailBuilder, EmailDefinition, SubjectResolver } from './builder.js';
+import type { AnyStandardSchema, InferOutput } from './schema.js';
+import type { Plugin } from './plugins/types.js';
+import type { AnyMiddleware } from './middlewares/types.js';
 import { consoleLogger, type LoggerLike } from './logger.js';
+import { handlePromise } from './lib/handle-promise.js';
 
 export type SendArgs<TInput> = {
   to: Address | Address[];
@@ -20,55 +30,50 @@ export type SendArgs<TInput> = {
   input: TInput;
 };
 
-export type ProviderEntry = {
-  name: string;
-  provider: Provider;
-  priority: number;
-};
-
-export type RouteUnion<R extends AnyEmailRouter> = {
+export type RouteUnion<R extends AnyEmailCatalog> = {
   [K in keyof R['emails'] & string]: {
     route: K;
-    input: R extends EmailRouter<any> ? InputOf<R, K> : unknown;
+    input: R extends EmailCatalog<any> ? InputOf<R, K> : unknown;
   };
 }[keyof R['emails'] & string];
 
-export type BeforeSendCtx<R extends AnyEmailRouter> = RouteUnion<R> & {
+export type BeforeSendCtx<R extends AnyEmailCatalog> = RouteUnion<R> & {
   args: SendArgs<unknown>;
   ctx: unknown;
   messageId: string;
 };
 
-export type ExecuteCtx<R extends AnyEmailRouter> = BeforeSendCtx<R> & {
+export type ExecuteCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
   rendered: RenderedMessage;
 };
 
-export type AfterSendCtx<R extends AnyEmailRouter> = BeforeSendCtx<R> & {
+export type AfterSendCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
   result: SendResult;
   durationMs: number;
 };
 
 export type ErrorPhase = 'validate' | 'middleware' | 'render' | 'send' | 'hook';
 
-export type ErrorCtx<R extends AnyEmailRouter> = BeforeSendCtx<R> & {
+export type ErrorCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
   error: EmailRpcError;
   phase: ErrorPhase;
 };
 
 export type HookFn<T> = (params: T) => void | Promise<void>;
 
-export type ClientHooks<R extends AnyEmailRouter = AnyEmailRouter> = {
+export type ClientHooks<R extends AnyEmailCatalog = AnyEmailCatalog> = {
   onBeforeSend?: HookFn<BeforeSendCtx<R>> | HookFn<BeforeSendCtx<R>>[];
   onExecute?: HookFn<ExecuteCtx<R>> | HookFn<ExecuteCtx<R>>[];
   onAfterSend?: HookFn<AfterSendCtx<R>> | HookFn<AfterSendCtx<R>>[];
   onError?: HookFn<ErrorCtx<R>> | HookFn<ErrorCtx<R>>[];
 };
 
-export type CreateClientOptions<R extends AnyEmailRouter, P extends readonly ProviderEntry[]> = {
-  router: R;
-  providers: P;
+export type CreateClientOptions<R extends AnyEmailCatalog, P extends readonly TransportEntry[]> = {
+  catalog: R;
+  transports: P;
+  ctx?: CtxOf<R>;
   defaults?: {
-    from?: Address;
+    from?: FromInput;
     replyTo?: Address;
     headers?: Record<string, string>;
   };
@@ -77,32 +82,39 @@ export type CreateClientOptions<R extends AnyEmailRouter, P extends readonly Pro
   plugins?: ReadonlyArray<Plugin<NoInfer<R>> | Plugin>;
 };
 
-export type SendOptions<P extends readonly ProviderEntry[]> = {
-  provider?: P[number]['name'];
+export type SendOptions<P extends readonly TransportEntry[]> = {
+  transport?: P[number]['name'];
 };
 
-export type RenderOptions = {
-  format: 'html' | 'text';
+export type RenderOptions<TCtx = unknown> = {
+  format?: 'html' | 'text';
+  ctx?: TCtx;
 };
 
-type RouteMethods<TInput, P extends readonly ProviderEntry[]> = {
+type RouteMethods<TInput, P extends readonly TransportEntry[]> = {
   send(args: SendArgs<TInput>, opts?: SendOptions<P>): Promise<SendResult>;
-  render(input: TInput): Promise<RenderedOutput>;
-  render(input: TInput, opts: RenderOptions): Promise<string>;
+  render(input: TInput, opts?: { ctx?: unknown }): Promise<RenderedOutput>;
+  render(input: TInput, opts: { format: 'html' | 'text'; ctx?: unknown }): Promise<string>;
 };
 
-export type EmailClient<R extends AnyEmailRouter, P extends readonly ProviderEntry[]> =
-  R extends EmailRouter<infer M>
-    ? { [K in keyof M & string]: RouteMethods<InputOf<EmailRouter<M>, K>, P> }
-    : never;
+type InputFromBuilder<B> = B extends EmailBuilder<any, infer S>
+  ? S extends { input: infer TSchema }
+    ? TSchema extends AnyStandardSchema
+      ? InferOutput<TSchema>
+      : unknown
+    : unknown
+  : unknown;
 
-export const handlePromise = async <T>(promise: Promise<T>): Promise<[T, null] | [null, Error]> => {
-  try {
-    return [await promise, null];
-  } catch (err) {
-    return [null, err instanceof Error ? err : new Error(String(err))];
-  }
+type ClientFromMap<M, P extends readonly TransportEntry[]> = {
+  [K in keyof M]: M[K] extends AnyEmailCatalog
+    ? ClientFromMap<M[K] extends EmailCatalog<infer SubM> ? SubM : never, P>
+    : M[K] extends EmailBuilder<any, any>
+      ? RouteMethods<InputFromBuilder<M[K]>, P>
+      : RouteMethods<unknown, P>;
 };
+
+export type EmailClient<R extends AnyEmailCatalog, P extends readonly TransportEntry[]> =
+  R extends EmailCatalog<infer M> ? ClientFromMap<M, P> : never;
 
 const HANDLED = Symbol.for('emailrpc.error.handled');
 
@@ -117,7 +129,27 @@ const isHandled = (err: unknown): boolean => {
 };
 
 const normalizeAddress = (addr: Address): string => {
-  return typeof addr === 'string' ? addr : addr.address;
+  return typeof addr === 'string' ? addr : addr.email;
+};
+
+const fromInputToParts = (
+  input: FromInput | undefined,
+): { name: string | undefined; email: string | undefined } => {
+  if (!input) return { name: undefined, email: undefined };
+  if (typeof input === 'string') return { name: undefined, email: input };
+  return { name: input.name, email: input.email };
+};
+
+const resolveFrom = (
+  perEmail: FromInput | undefined,
+  defaults: FromInput | undefined,
+): Address | undefined => {
+  const a = fromInputToParts(perEmail);
+  const b = fromInputToParts(defaults);
+  const email = a.email ?? b.email;
+  if (!email) return undefined;
+  const name = a.name ?? b.name;
+  return name ? { name, email } : { email };
 };
 
 const resolveSubject = <T>(
@@ -131,9 +163,10 @@ const resolveSubject = <T>(
 };
 
 type SendPipelineContext = {
-  providersByName: Map<string, Provider>;
-  defaultProvider: ProviderEntry | undefined;
-  defaults?: CreateClientOptions<AnyEmailRouter, readonly ProviderEntry[]>['defaults'];
+  transportsByName: Map<string, Transport>;
+  defaultTransport: TransportEntry | undefined;
+  defaults?: CreateClientOptions<AnyEmailCatalog, readonly TransportEntry[]>['defaults'];
+  defaultCtx: unknown;
   normalizedHooks: NormalizedHooks;
   pluginMiddleware: ReadonlyArray<AnyMiddleware>;
   logger: LoggerLike;
@@ -159,7 +192,7 @@ const runHooks = async <T>(
 ): Promise<Error | null> => {
   let firstError: Error | null = null;
   for (const fn of handlers) {
-    const [, err] = await handlePromise((async () => fn(params))());
+    const [err] = await handlePromise((async () => fn(params))());
     if (err) {
       if (!firstError) firstError = err;
       await onHookFailure(err);
@@ -181,37 +214,31 @@ const reportHookError = async (
     error:
       err instanceof EmailRpcError
         ? err
-        : new EmailRpcError({ message: err.message, code: 'UNKNOWN', cause: err }),
+        : new EmailRpcError({
+            message: err.message,
+            code: 'UNKNOWN',
+            cause: err,
+          }),
     phase: 'hook' as const,
   };
   for (const fn of hookErrorHandlers) {
-    const [, nestedErr] = await handlePromise((async () => fn(errorParams))());
+    const [nestedErr] = await handlePromise((async () => fn(errorParams))());
     if (nestedErr) log.error('hook failed', { err: nestedErr, hook: 'onError' });
   }
 };
 
 const executeRender = async (
-  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>,
+  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>,
   rawInput: unknown,
-  opts?: RenderOptions,
+  opts?: { format?: 'html' | 'text'; ctx?: unknown },
 ): Promise<RenderedOutput | string> => {
   const input = await validate(def.schema, rawInput, { route: def.id });
-  const rendered = await def.template.render(input);
+  const rendered = await def.template.render({ input, ctx: opts?.ctx ?? {} });
 
-  if (!opts) return rendered;
+  if (!opts?.format) return rendered;
 
   if (opts.format === 'html') return rendered.html;
   return rendered.text ?? '';
-};
-
-type RawSendArgs = {
-  to: Address | Address[];
-  cc?: Address | Address[];
-  bcc?: Address | Address[];
-  replyTo?: Address;
-  headers?: Record<string, string>;
-  attachments?: Attachment[];
-  input: unknown;
 };
 
 const toAddressArray = (value: Address | Address[]): Address[] => {
@@ -221,7 +248,7 @@ const toAddressArray = (value: Address | Address[]): Address[] => {
 type SendCore = (currentCtx: unknown) => Promise<SendResult>;
 
 const buildMessage = (
-  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>,
+  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>,
   args: RawSendArgs,
   input: unknown,
   rendered: { html: string; text?: string; subject?: string },
@@ -229,10 +256,10 @@ const buildMessage = (
   messageId: string,
 ): RenderedMessage => {
   const subject = resolveSubject(def.subject, input, rendered.subject);
-  const fromAddr = def.from ?? ctx.defaults?.from;
+  const fromAddr = resolveFrom(def.from, ctx.defaults?.from);
   if (!fromAddr) {
     throw new EmailRpcError({
-      message: `No "from" address for route "${ctx.route}": set it on the email definition or in client defaults.`,
+      message: `No "from" email for route "${ctx.route}": set it on the email definition or in client defaults.`,
       code: 'VALIDATION',
       route: ctx.route,
       messageId,
@@ -265,17 +292,22 @@ const composeMiddleware = (
   middlewares: ReadonlyArray<AnyMiddleware>,
   core: SendCore,
   baseInput: unknown,
+  args: RawSendArgs,
   route: string,
+  messageId: string,
 ): ((ctx: unknown) => Promise<SendResult>) => {
   let chain: (ctx: unknown) => Promise<SendResult> = (ctx) => core(ctx);
   for (let i = middlewares.length - 1; i >= 0; i--) {
-    const mw = middlewares[i]!;
+    const mw = middlewares[i];
+    if (!mw) continue;
     const downstream = chain;
     chain = (currentCtx) =>
       mw({
         input: baseInput,
         ctx: currentCtx,
         route,
+        messageId,
+        args,
         next: (newCtx) =>
           downstream(newCtx ? { ...(currentCtx as object), ...newCtx } : currentCtx),
       });
@@ -283,16 +315,16 @@ const composeMiddleware = (
   return (ctx) => chain(ctx);
 };
 
-const pickProvider = (
+const pickTransport = (
   ctx: SendPipelineContext,
-  opts: { provider?: string } | undefined,
+  opts: { transport?: string } | undefined,
   messageId: string,
-): Provider => {
-  if (opts?.provider) {
-    const found = ctx.providersByName.get(opts.provider);
+): Transport => {
+  if (opts?.transport) {
+    const found = ctx.transportsByName.get(opts.transport);
     if (!found) {
       throw new EmailRpcError({
-        message: `Provider "${opts.provider}" is not registered.`,
+        message: `Transport "${opts.transport}" is not registered.`,
         code: 'PROVIDER',
         route: ctx.route,
         messageId,
@@ -300,31 +332,31 @@ const pickProvider = (
     }
     return found;
   }
-  if (!ctx.defaultProvider) {
+  if (!ctx.defaultTransport) {
     throw new EmailRpcError({
-      message: 'No providers registered.',
+      message: 'No transports registered.',
       code: 'PROVIDER',
       route: ctx.route,
       messageId,
     });
   }
-  return ctx.defaultProvider.provider;
+  return ctx.defaultTransport.transport;
 };
 
 const executeSend = async (
-  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>,
+  def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>,
   args: RawSendArgs,
-  opts: { provider?: string } | undefined,
+  opts: { transport?: string } | undefined,
   ctx: SendPipelineContext,
 ): Promise<SendResult> => {
   const messageId = crypto.randomUUID();
   const log = ctx.logger.child({ route: ctx.route, messageId });
   log.debug('send start', { to: args.to, hasInput: args.input !== undefined });
   const startedAt = performance.now();
-  const initialCtx: Record<string, unknown> = {};
+  const initialCtx: unknown = ctx.defaultCtx ?? {};
   const baseHookCtx = { route: ctx.route, args, ctx: initialCtx, messageId };
 
-  const [input, validateErr] = await handlePromise(
+  const [validateErr, input] = await handlePromise(
     validate(def.schema, args.input, { route: ctx.route }),
   );
   if (validateErr) {
@@ -352,13 +384,19 @@ const executeSend = async (
     throw beforeErr;
   }
 
-  const renderState: { renderMs: number; sendMs: number } = { renderMs: 0, sendMs: 0 };
+  const renderState: { renderMs: number; sendMs: number } = {
+    renderMs: 0,
+    sendMs: 0,
+  };
 
   const core: SendCore = async (currentCtx) => {
-    log.debug('render start', { adapter: def.template?.constructor?.name ?? 'adapter' });
+    log.debug('render start', {
+      adapter: def.template?.constructor?.name ?? 'adapter',
+    });
     const renderStart = performance.now();
-    const [rendered, renderErr] = await handlePromise(def.template.render(input));
+    const renderTuple = await handlePromise(def.template.render({ input, ctx: currentCtx }));
     renderState.renderMs = performance.now() - renderStart;
+    const renderErr = renderTuple[0];
     if (renderErr) {
       log.warn('render failed', {
         err: renderErr,
@@ -374,16 +412,26 @@ const executeSend = async (
       });
       await runHooks(
         ctx.normalizedHooks.onError,
-        { ...beforeSendParams, ctx: currentCtx, error: wrapped, phase: 'render' as const },
+        {
+          ...beforeSendParams,
+          ctx: currentCtx,
+          error: wrapped,
+          phase: 'render' as const,
+        },
         (e) => reportHookError(ctx.normalizedHooks.onError, beforeSendParams, e, log, 'onError'),
       );
       markHandled(wrapped);
       throw wrapped;
     }
+    const rendered = renderTuple[1];
 
-    const message = buildMessage(def, args, input, rendered!, ctx, messageId);
+    const message = buildMessage(def, args, input, rendered, ctx, messageId);
 
-    const executeParams = { ...beforeSendParams, ctx: currentCtx, rendered: message };
+    const executeParams = {
+      ...beforeSendParams,
+      ctx: currentCtx,
+      rendered: message,
+    };
     const executeErr = await runHooks(ctx.normalizedHooks.onExecute, executeParams, (e) =>
       reportHookError(ctx.normalizedHooks.onError, executeParams, e, log, 'onExecute'),
     );
@@ -392,24 +440,29 @@ const executeSend = async (
       throw executeErr;
     }
 
-    const provider = pickProvider(ctx, opts, messageId);
-    const sendContext: SendContext = { route: ctx.route, messageId, attempt: 1 };
-    log.debug('provider send', { providerName: provider.name, attempt: 1 });
+    const transport = pickTransport(ctx, opts, messageId);
+    const sendContext: SendContext = {
+      route: ctx.route,
+      messageId,
+      attempt: 1,
+    };
+    log.debug('transport send', { transportName: transport.name, attempt: 1 });
     const sendStart = performance.now();
-    const [providerResult, sendErr] = await handlePromise(provider.send(message, sendContext));
+    const sendTuple = await handlePromise(transport.send(message, sendContext));
     renderState.sendMs = performance.now() - sendStart;
+    const sendErr = sendTuple[0];
 
     if (sendErr) {
       log.error('send failed', {
         err: sendErr,
-        providerName: provider.name,
+        transportName: transport.name,
         durationMs: renderState.sendMs,
       });
       const wrapped =
         sendErr instanceof EmailRpcError
           ? sendErr
           : new EmailRpcError({
-              message: `Provider send failed for route "${ctx.route}": ${sendErr.message}`,
+              message: `Transport send failed for route "${ctx.route}": ${sendErr.message}`,
               code: 'PROVIDER',
               route: ctx.route,
               messageId,
@@ -423,12 +476,13 @@ const executeSend = async (
       markHandled(wrapped);
       throw wrapped;
     }
+    const transportResult = sendTuple[1];
 
     const result: SendResult = {
       messageId,
-      providerMessageId: providerResult!.providerMessageId,
-      accepted: providerResult!.accepted,
-      rejected: providerResult!.rejected,
+      providerMessageId: transportResult.transportMessageId,
+      accepted: transportResult.accepted,
+      rejected: transportResult.rejected,
       envelope: {
         from: normalizeAddress(message.from),
         to: message.to.map(normalizeAddress),
@@ -436,17 +490,25 @@ const executeSend = async (
       timing: { renderMs: renderState.renderMs, sendMs: renderState.sendMs },
     };
     log.info('send ok', {
-      providerName: provider.name,
+      transportName: transport.name,
       durationMs: performance.now() - startedAt,
-      providerMessageId: result.providerMessageId,
+      transportMessageId: result.providerMessageId,
     });
     return result;
   };
 
   const allMiddleware = [...ctx.pluginMiddleware, ...def.middleware];
-  const composed = composeMiddleware(allMiddleware, core, input, ctx.route);
+  const composed = composeMiddleware(
+    allMiddleware,
+    core,
+    input,
+    args,
+    ctx.route,
+    messageId,
+  );
 
-  const [result, mwErr] = await handlePromise(composed(initialCtx));
+  const mwTuple = await handlePromise(composed(initialCtx));
+  const mwErr = mwTuple[0];
   if (mwErr) {
     if (isHandled(mwErr)) throw mwErr;
     const wrapped =
@@ -467,32 +529,35 @@ const executeSend = async (
     markHandled(wrapped);
     throw wrapped;
   }
+  const result = mwTuple[1];
 
   const afterSendParams = {
     ...beforeSendParams,
-    result: result!,
+    result,
     durationMs: renderState.renderMs + renderState.sendMs,
   };
   await runHooks(ctx.normalizedHooks.onAfterSend, afterSendParams, (e) =>
     reportHookError(ctx.normalizedHooks.onError, afterSendParams, e, log, 'onAfterSend'),
   );
 
-  return result!;
+  return result;
 };
 
-export const createClient = <R extends AnyEmailRouter, const P extends readonly ProviderEntry[]>(
+export const createClient = <R extends AnyEmailCatalog, const P extends readonly TransportEntry[]>(
   options: CreateClientOptions<R, P>,
 ): EmailClient<R, P> & { close: () => Promise<void> } => {
-  const { router, providers } = options;
+  const { catalog, transports } = options;
   const cache = new Map<string, unknown>();
 
-  const sortedProviders = [...providers].sort((a, b) => a.priority - b.priority);
-  const defaultProvider = sortedProviders[0];
-  const providersByName = new Map(providers.map((p) => [p.name, p.provider]));
+  const sortedTransports = [...transports].sort((a, b) => a.priority - b.priority);
+  const defaultTransport = sortedTransports[0];
+  const transportsByName = new Map(transports.map((p) => [p.name, p.transport]));
 
   const plugins = options.plugins ?? [];
   const pluginMiddleware: AnyMiddleware[] = plugins.flatMap((p) => p.middleware ?? []);
-  const baseLogger = (options.logger ?? consoleLogger()).child({ component: 'client' });
+  const baseLogger = (options.logger ?? consoleLogger()).child({
+    component: 'client',
+  });
 
   const mergeHook = <K extends keyof NormalizedHooks>(key: K): HookFn<any>[] => [
     ...plugins.flatMap((p) => toArray(p.hooks?.[key] as HookFn<any> | HookFn<any>[] | undefined)),
@@ -507,49 +572,76 @@ export const createClient = <R extends AnyEmailRouter, const P extends readonly 
   };
 
   for (const plugin of plugins) {
-    if (plugin.onCreate) plugin.onCreate({ router });
+    if (!plugin) continue;
+    if (plugin.onCreate) plugin.onCreate({ catalog });
   }
 
   const close = async (): Promise<void> => {
     for (let i = plugins.length - 1; i >= 0; i--) {
-      const plugin = plugins[i]!;
+      const plugin = plugins[i];
+      if (!plugin) continue;
       if (plugin.onClose) {
-        const [, err] = await handlePromise((async () => plugin.onClose!())());
+        const onClose = plugin.onClose;
+        const [err] = await handlePromise((async () => onClose())());
         if (err) baseLogger.error('plugin close failed', { err, plugin: plugin.name });
       }
     }
   };
 
+  const buildProcMethods = (
+    def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>,
+    flatKey: string,
+  ) =>
+    Object.freeze({
+      send: (sendArgs: RawSendArgs, sendOpts?: { transport?: string }) =>
+        executeSend(def, sendArgs, sendOpts, {
+          transportsByName,
+          defaultTransport,
+          defaults: options.defaults,
+          defaultCtx: options.ctx,
+          normalizedHooks,
+          pluginMiddleware,
+          logger: baseLogger,
+          route: flatKey,
+        }),
+      render: (input: unknown, renderOpts?: { format?: 'html' | 'text'; ctx?: unknown }) =>
+        executeRender(def, input, renderOpts),
+    });
+
+  const buildNestedProxy = (
+    nestedNode: Record<string, unknown>,
+    pathPrefix: string,
+  ): unknown => {
+    return new Proxy(
+      {},
+      {
+        get(_t, key) {
+          if (typeof key !== 'string') return undefined;
+          const value = nestedNode[key];
+          if (value === undefined) return undefined;
+          const flatKey = pathPrefix ? `${pathPrefix}.${key}` : key;
+          if (isEmailCatalog(value)) {
+            return buildNestedProxy(value.nested as Record<string, unknown>, flatKey);
+          }
+          const def = catalog.emails[flatKey];
+          if (!def) return undefined;
+          const cached = cache.get(flatKey);
+          if (cached) return cached;
+          const methods = buildProcMethods(def, flatKey);
+          cache.set(flatKey, methods);
+          return methods;
+        },
+      },
+    );
+  };
+
   const target = { close } as { close: () => Promise<void> };
+  const nestedProxy = buildNestedProxy(catalog.nested as Record<string, unknown>, '');
   const proxy = new Proxy(target as unknown as EmailClient<R, P> & { close: () => Promise<void> }, {
-    get(t, key: string) {
+    get(t, key) {
       if (typeof key !== 'string') return undefined;
       if (key === 'close') return (t as { close: () => Promise<void> }).close;
-
-      const def = (router.emails as Record<string, unknown>)[key] as
-        | EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown>>
-        | undefined;
-      if (!def) return undefined;
-
-      if (cache.has(key)) return cache.get(key);
-
-      const methods = Object.freeze({
-        send: (sendArgs: RawSendArgs, sendOpts?: { provider?: string }) =>
-          executeSend(def, sendArgs, sendOpts, {
-            providersByName,
-            defaultProvider,
-            defaults: options.defaults,
-            normalizedHooks,
-            pluginMiddleware,
-            logger: baseLogger,
-            route: key,
-          }),
-        render: (input: unknown, renderOpts?: RenderOptions) =>
-          executeRender(def, input, renderOpts),
-      });
-
-      cache.set(key, methods);
-      return methods;
+      return (nestedProxy as Record<string, unknown>)[key];
     },
   });
 

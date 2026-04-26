@@ -20,6 +20,7 @@
       "persistent": false
     },
     "dev": {
+      "env": ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD"],
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true

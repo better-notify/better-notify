@@ -2,7 +2,7 @@ import { EmailRpcNotImplementedError, type TemplateAdapter } from '@emailrpc/cor
 
 export const mjmlTemplate = <TInput>(_source: string): TemplateAdapter<TInput> => {
   return {
-    render: async () => {
+    render: async (_args) => {
       throw new EmailRpcNotImplementedError('@emailrpc/mjml (v0.4)');
     },
   };

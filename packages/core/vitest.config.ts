@@ -7,5 +7,16 @@ export default defineConfig({
       enabled: true,
       include: ['src/**/*.test.ts'],
     },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: [
+        '**/*.test.ts',
+        '**/*.test-d.ts',
+        'src/types.ts',
+        'src/template.ts',
+        'src/plugin.ts',
+      ],
+    },
   },
 });
