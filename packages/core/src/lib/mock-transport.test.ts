@@ -9,7 +9,7 @@ describe('mockTransport', () => {
     const result = await transport.send(
       {
         from: 'hello@example.com',
-        to: ['lucas@x.com'],
+        to: ['john@x.com'],
         subject: 'Test',
         html: '<p>hi</p>',
         text: 'hi',
@@ -20,12 +20,12 @@ describe('mockTransport', () => {
       { route: 'welcome', messageId: 'test-id', attempt: 1 },
     );
 
-    expect(result.accepted).toEqual(['lucas@x.com']);
+    expect(result.accepted).toEqual(['john@x.com']);
     expect(result.rejected).toEqual([]);
     expect(transport.sent).toHaveLength(1);
     expect(transport.sent[0]).toMatchObject({
       route: 'welcome',
-      to: ['lucas@x.com'],
+      to: ['john@x.com'],
       subject: 'Test',
       html: '<p>hi</p>',
       text: 'hi',
@@ -57,7 +57,7 @@ describe('mockTransport', () => {
     await transport.send(
       {
         from: { name: 'Hello', email: 'hello@example.com' },
-        to: [{ name: 'Lucas', email: 'lucas@x.com' }],
+        to: [{ name: 'John Doe', email: 'john@x.com' }],
         subject: 'Test',
         html: '<p>hi</p>',
         text: 'hi',
@@ -69,6 +69,6 @@ describe('mockTransport', () => {
     );
     const first = transport.sent[0];
     if (!first) throw new Error('expected record');
-    expect(first.to).toEqual(['lucas@x.com']);
+    expect(first.to).toEqual(['john@x.com']);
   });
 });

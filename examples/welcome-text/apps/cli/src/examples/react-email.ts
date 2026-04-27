@@ -25,7 +25,7 @@ export const runReactEmail = async (): Promise<void> => {
   const result = await mail.welcome.send({
     to: env.SMTP_DESTINATION_EMAIL,
     input: {
-      name: 'Lucas',
+      name: 'John Doe',
       verifyUrl: 'https://example.com/verify?token=abc123',
     },
   });

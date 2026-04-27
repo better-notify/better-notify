@@ -8,9 +8,9 @@ describe('validate', () => {
     const schema = z.object({ to: z.string().email(), name: z.string() });
     const value = await validate(schema, {
       to: 'user@example.com',
-      name: 'Lucas',
+      name: 'John Doe',
     });
-    expect(value).toEqual({ to: 'user@example.com', name: 'Lucas' });
+    expect(value).toEqual({ to: 'user@example.com', name: 'John Doe' });
   });
 
   it('applies schema defaults', async () => {

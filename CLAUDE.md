@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-emailRpc is an end-to-end typed email infrastructure for Node.js (ESM-only, Node ≥ 22). A single `EmailCatalog` type drives the typed sender, queue worker, and webhook router — analogous to tRPC/oRPC, but for email. The full design contract lives in `plan/emailrpc-spec.md`; treat it as the source of truth when behavior is ambiguous.
+emailRpc is an end-to-end typed email infrastructure for Node.js (ESM-only, Node ≥ 22). A single `EmailCatalog` type drives the typed sender, queue worker, and webhook router — analogous to tRPC/oRPC, but for email. The canonical design spec lives at `plan/emailrpc-spec.md` (gitignored, kept locally); the active per-feature design and execution docs live under `docs/superpowers/{specs,plans}/` (also gitignored). Treat the spec as the source of truth when behavior is ambiguous.
 
 Status: v0.1.0-alpha. Layer 1 (typed contracts in `@emailrpc/core`) plus build/release tooling are real. Adapter packages (`react-email`, `mjml`, `handlebars`, `ses`, `resend`, `bullmq`) and Layers 5–6 are stubs filled in over the v0.2+ roadmap.
 
@@ -17,6 +17,7 @@ pnpm install
 pnpm build           # turbo run build (rolldown per package)
 pnpm typecheck       # tsc --noEmit per package
 pnpm test            # vitest run (root config; collocated *.test.ts under packages/*/src)
+pnpm test:coverage   # vitest run --coverage (root config; collocated *.test-d.ts under packages/*/src)
 pnpm lint            # oxlint --fix per package
 pnpm fmt             # oxfmt
 pnpm ci              # build + typecheck + test + lint
@@ -86,7 +87,7 @@ Rolldown bundles each package via the shared `internal/rolldown-config/base.ts`.
 
 ## Conventions
 
-- **No code comments.** Don't write JSDoc, inline notes, or "what this does" headers; identifiers and types should carry the meaning. (User global rule.)
+- **No code comments.** Write JSDoc comments ONLY for public-API surface. Don't write inline notes, or "what this does" headers; identifiers and types should carry the meaning. (User global rule.)
 - **Prefer `type` over `interface`.** (User global rule — applies even though some upstream code in the spec shows `interface`.)
 - **Prefer `handlePromise` over try/catch** for async error handling. (User global rule.) `handlePromise` is the project's tuple-returning async wrapper — use it when introducing new async flows.
 - **Don't commit unless asked.** (User global rule.)
@@ -107,9 +108,10 @@ Rolldown bundles each package via the shared `internal/rolldown-config/base.ts`.
 - **No abstract classes for shared transport behavior** — use shared utility functions exported from `@emailrpc/core/transports`. Inheritance breaks across bundle boundaries (`instanceof` fails on duplicate-package situations) and forces consumers into class syntax. Functional composition stays structural and tree-shakeable.
 - **JSDoc only on public-API surface** (exported types, factory functions). The "no comments" rule still applies to function bodies. Document the contract for downstream implementers, not the implementation.
 - **`./test` subpath was removed**: `mockTransport` is now part of the public `transports` surface (it's a useful dev tool, not just a test helper). The remaining test utilities (`memoryLogger`, `recordHooks`) stay in `packages/core/src/test.ts` as **internal-only** — used by core's own tests, not built into `dist`, not exported via subpath.
+- **Catalog over router**: the Layer 1 aggregation primitive is `EmailCatalog`, built via `createEmailRpc<Ctx>().catalog({...})`. The conventional builder variable is `rpc`. Sub-catalogs compose via the same `.catalog({...})` call (it accepts both email procedures and other catalogs at the same level) and flatten into dot-path IDs — `mail.transactional.welcome.send(...)` resolves to canonical ID `transactional.welcome`, used as the logger `route` field, BullMQ job name, and webhook event correlation key. Catalogs carry a `_brand: 'EmailCatalog'` discriminator so the recursive `ValidateCatalog<M>` and the runtime flattener can distinguish sub-catalogs from email definitions without relying on structural shape. `createWebhookRouter` keeps its name (HTTP-shaped, intentionally distinct from the catalog).
 
 ## Reference docs
 
-- `plan/emailrpc-spec.md` — full technical spec; the contract for every layer's behavior.
-- `docs/superpowers/specs/` and `docs/superpowers/plans/` — design notes and execution plans for in-progress work (e.g. `2026-04-25-create-client-design.md`).
-- `README.md` — short public-facing summary and package status table.
+- `README.md` — short public-facing summary, quick-start snippet, and package status table.
+- `plan/emailrpc-spec.md` — canonical technical spec (gitignored, lives locally).
+- `docs/superpowers/specs/` and `docs/superpowers/plans/` — per-feature design docs and execution plans (gitignored).

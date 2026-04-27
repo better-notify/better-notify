@@ -9,6 +9,8 @@ export type ErrorCode =
   | 'SUPPRESSED'
   | 'RATE_LIMITED'
   | 'NOT_IMPLEMENTED'
+  | 'CHANNEL_NOT_QUEUEABLE'
+  | 'BATCH_EMPTY'
   | 'UNKNOWN';
 
 export type EmailRpcErrorOptions = {

@@ -1,5 +1,5 @@
 import { handlePromise } from '../lib/handle-promise.js';
-import { sleep } from '../lib/sleep.js';
+import { waitFor } from '../lib/wait-for.js';
 import { EmailRpcError } from '../errors.js';
 import { consoleLogger, type LoggerLike } from '../logger.js';
 import type { RenderedMessage, SendContext } from '../types.js';
@@ -178,7 +178,7 @@ export const multiTransport = (opts: MultiTransportOptions): Transport => {
         if (!retriable) break;
         if (attempt < maxAttempts) {
           if (opts.backoff) {
-            await sleep(computeBackoff(attempt, opts.backoff));
+            await waitFor(computeBackoff(attempt, opts.backoff));
           }
         }
       }

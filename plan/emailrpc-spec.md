@@ -604,13 +604,13 @@ For each route in the catalog, three callable shapes are exposed. **Transport fi
 
 ```ts
 mail.welcome.send({
-  to: 'lucas@x.com',                       // Address | Address[]   (required)
+  to: 'john@x.com',                       // Address | Address[]   (required)
   cc?: 'team@x.com',                       // Address | Address[]
   bcc?: ['legal@x.com'],                   // Address | Address[]
   replyTo?: 'support+ticket-42@x.com',     // overrides def.replyTo / defaults.replyTo
   headers?: { 'X-Custom': 'yes' },         // merged with defaults.headers (per-send wins)
   attachments?: [{ filename, content, contentType?, cid? }],
-  input: { name: 'Lucas', verifyUrl, locale: 'en' },  // validated against the schema
+  input: { name: 'John Doe', verifyUrl, locale: 'en' },  // validated against the schema
 }, { provider?: 'ses' });
 
 mail.welcome.queue({ to, cc?, bcc?, replyTo?, headers?, attachments?, input }, queueOpts?);
@@ -654,7 +654,7 @@ The first arg to `.queue()` is the same `SendArgs` shape as `.send()` (§6.1) �
 
 ```ts
 mail.welcome.queue(
-  { to: 'lucas@x.com', input: { name: 'Lucas', verifyUrl } },
+  { to: 'john@x.com', input: { name: 'John Doe', verifyUrl } },
   {
     delay: '5m' | 30_000, // ms or duration string
     attempts: 5, // retry count
@@ -1042,8 +1042,8 @@ const mail = createTestSender({
 });
 
 await mail.welcome({
-  to: 'lucas@x.com',
-  name: 'Lucas',
+  to: 'john@x.com',
+  name: 'John Doe',
   verifyUrl: '...',
   locale: 'en',
 });
@@ -1230,7 +1230,7 @@ the `emailrpc` binary (shipped from core) provides:
 ```sh
 emailrpc dev               # Watch templates + serve previews on localhost
 emailrpc preview welcome   # Open browser preview of a single route
-emailrpc send welcome --to me@x.com --name Lucas --verifyUrl ...   # Ad-hoc send
+emailrpc send welcome --to me@x.com --name John Doe --verifyUrl ...   # Ad-hoc send
 emailrpc check             # Static-check all routes (subject/template/variable refs)
 emailrpc migrate           # Run storage migrations
 emailrpc worker            # Start a worker process (alternative to embedding)
@@ -1320,8 +1320,8 @@ const provider = mockProvider();
 const mail = createTestSender({ catalog: emails, provider });
 
 await mail.welcome({
-  to: 'lucas@x.com',
-  name: 'Lucas',
+  to: 'john@x.com',
+  name: 'John Doe',
   verifyUrl: '...',
   locale: 'en',
 });
@@ -1329,8 +1329,8 @@ await mail.welcome({
 expect(provider.sent).toHaveLength(1);
 expect(provider.sent[0]).toMatchObject({
   route: 'welcome',
-  to: ['lucas@x.com'],
-  subject: 'Welcome, Lucas!',
+  to: ['john@x.com'],
+  subject: 'Welcome, John Doe!',
 });
 expect(provider.sent[0].html).toContain('https://...');
 ```
@@ -1363,13 +1363,13 @@ Plus snapshot helpers for HTML output and a `createWorkerHarness` for testing qu
 
 Releases are coordinated across the three packages. Versions in parentheses indicate which packages ship each milestone.
 
-**v0.1 (alpha)** — `emailrpc` only. Layers 1–4: contracts, sender, hooks, middleware, SMTP provider, MJML + Handlebars templates. No queue, no production package yet.
+**v0.1 (alpha) — ✅ shipped.** `@emailrpc/core` Layers 1–4: contracts (`createEmailRpc` + `rpc.catalog`), client (`createClient`), hooks (`onBeforeSend` / `onExecute` / `onAfterSend` / `onError`), middleware pipeline + plugins, transports surface (`mockTransport`, `multiTransport`, `createTransport` factory). Built-in structured logger. Errors taxonomy (§14). `@emailrpc/smtp` transport package (real). `@emailrpc/react-email` adapter package (real). Per-route `.batch(entries, { interval })` send (resolves §20 open question 3 ahead of schedule).
 
-**v0.2 (beta)** — `emailrpc` + `@emailrpc/react-email`. Layer 5 (in-memory queue + worker), `emailrpc/test`, CLI dev/preview commands. React Email adapter ships.
+**v0.2 (beta) — in progress.** Layer 5: in-memory queue + worker, `createQueue(...)` factory for BYO backends. CLI `dev` / `preview` commands. The `@emailrpc/react-email` adapter has already shipped in v0.1.
 
-**v0.3** — the relevant adapter package (`@emailrpc/bullmq`, `@emailrpc/ses`, etc.) debuts. Layer 6 (webhook router with SES/Resend signature verifiers), BullMQ queue, SES & Resend providers.
+**v0.3** — Layer 6: webhook router (`rpc.webhookRouter`) with provider-specific signature verifiers. `@emailrpc/bullmq`, `@emailrpc/ses`, `@emailrpc/resend` packages debut.
 
-**v0.4** — `@emailrpc/mjml` and `@emailrpc/handlebars` adapter packages. Hardening, more provider sig verifiers, OpenTelemetry middleware in core.
+**v0.4** — `@emailrpc/mjml` and `@emailrpc/handlebars` adapter packages (currently stubs). Hardening, more provider sig verifiers, OpenTelemetry middleware in core.
 
 **v1.0** — pg-boss adapter (in production package), OpenTelemetry, ClickHouse storage, full docs site, semver freeze across all three packages.
 
@@ -1385,7 +1385,7 @@ These are deliberate decisions to make before implementation starts:
 
 2. **Multi-tenancy.** Is tenant a first-class concept in the catalog, or just context that middleware partitions by? Current lean: context-only; ship a tenant-aware suppression list adapter rather than baking tenancy into the core.
 
-3. **Batch sends.** `mail.welcome.batch([input1, input2, ...])` — provider-batched where supported (SES, Resend), per-message otherwise? Yes, but defer to v0.3.
+3. **Batch sends. ✅ resolved (v0.1).** `mail.<route>.batch(entries, { interval? })` ships per-recipient personalized batch with optional millisecond interval between sends. Each entry has the same shape as `.send()` args. Returns `BatchResult` with per-entry status; never throws for per-entry failures. Provider-native batch APIs (SES `SendBulkEmail`, Resend `/emails/batch`) deferred to a future `transport.sendBatch?` capability. Design doc: `docs/superpowers/specs/2026-04-26-batch-send-design.md`.
 
 4. **i18n strategy.** Locale as input field (current proposal) vs. a dedicated `.locale()` builder method that wires into a translations store. Lean: input field for v1, dedicated mechanism if real-world usage shows the input-field approach is too verbose.
 

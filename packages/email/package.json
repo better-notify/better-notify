@@ -1,0 +1,42 @@
+{
+  "name": "@emailrpc/email",
+  "version": "0.1.0",
+  "description": "Email channel plugin for emailrpc.",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./transports": {
+      "types": "./dist/transports.d.ts",
+      "default": "./dist/transports.js"
+    }
+  },
+  "scripts": {
+    "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@emailrpc/core": "workspace:*",
+    "@standard-schema/spec": "^1.0.0"
+  },
+  "devDependencies": {
+    "@internal/rolldown-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "rolldown": "1.0.0-rc.17",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "zod": "^3.24.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

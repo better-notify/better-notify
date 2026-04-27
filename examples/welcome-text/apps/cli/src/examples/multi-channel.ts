@@ -1,0 +1,69 @@
+import { createNotify, createClient, withEventLogger, inMemoryEventSink } from '@emailrpc/core';
+import { emailChannel, mockTransport } from '@emailrpc/email';
+import { smsChannel, mockSmsTransport } from '@emailrpc/sms';
+import { pushChannel, mockPushTransport } from '@emailrpc/push';
+import { z } from 'zod';
+
+export const runMultiChannel = async (): Promise<void> => {
+  const rpc = createNotify({
+    channels: { email: emailChannel(), sms: smsChannel(), push: pushChannel() },
+  });
+
+  const catalog = rpc.catalog({
+    welcome: rpc
+      .email()
+      .input(z.object({ name: z.string() }))
+      .from('hello@example.com')
+      .subject(({ input }) => `Welcome, ${input.name}!`)
+      .template(({ input }) => ({
+        html: `<p>Welcome, ${input.name}!</p>`,
+        text: `Welcome, ${input.name}!`,
+      })),
+    welcomeSms: rpc
+      .use(withEventLogger({ sink: inMemoryEventSink() }))
+      .sms()
+      .input(z.object({ name: z.string() }))
+      .body(({ input }) => `Welcome, ${input.name}! Reply STOP to opt out.`),
+    welcomePush: rpc
+      .push()
+      .input(z.object({ name: z.string() }))
+      .title('Welcome')
+      .body(({ input }) => `Hi ${input.name}, your account is ready.`)
+      .data({ deeplink: '/onboarding' }),
+  });
+
+  const emailMock = mockTransport();
+  const smsMock = mockSmsTransport();
+  const pushMock = mockPushTransport();
+
+  const notify = createClient({
+    catalog,
+    channels: { email: emailChannel(), sms: smsChannel(), push: pushChannel() },
+    transportsByChannel: {
+      email: emailMock,
+      sms: smsMock,
+      push: pushMock,
+    },
+  });
+
+  const emailResult = await notify.welcome.send({
+    to: 'lucas@example.com',
+    input: { name: 'Lucas' },
+  });
+  const smsResult = await notify.welcomeSms.send({
+    to: '+15555555555',
+    input: { name: 'Lucas' },
+  });
+  const pushResult = await notify.welcomePush.send({
+    to: 'device-token-abc',
+    input: { name: 'Lucas' },
+  });
+
+  console.log('email:', { messageId: emailResult.messageId, accepted: emailResult.accepted });
+  console.log('sms:  ', { messageId: smsResult.messageId, accepted: smsResult.accepted });
+  console.log('push: ', { messageId: pushResult.messageId, accepted: pushResult.accepted });
+  console.log('---');
+  console.log('email rendered:', emailMock.sent[0]);
+  console.log('sms rendered:  ', smsMock.messages[0]);
+  console.log('push rendered: ', pushMock.messages[0]);
+};

@@ -35,8 +35,8 @@ export const runRateLimited = async (): Promise<void> => {
   const send = async (i: number): Promise<void> => {
     try {
       const result = await mail.welcome.send({
-        to: 'lucas@example.com',
-        input: { name: `Lucas ${i}` },
+        to: 'john@example.com',
+        input: { name: `John Doe ${i}` },
       });
       console.log(`#${i} ok          messageId=${result.messageId.slice(0, 8)}`);
     } catch (err) {

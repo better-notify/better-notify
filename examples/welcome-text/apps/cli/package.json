@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "@emailrpc/core": "workspace:*",
+    "@emailrpc/email": "workspace:*",
+    "@emailrpc/push": "workspace:*",
     "@emailrpc/react-email": "workspace:*",
+    "@emailrpc/sms": "workspace:*",
     "@emailrpc/smtp": "workspace:*",
     "@t3-oss/env-core": "0.13.11",
     "react": "19.2.5",

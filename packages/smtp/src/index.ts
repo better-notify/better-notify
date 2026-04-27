@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
-import type { Transport } from '@emailrpc/core/transports';
-import { formatAddress, normalizeAddress } from '@emailrpc/core/transports';
+import type { Transport } from '@emailrpc/email/transports';
+import { formatAddress, normalizeAddress } from '@emailrpc/email/transports';
 import { consoleLogger } from '@emailrpc/core';
 import type { SmtpTransportOptions } from './types.js';
 

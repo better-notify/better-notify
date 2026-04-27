@@ -24,7 +24,9 @@ export type {
 
 export { createClient } from './client.js';
 export { handlePromise } from './lib/handle-promise.js';
-export { sleep } from './lib/sleep.js';
+export { waitFor } from './lib/wait-for.js';
+export { obscureString } from './lib/obscure-string.js';
+export { obscureEmail } from './lib/obscure-email.js';
 export type {
   ClientHooks,
   CreateClientOptions,
@@ -39,6 +41,7 @@ export type {
   AfterSendCtx,
   ErrorCtx,
   ErrorPhase,
+  ChannelSendResult,
 } from './client.js';
 
 export type { Plugin } from './plugins/index.js';
@@ -160,3 +163,18 @@ export type {
   RecordedSpan,
 } from './tracers/index.js';
 export { inMemoryTracer } from './tracers/index.js';
+
+export type {
+  Channel,
+  ChannelDefinition,
+  ChannelBuilderCtx,
+  AnyChannel,
+  ChannelMap,
+  TransportsFor,
+  ArgsFor,
+  RenderedFor,
+  BuilderFor,
+} from './channel/types.js';
+
+export { createNotify } from './notify.js';
+export type { RootBuilder as NotifyRootBuilder, CreateNotifyOptions } from './notify.js';

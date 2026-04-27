@@ -21,7 +21,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*"
+    "@emailrpc/core": "workspace:*",
+    "@emailrpc/email": "workspace:*"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",

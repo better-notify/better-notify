@@ -43,9 +43,18 @@ importers:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../../../../packages/core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../../../../packages/email
+      '@emailrpc/push':
+        specifier: workspace:*
+        version: link:../../../../packages/push
       '@emailrpc/react-email':
         specifier: workspace:*
         version: link:../../../../packages/react-email
+      '@emailrpc/sms':
+        specifier: workspace:*
+        version: link:../../../../packages/sms
       '@emailrpc/smtp':
         specifier: workspace:*
         version: link:../../../../packages/smtp
@@ -155,11 +164,42 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/email:
+    dependencies:
+      '@emailrpc/core':
+        specifier: workspace:*
+        version: link:../core
+      '@standard-schema/spec':
+        specifier: ^1.0.0
+        version: 1.1.0
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
+      rolldown:
+        specifier: 1.0.0-rc.17
+        version: 1.0.0-rc.17
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.17)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/handlebars:
     dependencies:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../email
     devDependencies:
       '@internal/rolldown-config':
         specifier: workspace:*
@@ -182,6 +222,9 @@ importers:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../email
     devDependencies:
       '@internal/rolldown-config':
         specifier: workspace:*
@@ -199,11 +242,42 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.17)
 
+  packages/push:
+    dependencies:
+      '@emailrpc/core':
+        specifier: workspace:*
+        version: link:../core
+      '@standard-schema/spec':
+        specifier: ^1.0.0
+        version: 1.1.0
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
+      rolldown:
+        specifier: 1.0.0-rc.17
+        version: 1.0.0-rc.17
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.17)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/react-email:
     dependencies:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../email
     devDependencies:
       '@internal/rolldown-config':
         specifier: workspace:*
@@ -244,6 +318,9 @@ importers:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../email
     devDependencies:
       '@internal/rolldown-config':
         specifier: workspace:*
@@ -266,6 +343,9 @@ importers:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../email
     devDependencies:
       '@internal/rolldown-config':
         specifier: workspace:*
@@ -283,11 +363,42 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.17)
 
+  packages/sms:
+    dependencies:
+      '@emailrpc/core':
+        specifier: workspace:*
+        version: link:../core
+      '@standard-schema/spec':
+        specifier: ^1.0.0
+        version: 1.1.0
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
+      rolldown:
+        specifier: 1.0.0-rc.17
+        version: 1.0.0-rc.17
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.17)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/smtp:
     dependencies:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../email
       nodemailer:
         specifier: 8.0.6
         version: 8.0.6

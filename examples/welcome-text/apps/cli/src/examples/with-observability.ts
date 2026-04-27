@@ -33,8 +33,8 @@ export const runObservability = async (): Promise<void> => {
     defaults: { from: 'demo@example.com' },
   });
 
-  await mail.welcome.send({ to: 'lucas@example.com', input: { name: 'Lucas' } });
-  await mail.welcome.send({ to: 'maria@example.com', input: { name: 'Maria' } });
+  await mail.welcome.send({ to: 'john@example.com', input: { name: 'John Doe' } });
+  await mail.welcome.send({ to: 'sarah@example.com', input: { name: 'Sarah' } });
 
   console.log('---');
   console.log(`captured events: ${sink.events.length}`);

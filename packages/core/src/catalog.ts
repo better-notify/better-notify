@@ -1,6 +1,7 @@
 import type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';
 import type { TemplateAdapter } from './template.js';
 import type { EmailBuilder, EmailDefinition, EmailDefinitionOf } from './builder.js';
+import type { ChannelDefinition } from './channel/types.js';
 
 const CATALOG_BRAND = 'EmailCatalog' as const;
 
@@ -8,6 +9,7 @@ export type EmailCatalog<M, Ctx = unknown> = {
   readonly _brand: typeof CATALOG_BRAND;
   readonly _ctx: Ctx;
   readonly emails: { readonly [K in FlatKeys<M> & string]: EmailDefinition<Ctx, any, any> };
+  readonly definitions: { readonly [k: string]: ChannelDefinition<any, any> };
   readonly nested: { readonly [K in keyof M]: NestedValue<M[K]> };
   readonly routes: ReadonlyArray<string>;
 };
@@ -16,6 +18,7 @@ export type AnyEmailCatalog = {
   readonly _brand: typeof CATALOG_BRAND;
   readonly _ctx: any;
   readonly emails: Record<string, EmailDefinition<any, any, any>>;
+  readonly definitions: Record<string, ChannelDefinition<any, any>>;
   readonly nested: Record<string, unknown>;
   readonly routes: ReadonlyArray<string>;
 };
@@ -39,15 +42,17 @@ type FlatKeys<M> = {
 export type ValidateCatalog<M> = {
   [K in keyof M]: IsCatalog<M[K]> extends true
     ? M[K]
-    : M[K] extends EmailBuilder<any, infer S>
-      ? S extends {
-          input: AnyStandardSchema;
-          subject: unknown;
-          template: TemplateAdapter<any, any>;
-        }
-        ? M[K]
-        : `Email "${K & string}" is incomplete: input, subject, and template are required.`
-      : `Value at "${K & string}" is not an EmailBuilder or EmailCatalog.`;
+    : M[K] extends { readonly _channel: string; _finalize: (id: string) => any }
+      ? M[K]
+      : M[K] extends EmailBuilder<any, infer S>
+        ? S extends {
+            input: AnyStandardSchema;
+            subject: unknown;
+            template: TemplateAdapter<any, any>;
+          }
+          ? M[K]
+          : `Email "${K & string}" is incomplete: input, subject, and template are required.`
+        : `Value at "${K & string}" is not an EmailBuilder or EmailCatalog.`;
 };
 
 export const isEmailCatalog = (v: unknown): v is AnyEmailCatalog => {
@@ -87,10 +92,22 @@ const builderToDefinition = (
   };
 };
 
+const isChannelBuilder = (
+  v: unknown,
+): v is { _channel: string; _finalize: (id: string) => ChannelDefinition<any, any> } => {
+  return (
+    !!v &&
+    typeof v === 'object' &&
+    typeof (v as { _channel?: unknown })._channel === 'string' &&
+    typeof (v as { _finalize?: unknown })._finalize === 'function'
+  );
+};
+
 export const createCatalog = <const M extends Record<string, unknown>, Ctx = unknown>(
   map: M & ValidateCatalog<M>,
 ): EmailCatalog<M, Ctx> => {
   const flat: Record<string, EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>> = {};
+  const definitions: Record<string, ChannelDefinition<any, any>> = {};
   const nested: Record<string, unknown> = {};
   const routes: string[] = [];
 
@@ -101,10 +118,45 @@ export const createCatalog = <const M extends Record<string, unknown>, Ctx = unk
       for (const subKey of value.routes) {
         const flatKey = `${key}.${subKey}`;
         const subDef = value.emails[subKey];
-        if (!subDef) continue;
-        flat[flatKey] = { ...subDef, id: flatKey };
-        routes.push(flatKey);
+        const subChannelDef = value.definitions?.[subKey];
+        if (subDef) {
+          flat[flatKey] = { ...subDef, id: flatKey };
+        }
+        if (subChannelDef) {
+          definitions[flatKey] = { ...subChannelDef, id: flatKey };
+        }
+        if (subDef || subChannelDef) routes.push(flatKey);
       }
+    } else if (isChannelBuilder(value)) {
+      const def = value._finalize(key);
+      definitions[key] = def;
+      if (def.channel === 'email') {
+        const runtime = def.runtime as {
+          subject: unknown;
+          template: TemplateAdapter<unknown, unknown>;
+          from?: unknown;
+          replyTo?: unknown;
+          tags?: unknown;
+          priority?: unknown;
+        };
+        const emailDef: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>> = {
+          _ctx: undefined as never,
+          id: key,
+          schema: def.schema,
+          subject: runtime.subject as never,
+          template: runtime.template,
+          from: runtime.from as never,
+          replyTo: runtime.replyTo as never,
+          tags: (runtime.tags as never) ?? {},
+          priority: (runtime.priority as never) ?? 'normal',
+          middleware: def.middleware,
+        };
+        flat[key] = emailDef;
+        nested[key] = emailDef;
+      } else {
+        nested[key] = def;
+      }
+      routes.push(key);
     } else {
       const def = builderToDefinition(
         value as { _state?: Record<string, unknown> },
@@ -120,6 +172,7 @@ export const createCatalog = <const M extends Record<string, unknown>, Ctx = unk
     _brand: CATALOG_BRAND,
     _ctx: undefined as never,
     emails: flat as EmailCatalog<M, Ctx>['emails'],
+    definitions,
     nested: nested as EmailCatalog<M, Ctx>['nested'],
     routes,
   };

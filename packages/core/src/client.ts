@@ -17,6 +17,7 @@ import type { EmailBuilder, EmailDefinition, SubjectResolver } from './builder.j
 import type { AnyStandardSchema, InferOutput } from './schema.js';
 import type { Plugin } from './plugins/types.js';
 import type { AnyMiddleware } from './middlewares/types.js';
+import type { AnyChannel, ChannelDefinition, ChannelMap, TransportsFor } from './channel/types.js';
 import { consoleLogger, type LoggerLike } from './logger.js';
 import { handlePromise } from './lib/handle-promise.js';
 
@@ -68,9 +69,24 @@ export type ClientHooks<R extends AnyEmailCatalog = AnyEmailCatalog> = {
   onError?: HookFn<ErrorCtx<R>> | HookFn<ErrorCtx<R>>[];
 };
 
-export type CreateClientOptions<R extends AnyEmailCatalog, P extends readonly TransportEntry[]> = {
+export type ChannelSendResult = {
+  messageId: string;
+  providerMessageId?: string;
+  accepted?: string[];
+  rejected?: string[];
+  envelope?: { from?: string; to: string[] };
+  timing?: { renderMs: number; sendMs: number };
+};
+
+export type CreateClientOptions<
+  R extends AnyEmailCatalog,
+  P extends readonly TransportEntry[] = readonly TransportEntry[],
+  Channels extends ChannelMap = ChannelMap,
+> = {
   catalog: R;
-  transports: P;
+  transports?: P;
+  channels?: Channels;
+  transportsByChannel?: Partial<TransportsFor<Channels>>;
   ctx?: CtxOf<R>;
   defaults?: {
     from?: FromInput;
@@ -91,10 +107,32 @@ export type RenderOptions<TCtx = unknown> = {
   ctx?: TCtx;
 };
 
+type BatchEntryResult<TResult> =
+  | { status: 'ok'; index: number; result: TResult }
+  | { status: 'error'; index: number; error: EmailRpcError };
+
+type BatchResult<TResult> = {
+  okCount: number;
+  errorCount: number;
+  results: ReadonlyArray<BatchEntryResult<TResult>>;
+};
+
+type BatchOptions = { interval?: number };
+
 type RouteMethods<TInput, P extends readonly TransportEntry[]> = {
   send(args: SendArgs<TInput>, opts?: SendOptions<P>): Promise<SendResult>;
+  batch(
+    entries: ReadonlyArray<SendArgs<TInput>>,
+    opts?: BatchOptions,
+  ): Promise<BatchResult<SendResult>>;
   render(input: TInput, opts?: { ctx?: unknown }): Promise<RenderedOutput>;
   render(input: TInput, opts: { format: 'html' | 'text'; ctx?: unknown }): Promise<string>;
+};
+
+type ChannelRouteMethods<TArgs> = {
+  send(args: TArgs): Promise<ChannelSendResult>;
+  batch(entries: ReadonlyArray<TArgs>): Promise<BatchResult<ChannelSendResult>>;
+  queue(...args: unknown[]): Promise<never>;
 };
 
 type InputFromBuilder<B> = B extends EmailBuilder<any, infer S>
@@ -108,9 +146,13 @@ type InputFromBuilder<B> = B extends EmailBuilder<any, infer S>
 type ClientFromMap<M, P extends readonly TransportEntry[]> = {
   [K in keyof M]: M[K] extends AnyEmailCatalog
     ? ClientFromMap<M[K] extends EmailCatalog<infer SubM> ? SubM : never, P>
-    : M[K] extends EmailBuilder<any, any>
+    : M[K] extends { readonly _channel: 'email' }
       ? RouteMethods<InputFromBuilder<M[K]>, P>
-      : RouteMethods<unknown, P>;
+      : M[K] extends { readonly _channel: string; readonly _args: infer A }
+        ? ChannelRouteMethods<A>
+        : M[K] extends EmailBuilder<any, any>
+          ? RouteMethods<InputFromBuilder<M[K]>, P>
+          : RouteMethods<unknown, P>;
 };
 
 export type EmailClient<R extends AnyEmailCatalog, P extends readonly TransportEntry[]> =
@@ -543,10 +585,17 @@ const executeSend = async (
   return result;
 };
 
-export const createClient = <R extends AnyEmailCatalog, const P extends readonly TransportEntry[]>(
-  options: CreateClientOptions<R, P>,
+export const createClient = <
+  R extends AnyEmailCatalog,
+  const P extends readonly TransportEntry[] = readonly TransportEntry[],
+  Channels extends ChannelMap = ChannelMap,
+>(
+  options: CreateClientOptions<R, P, Channels>,
 ): EmailClient<R, P> & { close: () => Promise<void> } => {
-  const { catalog, transports } = options;
+  const { catalog } = options;
+  const transports: readonly TransportEntry[] = options.transports ?? [];
+  const channels = (options.channels ?? {}) as Record<string, AnyChannel>;
+  const transportsByChannel = (options.transportsByChannel ?? {}) as Record<string, { send: (rendered: unknown, ctx: unknown) => Promise<{ transportMessageId?: string; accepted?: string[]; rejected?: string[] }> }>;
   const cache = new Map<string, unknown>();
 
   const sortedTransports = [...transports].sort((a, b) => a.priority - b.priority);
@@ -588,25 +637,293 @@ export const createClient = <R extends AnyEmailCatalog, const P extends readonly
     }
   };
 
-  const buildProcMethods = (
-    def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>,
+  const executeChannelSend = async (
+    channelDef: ChannelDefinition<unknown, unknown>,
+    rawArgs: unknown,
+    flatKey: string,
+  ): Promise<ChannelSendResult> => {
+    const channel = channels[channelDef.channel];
+    if (!channel) {
+      throw new EmailRpcError({
+        message: `No channel registered for "${channelDef.channel}".`,
+        code: 'CONFIG',
+        route: flatKey,
+      });
+    }
+    const transport = transportsByChannel[channelDef.channel];
+    if (!transport) {
+      throw new EmailRpcError({
+        message: `No transport registered for channel "${channelDef.channel}".`,
+        code: 'PROVIDER',
+        route: flatKey,
+      });
+    }
+
+    const messageId = crypto.randomUUID();
+    const log = baseLogger.child({ route: flatKey, messageId });
+    const startedAt = performance.now();
+    const initialCtx: unknown = options.ctx ?? {};
+    const args = channel.validateArgs(rawArgs);
+    const baseHookCtx = { route: flatKey, args, ctx: initialCtx, messageId };
+
+    const [validateErr, input] = await handlePromise(
+      validate(channelDef.schema, (rawArgs as { input?: unknown })?.input, { route: flatKey }),
+    );
+    if (validateErr) {
+      log.warn('validate failed', { err: validateErr });
+      await runHooks(
+        normalizedHooks.onError,
+        { ...baseHookCtx, input: undefined, error: validateErr as EmailRpcError, phase: 'validate' as const },
+        (e) => reportHookError(normalizedHooks.onError, baseHookCtx, e, log, 'onError'),
+      );
+      markHandled(validateErr);
+      throw validateErr;
+    }
+
+    const beforeSendParams = { ...baseHookCtx, input };
+    const beforeErr = await runHooks(normalizedHooks.onBeforeSend, beforeSendParams, (e) =>
+      reportHookError(normalizedHooks.onError, beforeSendParams, e, log, 'onBeforeSend'),
+    );
+    if (beforeErr) {
+      markHandled(beforeErr);
+      throw beforeErr;
+    }
+
+    const timing = { renderMs: 0, sendMs: 0 };
+    const argsWithInput = { ...(args as object), input } as Record<string, unknown>;
+
+    const core: SendCore = async (currentCtx) => {
+      const renderStart = performance.now();
+      const renderTuple = await handlePromise(
+        channel.render(channelDef as never, argsWithInput as never, currentCtx),
+      );
+      timing.renderMs = performance.now() - renderStart;
+      const renderErr = renderTuple[0];
+      if (renderErr) {
+        const wrapped = new EmailRpcError({
+          message: `Render failed for route "${flatKey}": ${renderErr.message}`,
+          code: 'RENDER',
+          route: flatKey,
+          messageId,
+          cause: renderErr,
+        });
+        await runHooks(
+          normalizedHooks.onError,
+          { ...beforeSendParams, ctx: currentCtx, error: wrapped, phase: 'render' as const },
+          (e) => reportHookError(normalizedHooks.onError, beforeSendParams, e, log, 'onError'),
+        );
+        markHandled(wrapped);
+        throw wrapped;
+      }
+      const rendered = renderTuple[1];
+
+      const executeParams = { ...beforeSendParams, ctx: currentCtx, rendered };
+      const executeErr = await runHooks(normalizedHooks.onExecute, executeParams, (e) =>
+        reportHookError(normalizedHooks.onError, executeParams, e, log, 'onExecute'),
+      );
+      if (executeErr) {
+        markHandled(executeErr);
+        throw executeErr;
+      }
+
+      const sendStart = performance.now();
+      const sendCtx = { route: flatKey, messageId, attempt: 1 };
+      const sendTuple = await handlePromise(transport.send(rendered, sendCtx));
+      timing.sendMs = performance.now() - sendStart;
+      const sendErr = sendTuple[0];
+      if (sendErr) {
+        log.error('send failed', { err: sendErr, durationMs: timing.sendMs });
+        const wrapped =
+          sendErr instanceof EmailRpcError
+            ? sendErr
+            : new EmailRpcError({
+                message: `Transport send failed for route "${flatKey}": ${sendErr.message}`,
+                code: 'PROVIDER',
+                route: flatKey,
+                messageId,
+                cause: sendErr,
+              });
+        await runHooks(
+          normalizedHooks.onError,
+          { ...executeParams, error: wrapped, phase: 'send' as const },
+          (e) => reportHookError(normalizedHooks.onError, executeParams, e, log, 'onError'),
+        );
+        markHandled(wrapped);
+        throw wrapped;
+      }
+      const tr = sendTuple[1];
+      const renderedAny = rendered as Record<string, unknown> | undefined;
+      const renderedFrom = renderedAny?.from as Address | undefined;
+      const renderedToRaw = renderedAny?.to;
+      const renderedTo = Array.isArray(renderedToRaw)
+        ? (renderedToRaw as ReadonlyArray<Address>)
+        : undefined;
+      const envelope =
+        renderedFrom && renderedTo
+          ? {
+              from: normalizeAddress(renderedFrom),
+              to: renderedTo.map(normalizeAddress),
+            }
+          : undefined;
+      const result: ChannelSendResult = {
+        messageId,
+        providerMessageId: tr.transportMessageId,
+        accepted: tr.accepted ?? [],
+        rejected: tr.rejected ?? [],
+        timing,
+      };
+      if (envelope) result.envelope = envelope;
+      log.info('send ok', {
+        durationMs: performance.now() - startedAt,
+        transportMessageId: result.providerMessageId,
+      });
+      return result as unknown as SendResult;
+    };
+
+    const allMiddleware = [...pluginMiddleware, ...channelDef.middleware];
+    const composed = composeMiddleware(
+      allMiddleware,
+      core,
+      input,
+      (rawArgs ?? {}) as RawSendArgs,
+      flatKey,
+      messageId,
+    );
+
+    const mwTuple = await handlePromise(composed(initialCtx));
+    const mwErr = mwTuple[0];
+    if (mwErr) {
+      if (isHandled(mwErr)) throw mwErr;
+      const wrapped =
+        mwErr instanceof EmailRpcError
+          ? mwErr
+          : new EmailRpcError({
+              message: `Middleware failed for route "${flatKey}": ${mwErr.message}`,
+              code: 'UNKNOWN',
+              route: flatKey,
+              messageId,
+              cause: mwErr,
+            });
+      await runHooks(
+        normalizedHooks.onError,
+        { ...beforeSendParams, error: wrapped, phase: 'middleware' as const },
+        (e) => reportHookError(normalizedHooks.onError, beforeSendParams, e, log, 'onError'),
+      );
+      markHandled(wrapped);
+      throw wrapped;
+    }
+    const result = mwTuple[1] as unknown as ChannelSendResult;
+
+    const afterSendParams = { ...beforeSendParams, result, durationMs: timing.renderMs + timing.sendMs };
+    await runHooks(normalizedHooks.onAfterSend, afterSendParams, (e) =>
+      reportHookError(normalizedHooks.onError, afterSendParams, e, log, 'onAfterSend'),
+    );
+    return result;
+  };
+
+  const buildChannelProcMethods = (
+    channelDef: ChannelDefinition<unknown, unknown>,
     flatKey: string,
   ) =>
     Object.freeze({
-      send: (sendArgs: RawSendArgs, sendOpts?: { transport?: string }) =>
-        executeSend(def, sendArgs, sendOpts, {
-          transportsByName,
-          defaultTransport,
-          defaults: options.defaults,
-          defaultCtx: options.ctx,
-          normalizedHooks,
-          pluginMiddleware,
-          logger: baseLogger,
-          route: flatKey,
-        }),
+      send: (rawArgs: unknown) => executeChannelSend(channelDef, rawArgs, flatKey),
+      batch: async (entries: ReadonlyArray<unknown>) => {
+        const results: Array<
+          { status: 'ok'; index: number; result: ChannelSendResult } | { status: 'error'; index: number; error: EmailRpcError }
+        > = [];
+        let okCount = 0;
+        let errorCount = 0;
+        for (let i = 0; i < entries.length; i++) {
+          const [err, res] = await handlePromise(executeChannelSend(channelDef, entries[i], flatKey));
+          if (err) {
+            errorCount++;
+            results.push({
+              status: 'error',
+              index: i,
+              error: err instanceof EmailRpcError ? err : new EmailRpcError({ message: err.message, cause: err }),
+            });
+          } else {
+            okCount++;
+            results.push({ status: 'ok', index: i, result: res });
+          }
+        }
+        return { okCount, errorCount, results };
+      },
+      queue: () => {
+        return Promise.reject(
+          new EmailRpcError({
+            message: `Channel "${channelDef.channel}" does not support queueing.`,
+            code: 'CHANNEL_NOT_QUEUEABLE',
+            route: flatKey,
+          }),
+        );
+      },
+    });
+
+  const buildProcMethods = (
+    def: EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>,
+    flatKey: string,
+  ) => {
+    const baseSendCtx = {
+      transportsByName,
+      defaultTransport,
+      defaults: options.defaults,
+      defaultCtx: options.ctx,
+      normalizedHooks,
+      pluginMiddleware,
+      logger: baseLogger,
+      route: flatKey,
+    };
+    const channelDef = catalog.definitions?.[flatKey];
+    const channelTransport = channelDef ? transportsByChannel[channelDef.channel] : undefined;
+    const useChannel = !!(channelDef && channelTransport);
+    const send = useChannel
+      ? (sendArgs: RawSendArgs) => executeChannelSend(channelDef, sendArgs, flatKey) as unknown as Promise<SendResult>
+      : (sendArgs: RawSendArgs, sendOpts?: { transport?: string }) =>
+          executeSend(def, sendArgs, sendOpts, baseSendCtx);
+    return Object.freeze({
+      send,
       render: (input: unknown, renderOpts?: { format?: 'html' | 'text'; ctx?: unknown }) =>
         executeRender(def, input, renderOpts),
+      batch: async (entries: ReadonlyArray<RawSendArgs>, batchOpts?: { interval?: number }) => {
+        if (entries.length === 0) {
+          throw new EmailRpcError({
+            message: 'batch requires at least one entry',
+            code: 'BATCH_EMPTY',
+            route: flatKey,
+          });
+        }
+        const results: Array<
+          { status: 'ok'; index: number; result: SendResult } | { status: 'error'; index: number; error: EmailRpcError }
+        > = [];
+        let okCount = 0;
+        let errorCount = 0;
+        const interval = batchOpts?.interval ?? 0;
+        for (let i = 0; i < entries.length; i++) {
+          const entry = entries[i] as RawSendArgs;
+          const [err, res] = await handlePromise(send(entry));
+          if (err) {
+            errorCount++;
+            results.push({
+              status: 'error',
+              index: i,
+              error:
+                err instanceof EmailRpcError
+                  ? err
+                  : new EmailRpcError({ message: err.message, cause: err, route: flatKey }),
+            });
+          } else {
+            okCount++;
+            results.push({ status: 'ok', index: i, result: res });
+          }
+          if (interval > 0 && i < entries.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, interval));
+          }
+        }
+        return { okCount, errorCount, results };
+      },
     });
+  };
 
   const buildNestedProxy = (
     nestedNode: Record<string, unknown>,
@@ -623,13 +940,21 @@ export const createClient = <R extends AnyEmailCatalog, const P extends readonly
           if (isEmailCatalog(value)) {
             return buildNestedProxy(value.nested as Record<string, unknown>, flatKey);
           }
-          const def = catalog.emails[flatKey];
-          if (!def) return undefined;
           const cached = cache.get(flatKey);
           if (cached) return cached;
-          const methods = buildProcMethods(def, flatKey);
-          cache.set(flatKey, methods);
-          return methods;
+          const def = catalog.emails[flatKey];
+          if (def) {
+            const methods = buildProcMethods(def, flatKey);
+            cache.set(flatKey, methods);
+            return methods;
+          }
+          const channelDef = catalog.definitions?.[flatKey];
+          if (channelDef) {
+            const methods = buildChannelProcMethods(channelDef, flatKey);
+            cache.set(flatKey, methods);
+            return methods;
+          }
+          return undefined;
         },
       },
     );

@@ -21,8 +21,8 @@ export const runDryRun = async (): Promise<void> => {
   });
 
   const result = await mail.welcome.send({
-    to: 'lucas@example.com',
-    input: { name: 'Lucas' },
+    to: 'john@example.com',
+    input: { name: 'John Doe' },
   });
 
   console.log('messageId:', result.messageId);

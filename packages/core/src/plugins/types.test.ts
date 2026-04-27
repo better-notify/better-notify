@@ -104,7 +104,7 @@ describe('plugin lifecycle', () => {
         },
       },
     });
-    await mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } });
+    await mail.welcome.send({ to: 'x@y.com', input: { name: 'John Doe' } });
     expect(order).toEqual(['plugin', 'user']);
   });
 
@@ -137,7 +137,7 @@ describe('plugin lifecycle', () => {
       defaults: { from: 'a@b.com' },
       plugins: [{ name: 'p', middleware: [pluginMw] }],
     });
-    await mail.welcome.send({ to: 'x@y.com', input: { name: 'Lucas' } });
+    await mail.welcome.send({ to: 'x@y.com', input: { name: 'John Doe' } });
     expect(order).toEqual(['plugin enter', 'route enter', 'route exit', 'plugin exit']);
   });
 

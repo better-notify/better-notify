@@ -45,9 +45,9 @@ describe('TemplateAdapter', () => {
       });
 
     const rendered = await def._state.template!.render({
-      input: { name: 'Lucas', url: 'https://x.com' },
+      input: { name: 'John Doe', url: 'https://x.com' },
       ctx: {},
     });
-    expect(rendered.html).toContain('Lucas');
+    expect(rendered.html).toContain('John Doe');
   });
 });

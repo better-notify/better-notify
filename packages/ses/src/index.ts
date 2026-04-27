@@ -1,5 +1,5 @@
 import { EmailRpcNotImplementedError } from '@emailrpc/core';
-import type { Transport } from '@emailrpc/core/transports';
+import type { Transport } from '@emailrpc/email/transports';
 import type { WebhookAdapter } from '@emailrpc/core/webhook';
 
 export type SesTransportOptions = {

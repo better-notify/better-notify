@@ -8,6 +8,11 @@ import { runRateLimited } from './examples/rate-limited';
 import { runObservability } from './examples/with-observability';
 import { runKitchenSink } from './examples/kitchen-sink';
 import { runReactEmail } from './examples/react-email';
+import { runBatch } from './examples/batch';
+import { runHooks } from './examples/hooks';
+import { runPlugins } from './examples/plugins';
+import { runHttpTransport } from './examples/http-transport';
+import { runMultiChannel } from './examples/multi-channel';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -20,6 +25,11 @@ const examples: Record<string, () => Promise<void>> = {
   observability: runObservability,
   'kitchen-sink': runKitchenSink,
   'react-email': runReactEmail,
+  batch: runBatch,
+  hooks: runHooks,
+  plugins: runPlugins,
+  'http-transport': runHttpTransport,
+  'multi-channel': runMultiChannel,
 };
 
 const main = async (): Promise<void> => {

@@ -125,25 +125,25 @@ export const runKitchenSink = async (): Promise<void> => {
   const verifyUrl = 'https://example.com/verify?token=demo';
 
   console.log('1. fresh send via transactional sub-catalog (idempotency miss, rate limit ok)');
-  await sendWelcome('  first send', 'lucas@example.com', { name: 'Lucas', verifyUrl });
+  await sendWelcome('  first send', 'john@example.com', { name: 'John Doe', verifyUrl });
 
   console.log('2. same key (idempotency hit — replays cached result)');
-  await sendWelcome('  second send same key', 'lucas@example.com', { name: 'Lucas', verifyUrl });
+  await sendWelcome('  second send same key', 'john@example.com', { name: 'John Doe', verifyUrl });
 
   console.log('3. blocked recipient (suppression short-circuit)');
   await sendWelcome('  to suppressed', 'blocked@example.com', { name: 'Blocked', verifyUrl });
 
   console.log('4. burn the rate limit (max=5 per 60s, keyed per-recipient)');
   for (let i = 0; i < 6; i++) {
-    await sendWelcome(`  send #${i + 1} to maria`, 'maria@example.com', {
-      name: `Maria ${i}`,
+    await sendWelcome(`  send #${i + 1} to sarah`, 'sarah@example.com', {
+      name: `Sarah ${i}`,
       verifyUrl,
     });
   }
 
   console.log('5. send via marketing sub-catalog (nested path: mail.marketing.newsletter)');
   const newsletter = await mail.marketing.newsletter.send({
-    to: 'lucas@example.com',
+    to: 'john@example.com',
     input: {
       headline: 'Weekly update',
       bodyUrl: 'https://example.com/posts/weekly',
@@ -153,8 +153,8 @@ export const runKitchenSink = async (): Promise<void> => {
 
   console.log('6. send via transactional.reset (second route in transactional sub-catalog)');
   const reset = await mail.transactional.reset.send({
-    to: 'lucas@example.com',
-    input: { name: 'Lucas', resetUrl: 'https://example.com/reset?token=demo' },
+    to: 'john@example.com',
+    input: { name: 'John Doe', resetUrl: 'https://example.com/reset?token=demo' },
   });
   console.log(`  reset → ${reset.messageId.slice(0, 12)}`);
 
