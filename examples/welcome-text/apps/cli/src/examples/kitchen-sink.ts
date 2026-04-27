@@ -11,10 +11,9 @@ import {
   withEventLogger,
   withIdempotency,
   withRateLimit,
-  withSuppressionList,
   withTracing,
 } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
+import { emailChannel, withSuppressionList } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';

@@ -19,7 +19,7 @@ describe('withTagInject', () => {
       observed = ctx;
       return next();
     };
-    const result = await mw({
+    const result = (await mw({
       input: {},
       ctx: {},
       route: 'r',
@@ -34,7 +34,7 @@ describe('withTagInject', () => {
           args: { to: 'x@y.com', input: {} },
           next: noopNext as never,
         })) as never,
-    });
+    })) as { accepted: string[] };
     expect(observed).toMatchObject({
       tagsToInject: { env: 'prod', region: 'eu' },
     });

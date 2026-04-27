@@ -1,11 +1,11 @@
-import type { RawSendArgs } from '../types.js';
+import type { SendArgsLike } from './types.js';
 import type { IdempotencyStore } from '../stores/types.js';
 
 export type IdempotencyKeyParams<TInput = unknown> = {
   input: TInput;
   ctx: unknown;
   route: string;
-  args: RawSendArgs;
+  args: SendArgsLike;
 };
 
 export type IdempotencyKey<TInput = unknown> =

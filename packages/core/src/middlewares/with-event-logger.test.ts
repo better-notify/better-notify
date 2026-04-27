@@ -1,8 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { withEventLogger } from './with-event-logger.js';
 import { inMemoryEventSink } from '../sinks/in-memory-event-sink.js';
-import type { Middleware } from './types.js';
-import type { RawSendArgs, SendResult } from '../types.js';
+import type { Middleware, SendArgsLike } from './types.js';
+
+type SendResult = {
+  messageId: string;
+  accepted: string[];
+  rejected: string[];
+  envelope: { from: string; to: string[] };
+  timing: { renderMs: number; sendMs: number };
+};
 
 const okResult: SendResult = {
   messageId: 'm-internal',
@@ -15,7 +22,7 @@ const okResult: SendResult = {
 const callMw = (
   mw: Middleware,
   next: () => Promise<SendResult>,
-  args: RawSendArgs = { to: 'x@y.com', input: {} },
+  args: SendArgsLike = { to: 'x@y.com', input: {} },
 ) =>
   mw({
     input: {},

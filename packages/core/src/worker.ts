@@ -1,12 +1,17 @@
 import { NotifyRpcNotImplementedError } from './errors.js';
 import type { AnyCatalog } from './catalog.js';
 import type { Transport } from './transports/types.js';
-import type { QueueAdapter, Worker } from './queue.js';
+
+export type Worker = {
+  on(event: 'completed' | 'failed', handler: (...args: any[]) => void): void;
+  start(): Promise<void>;
+  close(): Promise<void>;
+};
 
 export type CreateWorkerOptions<R extends AnyCatalog, Ctx> = {
   catalog: R;
   transport: Transport;
-  queue: QueueAdapter;
+  queue: unknown;
   concurrency?: number;
   context?: (params: { job: { id: string; attemptsMade: number } }) => Ctx;
 };

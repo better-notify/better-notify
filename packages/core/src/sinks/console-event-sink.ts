@@ -13,9 +13,11 @@ export type ConsoleEventSinkOptions = {
  * matching `LoggerLike`, including a pino instance via `fromPino`) to route
  * events into your existing log pipeline.
  */
-export const consoleEventSink = (opts: ConsoleEventSinkOptions = {}): EventSink => {
+export const consoleEventSink = <TResult = unknown>(
+  opts: ConsoleEventSinkOptions = {},
+): EventSink<TResult> => {
   const logger = opts.logger ?? consoleLogger({ level: 'info' });
-  return createEventSink({
+  return createEventSink<TResult>({
     write: async (event) => {
       const payload = {
         route: event.route,
@@ -28,9 +30,9 @@ export const consoleEventSink = (opts: ConsoleEventSinkOptions = {}): EventSink 
         ...(event.result ? { result: event.result } : {}),
       };
       if (event.status === 'error') {
-        logger.error('email event', payload);
+        logger.error('send event', payload);
       } else {
-        logger.info('email event', payload);
+        logger.info('send event', payload);
       }
     },
   });

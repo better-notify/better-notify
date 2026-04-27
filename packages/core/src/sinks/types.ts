@@ -1,24 +1,22 @@
-import type { SendResult } from '../types.js';
+export type SendEventStatus = 'success' | 'error';
 
-export type EmailEventStatus = 'success' | 'error';
-
-export type EmailEventError = {
+export type SendEventError = {
   name: string;
   message: string;
   code?: string;
 };
 
-export type EmailEvent = {
+export type SendEvent<TResult = unknown> = {
   route: string;
   messageId: string;
-  status: EmailEventStatus;
+  status: SendEventStatus;
   durationMs: number;
   startedAt: Date;
   endedAt: Date;
-  result?: SendResult;
-  error?: EmailEventError;
+  result?: TResult;
+  error?: SendEventError;
 };
 
-export type EventSink = {
-  write(event: EmailEvent): Promise<void>;
+export type EventSink<TResult = unknown> = {
+  write(event: SendEvent<TResult>): Promise<void>;
 };

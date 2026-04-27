@@ -14,7 +14,7 @@ describe('withDryRun', () => {
   it('short-circuits without calling next', async () => {
     const mw = withDryRun();
     let called = false;
-    const r = await mw({
+    const r = (await mw({
       input: {},
       ctx: {},
       route: 'welcome',
@@ -24,7 +24,7 @@ describe('withDryRun', () => {
         called = true;
         return noopNext();
       }) as never,
-    });
+    })) as { messageId: string; accepted: string[] };
     expect(called).toBe(false);
     expect(r.messageId).toBe('dry-run');
     expect(r.accepted).toEqual([]);

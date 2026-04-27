@@ -1,5 +1,4 @@
-import type { LoggerLike } from '../logger.js';
-import type { SuppressionList } from '../stores/types.js';
+import type { LoggerLike, SuppressionList } from '@emailrpc/core';
 
 export type SuppressionField = 'to' | 'cc' | 'bcc';
 

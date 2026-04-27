@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { createEventSink } from './create-event-sink.js';
-import type { EmailEvent } from './types.js';
+import type { SendEvent } from './types.js';
 import type { LoggerLike } from '../logger.js';
 
-const baseEvent: EmailEvent = {
+const baseEvent: SendEvent = {
   route: 'welcome',
   messageId: 'm1',
   status: 'success',
@@ -30,7 +30,7 @@ const makeLogger = (): LoggerLike & { calls: Array<{ msg: string; payload?: obje
 
 describe('createEventSink', () => {
   it('forwards events to the user-supplied write', async () => {
-    const written: EmailEvent[] = [];
+    const written: SendEvent[] = [];
     const sink = createEventSink({
       write: async (event) => {
         written.push(event);
@@ -41,7 +41,7 @@ describe('createEventSink', () => {
   });
 
   it('skips events for which filter returns false', async () => {
-    const written: EmailEvent[] = [];
+    const written: SendEvent[] = [];
     const sink = createEventSink({
       write: async (event) => {
         written.push(event);
@@ -74,7 +74,7 @@ describe('createEventSink', () => {
   });
 
   it('forwards write errors to a user onError when provided', async () => {
-    const observed: Array<{ err: Error; event: EmailEvent }> = [];
+    const observed: Array<{ err: Error; event: SendEvent }> = [];
     const sink = createEventSink({
       write: async () => {
         throw new Error('sink down');

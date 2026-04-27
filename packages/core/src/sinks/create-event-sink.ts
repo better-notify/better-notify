@@ -1,11 +1,11 @@
 import { handlePromise } from '../lib/handle-promise.js';
 import { consoleLogger, type LoggerLike } from '../logger.js';
-import type { EmailEvent, EventSink } from './types.js';
+import type { EventSink, SendEvent } from './types.js';
 
-export type CreateEventSinkOptions = {
-  write: (event: EmailEvent) => Promise<void>;
-  filter?: (event: EmailEvent) => boolean;
-  onError?: (err: Error, event: EmailEvent) => void;
+export type CreateEventSinkOptions<TResult = unknown> = {
+  write: (event: SendEvent<TResult>) => Promise<void>;
+  filter?: (event: SendEvent<TResult>) => boolean;
+  onError?: (err: Error, event: SendEvent<TResult>) => void;
   errorLogger?: LoggerLike;
 };
 
@@ -38,7 +38,9 @@ export type CreateEventSinkOptions = {
  * });
  * ```
  */
-export const createEventSink = (opts: CreateEventSinkOptions): EventSink => {
+export const createEventSink = <TResult = unknown>(
+  opts: CreateEventSinkOptions<TResult>,
+): EventSink<TResult> => {
   const errorLogger = opts.errorLogger ?? consoleLogger({ level: 'error' });
   return {
     async write(event) {

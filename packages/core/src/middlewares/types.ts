@@ -1,16 +1,16 @@
-import type { RawSendArgs, SendResult } from '../types.js';
+export type SendArgsLike = { input: unknown; [k: string]: unknown };
 
-export type MiddlewareParams<TInput, TCtxIn, TCtxOut = TCtxIn> = {
+export type MiddlewareParams<TInput, TCtxIn, TCtxOut = TCtxIn, TResult = unknown> = {
   input: TInput;
   ctx: TCtxIn;
   route: string;
   messageId: string;
-  args: RawSendArgs;
-  next: (newCtx?: Partial<TCtxOut>) => Promise<SendResult>;
+  args: SendArgsLike;
+  next: (newCtx?: Partial<TCtxOut>) => Promise<TResult>;
 };
 
-export type Middleware<TInput = unknown, TCtxIn = unknown, TCtxOut = TCtxIn> = (
-  params: MiddlewareParams<TInput, TCtxIn, TCtxOut>,
-) => Promise<SendResult>;
+export type Middleware<TInput = unknown, TCtxIn = unknown, TCtxOut = TCtxIn, TResult = unknown> = (
+  params: MiddlewareParams<TInput, TCtxIn, TCtxOut, TResult>,
+) => Promise<TResult>;
 
-export type AnyMiddleware = Middleware<any, any, any>;
+export type AnyMiddleware = Middleware<any, any, any, any>;

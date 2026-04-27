@@ -2,8 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { inMemoryRateLimitStore } from '../stores/in-memory-rate-limit-store.js';
 import { withRateLimit } from './with-rate-limit.js';
 import { NotifyRpcRateLimitedError } from '../errors.js';
-import type { Middleware } from './types.js';
-import type { RawSendArgs, SendResult } from '../types.js';
+import type { Middleware, SendArgsLike } from './types.js';
+
+type SendResult = {
+  messageId: string;
+  accepted: string[];
+  rejected: string[];
+  envelope: { from: string; to: string[] };
+  timing: { renderMs: number; sendMs: number };
+};
 
 const okResult: SendResult = {
   messageId: 'm',
@@ -13,7 +20,7 @@ const okResult: SendResult = {
   timing: { renderMs: 0, sendMs: 0 },
 };
 
-const callMw = (mw: Middleware, args: RawSendArgs = { to: 'x@y.com', input: {} }) =>
+const callMw = (mw: Middleware, args: SendArgsLike = { to: 'x@y.com', input: {} }) =>
   mw({ input: {}, ctx: {}, route: 'welcome', messageId: 'test-msg', args, next: async () => okResult });
 
 describe('withRateLimit', () => {

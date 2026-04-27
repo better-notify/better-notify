@@ -1374,9 +1374,10 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   };
 
   it('chains all three: rate limit OK, not suppressed, fresh — provider sends and idempotency caches', async () => {
-    const { withRateLimit, withSuppressionList, withIdempotency, inMemoryRateLimitStore, inMemorySuppressionList, inMemoryIdempotencyStore } = await import('@emailrpc/core');
+    const { withRateLimit, withIdempotency, inMemoryRateLimitStore, inMemorySuppressionList, inMemoryIdempotencyStore } = await import('@emailrpc/core');
+    const { withSuppressionList } = await import('./index.js');
 
-    const idemStore = inMemoryIdempotencyStore();
+    const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
     const { ch, catalog } = buildKitchenCatalog([
       withRateLimit({ store: inMemoryRateLimitStore(), key: 'global', max: 10, window: 60_000 }),
       withSuppressionList({ list: inMemorySuppressionList() }),
@@ -1400,11 +1401,12 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   });
 
   it('suppression short-circuit does NOT write to idempotency store', async () => {
-    const { withSuppressionList, withIdempotency, inMemorySuppressionList, inMemoryIdempotencyStore } = await import('@emailrpc/core');
+    const { withIdempotency, inMemorySuppressionList, inMemoryIdempotencyStore } = await import('@emailrpc/core');
+    const { withSuppressionList } = await import('./index.js');
 
     const list = inMemorySuppressionList();
     await list.set('blocked@x.com', { reason: 'unsubscribe', createdAt: new Date() });
-    const idemStore = inMemoryIdempotencyStore();
+    const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     try {
@@ -1434,7 +1436,7 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   it('rate-limit throw does NOT write to idempotency store', async () => {
     const { withRateLimit, withIdempotency, inMemoryRateLimitStore, inMemoryIdempotencyStore, NotifyRpcRateLimitedError } = await import('@emailrpc/core');
 
-    const idemStore = inMemoryIdempotencyStore();
+    const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
     const { ch, catalog } = buildKitchenCatalog([
       withRateLimit({
         store: inMemoryRateLimitStore(),

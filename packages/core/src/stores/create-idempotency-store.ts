@@ -1,9 +1,8 @@
-import type { SendResult } from '../types.js';
 import type { IdempotencyStore } from './types.js';
 
-export type CreateIdempotencyStoreOptions = {
-  get: (key: string) => Promise<SendResult | null>;
-  set: (key: string, result: SendResult, ttlMs: number) => Promise<void>;
+export type CreateIdempotencyStoreOptions<TResult = unknown> = {
+  get: (key: string) => Promise<TResult | null>;
+  set: (key: string, result: TResult, ttlMs: number) => Promise<void>;
 };
 
 /**
@@ -24,9 +23,9 @@ export type CreateIdempotencyStoreOptions = {
  * });
  * ```
  */
-export const createIdempotencyStore = (
-  opts: CreateIdempotencyStoreOptions,
-): IdempotencyStore => {
+export const createIdempotencyStore = <TResult = unknown>(
+  opts: CreateIdempotencyStoreOptions<TResult>,
+): IdempotencyStore<TResult> => {
   return {
     get: opts.get,
     set: opts.set,

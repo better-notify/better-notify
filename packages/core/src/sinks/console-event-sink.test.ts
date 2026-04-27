@@ -36,7 +36,7 @@ describe('consoleEventSink', () => {
     const sink = consoleEventSink({ logger });
     await sink.write({ ...baseEvent, status: 'success' });
     expect(logger.calls[0]?.level).toBe('info');
-    expect(logger.calls[0]?.msg).toBe('email event');
+    expect(logger.calls[0]?.msg).toBe('send event');
   });
 
   it('emits error events at error level with the err payload', async () => {

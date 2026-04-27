@@ -1,11 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
-import { inMemorySuppressionList } from '../stores/in-memory-suppression-list.js';
+import { inMemorySuppressionList } from '@emailrpc/core';
+import type { Middleware, LoggerLike } from '@emailrpc/core';
 import { withSuppressionList } from './with-suppression-list.js';
-import type { Middleware } from './types.js';
-import type { RawSendArgs, SendResult } from '../types.js';
-import type { LoggerLike } from '../logger.js';
+import type { RawSendArgs } from '../types.js';
 
-const okResult: SendResult = {
+type SendResultLike = {
+  messageId: string;
+  accepted: string[];
+  rejected: string[];
+  envelope: { from: string; to: string[] };
+  timing: { renderMs: number; sendMs: number };
+};
+
+const okResult: SendResultLike = {
   messageId: 'm',
   accepted: ['x@y.com'],
   rejected: [],
@@ -20,12 +27,12 @@ const callMw = (mw: Middleware, args: RawSendArgs, route = 'welcome') => {
     ctx: {},
     route,
     messageId: 'test-msg',
-    args,
+    args: args as unknown as { input: unknown; [k: string]: unknown },
     next: async () => {
       nextCalled = true;
       return okResult;
     },
-  });
+  }) as Promise<SendResultLike>;
   return { result, nextCalled: () => nextCalled };
 };
 

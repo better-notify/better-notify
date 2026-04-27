@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { createIdempotencyStore } from './create-idempotency-store.js';
-import type { SendResult } from '../types.js';
+
+type SendResult = {
+  messageId: string;
+  accepted: string[];
+  rejected: string[];
+  envelope: { from: string; to: string[] };
+  timing: { renderMs: number; sendMs: number };
+};
 
 const makeResult = (id: string): SendResult => ({
   messageId: id,

@@ -1,9 +1,9 @@
 import { handlePromise } from '../lib/handle-promise.js';
-import type { EmailEvent, EmailEventError } from '../sinks/types.js';
+import type { SendEvent, SendEventError } from '../sinks/types.js';
 import type { Middleware } from './types.js';
 import type { WithEventLoggerOptions } from './with-event-logger.types.js';
 
-const toEventError = (err: Error): EmailEventError => {
+const toEventError = (err: Error): SendEventError => {
   const code = (err as { code?: unknown }).code;
   return {
     name: err.name,
@@ -15,7 +15,7 @@ const toEventError = (err: Error): EmailEventError => {
 /**
  * Emit one structured event per send into the supplied `EventSink`.
  *
- * Each send produces exactly one `EmailEvent` — either with `status: 'success'`
+ * Each send produces exactly one `SendEvent` — either with `status: 'success'`
  * and the resolved `result`, or with `status: 'error'` and a serialized
  * `error`. Errors are re-thrown after writing so the pipeline still surfaces
  * the failure to the caller.
@@ -36,7 +36,7 @@ export const withEventLogger = (opts: WithEventLoggerOptions): Middleware => {
     const endedAt = new Date();
 
     if (err) {
-      const event: EmailEvent = {
+      const event: SendEvent = {
         route,
         messageId,
         status: 'error',
@@ -49,7 +49,7 @@ export const withEventLogger = (opts: WithEventLoggerOptions): Middleware => {
       throw err;
     }
 
-    const event: EmailEvent = {
+    const event: SendEvent = {
       route,
       messageId,
       status: 'success',

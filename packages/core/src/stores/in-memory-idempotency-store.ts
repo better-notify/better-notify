@@ -1,12 +1,11 @@
 import { createIdempotencyStore } from './create-idempotency-store.js';
-import type { SendResult } from '../types.js';
 import type { IdempotencyStore } from './types.js';
 
-type Entry = { result: SendResult; expiresAtMs: number };
+type Entry<TResult> = { result: TResult; expiresAtMs: number };
 
-export const inMemoryIdempotencyStore = (): IdempotencyStore => {
-  const map = new Map<string, Entry>();
-  return createIdempotencyStore({
+export const inMemoryIdempotencyStore = <TResult = unknown>(): IdempotencyStore<TResult> => {
+  const map = new Map<string, Entry<TResult>>();
+  return createIdempotencyStore<TResult>({
     get: async (key) => {
       const entry = map.get(key);
       if (!entry) return null;

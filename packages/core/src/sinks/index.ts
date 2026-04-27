@@ -1,7 +1,7 @@
 export type {
-  EmailEvent,
-  EmailEventStatus,
-  EmailEventError,
+  SendEvent,
+  SendEventStatus,
+  SendEventError,
   EventSink,
 } from './types.js';
 export { createEventSink } from './create-event-sink.js';

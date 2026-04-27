@@ -57,7 +57,6 @@ export {
   withDryRun,
   withTagInject,
   withEventLogger,
-  withSuppressionList,
   withRateLimit,
   withIdempotency,
   withTracing,
@@ -68,8 +67,6 @@ export type {
   MiddlewareParams,
   WithTagInjectOptions,
   WithEventLoggerOptions,
-  WithSuppressionListOptions,
-  SuppressionField,
   WithRateLimitOptions,
   RateLimitKey,
   RateLimitKeyParams,
@@ -86,8 +83,6 @@ export type { LoggerLike, LogLevel, ConsoleLoggerOptions } from './logger.js';
 export { validate } from './schema.js';
 export type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';
 
-export type { TemplateAdapter, RenderedOutput, AnyTemplateAdapter } from './template.js';
-
 export {
   NotifyRpcError,
   NotifyRpcValidationError,
@@ -101,18 +96,7 @@ export type {
   NotifyRpcRateLimitedErrorOptions,
 } from './errors.js';
 
-export type {
-  Address,
-  FromInput,
-  Attachment,
-  InlineAsset,
-  Priority,
-  QueueResult,
-  RawSendArgs,
-  RenderedMessage,
-  SendResult,
-  Tags,
-} from './types.js';
+export type { Priority, Tags } from './types.js';
 
 export type {
   SuppressionEntry,
@@ -136,9 +120,9 @@ export type {
 } from './stores/index.js';
 
 export type {
-  EmailEvent,
-  EmailEventStatus,
-  EmailEventError,
+  SendEvent,
+  SendEventStatus,
+  SendEventError,
   EventSink,
   InMemoryEventSink,
   ConsoleEventSinkOptions,

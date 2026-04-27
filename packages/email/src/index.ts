@@ -29,6 +29,12 @@ export type {
   MockTransport,
 } from './transports/index.js';
 
+export { withSuppressionList } from './middlewares/with-suppression-list.js';
+export type {
+  WithSuppressionListOptions,
+  SuppressionField,
+} from './middlewares/with-suppression-list.types.js';
+
 export { emailChannel } from './channel.js';
 export type {
   EmailSendArgs,

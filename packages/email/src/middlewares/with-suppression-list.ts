@@ -1,11 +1,19 @@
+import { consoleLogger } from '@emailrpc/core';
+import type { Middleware } from '@emailrpc/core';
 import { normalizeAddress } from '../lib/normalize-address.js';
-import { consoleLogger } from '../logger.js';
-import type { Address, RawSendArgs, SendResult } from '../types.js';
-import type { Middleware } from './types.js';
+import type { Address, RawSendArgs } from '../types.js';
 import type {
   SuppressionField,
   WithSuppressionListOptions,
 } from './with-suppression-list.types.js';
+
+type SuppressedSendResult = {
+  messageId: string;
+  accepted: string[];
+  rejected: string[];
+  envelope: { from: string; to: string[] };
+  timing: { renderMs: number; sendMs: number };
+};
 
 const DEFAULT_FIELDS: ReadonlyArray<SuppressionField> = ['to', 'cc', 'bcc'];
 
@@ -53,7 +61,7 @@ export const withSuppressionList = (opts: WithSuppressionListOptions): Middlewar
   const logger = opts.logger ?? consoleLogger({ level: 'warn' });
 
   return async ({ args, route, next }) => {
-    const recipients = collectAddresses(args, fields);
+    const recipients = collectAddresses(args as unknown as RawSendArgs, fields);
     if (recipients.length === 0) return next();
 
     const lookups = await Promise.all(
@@ -71,7 +79,7 @@ export const withSuppressionList = (opts: WithSuppressionListOptions): Middlewar
       })),
     });
 
-    const result: SendResult = {
+    const result: SuppressedSendResult = {
       messageId: 'suppressed',
       accepted: [],
       rejected: recipients,

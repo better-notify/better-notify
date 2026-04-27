@@ -1,11 +1,11 @@
-import type { RawSendArgs } from '../types.js';
+import type { SendArgsLike } from './types.js';
 import type { RateLimitAlgorithm, RateLimitStore } from '../stores/types.js';
 
 export type RateLimitKeyParams<TInput = unknown> = {
   input: TInput;
   ctx: unknown;
   route: string;
-  args: RawSendArgs;
+  args: SendArgsLike;
 };
 
 export type RateLimitKey<TInput = unknown> =

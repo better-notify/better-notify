@@ -1,8 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { inMemoryIdempotencyStore } from '../stores/in-memory-idempotency-store.js';
 import { withIdempotency } from './with-idempotency.js';
-import type { Middleware } from './types.js';
-import type { RawSendArgs, SendResult } from '../types.js';
+import type { Middleware, SendArgsLike } from './types.js';
+
+type SendResult = {
+  messageId: string;
+  accepted: string[];
+  rejected: string[];
+  envelope: { from: string; to: string[] };
+  timing: { renderMs: number; sendMs: number };
+};
 
 const makeResult = (id: string): SendResult => ({
   messageId: id,
@@ -12,11 +19,12 @@ const makeResult = (id: string): SendResult => ({
   timing: { renderMs: 0, sendMs: 0 },
 });
 
-const callMw = (
+const callMw = async (
   mw: Middleware,
   next: () => Promise<SendResult>,
-  args: RawSendArgs = { to: 'x@y.com', input: {} },
-) => mw({ input: {}, ctx: {}, route: 'welcome', messageId: 'test-msg', args, next });
+  args: SendArgsLike = { to: 'x@y.com', input: {} },
+): Promise<SendResult> =>
+  (await mw({ input: {}, ctx: {}, route: 'welcome', messageId: 'test-msg', args, next })) as SendResult;
 
 describe('withIdempotency', () => {
   it('caches the first send and replays on subsequent calls', async () => {

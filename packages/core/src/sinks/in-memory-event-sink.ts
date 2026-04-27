@@ -1,8 +1,8 @@
 import { createEventSink } from './create-event-sink.js';
-import type { EmailEvent, EventSink } from './types.js';
+import type { EventSink, SendEvent } from './types.js';
 
-export type InMemoryEventSink = EventSink & {
-  readonly events: ReadonlyArray<EmailEvent>;
+export type InMemoryEventSink<TResult = unknown> = EventSink<TResult> & {
+  readonly events: ReadonlyArray<SendEvent<TResult>>;
   clear(): void;
 };
 
@@ -12,9 +12,9 @@ export type InMemoryEventSink = EventSink & {
  * Useful for tests and local development. Not intended for production — events
  * accumulate without bound until `clear()` is called.
  */
-export const inMemoryEventSink = (): InMemoryEventSink => {
-  const events: EmailEvent[] = [];
-  const inner = createEventSink({
+export const inMemoryEventSink = <TResult = unknown>(): InMemoryEventSink<TResult> => {
+  const events: SendEvent<TResult>[] = [];
+  const inner = createEventSink<TResult>({
     write: async (event) => {
       events.push(event);
     },

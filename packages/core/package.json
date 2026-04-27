@@ -14,10 +14,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./sender": {
-      "types": "./dist/sender.d.ts",
-      "default": "./dist/sender.js"
-    },
     "./worker": {
       "types": "./dist/worker.d.ts",
       "default": "./dist/worker.js"
@@ -29,14 +25,6 @@
     "./transports": {
       "types": "./dist/transports.d.ts",
       "default": "./dist/transports.js"
-    },
-    "./template": {
-      "types": "./dist/template.d.ts",
-      "default": "./dist/template.js"
-    },
-    "./queue": {
-      "types": "./dist/queue.d.ts",
-      "default": "./dist/queue.js"
     },
     "./middlewares": {
       "types": "./dist/middlewares.d.ts",
