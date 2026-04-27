@@ -1,16 +1,3 @@
-export { createEmailRpc } from './factory.js';
-export type { RootBuilder } from './factory.js';
-
-export { EmailBuilder } from './builder.js';
-export type {
-  AnyEmailBuilder,
-  CompleteEmailBuilder,
-  EmailDefinition,
-  EmailDefinitionOf,
-  IsComplete,
-  SubjectResolver,
-} from './builder.js';
-
 export { createCatalog, isCatalog } from './catalog.js';
 export type {
   Catalog,
@@ -96,16 +83,16 @@ export type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';
 export type { TemplateAdapter, RenderedOutput, AnyTemplateAdapter } from './template.js';
 
 export {
-  EmailRpcError,
-  EmailRpcValidationError,
-  EmailRpcRateLimitedError,
-  EmailRpcNotImplementedError,
+  NotifyRpcError,
+  NotifyRpcValidationError,
+  NotifyRpcRateLimitedError,
+  NotifyRpcNotImplementedError,
 } from './errors.js';
 export type {
   ErrorCode,
-  EmailRpcErrorOptions,
-  EmailRpcValidationErrorOptions,
-  EmailRpcRateLimitedErrorOptions,
+  NotifyRpcErrorOptions,
+  NotifyRpcValidationErrorOptions,
+  NotifyRpcRateLimitedErrorOptions,
 } from './errors.js';
 
 export type {

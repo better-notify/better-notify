@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createClient, createNotify, EmailRpcError } from '@emailrpc/core';
+import { createClient, createNotify, NotifyRpcError } from '@emailrpc/core';
 import { emailChannel, mockTransport } from './index.js';
 import type { TemplateAdapter } from './template.js';
 
@@ -72,7 +72,7 @@ describe('client.batch', () => {
     expect(result.errorCount).toBe(1);
     const failed = result.results[1];
     if (!failed || failed.status !== 'error') throw new Error('expected error entry at index 1');
-    expect(failed.error).toBeInstanceOf(EmailRpcError);
+    expect(failed.error).toBeInstanceOf(NotifyRpcError);
     expect(failed.error.code).toBe('VALIDATION');
     expect(transport.sent).toHaveLength(2);
   });
@@ -213,7 +213,7 @@ describe('client.batch', () => {
     expect(sent?.attachments).toBe(1);
   });
 
-  it('wraps non-EmailRpcError throws from hooks as UNKNOWN', async () => {
+  it('wraps non-NotifyRpcError throws from hooks as UNKNOWN', async () => {
     const ch = emailChannel();
     const rpc = createNotify({ channels: { email: ch } });
     const catalog = rpc.catalog({
@@ -247,7 +247,7 @@ describe('client.batch', () => {
     expect(result.errorCount).toBe(1);
     const failed = result.results[1];
     if (!failed || failed.status !== 'error') throw new Error('expected error entry at index 1');
-    expect(failed.error).toBeInstanceOf(EmailRpcError);
+    expect(failed.error).toBeInstanceOf(NotifyRpcError);
     expect(failed.error.code).toBe('UNKNOWN');
     expect(failed.error.message).toBe('plain hook failure');
     expect(failed.error.cause).toBeInstanceOf(Error);
@@ -256,11 +256,11 @@ describe('client.batch', () => {
 
   it('rejects an empty array', async () => {
     const { mail } = buildClient();
-    await expect(mail.welcome.batch([])).rejects.toThrow(EmailRpcError);
+    await expect(mail.welcome.batch([])).rejects.toThrow(NotifyRpcError);
     const [err] = await mail.welcome
       .batch([])
       .then(() => [null])
       .catch((e: unknown) => [e]);
-    expect((err as EmailRpcError).code).toBe('BATCH_EMPTY');
+    expect((err as NotifyRpcError).code).toBe('BATCH_EMPTY');
   });
 });

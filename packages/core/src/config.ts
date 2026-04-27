@@ -1,4 +1,4 @@
-export type EmailRpcConfig = {
+export type NotifyRpcConfig = {
   router: string;
   transport: string;
   storage?: string;
@@ -11,6 +11,6 @@ export type EmailRpcConfig = {
   };
 };
 
-export const defineConfig = (config: EmailRpcConfig): EmailRpcConfig => {
+export const defineConfig = (config: NotifyRpcConfig): NotifyRpcConfig => {
   return config;
 };

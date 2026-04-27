@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EmailRpcError } from '@emailrpc/core';
+import { NotifyRpcError } from '@emailrpc/core';
 import { resolveFrom } from './resolve-from.js';
 
 describe('resolveFrom', () => {
@@ -19,7 +19,7 @@ describe('resolveFrom', () => {
   });
 
   it('throws VALIDATION when no email is resolvable', () => {
-    expect(() => resolveFrom(undefined, undefined)).toThrow(EmailRpcError);
+    expect(() => resolveFrom(undefined, undefined)).toThrow(NotifyRpcError);
   });
 
   it('embeds route into the error message when route is provided', () => {
@@ -27,8 +27,8 @@ describe('resolveFrom', () => {
       resolveFrom(undefined, undefined, 'welcome');
       throw new Error('expected to throw');
     } catch (err) {
-      expect((err as EmailRpcError).message).toContain('welcome');
-      expect((err as EmailRpcError).route).toBe('welcome');
+      expect((err as NotifyRpcError).message).toContain('welcome');
+      expect((err as NotifyRpcError).route).toBe('welcome');
     }
   });
 });

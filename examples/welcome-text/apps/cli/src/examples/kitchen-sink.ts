@@ -1,5 +1,5 @@
 import {
-  EmailRpcRateLimitedError,
+  NotifyRpcRateLimitedError,
   consoleLogger,
   createClient,
   createNotify,
@@ -117,7 +117,7 @@ export const runKitchenSink = async (): Promise<void> => {
       const result = await mail.transactional.welcome.send({ to, input });
       console.log(`${label.padEnd(28)} → ${result.messageId.slice(0, 12)}`);
     } catch (err) {
-      if (err instanceof EmailRpcRateLimitedError) {
+      if (err instanceof NotifyRpcRateLimitedError) {
         console.log(
           `${label.padEnd(28)} → rate-limited (retry in ${err.retryAfterMs.toFixed(0)}ms)`,
         );

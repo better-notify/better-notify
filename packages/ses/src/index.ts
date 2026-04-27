@@ -1,4 +1,4 @@
-import { EmailRpcNotImplementedError } from '@emailrpc/core';
+import { NotifyRpcNotImplementedError } from '@emailrpc/core';
 import type { Transport } from '@emailrpc/email/transports';
 import type { WebhookAdapter } from '@emailrpc/core/webhook';
 
@@ -13,7 +13,7 @@ export type SesTransportOptions = {
 };
 
 export const sesTransport = (_opts: SesTransportOptions): Transport => {
-  throw new EmailRpcNotImplementedError('@emailrpc/ses transport (v0.3)');
+  throw new NotifyRpcNotImplementedError('@emailrpc/ses transport (v0.3)');
 };
 
 export type SesAdapterOptions = {
@@ -21,5 +21,5 @@ export type SesAdapterOptions = {
 };
 
 export const sesAdapter = (_opts: SesAdapterOptions = {}): WebhookAdapter => {
-  throw new EmailRpcNotImplementedError('@emailrpc/ses webhook adapter (v0.3)');
+  throw new NotifyRpcNotImplementedError('@emailrpc/ses webhook adapter (v0.3)');
 };

@@ -3,7 +3,7 @@ import { createTransport } from './create-transport.js';
 import { multiTransport } from './multi.js';
 import { createMockTransport } from './mock-transport.js';
 import type { SendContext, Transport, TransportResult } from '../transport.js';
-import { EmailRpcError } from '../errors.js';
+import { NotifyRpcError } from '../errors.js';
 
 type R = { body: string };
 type D = { id: string };
@@ -116,7 +116,7 @@ describe('multiTransport — construction', () => {
   it('throws CONFIG on empty transports', () => {
     expect(() =>
       multiTransport<R, D>({ strategy: 'failover', transports: [] }),
-    ).toThrow(EmailRpcError);
+    ).toThrow(NotifyRpcError);
   });
 
   it('throws CONFIG on invalid maxAttemptsPerTransport', () => {

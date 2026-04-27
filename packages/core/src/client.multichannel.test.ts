@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createClient } from './client.js';
-import { EmailRpcError } from './errors.js';
+import { NotifyRpcError } from './errors.js';
 import type { AnyChannel, AnyCatalog, ChannelDefinition } from './index.js';
 
 type TestRendered = { body: string; to: string };
@@ -82,7 +82,6 @@ const buildTestCatalog = (): AnyCatalog => {
   return {
     _brand: 'Catalog' as const,
     _ctx: undefined as never,
-    emails: {},
     definitions: { ping: def },
     nested: { ping: def as unknown as Record<string, unknown> },
     routes: ['ping'],
@@ -150,8 +149,8 @@ describe('createClient multi-channel', () => {
         return [e];
       }
     })();
-    expect(err).toBeInstanceOf(EmailRpcError);
-    expect((err as EmailRpcError).code).toBe('CHANNEL_NOT_QUEUEABLE');
+    expect(err).toBeInstanceOf(NotifyRpcError);
+    expect((err as NotifyRpcError).code).toBe('CHANNEL_NOT_QUEUEABLE');
   });
 
   it('runs middleware on non-email channel route and threads ctx into render', async () => {
@@ -242,7 +241,7 @@ describe('createClient multi-channel', () => {
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
-    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(EmailRpcError);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(NotifyRpcError);
     expect(errors).toEqual([{ phase: 'middleware', code: 'UNKNOWN' }]);
   });
 
@@ -272,7 +271,7 @@ describe('createClient multi-channel', () => {
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
-    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(EmailRpcError);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(NotifyRpcError);
     expect(errors).toEqual([{ phase: 'render', code: 'RENDER' }]);
   });
 
@@ -297,7 +296,7 @@ describe('createClient multi-channel', () => {
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
-    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(EmailRpcError);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(NotifyRpcError);
     expect(errors).toEqual([{ phase: 'send', code: 'PROVIDER' }]);
   });
 
@@ -468,7 +467,7 @@ describe('createClient multi-channel', () => {
       channels: { test: testChannel() },
       transportsByChannel: { test: createTestTransport() },
     }) as unknown as { ping: { queue: () => Promise<unknown> } };
-    await expect(mail.ping.queue()).rejects.toBeInstanceOf(EmailRpcError);
+    await expect(mail.ping.queue()).rejects.toBeInstanceOf(NotifyRpcError);
   });
 
   it('render() throws CONFIG when channel does not implement previewRender', async () => {
@@ -496,8 +495,8 @@ describe('createClient multi-channel', () => {
     expect(out).toEqual({ preview: { name: 'A' } });
   });
 
-  it('preserves EmailRpcError when transport throws one (no re-wrap)', async () => {
-    const orig = new EmailRpcError({ message: 'specific', code: 'PROVIDER' });
+  it('preserves NotifyRpcError when transport throws one (no re-wrap)', async () => {
+    const orig = new NotifyRpcError({ message: 'specific', code: 'PROVIDER' });
     const transport = {
       name: 'failing',
       sent: [] as unknown[],
@@ -505,7 +504,7 @@ describe('createClient multi-channel', () => {
         throw orig;
       },
     };
-    const errors: Array<EmailRpcError> = [];
+    const errors: Array<NotifyRpcError> = [];
     const catalog = buildTestCatalog();
     const mail = createClient({
       catalog,
@@ -538,8 +537,8 @@ describe('createClient multi-channel', () => {
     ).rejects.toThrow(/soft/);
   });
 
-  it('preserves EmailRpcError thrown from middleware', async () => {
-    const orig = new EmailRpcError({ message: 'mw orig', code: 'CONFIG' });
+  it('preserves NotifyRpcError thrown from middleware', async () => {
+    const orig = new NotifyRpcError({ message: 'mw orig', code: 'CONFIG' });
     const catalog = buildTestCatalog();
     const defs = catalog.definitions as unknown as Record<string, { middleware: unknown[] }>;
     const ping = defs.ping;
@@ -557,7 +556,7 @@ describe('createClient multi-channel', () => {
     await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBe(orig);
   });
 
-  it('batch wraps non-EmailRpcError transport throws with route-tagged EmailRpcError', async () => {
+  it('batch wraps non-NotifyRpcError transport throws with route-tagged NotifyRpcError', async () => {
     const transport = {
       name: 'bad',
       sent: [] as unknown[],
@@ -570,11 +569,11 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: testChannel() },
       transportsByChannel: { test: transport as unknown as TestTransport },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: EmailRpcError }> }> } };
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }> }> } };
     const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
     const first = r.results[0];
     if (!first || first.status !== 'error') throw new Error('expected error');
-    expect(first.error).toBeInstanceOf(EmailRpcError);
+    expect(first.error).toBeInstanceOf(NotifyRpcError);
     expect(first.error?.route).toBe('ping');
   });
 
@@ -604,7 +603,7 @@ describe('createClient multi-channel', () => {
       channels: { test: testChannel() },
       transportsByChannel: { test: createTestTransport() },
     }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<unknown> } };
-    await expect(mail.ping.batch([])).rejects.toThrow(EmailRpcError);
+    await expect(mail.ping.batch([])).rejects.toThrow(NotifyRpcError);
   });
 
   it('access via nested catalog path works', async () => {
@@ -612,7 +611,6 @@ describe('createClient multi-channel', () => {
     const outerCatalog = {
       _brand: 'Catalog' as const,
       _ctx: undefined as never,
-      emails: {},
       definitions: { 'ns.ping': inner.definitions.ping! },
       nested: { ns: inner },
       routes: ['ns.ping'],
@@ -659,8 +657,8 @@ describe('createClient multi-channel', () => {
     expect(errors.some((e) => e.phase === 'hook')).toBe(true);
   });
 
-  it('batch preserves EmailRpcError thrown from transport', async () => {
-    const orig = new EmailRpcError({ message: 'original', code: 'PROVIDER' });
+  it('batch preserves NotifyRpcError thrown from transport', async () => {
+    const orig = new NotifyRpcError({ message: 'original', code: 'PROVIDER' });
     const transport = {
       name: 'bad',
       sent: [] as unknown[],
@@ -673,7 +671,7 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: testChannel() },
       transportsByChannel: { test: transport as unknown as TestTransport },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: EmailRpcError }> }> } };
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }> }> } };
     const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
     const first = r.results[0];
     if (!first || first.status !== 'error') throw new Error('expected error');
@@ -692,9 +690,9 @@ describe('createClient multi-channel', () => {
     expect(transport.sent).toHaveLength(1);
   });
 
-  it('reportHookError preserves err when hook threw an EmailRpcError directly', async () => {
-    const original = new EmailRpcError({ message: 'pre-wrapped', code: 'UNKNOWN' });
-    const errors: Array<{ error: EmailRpcError }> = [];
+  it('reportHookError preserves err when hook threw an NotifyRpcError directly', async () => {
+    const original = new NotifyRpcError({ message: 'pre-wrapped', code: 'UNKNOWN' });
+    const errors: Array<{ error: NotifyRpcError }> = [];
     const catalog = buildTestCatalog();
     const mail = createClient({
       catalog,
@@ -728,7 +726,6 @@ describe('createClient multi-channel', () => {
     const orphan: AnyCatalog = {
       _brand: 'Catalog' as const,
       _ctx: undefined as never,
-      emails: {},
       definitions: {},
       nested: { ghost: def as unknown as Record<string, unknown> },
       routes: ['ghost'],
@@ -761,7 +758,7 @@ describe('createClient multi-channel', () => {
     expect(errors.some((e) => e.phase === 'hook')).toBe(true);
   });
 
-  it('batch wraps non-EmailRpcError thrown by validateArgs', async () => {
+  it('batch wraps non-NotifyRpcError thrown by validateArgs', async () => {
     const ch = testChannel() as unknown as {
       validateArgs: (a: unknown) => unknown;
     };
@@ -773,11 +770,11 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: ch as unknown as AnyChannel },
       transportsByChannel: { test: createTestTransport() },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: string; error?: EmailRpcError }> }> } };
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: string; error?: NotifyRpcError }> }> } };
     const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
     const first = r.results[0];
     if (!first || first.status !== 'error') throw new Error('expected error');
-    expect(first.error).toBeInstanceOf(EmailRpcError);
+    expect(first.error).toBeInstanceOf(NotifyRpcError);
     expect(first.error?.message).toMatch(/validate boom/);
   });
 

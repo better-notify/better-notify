@@ -1,12 +1,14 @@
 import { z } from 'zod';
-import { createEmailRpc, type TemplateAdapter } from '@emailrpc/core';
+import { createNotify } from '@emailrpc/core';
+import { emailChannel, type TemplateAdapter } from '@emailrpc/email';
 
 type AppContext = {
   requestId: string;
   locale: 'en' | 'pt-BR' | 'nl';
 };
 
-const rpc = createEmailRpc<AppContext>();
+const ch = emailChannel({ defaults: { from: 'hello@example.com' } });
+const rpc = createNotify<{ email: typeof ch }, AppContext>({ channels: { email: ch } });
 
 type WelcomeProps = {
   name: string;
@@ -29,7 +31,6 @@ export const welcome = rpc
       locale: z.enum(['en', 'pt-BR', 'nl']).default('en'),
     }),
   )
-  .from('hello@example.com')
   .replyTo('support@example.com')
   .subject(
     ({ input }) =>

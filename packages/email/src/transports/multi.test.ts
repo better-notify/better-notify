@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { multiTransport } from './multi.js';
-import { EmailRpcError } from '@emailrpc/core';
+import { NotifyRpcError } from '@emailrpc/core';
 import { memoryLogger } from '../lib/test-utils.js';
 import type { Transport, TransportResult } from './types.js';
 import type { RenderedMessage, SendContext } from '../types.js';
@@ -59,11 +59,11 @@ const fakeTransport = (name: string, queue: FakeBehavior[]): FakeTransport => {
 
 describe('multiTransport — construction', () => {
   it('throws CONFIG error on empty transports', () => {
-    expect(() => multiTransport({ strategy: 'failover', transports: [] })).toThrow(EmailRpcError);
+    expect(() => multiTransport({ strategy: 'failover', transports: [] })).toThrow(NotifyRpcError);
     try {
       multiTransport({ strategy: 'failover', transports: [] });
     } catch (e) {
-      expect((e as EmailRpcError).code).toBe('CONFIG');
+      expect((e as NotifyRpcError).code).toBe('CONFIG');
     }
   });
 

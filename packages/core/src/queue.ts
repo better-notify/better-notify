@@ -1,4 +1,4 @@
-import { EmailRpcNotImplementedError } from './errors.js';
+import { NotifyRpcNotImplementedError } from './errors.js';
 import type { SendResult } from './types.js';
 
 export type EmailJob<TInput = unknown, TCtx = unknown> = {
@@ -44,5 +44,5 @@ export type QueueAdapter = {
 };
 
 export const inMemoryQueue = (): QueueAdapter => {
-  throw new EmailRpcNotImplementedError('inMemoryQueue() (Layer 5)');
+  throw new NotifyRpcNotImplementedError('inMemoryQueue() (Layer 5)');
 };

@@ -1,6 +1,6 @@
 import { handlePromise } from '../lib/handle-promise.js';
 import { waitFor } from '../lib/wait-for.js';
-import { EmailRpcError } from '../errors.js';
+import { NotifyRpcError } from '../errors.js';
 import { consoleLogger, type LoggerLike } from '../logger.js';
 import type { SendContext, Transport, TransportResult } from '../transport.js';
 import type {
@@ -19,7 +19,7 @@ export type {
 
 const validateOptions = (opts: MultiTransportOptions): void => {
   if (opts.transports.length === 0) {
-    throw new EmailRpcError({
+    throw new NotifyRpcError({
       code: 'CONFIG',
       message: 'multiTransport requires at least one transport',
     });
@@ -28,7 +28,7 @@ const validateOptions = (opts: MultiTransportOptions): void => {
   const max = opts.maxAttemptsPerTransport ?? 1;
 
   if (max < 1 || !Number.isInteger(max)) {
-    throw new EmailRpcError({
+    throw new NotifyRpcError({
       code: 'CONFIG',
       message: 'maxAttemptsPerTransport must be an integer >= 1',
     });
@@ -38,7 +38,7 @@ const validateOptions = (opts: MultiTransportOptions): void => {
     const { initialMs, factor, maxMs } = opts.backoff;
 
     if (initialMs <= 0 || factor < 1 || maxMs < initialMs) {
-      throw new EmailRpcError({
+      throw new NotifyRpcError({
         code: 'CONFIG',
         message: 'invalid backoff config',
       });
@@ -129,7 +129,7 @@ const runClose = async (inner: Transport<any, any>, log: LoggerLike): Promise<vo
  * would from a single transport.
  *
  * @param opts See {@link MultiTransportOptions}. Validated synchronously;
- *   invalid configs throw `EmailRpcError({ code: 'CONFIG' })` from the call
+ *   invalid configs throw `NotifyRpcError({ code: 'CONFIG' })` from the call
  *   site, not from the first `send()`.
  */
 export const multiTransport = <TRendered = unknown, TData = unknown>(

@@ -95,6 +95,9 @@ importers:
       '@emailrpc/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@emailrpc/email':
+        specifier: workspace:*
+        version: link:../../packages/email
       zod:
         specifier: ^3.24.1
         version: 3.25.76

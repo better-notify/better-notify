@@ -1,4 +1,4 @@
-import { EmailRpcNotImplementedError } from '@emailrpc/core';
+import { NotifyRpcNotImplementedError } from '@emailrpc/core';
 import type { QueueAdapter } from '@emailrpc/core/queue';
 
 export type BullmqOptions = {
@@ -13,5 +13,5 @@ export type BullmqOptions = {
 };
 
 export const bullmq = (_opts: BullmqOptions): QueueAdapter => {
-  throw new EmailRpcNotImplementedError('@emailrpc/bullmq queue adapter (v0.3)');
+  throw new NotifyRpcNotImplementedError('@emailrpc/bullmq queue adapter (v0.3)');
 };

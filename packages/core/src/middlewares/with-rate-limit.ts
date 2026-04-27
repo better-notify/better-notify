@@ -1,4 +1,4 @@
-import { EmailRpcRateLimitedError } from '../errors.js';
+import { NotifyRpcRateLimitedError } from '../errors.js';
 import type { Middleware } from './types.js';
 import type { WithRateLimitOptions } from './with-rate-limit.types.js';
 
@@ -7,7 +7,7 @@ import type { WithRateLimitOptions } from './with-rate-limit.types.js';
  *
  * On every send the key is resolved (string or function of
  * `{ input, ctx, route, args }`) and recorded in the store; if the post-
- * record count exceeds `max`, an `EmailRpcRateLimitedError` is thrown
+ * record count exceeds `max`, an `NotifyRpcRateLimitedError` is thrown
  * carrying `key` and `retryAfterMs` so a queue worker (or retry layer) can
  * back off precisely. Otherwise the chain continues.
  *
@@ -40,7 +40,7 @@ export const withRateLimit = <TInput = unknown>(
       typeof opts.key === 'function' ? opts.key({ input, ctx, route, args }) : opts.key;
     const { count, resetAtMs } = await opts.store.record(key, opts.window, algorithm);
     if (count > opts.max) {
-      throw new EmailRpcRateLimitedError({
+      throw new NotifyRpcRateLimitedError({
         message: `Rate limit exceeded for key "${key}" on route "${route}".`,
         route,
         key,

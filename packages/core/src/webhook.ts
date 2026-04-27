@@ -1,4 +1,4 @@
-import { EmailRpcNotImplementedError } from './errors.js';
+import { NotifyRpcNotImplementedError } from './errors.js';
 import type { AnyStandardSchema, InferOutput } from './schema.js';
 
 export type WebhookHandler<TSchema extends AnyStandardSchema, TCtx> = {
@@ -28,12 +28,12 @@ export const toNodeHandler = (
   _router: WebhookRouter,
   _opts: { adapter: WebhookAdapter },
 ): never => {
-  throw new EmailRpcNotImplementedError('toNodeHandler() (Layer 6)');
+  throw new NotifyRpcNotImplementedError('toNodeHandler() (Layer 6)');
 };
 
 export const toFetchHandler = (
   _router: WebhookRouter,
   _opts: { adapter: WebhookAdapter },
 ): never => {
-  throw new EmailRpcNotImplementedError('toFetchHandler() (Layer 6)');
+  throw new NotifyRpcNotImplementedError('toFetchHandler() (Layer 6)');
 };

@@ -1,5 +1,5 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { EmailRpcValidationError } from './errors.js';
+import { NotifyRpcValidationError } from './errors.js';
 
 export type AnyStandardSchema = StandardSchemaV1;
 
@@ -15,7 +15,7 @@ export const validate = async <S extends StandardSchemaV1>(
   if (result instanceof Promise) result = await result;
 
   if (result.issues) {
-    throw new EmailRpcValidationError({
+    throw new NotifyRpcValidationError({
       message: `Validation failed${ctx.route ? ` for route "${ctx.route}"` : ''}`,
       issues: result.issues,
       route: ctx.route,

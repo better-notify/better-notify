@@ -1,5 +1,5 @@
 import { validate } from './schema.js';
-import { EmailRpcError } from './errors.js';
+import { NotifyRpcError } from './errors.js';
 import type { AnyCatalog, CtxOf, Catalog, InputOf } from './catalog.js';
 import { isCatalog } from './catalog.js';
 import type { Plugin } from './plugins/types.js';
@@ -19,11 +19,11 @@ export type ChannelSendResult<TData = unknown> = {
 export type SendArgs<TInput> = { input: TInput; [k: string]: unknown };
 
 export type RouteUnion<R extends AnyCatalog> = {
-  [K in keyof R['emails'] & string]: {
+  [K in keyof R['definitions'] & string]: {
     route: K;
     input: R extends Catalog<any> ? InputOf<R, K> : unknown;
   };
-}[keyof R['emails'] & string];
+}[keyof R['definitions'] & string];
 
 export type BeforeSendCtx<R extends AnyCatalog> = RouteUnion<R> & {
   args: SendArgs<unknown>;
@@ -43,7 +43,7 @@ export type AfterSendCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
 export type ErrorPhase = 'validate' | 'middleware' | 'render' | 'send' | 'hook';
 
 export type ErrorCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
-  error: EmailRpcError;
+  error: NotifyRpcError;
   phase: ErrorPhase;
 };
 
@@ -74,7 +74,7 @@ export type RenderOptions<TCtx = unknown> = { format?: 'html' | 'text'; ctx?: TC
 
 type BatchEntryResult<TResult> =
   | { status: 'ok'; index: number; result: TResult }
-  | { status: 'error'; index: number; error: EmailRpcError };
+  | { status: 'error'; index: number; error: NotifyRpcError };
 
 type BatchResult<TResult> = {
   okCount: number;
@@ -161,9 +161,9 @@ const reportHookError = async (
   const errorParams = {
     ...baseCtx,
     error:
-      err instanceof EmailRpcError
+      err instanceof NotifyRpcError
         ? err
-        : new EmailRpcError({ message: err.message, code: 'UNKNOWN', cause: err }),
+        : new NotifyRpcError({ message: err.message, code: 'UNKNOWN', cause: err }),
     phase: 'hook' as const,
   };
   for (const fn of hookErrorHandlers) {
@@ -255,7 +255,7 @@ export const createClient = <
   ): Promise<ChannelSendResult> => {
     const channel = channels[channelDef.channel];
     if (!channel) {
-      throw new EmailRpcError({
+      throw new NotifyRpcError({
         message: `No channel registered for "${channelDef.channel}".`,
         code: 'CONFIG',
         route: flatKey,
@@ -263,7 +263,7 @@ export const createClient = <
     }
     const transport = transportsByChannel[channelDef.channel];
     if (!transport) {
-      throw new EmailRpcError({
+      throw new NotifyRpcError({
         message: `No transport registered for channel "${channelDef.channel}".`,
         code: 'PROVIDER',
         route: flatKey,
@@ -284,7 +284,7 @@ export const createClient = <
       log.warn('validate failed', { err: validateErr });
       await runHooks(
         normalizedHooks.onError,
-        { ...baseHookCtx, input: undefined, error: validateErr as EmailRpcError, phase: 'validate' as const },
+        { ...baseHookCtx, input: undefined, error: validateErr as NotifyRpcError, phase: 'validate' as const },
         (e) => reportHookError(normalizedHooks.onError, baseHookCtx, e, log, 'onError'),
       );
       markHandled(validateErr);
@@ -311,7 +311,7 @@ export const createClient = <
       timing.renderMs = performance.now() - renderStart;
       const renderErr = renderTuple[0];
       if (renderErr) {
-        const wrapped = new EmailRpcError({
+        const wrapped = new NotifyRpcError({
           message: `Render failed for route "${flatKey}": ${renderErr.message}`,
           code: 'RENDER',
           route: flatKey,
@@ -351,9 +351,9 @@ export const createClient = <
       if (failure) {
         log.error('send failed', { err: failure, durationMs: timing.sendMs });
         const wrapped =
-          failure instanceof EmailRpcError
+          failure instanceof NotifyRpcError
             ? failure
-            : new EmailRpcError({
+            : new NotifyRpcError({
                 message: `Transport send failed for route "${flatKey}": ${failure.message}`,
                 code: 'PROVIDER',
                 route: flatKey,
@@ -401,9 +401,9 @@ export const createClient = <
     if (mwErr) {
       if (isHandled(mwErr)) throw mwErr;
       const wrapped =
-        mwErr instanceof EmailRpcError
+        mwErr instanceof NotifyRpcError
           ? mwErr
-          : new EmailRpcError({
+          : new NotifyRpcError({
               message: `Middleware failed for route "${flatKey}": ${mwErr.message}`,
               code: 'UNKNOWN',
               route: flatKey,
@@ -432,7 +432,7 @@ export const createClient = <
       send: (rawArgs: unknown) => executeChannelSend(channelDef, rawArgs, flatKey),
       batch: async (entries: ReadonlyArray<unknown>, batchOpts?: BatchOptions) => {
         if (entries.length === 0) {
-          throw new EmailRpcError({
+          throw new NotifyRpcError({
             message: 'batch requires at least one entry',
             code: 'BATCH_EMPTY',
             route: flatKey,
@@ -440,7 +440,7 @@ export const createClient = <
         }
         const results: Array<
           | { status: 'ok'; index: number; result: ChannelSendResult }
-          | { status: 'error'; index: number; error: EmailRpcError }
+          | { status: 'error'; index: number; error: NotifyRpcError }
         > = [];
         let okCount = 0;
         let errorCount = 0;
@@ -453,9 +453,9 @@ export const createClient = <
               status: 'error',
               index: i,
               error:
-                err instanceof EmailRpcError
+                err instanceof NotifyRpcError
                   ? err
-                  : new EmailRpcError({ message: err.message, cause: err, route: flatKey }),
+                  : new NotifyRpcError({ message: err.message, cause: err, route: flatKey }),
             });
           } else {
             okCount++;
@@ -469,7 +469,7 @@ export const createClient = <
       },
       queue: () =>
         Promise.reject(
-          new EmailRpcError({
+          new NotifyRpcError({
             message: `Channel "${channelDef.channel}" does not support queueing.`,
             code: 'CHANNEL_NOT_QUEUEABLE',
             route: flatKey,
@@ -478,7 +478,7 @@ export const createClient = <
       render: async (input: unknown, renderOpts?: { ctx?: unknown }) => {
         const channel = channels[channelDef.channel];
         if (!channel?.previewRender) {
-          throw new EmailRpcError({
+          throw new NotifyRpcError({
             message: `Channel "${channelDef.channel}" does not support .render().`,
             code: 'CONFIG',
             route: flatKey,

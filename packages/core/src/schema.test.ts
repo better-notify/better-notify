@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { validate } from './schema.js';
-import { EmailRpcValidationError } from './errors.js';
+import { NotifyRpcValidationError } from './errors.js';
 
 describe('validate', () => {
   it('returns the parsed value on success', async () => {
@@ -19,17 +19,17 @@ describe('validate', () => {
     expect(value).toEqual({ locale: 'en' });
   });
 
-  it('throws EmailRpcValidationError with issues populated', async () => {
+  it('throws NotifyRpcValidationError with issues populated', async () => {
     const schema = z.object({ to: z.string().email() });
     await expect(validate(schema, { to: 'not-an-email' })).rejects.toMatchObject({
-      name: 'EmailRpcValidationError',
+      name: 'NotifyRpcValidationError',
       code: 'VALIDATION',
     });
     try {
       await validate(schema, { to: 'not-an-email' });
     } catch (err) {
-      expect(err).toBeInstanceOf(EmailRpcValidationError);
-      const e = err as EmailRpcValidationError;
+      expect(err).toBeInstanceOf(NotifyRpcValidationError);
+      const e = err as NotifyRpcValidationError;
       expect(e.issues.length).toBeGreaterThan(0);
       expect(e.issues[0]).toHaveProperty('message');
     }

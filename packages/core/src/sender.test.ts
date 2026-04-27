@@ -1,23 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
 import { createSender } from './sender.js';
-import { createEmailRpc } from './factory.js';
-import { EmailRpcNotImplementedError } from './errors.js';
-import type { TemplateAdapter } from './template.js';
+import { NotifyRpcNotImplementedError } from './errors.js';
+import type { AnyCatalog } from './catalog.js';
 
 describe('sender stubs', () => {
-  it('createSender() throws EmailRpcNotImplementedError', () => {
-    const adapter: TemplateAdapter<{ name: string }> = {
-      render: async () => ({ html: '' }),
+  it('createSender() throws NotifyRpcNotImplementedError', () => {
+    const catalog: AnyCatalog = {
+      _brand: 'Catalog',
+      _ctx: undefined as never,
+      definitions: {},
+      nested: {},
+      routes: [],
     };
-    const t = createEmailRpc();
-    const catalog = t.catalog({
-      welcome: t
-        .email()
-        .input(z.object({ name: z.string() }))
-        .subject('hi')
-        .template(adapter),
-    });
-    expect(() => createSender({ catalog, transport: {} })).toThrow(EmailRpcNotImplementedError);
+    expect(() => createSender({ catalog, transport: {} })).toThrow(NotifyRpcNotImplementedError);
   });
 });

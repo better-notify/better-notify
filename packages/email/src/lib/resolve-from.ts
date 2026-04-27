@@ -1,4 +1,4 @@
-import { EmailRpcError } from '@emailrpc/core';
+import { NotifyRpcError } from '@emailrpc/core';
 import type { Address, FromInput } from '../types.js';
 
 const fromInputToParts = (
@@ -18,7 +18,7 @@ export const resolveFrom = (
   const b = fromInputToParts(defaults);
   const email = a.email ?? b.email;
   if (!email) {
-    throw new EmailRpcError({
+    throw new NotifyRpcError({
       message: `No "from" email${route ? ` for route "${route}"` : ''}: set it on the email definition, per-call args, or in channel defaults.`,
       code: 'VALIDATION',
       route,

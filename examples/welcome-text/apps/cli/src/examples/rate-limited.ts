@@ -1,5 +1,5 @@
 import {
-  EmailRpcRateLimitedError,
+  NotifyRpcRateLimitedError,
   createNotify,
   createClient,
   inMemoryRateLimitStore,
@@ -42,7 +42,7 @@ export const runRateLimited = async (): Promise<void> => {
       });
       console.log(`#${i} ok          messageId=${result.messageId.slice(0, 8)}`);
     } catch (err) {
-      if (err instanceof EmailRpcRateLimitedError) {
+      if (err instanceof NotifyRpcRateLimitedError) {
         console.log(
           `#${i} rate-limited  key=${err.key} retryAfterMs=${err.retryAfterMs.toFixed(0)}`,
         );

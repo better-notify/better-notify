@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   createClient,
   createNotify,
-  EmailRpcError,
+  NotifyRpcError,
   type Middleware,
 } from '@emailrpc/core';
 import { emailChannel, mockTransport, multiTransport } from './index.js';
@@ -591,7 +591,7 @@ describe('proxy behavior', () => {
 });
 
 describe('error pipeline', () => {
-  it('wraps render failures in EmailRpcError with code RENDER and fires onError', async () => {
+  it('wraps render failures in NotifyRpcError with code RENDER and fires onError', async () => {
     const failingAdapter: TemplateAdapter<{ name: string }> = {
       render: async () => {
         throw new Error('boom');
@@ -661,7 +661,7 @@ describe('error pipeline', () => {
     ).rejects.toThrow();
   });
 
-  it('wraps non-EmailRpcError provider failures with code PROVIDER', async () => {
+  it('wraps non-NotifyRpcError provider failures with code PROVIDER', async () => {
     const { catalog, channel } = createTestCatalog({ from: 'a@b.com' });
     const failingProvider = {
       name: 'failing',
@@ -687,9 +687,9 @@ describe('error pipeline', () => {
     expect(errors).toEqual([{ phase: 'send', code: 'PROVIDER' }]);
   });
 
-  it('passes through EmailRpcError thrown by the provider as-is', async () => {
+  it('passes through NotifyRpcError thrown by the provider as-is', async () => {
     const { catalog, channel } = createTestCatalog({ from: 'a@b.com' });
-    const original = new EmailRpcError({
+    const original = new NotifyRpcError({
       message: 'rate limited',
       code: 'PROVIDER',
     });
@@ -760,7 +760,7 @@ describe('error pipeline (extra)', () => {
     expect(errors).toEqual([{ phase: 'hook' }]);
   });
 
-  it('passes through EmailRpcError thrown inside an onError handler without rewrapping', async () => {
+  it('passes through NotifyRpcError thrown inside an onError handler without rewrapping', async () => {
     const log = memoryLogger();
     const { catalog, channel } = createTestCatalog({ from: 'a@b.com' });
     const mail = createClient({
@@ -770,7 +770,7 @@ describe('error pipeline (extra)', () => {
       logger: log,
       hooks: {
         onError: () => {
-          throw new EmailRpcError({
+          throw new NotifyRpcError({
             message: 'rpc-handler-err',
             code: 'UNKNOWN',
           });
@@ -1432,7 +1432,7 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   });
 
   it('rate-limit throw does NOT write to idempotency store', async () => {
-    const { withRateLimit, withIdempotency, inMemoryRateLimitStore, inMemoryIdempotencyStore, EmailRpcRateLimitedError } = await import('@emailrpc/core');
+    const { withRateLimit, withIdempotency, inMemoryRateLimitStore, inMemoryIdempotencyStore, NotifyRpcRateLimitedError } = await import('@emailrpc/core');
 
     const idemStore = inMemoryIdempotencyStore();
     const { ch, catalog } = buildKitchenCatalog([
@@ -1464,7 +1464,7 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
 
     await expect(
       mail.welcome.send({ to: 'b@x.com', input: { name: 'John Doe' } }),
-    ).rejects.toBeInstanceOf(EmailRpcRateLimitedError);
+    ).rejects.toBeInstanceOf(NotifyRpcRateLimitedError);
     expect(transport.sent).toHaveLength(1);
     expect((await idemStore.get('idem-key'))?.messageId).toBe('sentinel');
   });

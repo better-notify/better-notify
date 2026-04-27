@@ -46,7 +46,7 @@ export type MultiTransportBackoff = {
 
 /**
  * Options for {@link multiTransport}. Validated synchronously at construction;
- * invalid configs throw `EmailRpcError({ code: 'CONFIG' })`.
+ * invalid configs throw `NotifyRpcError({ code: 'CONFIG' })`.
  */
 export type MultiTransportOptions<TRendered = unknown, TData = unknown> = {
   /**

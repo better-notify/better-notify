@@ -1,4 +1,4 @@
-import { createNotify, createClient, EmailRpcError } from '@emailrpc/core';
+import { createNotify, createClient, NotifyRpcError } from '@emailrpc/core';
 import { emailChannel } from '@emailrpc/email';
 import { createTransport, formatAddress, normalizeAddress } from '@emailrpc/email/transports';
 import { z } from 'zod';
@@ -33,15 +33,15 @@ const httpTransport = (opts: HttpTransportOptions) => {
         headers: {
           'Content-Type': 'application/json',
           ...(opts.apiKey ? { Authorization: `Bearer ${opts.apiKey}` } : {}),
-          'X-EmailRpc-Route': ctx.route,
-          'X-EmailRpc-Message-Id': ctx.messageId,
+          'X-NotifyRpc-Route': ctx.route,
+          'X-NotifyRpc-Message-Id': ctx.messageId,
         },
         body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         const detail = await response.text().catch(() => '');
-        throw new EmailRpcError({
+        throw new NotifyRpcError({
           message:
             `HTTP transport failed: ${response.status} ${response.statusText} ${detail}`.trim(),
           code: 'PROVIDER',

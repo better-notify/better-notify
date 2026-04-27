@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { inMemoryRateLimitStore } from '../stores/in-memory-rate-limit-store.js';
 import { withRateLimit } from './with-rate-limit.js';
-import { EmailRpcRateLimitedError } from '../errors.js';
+import { NotifyRpcRateLimitedError } from '../errors.js';
 import type { Middleware } from './types.js';
 import type { RawSendArgs, SendResult } from '../types.js';
 
@@ -25,12 +25,12 @@ describe('withRateLimit', () => {
     await expect(callMw(mw)).resolves.toMatchObject({ messageId: 'm' });
   });
 
-  it('throws EmailRpcRateLimitedError when count exceeds max', async () => {
+  it('throws NotifyRpcRateLimitedError when count exceeds max', async () => {
     const store = inMemoryRateLimitStore();
     const mw = withRateLimit({ store, key: 'k', max: 2, window: 60_000 });
     await callMw(mw);
     await callMw(mw);
-    await expect(callMw(mw)).rejects.toBeInstanceOf(EmailRpcRateLimitedError);
+    await expect(callMw(mw)).rejects.toBeInstanceOf(NotifyRpcRateLimitedError);
   });
 
   it('error carries key + retryAfterMs', async () => {
@@ -38,9 +38,9 @@ describe('withRateLimit', () => {
     const mw = withRateLimit({ store, key: 'tenant-1', max: 1, window: 60_000 });
     await callMw(mw);
     const err = await callMw(mw).catch((e) => e);
-    expect(err).toBeInstanceOf(EmailRpcRateLimitedError);
-    expect((err as EmailRpcRateLimitedError).key).toBe('tenant-1');
-    expect((err as EmailRpcRateLimitedError).retryAfterMs).toBeGreaterThan(0);
+    expect(err).toBeInstanceOf(NotifyRpcRateLimitedError);
+    expect((err as NotifyRpcRateLimitedError).key).toBe('tenant-1');
+    expect((err as NotifyRpcRateLimitedError).retryAfterMs).toBeGreaterThan(0);
   });
 
   it('supports a function key derived from args', async () => {
@@ -53,7 +53,7 @@ describe('withRateLimit', () => {
     });
     await callMw(mw, { to: 'a@x.com', input: {} });
     await expect(callMw(mw, { to: 'a@x.com', input: {} })).rejects.toBeInstanceOf(
-      EmailRpcRateLimitedError,
+      NotifyRpcRateLimitedError,
     );
     await expect(callMw(mw, { to: 'b@x.com', input: {} })).resolves.toMatchObject({
       messageId: 'm',
@@ -71,6 +71,6 @@ describe('withRateLimit', () => {
     });
     await callMw(mw);
     await callMw(mw);
-    await expect(callMw(mw)).rejects.toBeInstanceOf(EmailRpcRateLimitedError);
+    await expect(callMw(mw)).rejects.toBeInstanceOf(NotifyRpcRateLimitedError);
   });
 });

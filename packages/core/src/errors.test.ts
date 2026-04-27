@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
-  EmailRpcError,
-  EmailRpcNotImplementedError,
-  EmailRpcRateLimitedError,
-  EmailRpcValidationError,
+  NotifyRpcError,
+  NotifyRpcNotImplementedError,
+  NotifyRpcRateLimitedError,
+  NotifyRpcValidationError,
 } from './errors.js';
 
-describe('EmailRpcError', () => {
+describe('NotifyRpcError', () => {
   it('defaults code to UNKNOWN', () => {
-    const err = new EmailRpcError({ message: 'boom' });
+    const err = new NotifyRpcError({ message: 'boom' });
     expect(err.code).toBe('UNKNOWN');
     expect(err.route).toBeUndefined();
     expect(err.messageId).toBeUndefined();
-    expect(err.name).toBe('EmailRpcError');
+    expect(err.name).toBe('NotifyRpcError');
   });
 
   it('preserves cause and explicit fields', () => {
     const cause = new Error('underlying');
-    const err = new EmailRpcError({
+    const err = new NotifyRpcError({
       message: 'boom',
       code: 'PROVIDER',
       route: 'welcome',
@@ -31,14 +31,14 @@ describe('EmailRpcError', () => {
   });
 
   it('toJSON serializes fields', () => {
-    const err = new EmailRpcError({
+    const err = new NotifyRpcError({
       message: 'boom',
       code: 'PROVIDER',
       route: 'welcome',
       messageId: 'm1',
     });
     expect(err.toJSON()).toEqual({
-      name: 'EmailRpcError',
+      name: 'NotifyRpcError',
       message: 'boom',
       code: 'PROVIDER',
       route: 'welcome',
@@ -47,29 +47,29 @@ describe('EmailRpcError', () => {
   });
 });
 
-describe('EmailRpcValidationError', () => {
+describe('NotifyRpcValidationError', () => {
   it('forces code to VALIDATION and exposes issues', () => {
     const issues = [{ message: 'bad email', path: ['to'] }];
-    const err = new EmailRpcValidationError({
+    const err = new NotifyRpcValidationError({
       message: 'invalid',
       issues,
       route: 'welcome',
     });
     expect(err.code).toBe('VALIDATION');
-    expect(err.name).toBe('EmailRpcValidationError');
+    expect(err.name).toBe('NotifyRpcValidationError');
     expect(err.issues).toEqual(issues);
   });
 
   it('toJSON includes issues alongside base fields', () => {
     const issues = [{ message: 'bad', path: ['x'] }];
-    const err = new EmailRpcValidationError({
+    const err = new NotifyRpcValidationError({
       message: 'invalid',
       issues,
       route: 'welcome',
       messageId: 'm1',
     });
     expect(err.toJSON()).toEqual({
-      name: 'EmailRpcValidationError',
+      name: 'NotifyRpcValidationError',
       message: 'invalid',
       code: 'VALIDATION',
       route: 'welcome',
@@ -79,22 +79,22 @@ describe('EmailRpcValidationError', () => {
   });
 });
 
-describe('EmailRpcRateLimitedError', () => {
+describe('NotifyRpcRateLimitedError', () => {
   it('forces code to RATE_LIMITED and exposes key + retryAfterMs', () => {
-    const err = new EmailRpcRateLimitedError({
+    const err = new NotifyRpcRateLimitedError({
       message: 'too many',
       route: 'welcome',
       key: 'tenant-1',
       retryAfterMs: 1500,
     });
     expect(err.code).toBe('RATE_LIMITED');
-    expect(err.name).toBe('EmailRpcRateLimitedError');
+    expect(err.name).toBe('NotifyRpcRateLimitedError');
     expect(err.key).toBe('tenant-1');
     expect(err.retryAfterMs).toBe(1500);
   });
 
   it('toJSON includes key and retryAfterMs alongside base fields', () => {
-    const err = new EmailRpcRateLimitedError({
+    const err = new NotifyRpcRateLimitedError({
       message: 'too many',
       route: 'welcome',
       messageId: 'm1',
@@ -102,7 +102,7 @@ describe('EmailRpcRateLimitedError', () => {
       retryAfterMs: 1500,
     });
     expect(err.toJSON()).toEqual({
-      name: 'EmailRpcRateLimitedError',
+      name: 'NotifyRpcRateLimitedError',
       message: 'too many',
       code: 'RATE_LIMITED',
       route: 'welcome',
@@ -113,11 +113,11 @@ describe('EmailRpcRateLimitedError', () => {
   });
 });
 
-describe('EmailRpcNotImplementedError', () => {
+describe('NotifyRpcNotImplementedError', () => {
   it('formats the feature name and sets code', () => {
-    const err = new EmailRpcNotImplementedError('foo()');
+    const err = new NotifyRpcNotImplementedError('foo()');
     expect(err.code).toBe('NOT_IMPLEMENTED');
-    expect(err.name).toBe('EmailRpcNotImplementedError');
+    expect(err.name).toBe('NotifyRpcNotImplementedError');
     expect(err.message).toContain('foo()');
     expect(err.message).toContain('not implemented');
   });
