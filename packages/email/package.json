@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/email",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha.0",
   "description": "Email channel plugin for betternotify.",
   "license": "MIT",
   "files": [
