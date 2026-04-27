@@ -18,10 +18,7 @@ const buildSimpleChannel = () =>
       if (typeof a.to !== 'string') throw new Error('to required');
       return a as TestArgs;
     },
-    render: ({ runtime, args }): TestRendered => {
-      const body = typeof runtime.body === 'function' ? runtime.body({ input: args.input }) : runtime.body;
-      return { body, to: args.to };
-    },
+    render: ({ runtime, args }): TestRendered => ({ body: runtime.body, to: args.to }),
   });
 
 describe('defineChannel', () => {
@@ -168,10 +165,7 @@ describe('defineChannel', () => {
       slots: { body: slot.resolver<string>() },
       validateArgs: (args: unknown): TestArgs => args as TestArgs,
       render: ({ args }) => ({ body: 'x', to: (args as { to: string }).to }),
-      previewRender: ({ runtime, input }) => {
-        const body = typeof runtime.body === 'function' ? runtime.body({ input }) : runtime.body;
-        return { body };
-      },
+      previewRender: ({ runtime }) => ({ body: runtime.body }),
     });
     const def = ch
       .createBuilder({ ctx: undefined, rootMiddleware: [] })
@@ -208,7 +202,7 @@ describe('defineChannel', () => {
       validateArgs: (args: unknown): { input: unknown; to: string } =>
         args as { input: unknown; to: string },
       render: ({ runtime, args }) => ({
-        body: typeof runtime.body === 'function' ? runtime.body({ input: args.input }) : runtime.body,
+        body: runtime.body,
         to: args.to,
       }),
     });

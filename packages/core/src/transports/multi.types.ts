@@ -2,24 +2,35 @@ import type { LoggerLike } from '../logger.js';
 import type { Transport } from '../transport.js';
 
 /**
- * Strategy controlling which inner transport is tried first on each `send()`.
+ * Strategy controlling how inner transports are dispatched on each `send()`.
  *
- * - `'failover'`: every send starts at `transports[0]` and walks forward through
- *   the list. Use when you have a clear primary + backup ordering (e.g. cheaper
- *   provider first, paid fallback second).
- * - `'round-robin'`: each `send()` advances an in-process counter, so successive
- *   sends start at different indices. Within a single send, on failure it still
- *   walks forward (modulo n) through the remaining transports. Use to spread
- *   load evenly across equivalent providers.
- * - `'random'`: each `send()` picks a uniformly-random start index. On failure
- *   it walks forward (modulo n) through the rest. Use when you want load
- *   spreading without per-process counter coordination — multiple processes
- *   distribute on average without sharing state.
+ * **Sequential** (one transport at a time, retry/advance on failure):
+ * - `'failover'`: every send starts at `transports[0]` and walks forward.
+ *   Clear primary + backup ordering.
+ * - `'round-robin'`: counter-based rotation across calls; even load distribution.
+ * - `'random'`: uniformly random start; load spreading without coordination.
  *
- * Weighted distribution is deferred to v0.3 — the union expands without a
- * breaking change when it lands.
+ * **Parallel** (all transports fire concurrently):
+ * - `'race'`: dispatch to all in parallel; return the first successful result.
+ *   Throws when all fail. Use for latency redundancy across equivalent providers.
+ * - `'parallel'`: dispatch to all in parallel; require ALL to succeed. Returns
+ *   the first transport's data as canonical. Use for verified-redundancy delivery
+ *   (e.g. primary + audit copy, both must succeed).
+ * - `'mirrored'`: dispatch to `transports[0]` (primary) and AWAIT it; the rest
+ *   fire-and-forget in the background (errors logged at `warn`). Returns the
+ *   primary's result. Use when secondary providers are observability mirrors —
+ *   their failure must not affect the user-visible outcome.
+ *
+ * Sequential strategies honor `maxAttemptsPerTransport` and `backoff`. Parallel
+ * strategies ignore them (per-transport retries make less sense in fan-out).
  */
-export type MultiTransportStrategy = 'failover' | 'round-robin' | 'random';
+export type MultiTransportStrategy =
+  | 'failover'
+  | 'round-robin'
+  | 'random'
+  | 'race'
+  | 'parallel'
+  | 'mirrored';
 
 /**
  * One inner transport in the composite list. Currently a thin wrapper so

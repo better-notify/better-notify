@@ -5,6 +5,7 @@ import { normalizeAddress } from '../lib/normalize-address.js';
 
 type MockTransportRecord = {
   route: string;
+  from?: string;
   to: string[];
   cc?: string[];
   bcc?: string[];
@@ -31,6 +32,7 @@ export const mockTransport = (): MockTransport => {
       const to = message.to.map(normalizeAddress);
       records.push({
         route: ctx.route,
+        from: message.from ? normalizeAddress(message.from) : undefined,
         to,
         cc: message.cc?.map(normalizeAddress),
         bcc: message.bcc?.map(normalizeAddress),

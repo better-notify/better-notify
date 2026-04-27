@@ -1,10 +1,12 @@
 import { defineChannel, slot } from '@emailrpc/core';
 import type { PushDeviceToken, PushSendArgs, RenderedPush } from './types.js';
 
-export type TitleResolver<TInput> = string | ((args: { input: TInput }) => string);
-export type BodyResolver<TInput> = string | ((args: { input: TInput }) => string);
-export type DataResolver<TInput> = Record<string, unknown> | ((args: { input: TInput }) => Record<string, unknown>);
-export type BadgeResolver<TInput> = number | ((args: { input: TInput }) => number);
+export type TitleResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
+export type BodyResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
+export type DataResolver<TInput> =
+  | Record<string, unknown>
+  | ((args: { input: TInput; ctx: unknown }) => Record<string, unknown>);
+export type BadgeResolver<TInput> = number | ((args: { input: TInput; ctx: unknown }) => number);
 
 const validatePushArgs = (args: unknown): PushSendArgs<unknown> => {
   if (!args || typeof args !== 'object') throw new Error('push args must be an object');
@@ -36,17 +38,9 @@ export const pushChannel = () =>
     },
     validateArgs: validatePushArgs,
     render: ({ runtime, args }): RenderedPush => {
-      const title = typeof runtime.title === 'function' ? runtime.title({ input: args.input }) : runtime.title;
-      const body = typeof runtime.body === 'function' ? runtime.body({ input: args.input }) : runtime.body;
-      const result: RenderedPush = { title, body, to: args.to };
-      if (runtime.data !== undefined) {
-        result.data =
-          typeof runtime.data === 'function' ? runtime.data({ input: args.input }) : runtime.data;
-      }
-      if (runtime.badge !== undefined) {
-        result.badge =
-          typeof runtime.badge === 'function' ? runtime.badge({ input: args.input }) : runtime.badge;
-      }
+      const result: RenderedPush = { title: runtime.title, body: runtime.body, to: args.to };
+      if (runtime.data !== undefined) result.data = runtime.data;
+      if (runtime.badge !== undefined) result.badge = runtime.badge;
       return result;
     },
   });

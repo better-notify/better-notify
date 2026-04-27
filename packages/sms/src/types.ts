@@ -1,6 +1,6 @@
 export type SmsAddress = string;
 
-export type SmsSendArgs<TInput> = {
+export type SmsSendArgs<TInput = unknown> = {
   to: SmsAddress;
   input: TInput;
 };

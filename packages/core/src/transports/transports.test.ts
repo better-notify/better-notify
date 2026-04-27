@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createTransport } from './create-transport.js';
 import { multiTransport } from './multi.js';
 import { createMockTransport } from './mock-transport.js';
+import { mapTransport } from './map-transport.js';
 import type { SendContext, Transport, TransportResult } from '../transport.js';
 import { NotifyRpcError } from '../errors.js';
 
@@ -341,5 +342,255 @@ describe('multiTransport — verify and close', () => {
       transports: [{ transport: a }],
     });
     await expect(m.close!()).resolves.toBeUndefined();
+  });
+});
+
+describe('multiTransport — race', () => {
+  it('returns first successful result; ignores slower ones', async () => {
+    const fast = createTransport<R, D>({
+      name: 'fast',
+      send: async () => ({ ok: true, data: { id: 'fast' } }),
+    });
+    const slow = createTransport<R, D>({
+      name: 'slow',
+      send: async () => {
+        await new Promise((r) => setTimeout(r, 50));
+        return { ok: true, data: { id: 'slow' } };
+      },
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'race',
+      transports: [{ transport: slow }, { transport: fast }],
+    });
+    const r = await m.send({ body: 'x' }, baseCtx);
+    if (!r.ok) throw new Error('expected ok');
+    expect(r.data.id).toBe('fast');
+  });
+
+  it('skips failures and returns the first success', async () => {
+    const broken = createTransport<R, D>({
+      name: 'broken',
+      send: async () => {
+        throw new Error('boom');
+      },
+    });
+    const good = createTransport<R, D>({
+      name: 'good',
+      send: async () => ({ ok: true, data: { id: 'good' } }),
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'race',
+      transports: [{ transport: broken }, { transport: good }],
+    });
+    const r = await m.send({ body: 'x' }, baseCtx);
+    if (!r.ok) throw new Error('expected ok');
+    expect(r.data.id).toBe('good');
+  });
+
+  it('throws when all transports fail', async () => {
+    const a = createTransport<R, D>({
+      name: 'a',
+      send: async () => {
+        throw new Error('a-fail');
+      },
+    });
+    const b = createTransport<R, D>({
+      name: 'b',
+      send: async () => {
+        throw new Error('b-fail');
+      },
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'race',
+      transports: [{ transport: a }, { transport: b }],
+    });
+    await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow(/a-fail|b-fail/);
+  });
+});
+
+describe('multiTransport — parallel', () => {
+  it('succeeds when all branches succeed; returns first transport data', async () => {
+    const calls: string[] = [];
+    const a = createTransport<R, D>({
+      name: 'a',
+      send: async () => {
+        calls.push('a');
+        return { ok: true, data: { id: 'a' } };
+      },
+    });
+    const b = createTransport<R, D>({
+      name: 'b',
+      send: async () => {
+        calls.push('b');
+        return { ok: true, data: { id: 'b' } };
+      },
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'parallel',
+      transports: [{ transport: a }, { transport: b }],
+    });
+    const r = await m.send({ body: 'x' }, baseCtx);
+    if (!r.ok) throw new Error('expected ok');
+    expect(r.data.id).toBe('a');
+    expect(calls.sort()).toEqual(['a', 'b']);
+  });
+
+  it('throws when any branch fails (even if others succeed)', async () => {
+    const a = createTransport<R, D>({
+      name: 'a',
+      send: async () => ({ ok: true, data: { id: 'a' } }),
+    });
+    const b = createTransport<R, D>({
+      name: 'b',
+      send: async () => {
+        throw new Error('b-fail');
+      },
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'parallel',
+      transports: [{ transport: a }, { transport: b }],
+    });
+    await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow('b-fail');
+  });
+
+  it('treats { ok: false } returns the same as throws', async () => {
+    const a = createTransport<R, D>({
+      name: 'a',
+      send: async () => ({ ok: true, data: { id: 'a' } }),
+    });
+    const b = createTransport<R, D>({
+      name: 'b',
+      send: async () => ({ ok: false, error: new Error('soft fail') }),
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'parallel',
+      transports: [{ transport: a }, { transport: b }],
+    });
+    await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow('soft fail');
+  });
+});
+
+describe('multiTransport — mirrored', () => {
+  it('returns primary result; mirrors fire-and-forget', async () => {
+    const calls: string[] = [];
+    const primary = createTransport<R, D>({
+      name: 'primary',
+      send: async () => {
+        calls.push('primary');
+        return { ok: true, data: { id: 'primary' } };
+      },
+    });
+    let mirrorResolved = false;
+    const mirror = createTransport<R, D>({
+      name: 'mirror',
+      send: async () => {
+        await new Promise((r) => setTimeout(r, 20));
+        calls.push('mirror');
+        mirrorResolved = true;
+        return { ok: true, data: { id: 'mirror' } };
+      },
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'mirrored',
+      transports: [{ transport: primary }, { transport: mirror }],
+    });
+    const r = await m.send({ body: 'x' }, baseCtx);
+    if (!r.ok) throw new Error('expected ok');
+    expect(r.data.id).toBe('primary');
+    expect(calls).toEqual(['primary']); // mirror still pending
+    expect(mirrorResolved).toBe(false);
+    await new Promise((res) => setTimeout(res, 40));
+    expect(mirrorResolved).toBe(true);
+  });
+
+  it('mirror failure does not affect primary result', async () => {
+    const primary = createTransport<R, D>({
+      name: 'primary',
+      send: async () => ({ ok: true, data: { id: 'primary' } }),
+    });
+    const mirror = createTransport<R, D>({
+      name: 'mirror',
+      send: async () => {
+        throw new Error('mirror boom');
+      },
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'mirrored',
+      transports: [{ transport: primary }, { transport: mirror }],
+    });
+    const r = await m.send({ body: 'x' }, baseCtx);
+    if (!r.ok) throw new Error('expected ok');
+    expect(r.data.id).toBe('primary');
+    await new Promise((res) => setTimeout(res, 10));
+  });
+
+  it('primary failure throws, mirrors never run', async () => {
+    let mirrorRan = false;
+    const primary = createTransport<R, D>({
+      name: 'primary',
+      send: async () => {
+        throw new Error('primary boom');
+      },
+    });
+    const mirror = createTransport<R, D>({
+      name: 'mirror',
+      send: async () => {
+        mirrorRan = true;
+        return { ok: true, data: { id: 'mirror' } };
+      },
+    });
+    const m = multiTransport<R, D>({
+      strategy: 'mirrored',
+      transports: [{ transport: primary }, { transport: mirror }],
+    });
+    await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow('primary boom');
+    expect(mirrorRan).toBe(false);
+  });
+});
+
+describe('mapTransport', () => {
+  it('rewrites the rendered message before delegating', async () => {
+    let captured: R | undefined;
+    const inner = createTransport<R, D>({
+      name: 'inner',
+      send: async (rendered) => {
+        captured = rendered;
+        return { ok: true, data: { id: 'x' } };
+      },
+    });
+    const wrapped = mapTransport<R, D>(inner, (msg) => ({ ...msg, body: `[wrapped] ${msg.body}` }));
+    await wrapped.send({ body: 'hi' }, baseCtx);
+    expect(captured?.body).toBe('[wrapped] hi');
+  });
+
+  it('preserves name, verify, and close from the inner transport', async () => {
+    let closed = false;
+    const inner: Transport<R, D> = {
+      name: 'inner',
+      send: async () => ({ ok: true, data: { id: 'x' } }),
+      verify: async () => ({ ok: true, details: 'inner-detail' }),
+      close: async () => {
+        closed = true;
+      },
+    };
+    const wrapped = mapTransport<R, D>(inner, (m) => m);
+    expect(wrapped.name).toBe('inner');
+    expect(await wrapped.verify!()).toEqual({ ok: true, details: 'inner-detail' });
+    await wrapped.close!();
+    expect(closed).toBe(true);
+  });
+
+  it('supports async rewrite functions', async () => {
+    let captured: R | undefined;
+    const inner = createTransport<R, D>({
+      name: 'inner',
+      send: async (rendered) => {
+        captured = rendered;
+        return { ok: true, data: { id: 'x' } };
+      },
+    });
+    const wrapped = mapTransport<R, D>(inner, async (msg) => ({ ...msg, body: msg.body.toUpperCase() }));
+    await wrapped.send({ body: 'hi' }, baseCtx);
+    expect(captured?.body).toBe('HI');
   });
 });

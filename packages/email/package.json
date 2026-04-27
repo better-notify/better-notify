@@ -1,6 +1,6 @@
 {
   "name": "@emailrpc/email",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Email channel plugin for emailrpc.",
   "license": "MIT",
   "files": [

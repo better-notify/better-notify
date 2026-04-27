@@ -13,7 +13,8 @@ pnpm add @emailrpc/react-email @emailrpc/core react react-email
 ```tsx
 /** @jsxImportSource react */
 import { z } from 'zod';
-import { createEmailRpc } from '@emailrpc/core';
+import { createNotify } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { reactEmail } from '@emailrpc/react-email';
 import { Body, Html } from 'react-email';
 
@@ -26,7 +27,8 @@ const Welcome = ({ name, link }: { name: string; link: string }) => (
   </Html>
 );
 
-const rpc = createEmailRpc<{ baseUrl: string }>();
+const email = emailChannel();
+const rpc = createNotify<{ email: typeof email }, { baseUrl: string }>({ channels: { email } });
 
 export const catalog = rpc.catalog({
   welcome: rpc.email()

@@ -191,17 +191,17 @@ describe('executeSend', () => {
     ).rejects.toThrow('Validation failed');
   });
 
-  it('throws when no from address is available', async () => {
+  it('renders without from when no source provides one (transport may reject)', async () => {
     const { catalog, channel } = createTestCatalog();
+    const transport = mockTransport();
     const mail = createClient({
       catalog,
       channels: { email: channel },
-      transportsByChannel: { email: mockTransport() },
+      transportsByChannel: { email: transport },
     });
 
-    await expect(
-      mail.welcome.send({ to: 'john@x.com', input: { name: 'John Doe' } }),
-    ).rejects.toThrow('from');
+    await mail.welcome.send({ to: 'john@x.com', input: { name: 'John Doe' } });
+    expect(transport.sent[0]?.from).toBeUndefined();
   });
 
   it('accepts an array of recipients', async () => {

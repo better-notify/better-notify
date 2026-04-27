@@ -148,7 +148,97 @@ export const multiTransport = <TRendered = unknown, TData = unknown>(
   });
   const counter = { value: 0 };
 
-  const send = async (message: TRendered, ctx: SendContext): Promise<TransportResult<TData>> => {
+  const sendOne = async (
+    transport: Transport<TRendered, TData>,
+    message: TRendered,
+    ctx: SendContext,
+  ): Promise<TransportResult<TData>> => {
+    const [err, result] = await handlePromise(transport.send(message, ctx));
+    if (err) throw err;
+    if (result.ok === false) throw result.error;
+    return result;
+  };
+
+  const sendRace = async (
+    message: TRendered,
+    ctx: SendContext,
+  ): Promise<TransportResult<TData>> => {
+    const promises = entries.map(async (e) => {
+      try {
+        const r = await sendOne(e.transport, message, ctx);
+        log.debug('multi race winner', { transportName: e.transport.name });
+        return r;
+      } catch (err) {
+        log.warn('multi race attempt failed', { err, transportName: e.transport.name });
+        throw err;
+      }
+    });
+    try {
+      return await Promise.any(promises);
+    } catch (err) {
+      const errors = err instanceof AggregateError ? err.errors : [err];
+      const lastErr = errors[errors.length - 1];
+      log.error('multi race exhausted', { errors: errors.length, lastErr });
+      throw lastErr ?? err;
+    }
+  };
+
+  const sendParallel = async (
+    message: TRendered,
+    ctx: SendContext,
+  ): Promise<TransportResult<TData>> => {
+    const settled = await Promise.allSettled(
+      entries.map((e) => sendOne(e.transport, message, ctx)),
+    );
+    const failures: unknown[] = [];
+    const successes: TransportResult<TData>[] = [];
+    for (let i = 0; i < settled.length; i++) {
+      const s = settled[i];
+      if (!s) continue;
+      const transportName = entries[i]?.transport.name ?? `[${i}]`;
+      if (s.status === 'rejected') {
+        failures.push(s.reason);
+        log.warn('multi parallel branch failed', { err: s.reason, transportName });
+      } else {
+        successes.push(s.value);
+        log.debug('multi parallel branch ok', { transportName });
+      }
+    }
+    if (failures.length > 0) {
+      log.error('multi parallel partial failure', {
+        successes: successes.length,
+        failures: failures.length,
+      });
+      throw failures[0];
+    }
+    const first = successes[0];
+    if (!first) throw new NotifyRpcError({ code: 'CONFIG', message: 'parallel requires at least one transport' });
+    return first;
+  };
+
+  const sendMirrored = async (
+    message: TRendered,
+    ctx: SendContext,
+  ): Promise<TransportResult<TData>> => {
+    const primary = entries[0];
+    if (!primary) throw new NotifyRpcError({ code: 'CONFIG', message: 'mirrored requires at least one transport' });
+    const result = await sendOne(primary.transport, message, ctx);
+    log.debug('multi mirrored primary ok', { transportName: primary.transport.name });
+    for (let i = 1; i < entries.length; i++) {
+      const mirror = entries[i];
+      if (!mirror) continue;
+      const transportName = mirror.transport.name;
+      void handlePromise(sendOne(mirror.transport, message, ctx)).then(([err]) => {
+        if (err) log.warn('multi mirror failed', { err, transportName });
+      });
+    }
+    return result;
+  };
+
+  const sendSequential = async (
+    message: TRendered,
+    ctx: SendContext,
+  ): Promise<TransportResult<TData>> => {
     const order = buildOrder(strategy, entries.length, counter);
     let lastErr: unknown;
     let attempts = 0;
@@ -188,6 +278,13 @@ export const multiTransport = <TRendered = unknown, TData = unknown>(
 
     log.error('multi exhausted', { attempts, lastErr });
     throw lastErr;
+  };
+
+  const send = async (message: TRendered, ctx: SendContext): Promise<TransportResult<TData>> => {
+    if (strategy === 'race') return sendRace(message, ctx);
+    if (strategy === 'parallel') return sendParallel(message, ctx);
+    if (strategy === 'mirrored') return sendMirrored(message, ctx);
+    return sendSequential(message, ctx);
   };
 
   const verify = async (): Promise<{ ok: boolean; details?: unknown }> => {

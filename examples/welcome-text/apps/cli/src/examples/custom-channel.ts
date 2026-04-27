@@ -25,9 +25,7 @@ const slackChannel = defineChannel({
     threadTs: z.string().optional(),
   }),
   render: ({ runtime, args }): RenderedSlack => {
-    const text =
-      typeof runtime.text === 'function' ? runtime.text({ input: args.input }) : runtime.text;
-    const rendered: RenderedSlack = { channel: args.channel, text };
+    const rendered: RenderedSlack = { channel: args.channel, text: runtime.text };
     if (args.threadTs) rendered.threadTs = args.threadTs;
     return rendered;
   },

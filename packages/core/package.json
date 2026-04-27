@@ -1,6 +1,6 @@
 {
   "name": "@emailrpc/core",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "End-to-end typed email contracts, sender, and webhook router for Node.js.",
   "license": "MIT",
   "files": [

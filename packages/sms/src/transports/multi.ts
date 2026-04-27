@@ -1,4 +1,7 @@
-import { multiTransport as coreMultiTransport, createTransport as coreCreateTransport } from '@emailrpc/core';
+import {
+  multiTransport as coreMultiTransport,
+  createTransport as coreCreateTransport,
+} from '@emailrpc/core';
 import type {
   MultiTransportOptions as CoreMultiTransportOptions,
   CreateTransportOptions as CoreCreateTransportOptions,

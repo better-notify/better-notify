@@ -11,21 +11,25 @@ pnpm add @emailrpc/smtp @emailrpc/core
 ## Usage
 
 ```ts
-import { createClient } from '@emailrpc/core';
+import { createNotify, createClient } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { smtpTransport } from '@emailrpc/smtp';
-import { emails } from './emails';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({ /* routes */ });
 
 const mail = createClient({
-  catalog: emails,
-  transports: [
-    smtpTransport({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: smtpTransport({
       host: 'smtp.example.com',
       port: 587,
       auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASS! },
     }),
-  ],
-  defaults: {
-    from: { name: 'My App', email: 'noreply@example.com' },
   },
 });
 ```

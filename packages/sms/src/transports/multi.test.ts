@@ -24,4 +24,20 @@ describe('sms multiTransport / createTransport wrappers', () => {
     if (!r.ok) throw new Error('expected ok');
     expect(r.data.messageId).toBe('abc');
   });
+
+  it('provider transport packages stamp identity in their send closure', async () => {
+    // Convention: provider authors close over their sender info inside `send`.
+    // No framework-level option needed.
+    const sender = '+15555550100';
+    let captured: { from?: string } | undefined;
+    const twilioStyle = createTransport({
+      name: 'twilio',
+      send: async (rendered) => {
+        captured = { ...rendered, from: sender };
+        return { ok: true, data: { messageId: 'abc' } };
+      },
+    });
+    await twilioStyle.send({ to: '+1', body: 'hi' }, { route: 'x', messageId: 'm', attempt: 1 });
+    expect(captured?.from).toBe(sender);
+  });
 });

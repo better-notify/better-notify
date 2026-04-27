@@ -1,6 +1,6 @@
 {
   "name": "@emailrpc/ses",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "AWS SES provider and webhook adapter for emailRpc.",
   "license": "MIT",
   "files": [

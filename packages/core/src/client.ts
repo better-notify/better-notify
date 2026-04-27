@@ -104,7 +104,7 @@ type ClientFromMap<M> = {
 export type Client<R extends AnyCatalog> =
   R extends Catalog<infer M> ? ClientFromMap<M> : never;
 
-const HANDLED = Symbol.for('emailrpc.error.handled');
+const HANDLED = Symbol.for('notifyrpc.error.handled');
 
 const markHandled = (err: unknown): void => {
   if (err && typeof err === 'object') (err as Record<symbol, true>)[HANDLED] = true;

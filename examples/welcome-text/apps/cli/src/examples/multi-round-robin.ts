@@ -1,13 +1,9 @@
 import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
-import { multiTransport } from '@emailrpc/email/transports';
+import { emailChannel, createTransport, multiTransport } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
-import { mockTransport } from '../test-utils';
 
-const ch = emailChannel({
-  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
-});
+const ch = emailChannel();
 const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
@@ -22,13 +18,28 @@ const catalog = rpc.catalog({
     }),
 });
 
+// Each provider closes over its own verified sender — no framework defaultFrom.
+const stubProvider = (label: string, accountFrom: { name: string; email: string }) =>
+  createTransport({
+    name: label,
+    send: async (msg) => {
+      const from = msg.from ?? accountFrom;
+      console.log(`[${label}] from=${JSON.stringify(from)} to=${msg.to.join(',')}`);
+      return { ok: true, data: { accepted: msg.to.map(String), rejected: [] } };
+    },
+  });
+
 export const runMultiRoundRobin = async (): Promise<void> => {
   const composite = multiTransport({
     name: 'round-robin',
     strategy: 'round-robin',
     transports: [
-      { transport: mockTransport('mock-a') },
-      { transport: mockTransport('mock-b') },
+      {
+        transport: stubProvider('mock-a', { name: 'Account A', email: 'noreply@a.example.com' }),
+      },
+      {
+        transport: stubProvider('mock-b', { name: 'Account B', email: 'noreply@b.example.com' }),
+      },
     ],
     logger: consoleLogger({ level: 'debug' }),
   });
@@ -37,14 +48,16 @@ export const runMultiRoundRobin = async (): Promise<void> => {
     catalog,
     channels: { email: ch },
     transportsByChannel: { email: composite },
-    logger: consoleLogger({ level: 'debug' }),
+    logger: consoleLogger({ level: 'info' }),
   });
 
+  console.log('Two providers alternating round-robin; each stamps its account-bound `from`.');
+  console.log('---');
   for (let i = 1; i <= 4; i++) {
     const result = await mail.welcome.send({
       to: env.SMTP_DESTINATION_EMAIL,
       input: { name: `User ${i}`, verifyUrl: `https://example.com/verify?token=abc${i}` },
     });
-    console.log(`Send #${i}:`, result.messageId, '→', result.envelope?.to.join(', '));
+    console.log(`Send #${i}: id=${result.messageId.slice(0, 8)} (see [provider] log above for from)`);
   }
 };

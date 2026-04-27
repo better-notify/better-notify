@@ -1,6 +1,6 @@
 {
   "name": "@emailrpc/sms",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "SMS channel plugin for emailrpc.",
   "license": "MIT",
   "files": [

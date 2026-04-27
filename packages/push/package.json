@@ -1,6 +1,6 @@
 {
   "name": "@emailrpc/push",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Push notification channel plugin for emailrpc.",
   "license": "MIT",
   "files": [

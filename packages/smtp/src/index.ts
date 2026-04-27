@@ -1,8 +1,15 @@
 import nodemailer from 'nodemailer';
-import type { Transport } from '@emailrpc/email/transports';
+import type { Address, FromInput, Transport } from '@emailrpc/email';
 import { formatAddress, normalizeAddress } from '@emailrpc/email/transports';
-import { consoleLogger } from '@emailrpc/core';
+import { consoleLogger, NotifyRpcError } from '@emailrpc/core';
 import type { SmtpTransportOptions } from './types.js';
+
+const fromInputToAddress = (input: Address | FromInput | undefined): Address | undefined => {
+  if (!input) return undefined;
+  if (typeof input === 'string') return input;
+  if (!input.email) return undefined;
+  return input.name ? { name: input.name, email: input.email } : { email: input.email };
+};
 
 export type { SmtpTransportOptions, SmtpAuth, SmtpDkim } from './types.js';
 
@@ -26,11 +33,23 @@ export const smtpTransport = (opts: SmtpTransportOptions): Transport => {
   const log = (opts.logger ?? consoleLogger()).child({ component: 'smtp' });
   const warned = new Set<string>();
 
+  const fallbackFrom = opts.auth?.user;
+
   return {
     name: 'smtp',
     async send(message, ctx) {
+      const from = fromInputToAddress(message.from ?? fallbackFrom);
+      if (!from) {
+        throw new NotifyRpcError({
+          message:
+            'SMTP transport: no "from" address. Set it on the channel default, route `.from()` resolver, per-call args, or supply `auth.user` on smtpTransport.',
+          code: 'CONFIG',
+          route: ctx.route,
+          messageId: ctx.messageId,
+        });
+      }
       if (opts.auth?.user) {
-        const fromAddress = normalizeAddress(message.from);
+        const fromAddress = normalizeAddress(from);
 
         if (fromAddress !== opts.auth.user && !warned.has(fromAddress)) {
           warned.add(fromAddress);
@@ -43,7 +62,7 @@ export const smtpTransport = (opts: SmtpTransportOptions): Transport => {
         }
       }
       const info = await transporter.sendMail({
-        from: formatAddress(message.from),
+        from: formatAddress(from),
         to: message.to.map(formatAddress),
         cc: message.cc?.map(formatAddress),
         bcc: message.bcc?.map(formatAddress),

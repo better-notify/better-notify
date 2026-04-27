@@ -3,6 +3,9 @@ import { runSmtp } from './examples/smtp';
 import { runMultiFailover } from './examples/multi-failover';
 import { runMultiRoundRobin } from './examples/multi-round-robin';
 import { runMultiRandom } from './examples/multi-random';
+import { runMultiRace } from './examples/multi-race';
+import { runMultiParallel } from './examples/multi-parallel';
+import { runMultiMirrored } from './examples/multi-mirrored';
 import { runDryRun } from './examples/dry-run';
 import { runRateLimited } from './examples/rate-limited';
 import { runObservability } from './examples/with-observability';
@@ -14,6 +17,7 @@ import { runPlugins } from './examples/plugins';
 import { runHttpTransport } from './examples/http-transport';
 import { runMultiChannel } from './examples/multi-channel';
 import { runCustomChannel } from './examples/custom-channel';
+import { runPerTransportFrom } from './examples/per-transport-from';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -21,6 +25,9 @@ const examples: Record<string, () => Promise<void>> = {
   'multi-failover': runMultiFailover,
   'multi-round-robin': runMultiRoundRobin,
   'multi-random': runMultiRandom,
+  'multi-race': runMultiRace,
+  'multi-parallel': runMultiParallel,
+  'multi-mirrored': runMultiMirrored,
   'dry-run': runDryRun,
   'rate-limited': runRateLimited,
   observability: runObservability,
@@ -32,6 +39,7 @@ const examples: Record<string, () => Promise<void>> = {
   'http-transport': runHttpTransport,
   'multi-channel': runMultiChannel,
   'custom-channel': runCustomChannel,
+  'per-transport-from': runPerTransportFrom,
 };
 
 const main = async (): Promise<void> => {

@@ -15,7 +15,8 @@ export type EmailSendArgs<TInput = unknown> = {
   input: TInput;
 };
 
-export type SubjectResolver<TInput> = string | ((args: { input: TInput }) => string);
+export type SubjectResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
+export type FromResolver<TInput> = FromInput | ((args: { input: TInput; ctx: unknown }) => FromInput);
 
 export type TemplateInput<TInput = any, TCtx = any> =
   | TemplateAdapter<TInput, TCtx>
@@ -50,7 +51,7 @@ export const emailChannel = (options: EmailChannelOptions = {}) =>
     slots: {
       subject: slot.resolver<string>(),
       template: slot.value<TemplateInput>(),
-      from: slot.value<FromInput>().optional(),
+      from: slot.resolver<FromInput>().optional(),
       replyTo: slot.value<Address>().optional(),
       tags: slot.value<Tags>().optional(),
       priority: slot.value<Priority>().optional(),
@@ -59,9 +60,6 @@ export const emailChannel = (options: EmailChannelOptions = {}) =>
     render: async ({ runtime, args, ctx }): Promise<RenderedMessage> => {
       const adapter = toAdapter(runtime.template);
       const rendered = await adapter.render({ input: args.input, ctx });
-      const subj =
-        typeof runtime.subject === 'function' ? runtime.subject({ input: args.input }) : runtime.subject;
-
       const from = resolveFrom(args.from ?? runtime.from, options.defaults?.from);
       const replyTo = args.replyTo ?? runtime.replyTo ?? options.defaults?.replyTo;
       const mergedHeaders = {
@@ -70,15 +68,15 @@ export const emailChannel = (options: EmailChannelOptions = {}) =>
       };
 
       const message: RenderedMessage = {
-        from,
         to: toAddressArray(args.to),
-        subject: rendered.subject ?? subj,
+        subject: rendered.subject ?? runtime.subject,
         html: rendered.html,
         text: rendered.text,
         tags: runtime.tags,
         priority: runtime.priority,
       };
 
+      if (from) message.from = from;
       if (args.cc) message.cc = toAddressArray(args.cc);
       if (args.bcc) message.bcc = toAddressArray(args.bcc);
       if (replyTo) message.replyTo = replyTo;

@@ -1,6 +1,6 @@
 # @emailrpc/core
 
-End-to-end typed email contracts, client, transports, middleware, and observability primitives for [emailRpc](../../README.md).
+Channel-agnostic notification infrastructure: contracts, client pipeline, transport factories, middleware, hooks, plugins, and observability primitives. See the [root README](../../README.md) for the high-level overview and quick-start.
 
 ## Install
 
@@ -8,28 +8,59 @@ End-to-end typed email contracts, client, transports, middleware, and observabil
 pnpm add @emailrpc/core
 ```
 
-## multiTransport
+## What's in here
 
-Composes multiple `Transport`s into a single composite. Returned object is itself a `Transport` — register it like any other.
+- **`createNotify({ channels })`** — root builder factory. Returns a typed `rpc` with `.use(mw)`, `.catalog(...)`, and one method per registered channel.
+- **`createClient({ catalog, channels, transportsByChannel, ... })`** — typed client. `mail.<route>.send()`, `.batch()`, `.queue()`, `.render()`.
+- **`createCatalog(map)`** — aggregates channel routes (and sub-catalogs) into one typed `Catalog<M, Ctx>`.
+- **`Channel<TName, TBuilder, TArgs, TRendered, TTransport>`** — channel contract. Exposes `createBuilder`, `validateArgs`, `render`, optional `previewRender`, `finalize`.
+- **`defineChannel({ name, slots, validateArgs, render })`** — factory that generates the entire `Channel<>` plus a chained slot-setter builder. See custom-channel example.
+- **`Transport<TRendered, TData>`** — wire-level send adapter. Returns `TransportResult<TData> = { ok: true, data } | { ok: false, error }`.
+- **`createTransport<TRendered, TData>(...)`** / **`multiTransport<TRendered, TData>(...)`** / **`createMockTransport<TRendered, TData>(...)`** — generic transport factories. Channel packages re-export these pre-parameterized.
+- **`NotifyRpcError`** + subclasses — framework error class with `code`, `route`, `messageId`. JSON-serializable.
+- **Middleware**: `withDryRun`, `withTagInject`, `withEventLogger`, `withSuppressionList`, `withRateLimit`, `withIdempotency`, `withTracing`.
+- **Stores**: in-memory implementations for suppression / rate-limit / idempotency.
+- **Sinks**: event sink contract + in-memory and console implementations.
+- **Tracers**: in-memory tracer for `withTracing`.
+- **Logger**: structural `LoggerLike` + `consoleLogger()` + `fromPino()` adapter.
+
+## defineChannel
 
 ```ts
-import { createClient } from '@emailrpc/core';
-import { multiTransport } from '@emailrpc/core/transports';
+import { defineChannel, slot } from '@emailrpc/core';
+import { z } from 'zod';
+
+const slackChannel = defineChannel({
+  name: 'slack' as const,
+  slots: {
+    text: slot.resolver<string>(),
+    threadTs: slot.value<string>().optional(),
+  },
+  validateArgs: z.object({ channel: z.string() }),
+  render: ({ runtime, args }) => ({
+    channel: args.channel,
+    text: typeof runtime.text === 'function' ? runtime.text({ input: args.input }) : runtime.text,
+  }),
+});
+```
+
+`slot.resolver<T>()` accepts `T | ((args: { input: TInput }) => T)`. `slot.value<T>()` accepts only `T`. Both support `.optional()` (default required). The generated builder has chained methods for each slot, plus `.input(schema)` and `.use(mw)`. Set-once is enforced at runtime.
+
+`validateArgs` accepts either a Standard Schema (zod, valibot, arktype, etc.) or `(raw) => TArgs | Promise<TArgs>`. When a schema, the framework auto-merges raw `input` back so the user's args schema only needs to describe routing fields.
+
+## multiTransport
+
+Composes multiple `Transport<TRendered, TData>` into one composite. The result is itself a `Transport<TRendered, TData>` — register it like any other.
+
+```ts
+import { multiTransport } from '@emailrpc/email/transports'; // pre-parameterized for email
 import { smtpTransport } from '@emailrpc/smtp';
 
 const transport = multiTransport({
   strategy: 'failover',
   transports: [
-    {
-      transport: smtpTransport({
-        /* primary */
-      }),
-    },
-    {
-      transport: smtpTransport({
-        /* backup */
-      }),
-    },
+    { transport: smtpTransport({ /* primary */ }) },
+    { transport: smtpTransport({ /* backup */ }) },
   ],
 });
 ```
@@ -48,165 +79,52 @@ Each strategy decides which inner transport to try **first** on every `send()`. 
 
 ### Retry within a transport
 
-By default each inner transport gets one attempt; on failure, multiTransport advances immediately. Set `maxAttemptsPerTransport` and (optionally) `backoff` to retry the same transport before advancing:
+`maxAttemptsPerTransport` controls how many times a single inner is retried on a *retriable* error before advancing. `backoff: { initialMs, factor, maxMs }` gives exponential delay between retries on the same transport (no jitter). `isRetriable(err) => boolean` lets you advance immediately on non-retriable errors. Defaults: `maxAttemptsPerTransport=1` (no retry), `isRetriable=() => true`.
+
+A failure can be either:
+- A thrown error from the inner `send()`
+- A returned `{ ok: false, error }` (soft failure — same retry/advance semantics as a throw)
+
+### verify / close
+
+`verify()` runs every inner's `verify?.()` in parallel and reports `{ ok: anyInnerOk, details: { results: [...] } }`. Inner verify throws are captured per-inner and never propagate. `close()` runs every inner's `close?.()` in parallel; individual errors are logged and swallowed.
+
+## createTransport / createMockTransport
+
+Generic builders for the `Transport<TRendered, TData>` contract:
 
 ```ts
-multiTransport({
-  strategy: 'failover',
-  transports: [
-    /* ... */
-  ],
-  maxAttemptsPerTransport: 3,
-  backoff: { initialMs: 200, factor: 2, maxMs: 2000 },
-});
-```
+import { createTransport, createMockTransport } from '@emailrpc/core';
 
-Delay between attempts on the _same_ transport: `min(maxMs, initialMs * factor^(attempt-1))`. Advancing between transports never sleeps.
-
-### Custom retry classification
-
-```ts
-multiTransport({
-  strategy: 'failover',
-  transports: [
-    /* ... */
-  ],
-  isRetriable: (err) =>
-    (err as { code?: string }).code === 'ETIMEDOUT' ||
-    ((err as { responseCode?: number }).responseCode ?? 0) >= 500,
-});
-```
-
-`isRetriable` defaults to `() => true` (every error retriable). Returning `false` advances immediately to the next transport — it does not abort the whole send.
-
-### Observability
-
-multiTransport accepts an optional `logger?: LoggerLike` and emits, on its own bound child (`{ component: 'multi-transport', name }`):
-
-| Level   | Message                | Payload                                      |
-| ------- | ---------------------- | -------------------------------------------- |
-| `debug` | `multi attempt ok`     | `{ transportName, attempt, strategy }`       |
-| `warn`  | `multi attempt failed` | `{ err, transportName, attempt, retriable }` |
-| `error` | `multi exhausted`      | `{ attempts, lastErr }`                      |
-| `error` | `multi close failed`   | `{ err, transportName }`                     |
-
-## Middleware
-
-Attach via `rpc.use(...)` on the root builder, on a sub-builder, or on a single email definition. All middleware ship under the `@emailrpc/core/middlewares` subpath.
-
-| Middleware             | Purpose                                                                                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `withDryRun()`         | Short-circuit every send with a synthetic `SendResult` (`messageId: 'dry-run'`). Render and transport never run.                              |
-| `withTagInject(opts)`  | Inject a static tag map into ctx as `tagsToInject` for downstream consumers. Header wiring lands with future args-mutation work.              |
-| `withSuppressionList`  | Block sends to recipients present in a `SuppressionList`. Short-circuits with `messageId: 'suppressed'`.                                      |
-| `withRateLimit`        | Throttle sends per derived `key` against a `RateLimitStore`. Throws `EmailRpcRateLimitedError` carrying `key` + `retryAfterMs` when exceeded. |
-| `withIdempotency`      | Cache the first `SendResult` per `key` for `ttl` ms; replay on subsequent sends. Failures are not cached.                                     |
-| `withEventLogger`      | Emit one structured `EmailEvent` per send into an `EventSink` (success or error).                                                             |
-| `withTracing`          | Wrap each send in a `tracer.startActiveSpan(...)`. `TracerLike` is structurally compatible with `@opentelemetry/api`.                         |
-
-### Quick examples
-
-```ts
-import {
-  createEmailRpc,
-  withRateLimit,
-  withSuppressionList,
-  withIdempotency,
-  withEventLogger,
-  withTracing,
-  inMemoryRateLimitStore,
-  inMemorySuppressionList,
-  inMemoryIdempotencyStore,
-  consoleEventSink,
-} from '@emailrpc/core';
-
-const rpc = createEmailRpc()
-  .use(withSuppressionList({ list: inMemorySuppressionList() }))
-  .use(withRateLimit({
-    store: inMemoryRateLimitStore(),
-    key: ({ args }) => Array.isArray(args.to) ? 'multi' : String(args.to),
-    max: 3,
-    window: 60_000,
-  }))
-  .use(withEventLogger({ sink: consoleEventSink() }));
-```
-
-## Stores
-
-Pluggable storage contracts under `@emailrpc/core/stores`. Each contract is a plain `type` — implement it with any backend (Redis, DynamoDB, Postgres). Built-in in-memory adapters ship for dev and tests.
-
-| Contract           | Methods                                  | Built-in                       | Factory                     |
-| ------------------ | ---------------------------------------- | ------------------------------ | --------------------------- |
-| `SuppressionList`  | `get(email)` · `set(email, entry)` · `del(email)` | `inMemorySuppressionList()`    | `createSuppressionList(...)` |
-| `RateLimitStore`   | `record(key, windowMs, algorithm)`       | `inMemoryRateLimitStore()`     | —                           |
-| `IdempotencyStore` | `get(key)` · `set(key, result, ttlMs)`   | `inMemoryIdempotencyStore()`   | `createIdempotencyStore(...)` |
-
-`createSuppressionList` normalizes emails (trim + lowercase) before forwarding to your storage, so your backend doesn't need to. `createIdempotencyStore` is a typed pass-through. Both are useful when adapting Redis or other KVs.
-
-```ts
-import { createSuppressionList } from '@emailrpc/core';
-
-const redisList = createSuppressionList({
-  get: async (email) => {
-    const json = await redis.get(`suppression:${email}`);
-    return json ? JSON.parse(json) : null;
-  },
-  set: async (email, entry) => {
-    await redis.set(`suppression:${email}`, JSON.stringify(entry));
-  },
-  del: async (email) => {
-    await redis.del(`suppression:${email}`);
+const real = createTransport<MyRendered, MyData>({
+  name: 'my-api',
+  send: async (rendered, ctx) => {
+    const res = await fetch('https://api.example.com/send', { body: JSON.stringify(rendered) });
+    if (!res.ok) return { ok: false, error: new Error(await res.text()) };
+    return { ok: true, data: { id: (await res.json()).id } };
   },
 });
-```
 
-`RateLimitStore.record` is a single round-trip "record an attempt and report state" — the middleware decides whether to block based on the returned `count`. Keeps the Redis path to one or two ops per send.
-
-## Sinks
-
-Write-only event destinations under `@emailrpc/core/sinks`. The dual of stores: where structured `EmailEvent`s go.
-
-| Sink                                  | Purpose                                                                            |
-| ------------------------------------- | ---------------------------------------------------------------------------------- |
-| `inMemoryEventSink()`                 | Collects events into a readable array. For tests and local debugging.              |
-| `consoleEventSink({ logger? })`       | Emits each event through a `LoggerLike` (defaults to `consoleLogger`).             |
-| `createEventSink(opts)`               | Factory: BYO `write`. Adds failure isolation + optional `filter`.                  |
-
-`createEventSink` wraps a user-supplied `write(event)` with two universal pieces:
-- **Failure isolation.** Sink errors are caught — a flaky audit pipeline can't break email delivery. Default behavior logs the error via `errorLogger`; pass `onError` to take full control.
-- **Optional `filter`.** Drop events you don't want shipped (e.g. errors-only).
-
-```ts
-const datadogSink = createEventSink({
-  write: async (event) => {
-    await fetch('https://http-intake.logs.datadoghq.com/api/v2/logs', {
-      method: 'POST',
-      headers: { 'DD-API-KEY': process.env.DD_API_KEY!, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ddsource: 'emailrpc', service: 'mail', ...event }),
-    });
-  },
-  filter: (event) => event.status === 'error',
+const mock = createMockTransport<MyRendered, MyData>({
+  reply: (rendered, ctx) => ({ id: `mock-${ctx.messageId}` }),
 });
+mock.sent; // ReadonlyArray<{ rendered, ctx }>
+mock.reset();
 ```
-
-## Tracers
-
-Span-style tracing primitives under `@emailrpc/core/tracers`. The `TracerLike` interface is structurally compatible with `@opentelemetry/api`'s `Tracer.startActiveSpan(name, fn)` — pass an OTel tracer directly, no adapter:
-
-```ts
-import { trace } from '@opentelemetry/api';
-import { withTracing } from '@emailrpc/core';
-
-rpc.use(withTracing({ tracer: trace.getTracer('emailrpc') }));
-```
-
-For unit tests use `inMemoryTracer()` — records each span (name, attributes, status, exceptions) for assertion. Each `withTracing`-wrapped send sets `emailrpc.route` and `emailrpc.message_id` attributes; on failure, the exception is recorded and the status set to `error`.
 
 ## Errors
 
-| Error                          | Code            | Surface                                                                         |
-| ------------------------------ | --------------- | ------------------------------------------------------------------------------- |
-| `EmailRpcError`                | `'UNKNOWN'` …   | Base class. JSON-serializable for queue persistence.                            |
-| `EmailRpcValidationError`      | `'VALIDATION'`  | Schema validation failure. Carries Standard Schema `issues`.                    |
-| `EmailRpcRateLimitedError`     | `'RATE_LIMITED'`| Thrown by `withRateLimit`. Carries `key` and `retryAfterMs` for retry layers.   |
-| `EmailRpcNotImplementedError`  | `'NOT_IMPLEMENTED'`| Thrown by deferred features.                                                 |
+All framework errors extend `NotifyRpcError` and are JSON-serializable. Each carries `code`, `route?`, `messageId?`, plus subclass-specific fields:
+
+| Class                               | Code on instances                  |
+| ----------------------------------- | ---------------------------------- |
+| `NotifyRpcError`                    | any of `ErrorCode`                 |
+| `NotifyRpcValidationError`          | `'VALIDATION'` + `issues`          |
+| `NotifyRpcRateLimitedError`         | `'RATE_LIMITED'` + `key`/`retryAfterMs` |
+| `NotifyRpcNotImplementedError`      | `'NOT_IMPLEMENTED'`                |
+
+`ErrorCode` union: `'VALIDATION' | 'PROVIDER' | 'CONFIG' | 'TIMEOUT' | 'RENDER' | 'SUPPRESSED' | 'RATE_LIMITED' | 'NOT_IMPLEMENTED' | 'CHANNEL_NOT_QUEUEABLE' | 'BATCH_EMPTY' | 'UNKNOWN'`.
+
+## License
+
+MIT

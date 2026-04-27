@@ -4,7 +4,7 @@ import type { AnyMiddleware, Middleware } from '../middlewares/types.js';
 import type { Transport } from '../transport.js';
 import type { Channel, ChannelBuilderCtx, ChannelDefinition } from './types.js';
 
-export type ResolverSlot<TValue> = TValue | ((args: { input: any }) => TValue);
+export type ResolverSlot<TValue> = TValue | ((args: { input: any; ctx: unknown }) => TValue);
 
 export type SlotKind = 'resolver' | 'value';
 
@@ -13,12 +13,10 @@ export type SlotConfig<K extends SlotKind = SlotKind> = { kind: K; required: boo
 export type SlotMap = Record<string, SlotConfig>;
 
 type SlotValueType<S, TValue, TInput> = S extends { kind: 'resolver' }
-  ? TValue | ((args: { input: TInput }) => TValue)
+  ? TValue | ((args: { input: TInput; ctx: unknown }) => TValue)
   : TValue;
 
-type SlotRuntimeType<S, TValue, TInput> = S extends { required: false }
-  ? SlotValueType<S, TValue, TInput> | undefined
-  : SlotValueType<S, TValue, TInput>;
+type SlotRuntimeType<S, TValue> = S extends { required: false } ? TValue | undefined : TValue;
 
 type ArgsBase<TArgs> = TArgs extends { input: any } ? Omit<TArgs, 'input'> : TArgs;
 
@@ -74,12 +72,12 @@ export type DefineChannelOptions<
   readonly slots: TSlotConfig;
   readonly validateArgs: TValidator;
   readonly render: (params: {
-    runtime: { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
+    runtime: { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>> };
     args: WithInput<ArgsFromValidator<TValidator>>;
     ctx: unknown;
   }) => Promise<TRendered> | TRendered;
   readonly previewRender?: (params: {
-    runtime: { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
+    runtime: { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>> };
     input: unknown;
     ctx: unknown;
   }) => Promise<unknown> | unknown;
@@ -87,6 +85,24 @@ export type DefineChannelOptions<
 
 const isStandardSchema = (v: unknown): v is AnyStandardSchema =>
   !!v && typeof v === 'object' && '~standard' in v;
+
+const resolveRuntime = (
+  rawRuntime: Record<string, unknown>,
+  slots: SlotMap,
+  input: unknown,
+  ctx: unknown,
+): Record<string, unknown> => {
+  const resolved: Record<string, unknown> = {};
+  for (const [key, config] of Object.entries(slots)) {
+    const raw = rawRuntime[key];
+    if (config.kind === 'resolver' && typeof raw === 'function') {
+      resolved[key] = (raw as (a: { input: unknown; ctx: unknown }) => unknown)({ input, ctx });
+    } else {
+      resolved[key] = raw;
+    }
+  }
+  return resolved;
+};
 
 const buildBuilder = <
   TInput,
@@ -211,16 +227,22 @@ export const defineChannel = <
         args: unknown,
       ) => ArgsFromValidator<TValidator> | Promise<ArgsFromValidator<TValidator>>),
   render: async (def, args, ctx) => {
-    const runtime = def.runtime as {
-      [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
-    };
+    const runtime = resolveRuntime(
+      def.runtime as Record<string, unknown>,
+      opts.slots,
+      (args as { input: unknown }).input,
+      ctx,
+    ) as { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>> };
     return opts.render({ runtime, args: args as WithInput<ArgsFromValidator<TValidator>>, ctx });
   },
   previewRender: opts.previewRender
     ? async (def, input, ctx) => {
-        const runtime = def.runtime as {
-          [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
-        };
+        const runtime = resolveRuntime(
+          def.runtime as Record<string, unknown>,
+          opts.slots,
+          input,
+          ctx,
+        ) as never;
         const fn = opts.previewRender;
         if (!fn) return undefined;
         return fn({ runtime, input, ctx });

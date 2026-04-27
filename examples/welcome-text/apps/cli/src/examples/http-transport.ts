@@ -1,13 +1,15 @@
 import { createNotify, createClient, NotifyRpcError } from '@emailrpc/core';
+import type { Address } from '@emailrpc/email';
 import { emailChannel } from '@emailrpc/email';
 import { createTransport, formatAddress, normalizeAddress } from '@emailrpc/email/transports';
 import { z } from 'zod';
-import { env } from '../env';
 
 type HttpTransportOptions = {
   name?: string;
   url: string;
   apiKey?: string;
+  /** Sender bound to this transport's API credentials; closes over `send`. */
+  from?: Address;
   fetchImpl?: typeof fetch;
 };
 
@@ -16,8 +18,10 @@ const httpTransport = (opts: HttpTransportOptions) => {
   return createTransport({
     name: opts.name ?? 'http',
     send: async (message, ctx) => {
+      // Provider closes over its sender — this is the convention for non-email channels too.
+      const finalFrom = message.from ?? opts.from;
       const body = {
-        from: formatAddress(message.from),
+        from: finalFrom ? formatAddress(finalFrom) : undefined,
         to: message.to.map(formatAddress),
         cc: message.cc?.map(formatAddress),
         bcc: message.bcc?.map(formatAddress),
@@ -69,9 +73,7 @@ const httpTransport = (opts: HttpTransportOptions) => {
   });
 };
 
-const ch = emailChannel({
-  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
-});
+const ch = emailChannel();
 const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
@@ -96,6 +98,7 @@ export const runHttpTransport = async (): Promise<void> => {
       email: httpTransport({
         url: targetUrl,
         apiKey: process.env.HTTP_TRANSPORT_API_KEY,
+        from: 'noreply@example.com',
       }),
     },
   });

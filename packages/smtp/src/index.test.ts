@@ -176,4 +176,24 @@ describe('smtpTransport', () => {
       authUser: 'auth@x.com',
     });
   });
+
+  it('falls back to auth.user when message.from is missing', async () => {
+    sendMailMock.mockResolvedValue({ messageId: 'x', accepted: [], rejected: [] });
+    const t = smtpTransport({
+      host: 'smtp.x.com',
+      port: 587,
+      auth: { user: 'auth@x.com', pass: 'p' },
+    });
+    const msg = { ...baseMessage } as Record<string, unknown>;
+    delete msg.from;
+    await t.send(msg as never, baseCtx);
+    expect(sendMailMock.mock.calls[0]?.[0].from).toBe('auth@x.com');
+  });
+
+  it('throws CONFIG when no from is resolvable from message or auth', async () => {
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const msg = { ...baseMessage } as Record<string, unknown>;
+    delete msg.from;
+    await expect(t.send(msg as never, baseCtx)).rejects.toThrow(/no "from"/);
+  });
 });

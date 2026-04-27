@@ -1,6 +1,6 @@
 {
   "name": "@emailrpc/resend",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Resend provider for emailRpc.",
   "license": "MIT",
   "files": [

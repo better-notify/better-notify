@@ -22,7 +22,7 @@ export type Tags = {
 };
 
 export type RenderedMessage = {
-  from: Address;
+  from?: Address;
   to: Address[];
   cc?: Address[];
   bcc?: Address[];

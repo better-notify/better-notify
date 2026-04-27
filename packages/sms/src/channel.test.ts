@@ -55,4 +55,5 @@ describe('smsChannel', () => {
     const partial = buildBuilder(ch);
     expect(() => ch.finalize(partial, 'r')).toThrow(/missing required slot: body/);
   });
+
 });

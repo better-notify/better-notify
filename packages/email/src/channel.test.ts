@@ -72,6 +72,20 @@ describe('emailChannel', () => {
     expect(rendered.from).toEqual({ email: 'perCall@example.com' });
   });
 
+  it('builder.from accepts a resolver that uses ctx', async () => {
+    const ch = emailChannel();
+    const def = ch.finalize(
+      makeBuilder(ch).from(({ ctx }) => (ctx as { tenantFrom: string }).tenantFrom),
+      'welcome',
+    );
+    const rendered = await ch.render(
+      def,
+      { to: 'a@b.com', input: { name: 'Lucas' } } as any,
+      { tenantFrom: 'tenant-a@example.com' },
+    );
+    expect(rendered.from).toEqual({ email: 'tenant-a@example.com' });
+  });
+
   it('per-call args.from merges name from defaults when args only provide email via object', async () => {
     const ch = emailChannel({ defaults: { from: { name: 'Default Name', email: 'default@example.com' } } });
     const def = ch.finalize(makeBuilder(ch), 'welcome');
@@ -135,12 +149,12 @@ describe('emailChannel', () => {
     expect(rendered.priority).toBe('high');
   });
 
-  it('render throws if no from email is provided by any source', async () => {
+  it('render emits message with from undefined when no source provides one', async () => {
     const ch = emailChannel();
     const def = ch.finalize(makeBuilder(ch), 'welcome');
-    await expect(
-      ch.render(def, { to: 'a@b.com', input: { name: 'Lucas' } } as any, {}),
-    ).rejects.toThrow('No "from" email');
+    const out = await ch.render(def, { to: 'a@b.com', input: { name: 'Lucas' } } as any, {});
+    expect(out.from).toBeUndefined();
+    expect(out.to).toEqual(['a@b.com']);
   });
 
   it('render produces a complete RenderedMessage with all expected fields populated', async () => {

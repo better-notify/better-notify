@@ -1,13 +1,9 @@
 import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
-import { multiTransport } from '@emailrpc/email/transports';
+import { emailChannel, createTransport, multiTransport } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
-import { mockTransport } from '../test-utils';
 
-const ch = emailChannel({
-  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
-});
+const ch = emailChannel();
 const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
@@ -22,6 +18,17 @@ const catalog = rpc.catalog({
     }),
 });
 
+// Each transport closes over its own account-bound sender.
+const stub = (label: string, accountFrom: string) =>
+  createTransport({
+    name: label,
+    send: async (msg) => {
+      const from = msg.from ?? accountFrom;
+      console.log(`[${label}] from=${JSON.stringify(from)} to=${msg.to.join(',')}`);
+      return { ok: true, data: { accepted: msg.to.map(String), rejected: [] } };
+    },
+  });
+
 export const runMultiRandom = async (): Promise<void> => {
   const mail = createClient({
     catalog,
@@ -31,14 +38,13 @@ export const runMultiRandom = async (): Promise<void> => {
         name: 'random',
         strategy: 'random',
         transports: [
-          { transport: mockTransport('transport-1') },
-          { transport: mockTransport('transport-2') },
-          { transport: mockTransport('transport-3') },
+          { transport: stub('transport-1', 'a@example.com') },
+          { transport: stub('transport-2', 'b@example.com') },
+          { transport: stub('transport-3', 'c@example.com') },
         ],
-        logger: consoleLogger({ level: 'debug' }),
+        logger: consoleLogger({ level: 'info' }),
       }),
     },
-    logger: consoleLogger({ level: 'debug' }),
   });
 
   const result = await mail.welcome.send({
@@ -46,6 +52,8 @@ export const runMultiRandom = async (): Promise<void> => {
     input: { name: 'John Doe', verifyUrl: 'https://example.com/verify?token=abc123' },
   });
 
+  console.log('---');
   console.log('Message ID:', result.messageId);
   console.log('Send:      ', `${result.timing.sendMs.toFixed(1)}ms`);
+  console.log('(actual sender printed by selected provider above)');
 };

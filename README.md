@@ -1,29 +1,30 @@
 # emailRpc
 
-End-to-end typed email infrastructure for Node.js. Define email contracts once, get a typed sender, queue worker, and webhook router — all driven by the same `EmailCatalog` type.
+End-to-end typed notification infrastructure for Node.js. Define a multi-channel `Catalog` once, get a typed client (`mail.<route>.send(...)` / `.batch(...)`) that dispatches to email, SMS, push, or any custom channel — all sharing the same validation, middleware, hooks, and transport contracts.
 
-> **Status:** v0.1.0-alpha. Layer 1 (typed contracts) and the send pipeline (validation, render, middleware/hooks/plugins, transports including SMTP and `multiTransport` failover) are real in `@emailrpc/core` and `@emailrpc/smtp`. Workers, webhooks, and the remaining provider/template adapters land in v0.2+. Packages are ESM-only at this stage; CJS output will return alongside the v1.0 stable release once the public API is frozen.
+> **Status:** v0.0.1. Multi-channel pipeline (email + SMS + push) is real, with generic `Channel<>` and `Transport<TRendered, TData>` contracts in `@emailrpc/core` and a `defineChannel` factory for custom channels. Queue/worker and webhook router for non-email channels land later.
 
 ## Quick start
 
 ```ts
-import { createEmailRpc, createClient } from '@emailrpc/core';
-import { smtpTransport } from '@emailrpc/smtp';
+import { createNotify, createClient } from '@emailrpc/core';
+import { emailChannel, mockTransport } from '@emailrpc/email';
 import { z } from 'zod';
 
-const rpc = createEmailRpc();
+const email = emailChannel({ defaults: { from: 'hello@example.com' } });
+const rpc = createNotify({ channels: { email } });
 
-const welcome = rpc.email()
-  .input(z.object({ name: z.string() }))
-  .subject(({ input }) => `Welcome, ${input.name}`)
-  .template({ render: async ({ input }) => ({ html: `<p>Hi ${input.name}</p>` }) })
-  .from('hello@example.com');
-
-const catalog = rpc.catalog({ welcome });
+const catalog = rpc.catalog({
+  welcome: rpc.email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}`)
+    .template({ render: async ({ input }) => ({ html: `<p>Hi ${input.name}</p>` }) }),
+});
 
 const mail = createClient({
   catalog,
-  transports: [{ name: 'smtp', transport: smtpTransport({ url: process.env.SMTP_URL! }), priority: 1 }],
+  channels: { email },
+  transportsByChannel: { email: mockTransport() },
 });
 
 await mail.welcome.send({ to: 'john@example.com', input: { name: 'John Doe' } });
@@ -36,22 +37,91 @@ const transactional = rpc.catalog({ welcome, passwordReset });
 const marketing = rpc.catalog({ newsletter });
 const root = rpc.catalog({ transactional, marketing });
 
-const mail = createClient({ catalog: root, transports: [...] });
-await mail.transactional.welcome.send({ to, input });   // logs route: "transactional.welcome"
+const mail = createClient({ catalog: root, channels: { email }, transportsByChannel: { email: t } });
+await mail.transactional.welcome.send({ to, input }); // logs route: "transactional.welcome"
 ```
+
+## Multiple channels
+
+```ts
+import { emailChannel } from '@emailrpc/email';
+import { smsChannel, mockSmsTransport } from '@emailrpc/sms';
+import { pushChannel, mockPushTransport } from '@emailrpc/push';
+
+const channels = { email: emailChannel(), sms: smsChannel(), push: pushChannel() };
+const rpc = createNotify({ channels });
+
+const catalog = rpc.catalog({
+  welcomeEmail: rpc.email().input(/*...*/).subject('Welcome').template(/*...*/),
+  welcomeSms:   rpc.sms().input(/*...*/).body(({ input }) => `Hi ${input.name}`),
+  welcomePush:  rpc.push().input(/*...*/).title('Welcome').body(({ input }) => `Hi ${input.name}`),
+});
+
+const notify = createClient({
+  catalog,
+  channels,
+  transportsByChannel: {
+    email: mockTransport(),
+    sms: mockSmsTransport(),
+    push: mockPushTransport(),
+  },
+});
+
+await notify.welcomeSms.send({ to: '+15555555555', input: { name: 'Alice' } });
+```
+
+## Custom channels
+
+```ts
+import { defineChannel, slot } from '@emailrpc/core';
+
+const slackChannel = defineChannel({
+  name: 'slack' as const,
+  slots: { text: slot.resolver<string>() },
+  validateArgs: z.object({ channel: z.string(), threadTs: z.string().optional() }),
+  render: ({ runtime, args }) => ({
+    channel: args.channel,
+    text: typeof runtime.text === 'function'
+      ? runtime.text({ input: args.input })
+      : runtime.text,
+  }),
+});
+```
+
+`slot.resolver<T>()` accepts `T | (({input}) => T)`. `slot.value<T>()` accepts only `T`. Both support `.optional()`. See `examples/welcome-text/apps/cli/src/examples/custom-channel.ts` for the full Slack channel + transport.
+
+## Custom transports
+
+```ts
+import { createTransport, multiTransport, createMockTransport } from '@emailrpc/core';
+
+const myTransport = createTransport<MyRendered, MyData>({
+  name: 'my-api',
+  send: async (rendered, ctx) => {
+    const res = await fetch('...', { body: JSON.stringify(rendered) });
+    if (!res.ok) return { ok: false, error: new Error(await res.text()) };
+    return { ok: true, data: { id: (await res.json()).id } };
+  },
+});
+```
+
+Each channel package re-exports these factories pre-parameterized for that channel's `TRendered` and `TData`, so users typically import `multiTransport` from `@emailrpc/email` (or sms/push) and skip the generics.
 
 ## Packages
 
-| Package                 | Status | Purpose                                                                            |
-| ----------------------- | ------ | ---------------------------------------------------------------------------------- |
-| `@emailrpc/core`        | alpha  | Contracts, builder, catalog, client, transports (`mockTransport`, `multiTransport`), middleware/hooks/plugins, Standard Schema validation, structural logger |
-| `@emailrpc/smtp`        | alpha  | SMTP transport (nodemailer-based)                                                  |
-| `@emailrpc/react-email` | stub   | React Email template adapter                                                       |
-| `@emailrpc/mjml`        | stub   | MJML template adapter                                                              |
-| `@emailrpc/handlebars`  | stub   | Handlebars template adapter                                                        |
-| `@emailrpc/ses`         | stub   | AWS SES transport                                                                  |
-| `@emailrpc/resend`      | stub   | Resend transport                                                                   |
-| `@emailrpc/bullmq`      | stub   | BullMQ queue adapter                                                               |
+| Package                 | Purpose                                                                    |
+| ----------------------- | -------------------------------------------------------------------------- |
+| `@emailrpc/core`        | `Channel<>`, `Transport<>`, `defineChannel`, `createNotify`, `createClient`, `createCatalog`, middleware, hooks, plugins, stores, sinks, tracers, generic transport factories (`createTransport`, `multiTransport`, `createMockTransport`) |
+| `@emailrpc/email`       | `emailChannel()`, `mockTransport`, address helpers, `multiTransport`/`createTransport` parameterized for email |
+| `@emailrpc/sms`         | `smsChannel()`, `mockSmsTransport`, sms-typed `multiTransport`/`createTransport`               |
+| `@emailrpc/push`        | `pushChannel()`, `mockPushTransport`, push-typed `multiTransport`/`createTransport`            |
+| `@emailrpc/smtp`        | SMTP transport for the email channel (nodemailer-based)                                       |
+| `@emailrpc/react-email` | React Email template adapter                                                                  |
+| `@emailrpc/mjml`        | MJML template adapter (stub)                                                                  |
+| `@emailrpc/handlebars`  | Handlebars template adapter (stub)                                                            |
+| `@emailrpc/ses`         | AWS SES transport (stub)                                                                      |
+| `@emailrpc/resend`      | Resend transport (stub)                                                                       |
+| `@emailrpc/bullmq`      | BullMQ queue adapter (stub)                                                                   |
 
 ## Development
 
@@ -60,6 +130,7 @@ pnpm install
 pnpm build
 pnpm test
 pnpm typecheck
+pnpm test:coverage
 ```
 
 Add a changeset for any user-facing change:

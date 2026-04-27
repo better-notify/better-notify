@@ -35,7 +35,12 @@ export type { Plugin } from './plugins/index.js';
 
 export type { Transport, TransportResult, AnyTransport, SendContext } from './transport.js';
 
-export { multiTransport, createTransport, createMockTransport } from './transports/index.js';
+export {
+  multiTransport,
+  createTransport,
+  createMockTransport,
+  mapTransport,
+} from './transports/index.js';
 export type {
   TransportEntry,
   MultiTransportOptions,
@@ -45,6 +50,7 @@ export type {
   CreateTransportOptions,
   CreateMockTransportOptions,
   MockTransport,
+  MapTransportFn,
 } from './transports/index.js';
 
 export {
