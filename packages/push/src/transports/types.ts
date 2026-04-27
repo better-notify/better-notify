@@ -1,4 +1,4 @@
-import type { Transport as CoreTransport } from '@emailrpc/core';
+import type { Transport as CoreTransport } from '@betternotify/core';
 import type { RenderedPush } from '../types.js';
 
 export type PushTransportData = {

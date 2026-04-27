@@ -1,5 +1,5 @@
-import { createNotify, createClient, withDryRun } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
+import { createNotify, createClient, withDryRun } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';
 

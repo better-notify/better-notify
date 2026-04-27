@@ -1,18 +1,18 @@
-# @emailrpc/sms
+# @betternotify/sms
 
-SMS channel for [emailRpc](../../README.md). Provides `smsChannel()`, a `mockSmsTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedSms`.
+SMS channel for [BetterNotify](../../README.md). Provides `smsChannel()`, a `mockSmsTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedSms`.
 
 ## Install
 
 ```sh
-pnpm add @emailrpc/sms @emailrpc/core
+pnpm add @betternotify/sms @betternotify/core
 ```
 
 ## Usage
 
 ```ts
-import { createNotify, createClient } from '@emailrpc/core';
-import { smsChannel, mockSmsTransport } from '@emailrpc/sms';
+import { createNotify, createClient } from '@betternotify/core';
+import { smsChannel, mockSmsTransport } from '@betternotify/sms';
 import { z } from 'zod';
 
 const sms = smsChannel();
@@ -54,7 +54,7 @@ notify.loginCode.send({
 ## Transports
 
 ```ts
-import { mockSmsTransport, multiTransport, createTransport } from '@emailrpc/sms';
+import { mockSmsTransport, multiTransport, createTransport } from '@betternotify/sms';
 
 const transport = multiTransport({
   strategy: 'failover',

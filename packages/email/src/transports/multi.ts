@@ -1,5 +1,5 @@
-import { multiTransport as coreMultiTransport } from '@emailrpc/core';
-import type { MultiTransportOptions as CoreMultiTransportOptions } from '@emailrpc/core';
+import { multiTransport as coreMultiTransport } from '@betternotify/core';
+import type { MultiTransportOptions as CoreMultiTransportOptions } from '@betternotify/core';
 import type { RenderedMessage } from '../types.js';
 import type { EmailTransportData, Transport } from './types.js';
 

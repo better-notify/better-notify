@@ -103,22 +103,22 @@ importers:
 
   examples/welcome-text/apps/cli:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../../../../packages/core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../../../../packages/email
-      '@emailrpc/push':
+      '@betternotify/push':
         specifier: workspace:*
         version: link:../../../../packages/push
-      '@emailrpc/react-email':
+      '@betternotify/react-email':
         specifier: workspace:*
         version: link:../../../../packages/react-email
-      '@emailrpc/sms':
+      '@betternotify/sms':
         specifier: workspace:*
         version: link:../../../../packages/sms
-      '@emailrpc/smtp':
+      '@betternotify/smtp':
         specifier: workspace:*
         version: link:../../../../packages/smtp
       '@t3-oss/env-core':
@@ -155,10 +155,10 @@ importers:
 
   internal/fixtures:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../../packages/email
       zod:
@@ -185,7 +185,7 @@ importers:
 
   packages/bullmq:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -232,7 +232,7 @@ importers:
 
   packages/email:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
       '@standard-schema/spec':
@@ -260,10 +260,10 @@ importers:
 
   packages/handlebars:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../email
     devDependencies:
@@ -285,10 +285,10 @@ importers:
 
   packages/mjml:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../email
     devDependencies:
@@ -310,7 +310,7 @@ importers:
 
   packages/push:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
       '@standard-schema/spec':
@@ -338,10 +338,10 @@ importers:
 
   packages/react-email:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../email
     devDependencies:
@@ -381,10 +381,10 @@ importers:
 
   packages/resend:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../email
     devDependencies:
@@ -406,10 +406,10 @@ importers:
 
   packages/ses:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../email
     devDependencies:
@@ -431,7 +431,7 @@ importers:
 
   packages/sms:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
       '@standard-schema/spec':
@@ -459,10 +459,10 @@ importers:
 
   packages/smtp:
     dependencies:
-      '@emailrpc/core':
+      '@betternotify/core':
         specifier: workspace:*
         version: link:../core
-      '@emailrpc/email':
+      '@betternotify/email':
         specifier: workspace:*
         version: link:../email
       nodemailer:

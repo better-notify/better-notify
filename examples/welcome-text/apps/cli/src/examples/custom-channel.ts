@@ -6,7 +6,7 @@ import {
   defineChannel,
   slot,
   type Transport,
-} from '@emailrpc/core';
+} from '@betternotify/core';
 import { z } from 'zod';
 
 type RenderedSlack = {

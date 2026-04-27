@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createClient, createNotify, NotifyRpcError } from '@emailrpc/core';
+import { createClient, createNotify, NotifyRpcError } from '@betternotify/core';
 import { emailChannel, mockTransport } from './index.js';
 import type { TemplateAdapter } from './template.js';
 

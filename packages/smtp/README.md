@@ -1,19 +1,19 @@
-# @emailrpc/smtp
+# @betternotify/smtp
 
-Nodemailer-backed SMTP transport for [emailRpc](../core).
+Nodemailer-backed SMTP transport for [BetterNotify](../core).
 
 ## Install
 
 ```sh
-pnpm add @emailrpc/smtp @emailrpc/core
+pnpm add @betternotify/smtp @betternotify/core
 ```
 
 ## Usage
 
 ```ts
-import { createNotify, createClient } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
-import { smtpTransport } from '@emailrpc/smtp';
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { smtpTransport } from '@betternotify/smtp';
 
 const email = emailChannel({
   defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
@@ -85,8 +85,8 @@ defaults: { from: { name: 'My App', email: process.env.SMTP_USER! } }
 ## Tests & development
 
 ```sh
-pnpm --filter @emailrpc/smtp test
-pnpm --filter @emailrpc/smtp build
+pnpm --filter @betternotify/smtp test
+pnpm --filter @betternotify/smtp build
 ```
 
 Tests use a mocked nodemailer — no real SMTP server needed. To exercise against a local catcher, point at [Mailpit](https://github.com/axllent/mailpit) or [maildev](https://github.com/maildev/maildev).

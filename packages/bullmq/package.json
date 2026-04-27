@@ -1,7 +1,7 @@
 {
-  "name": "@emailrpc/bullmq",
+  "name": "@betternotify/bullmq",
   "version": "0.0.1",
-  "description": "BullMQ queue adapter for emailRpc.",
+  "description": "BullMQ queue adapter for BetterNotify.",
   "license": "MIT",
   "files": [
     "dist",
@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*"
+    "@betternotify/core": "workspace:*"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",

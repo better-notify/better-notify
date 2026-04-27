@@ -6,7 +6,7 @@ import {
   type AnyCatalog,
   type Middleware,
   type Plugin,
-} from '@emailrpc/core';
+} from '@betternotify/core';
 import { emailChannel, mockTransport } from './index.js';
 
 describe('Plugin type', () => {

@@ -1,6 +1,6 @@
-import { NotifyRpcNotImplementedError } from '@emailrpc/core';
-import type { Transport } from '@emailrpc/email/transports';
-import type { WebhookAdapter } from '@emailrpc/core/webhook';
+import { NotifyRpcNotImplementedError } from '@betternotify/core';
+import type { Transport } from '@betternotify/email/transports';
+import type { WebhookAdapter } from '@betternotify/core/webhook';
 
 export type ResendTransportOptions = {
   apiKey: string;
@@ -8,7 +8,7 @@ export type ResendTransportOptions = {
 };
 
 export const resendTransport = (_opts: ResendTransportOptions): Transport => {
-  throw new NotifyRpcNotImplementedError('@emailrpc/resend transport (v0.3)');
+  throw new NotifyRpcNotImplementedError('@betternotify/resend transport (v0.3)');
 };
 
 export type ResendAdapterOptions = {
@@ -16,5 +16,5 @@ export type ResendAdapterOptions = {
 };
 
 export const resendAdapter = (_opts: ResendAdapterOptions = {}): WebhookAdapter => {
-  throw new NotifyRpcNotImplementedError('@emailrpc/resend webhook adapter (v0.3)');
+  throw new NotifyRpcNotImplementedError('@betternotify/resend webhook adapter (v0.3)');
 };

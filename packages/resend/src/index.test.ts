@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resendTransport, resendAdapter } from './index.js';
 
-describe('@emailrpc/resend (stub)', () => {
+describe('@betternotify/resend (stub)', () => {
   it('resendTransport() throws not-implemented', () => {
     expect(() => resendTransport({ apiKey: 'fake' })).toThrow(/not implemented/);
   });

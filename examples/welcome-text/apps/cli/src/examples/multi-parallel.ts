@@ -1,6 +1,6 @@
-import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
-import { multiTransport } from '@emailrpc/email/transports';
+import { createNotify, createClient, consoleLogger } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { multiTransport } from '@betternotify/email/transports';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';

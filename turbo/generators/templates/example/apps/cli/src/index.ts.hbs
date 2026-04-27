@@ -1,4 +1,4 @@
-import { createClient } from '@emailrpc/core'; import { mockProvider } from '@emailrpc/core/test';
+import { createClient } from '@betternotify/core'; import { mockProvider } from '@betternotify/core/test';
 import { emails } from '@{{kebab name}}/emails'; const provider = mockProvider(); const mail =
 createClient({ router: emails, providers: [{ name: 'mock', provider, priority: 1 }], }); const
 result = await mail.hello.send({ to: 'someone@example.com', input: { name: 'World' }, });

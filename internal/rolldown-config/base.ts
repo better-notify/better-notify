@@ -18,7 +18,7 @@ export const baseConfig = (opts: BaseConfigOptions): RolldownOptions => {
       },
     ],
     platform: 'node',
-    external: [/^node:/, /^@emailrpc\//, /^@standard-schema\//, ...(opts.external ?? [])],
+    external: [/^node:/, /^@betternotify\//, /^@standard-schema\//, ...(opts.external ?? [])],
     plugins: [dts({ resolve: true })],
     treeshake: true,
   });

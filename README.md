@@ -1,14 +1,14 @@
-# emailRpc
+# BetterNotify
 
 End-to-end typed notification infrastructure for Node.js. Define a multi-channel `Catalog` once, get a typed client (`mail.<route>.send(...)` / `.batch(...)`) that dispatches to email, SMS, push, or any custom channel — all sharing the same validation, middleware, hooks, and transport contracts.
 
-> **Status:** v0.0.1. Multi-channel pipeline (email + SMS + push) is real, with generic `Channel<>` and `Transport<TRendered, TData>` contracts in `@emailrpc/core` and a `defineChannel` factory for custom channels. Queue/worker and webhook router for non-email channels land later.
+> **Status:** v0.0.1. Multi-channel pipeline (email + SMS + push) is real, with generic `Channel<>` and `Transport<TRendered, TData>` contracts in `@betternotify/core` and a `defineChannel` factory for custom channels. Queue/worker and webhook router for non-email channels land later.
 
 ## Quick start
 
 ```ts
-import { createNotify, createClient } from '@emailrpc/core';
-import { emailChannel, mockTransport } from '@emailrpc/email';
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel, mockTransport } from '@betternotify/email';
 import { z } from 'zod';
 
 const email = emailChannel({ defaults: { from: 'hello@example.com' } });
@@ -49,9 +49,9 @@ await mail.transactional.welcome.send({ to, input }); // logs route: "transactio
 ## Multiple channels
 
 ```ts
-import { emailChannel } from '@emailrpc/email';
-import { smsChannel, mockSmsTransport } from '@emailrpc/sms';
-import { pushChannel, mockPushTransport } from '@emailrpc/push';
+import { emailChannel } from '@betternotify/email';
+import { smsChannel, mockSmsTransport } from '@betternotify/sms';
+import { pushChannel, mockPushTransport } from '@betternotify/push';
 
 const channels = { email: emailChannel(), sms: smsChannel(), push: pushChannel() };
 const rpc = createNotify({ channels });
@@ -85,7 +85,7 @@ await notify.welcomeSms.send({ to: '+15555555555', input: { name: 'Alice' } });
 ## Custom channels
 
 ```ts
-import { defineChannel, slot } from '@emailrpc/core';
+import { defineChannel, slot } from '@betternotify/core';
 
 const slackChannel = defineChannel({
   name: 'slack' as const,
@@ -103,7 +103,7 @@ const slackChannel = defineChannel({
 ## Custom transports
 
 ```ts
-import { createTransport, multiTransport, createMockTransport } from '@emailrpc/core';
+import { createTransport, multiTransport, createMockTransport } from '@betternotify/core';
 
 const myTransport = createTransport<MyRendered, MyData>({
   name: 'my-api',
@@ -115,23 +115,23 @@ const myTransport = createTransport<MyRendered, MyData>({
 });
 ```
 
-Each channel package re-exports these factories pre-parameterized for that channel's `TRendered` and `TData`, so users typically import `multiTransport` from `@emailrpc/email` (or sms/push) and skip the generics.
+Each channel package re-exports these factories pre-parameterized for that channel's `TRendered` and `TData`, so users typically import `multiTransport` from `@betternotify/email` (or sms/push) and skip the generics.
 
 ## Packages
 
 | Package                 | Purpose                                                                                                                                                                                                                                    |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `@emailrpc/core`        | `Channel<>`, `Transport<>`, `defineChannel`, `createNotify`, `createClient`, `createCatalog`, middleware, hooks, plugins, stores, sinks, tracers, generic transport factories (`createTransport`, `multiTransport`, `createMockTransport`) |
-| `@emailrpc/email`       | `emailChannel()`, `mockTransport`, address helpers, `multiTransport`/`createTransport` parameterized for email                                                                                                                             |
-| `@emailrpc/sms`         | `smsChannel()`, `mockSmsTransport`, sms-typed `multiTransport`/`createTransport`                                                                                                                                                           |
-| `@emailrpc/push`        | `pushChannel()`, `mockPushTransport`, push-typed `multiTransport`/`createTransport`                                                                                                                                                        |
-| `@emailrpc/smtp`        | SMTP transport for the email channel (nodemailer-based)                                                                                                                                                                                    |
-| `@emailrpc/react-email` | React Email template adapter                                                                                                                                                                                                               |
-| `@emailrpc/mjml`        | MJML template adapter (stub)                                                                                                                                                                                                               |
-| `@emailrpc/handlebars`  | Handlebars template adapter (stub)                                                                                                                                                                                                         |
-| `@emailrpc/ses`         | AWS SES transport (stub)                                                                                                                                                                                                                   |
-| `@emailrpc/resend`      | Resend transport (stub)                                                                                                                                                                                                                    |
-| `@emailrpc/bullmq`      | BullMQ queue adapter (stub)                                                                                                                                                                                                                |
+| `@betternotify/core`        | `Channel<>`, `Transport<>`, `defineChannel`, `createNotify`, `createClient`, `createCatalog`, middleware, hooks, plugins, stores, sinks, tracers, generic transport factories (`createTransport`, `multiTransport`, `createMockTransport`) |
+| `@betternotify/email`       | `emailChannel()`, `mockTransport`, address helpers, `multiTransport`/`createTransport` parameterized for email                                                                                                                             |
+| `@betternotify/sms`         | `smsChannel()`, `mockSmsTransport`, sms-typed `multiTransport`/`createTransport`                                                                                                                                                           |
+| `@betternotify/push`        | `pushChannel()`, `mockPushTransport`, push-typed `multiTransport`/`createTransport`                                                                                                                                                        |
+| `@betternotify/smtp`        | SMTP transport for the email channel (nodemailer-based)                                                                                                                                                                                    |
+| `@betternotify/react-email` | React Email template adapter                                                                                                                                                                                                               |
+| `@betternotify/mjml`        | MJML template adapter (stub)                                                                                                                                                                                                               |
+| `@betternotify/handlebars`  | Handlebars template adapter (stub)                                                                                                                                                                                                         |
+| `@betternotify/ses`         | AWS SES transport (stub)                                                                                                                                                                                                                   |
+| `@betternotify/resend`      | Resend transport (stub)                                                                                                                                                                                                                    |
+| `@betternotify/bullmq`      | BullMQ queue adapter (stub)                                                                                                                                                                                                                |
 
 ## Development
 

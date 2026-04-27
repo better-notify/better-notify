@@ -1,4 +1,4 @@
-import { defineChannel, slot } from '@emailrpc/core';
+import { defineChannel, slot } from '@betternotify/core';
 import type { RenderedSms, SmsSendArgs } from './types.js';
 
 export type BodyResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);

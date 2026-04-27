@@ -7,8 +7,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
-    "@emailrpc/email": "workspace:*",
+    "@betternotify/core": "workspace:*",
+    "@betternotify/email": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

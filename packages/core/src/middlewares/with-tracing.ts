@@ -11,14 +11,14 @@ import type { WithTracingOptions } from './with-tracing.types.js';
  *
  * ```ts
  * import { trace } from '@opentelemetry/api';
- * t.use(withTracing({ tracer: trace.getTracer('emailrpc') }))
+ * t.use(withTracing({ tracer: trace.getTracer('betternotify') }))
  * ```
  *
  * For tests use `inMemoryTracer()` to record spans for assertion. The default
- * span name is `emailrpc.send.<route>`; supply `name` (string or function) to
+ * span name is `betternotify.send.<route>`; supply `name` (string or function) to
  * override.
  *
- * Span attributes set on every send: `emailrpc.route`, `emailrpc.message_id`.
+ * Span attributes set on every send: `betternotify.route`, `betternotify.message_id`.
  * On failure the exception is recorded and status set to `error`; on success
  * status is set to `ok`.
  */
@@ -26,13 +26,13 @@ export const withTracing = (opts: WithTracingOptions): Middleware => {
   const resolveName = (route: string, messageId: string): string => {
     if (typeof opts.name === 'function') return opts.name({ route, messageId });
     if (typeof opts.name === 'string') return opts.name;
-    return `emailrpc.send.${route}`;
+    return `betternotify.send.${route}`;
   };
 
   return async ({ route, messageId, next }) => {
     return opts.tracer.startActiveSpan(resolveName(route, messageId), async (span) => {
-      span.setAttribute('emailrpc.route', route);
-      span.setAttribute('emailrpc.message_id', messageId);
+      span.setAttribute('betternotify.route', route);
+      span.setAttribute('betternotify.message_id', messageId);
       const [err, result] = await handlePromise(next());
       if (err) {
         span.recordException(err);

@@ -1,5 +1,5 @@
 import type SMTPTransport from 'nodemailer/lib/smtp-transport/index.js';
-import type { LoggerLike } from '@emailrpc/core';
+import type { LoggerLike } from '@betternotify/core';
 
 export type SmtpAuth = {
   user: string;

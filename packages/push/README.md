@@ -1,18 +1,18 @@
-# @emailrpc/push
+# @betternotify/push
 
-Push notification channel for [emailRpc](../../README.md). Provides `pushChannel()`, a `mockPushTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedPush`.
+Push notification channel for [BetterNotify](../../README.md). Provides `pushChannel()`, a `mockPushTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedPush`.
 
 ## Install
 
 ```sh
-pnpm add @emailrpc/push @emailrpc/core
+pnpm add @betternotify/push @betternotify/core
 ```
 
 ## Usage
 
 ```ts
-import { createNotify, createClient } from '@emailrpc/core';
-import { pushChannel, mockPushTransport } from '@emailrpc/push';
+import { createNotify, createClient } from '@betternotify/core';
+import { pushChannel, mockPushTransport } from '@betternotify/push';
 import { z } from 'zod';
 
 const push = pushChannel();
@@ -62,7 +62,7 @@ notify.newMessage.send({
 ## Transports
 
 ```ts
-import { mockPushTransport, multiTransport, createTransport } from '@emailrpc/push';
+import { mockPushTransport, multiTransport, createTransport } from '@betternotify/push';
 ```
 
 Custom transport contract: `Transport<RenderedPush, PushTransportData>` where `PushTransportData = { messageId, provider? }`.

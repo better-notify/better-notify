@@ -1,7 +1,7 @@
 {
-  "name": "@emailrpc/push",
+  "name": "@betternotify/push",
   "version": "0.0.1",
-  "description": "Push notification channel plugin for emailrpc.",
+  "description": "Push notification channel plugin for betternotify.",
   "license": "MIT",
   "files": [
     "dist",
@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
+    "@betternotify/core": "workspace:*",
     "@standard-schema/spec": "catalog:"
   },
   "devDependencies": {

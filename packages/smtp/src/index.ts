@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
-import type { Address, FromInput, Transport } from '@emailrpc/email';
-import { formatAddress, normalizeAddress } from '@emailrpc/email/transports';
-import { consoleLogger, NotifyRpcError } from '@emailrpc/core';
+import type { Address, FromInput, Transport } from '@betternotify/email';
+import { formatAddress, normalizeAddress } from '@betternotify/email/transports';
+import { consoleLogger, NotifyRpcError } from '@betternotify/core';
 import type { SmtpTransportOptions } from './types.js';
 
 const fromInputToAddress = (input: Address | FromInput | undefined): Address | undefined => {

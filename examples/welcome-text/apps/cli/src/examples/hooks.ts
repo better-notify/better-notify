@@ -1,6 +1,6 @@
-import { createNotify, createClient, type ClientHooks } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
-import type { RenderedMessage } from '@emailrpc/email';
+import { createNotify, createClient, type ClientHooks } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import type { RenderedMessage } from '@betternotify/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';

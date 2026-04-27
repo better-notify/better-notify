@@ -31,7 +31,7 @@ export type CreateEventSinkOptions<TResult = unknown> = {
  *     await fetch('https://http-intake.logs.datadoghq.com/api/v2/logs', {
  *       method: 'POST',
  *       headers: { 'DD-API-KEY': process.env.DD_API_KEY!, 'Content-Type': 'application/json' },
- *       body: JSON.stringify({ ddsource: 'emailrpc', service: 'mail', ...event }),
+ *       body: JSON.stringify({ ddsource: 'betternotify', service: 'mail', ...event }),
  *     });
  *   },
  *   filter: (event) => event.status === 'error',

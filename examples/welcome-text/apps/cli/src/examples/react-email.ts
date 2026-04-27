@@ -1,6 +1,6 @@
-import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
-import { reactEmail } from '@emailrpc/react-email';
+import { createNotify, createClient, consoleLogger } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { reactEmail } from '@betternotify/react-email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
@@ -36,5 +36,5 @@ export const runReactEmail = async (): Promise<void> => {
 
   console.log('messageId:', result.messageId);
   console.log('to       :', result.envelope?.to.join(', '));
-  console.log('— rendered through @emailrpc/react-email; HTML body sent to transport.');
+  console.log('— rendered through @betternotify/react-email; HTML body sent to transport.');
 };

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { multiTransport } from './multi.js';
-import { NotifyRpcError } from '@emailrpc/core';
+import { NotifyRpcError } from '@betternotify/core';
 import { memoryLogger } from '../lib/test-utils.js';
 import type { Transport, TransportResult } from './types.js';
 import type { RenderedMessage, SendContext } from '../types.js';

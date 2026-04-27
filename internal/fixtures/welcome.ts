@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { createNotify } from '@emailrpc/core';
-import { emailChannel, type TemplateAdapter } from '@emailrpc/email';
+import { createNotify } from '@betternotify/core';
+import { emailChannel, type TemplateAdapter } from '@betternotify/email';
 
 type AppContext = {
   requestId: string;

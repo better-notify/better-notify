@@ -1,11 +1,11 @@
-# @emailrpc/react-email
+# @betternotify/react-email
 
-React Email render helper for [emailRpc](../core).
+React Email render helper for [BetterNotify](../core).
 
 ## Install
 
 ```sh
-pnpm add @emailrpc/react-email @emailrpc/core react react-email
+pnpm add @betternotify/react-email @betternotify/core react react-email
 ```
 
 ## Usage
@@ -13,9 +13,9 @@ pnpm add @emailrpc/react-email @emailrpc/core react react-email
 ```tsx
 /** @jsxImportSource react */
 import { z } from 'zod';
-import { createNotify } from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
-import { reactEmail } from '@emailrpc/react-email';
+import { createNotify } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { reactEmail } from '@betternotify/react-email';
 import { Body, Html } from 'react-email';
 
 const Welcome = ({ name, link }: { name: string; link: string }) => (
