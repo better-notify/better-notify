@@ -54,7 +54,7 @@ Plus `.input(schema)` and `.use(mw)`.
 
 ```ts
 notify.newMessage.send({
-  to: string | ReadonlyArray<string>,  // device token(s)
+  to: string | ReadonlyArray<string>, // device token(s)
   input: TInput,
 });
 ```

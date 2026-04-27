@@ -15,7 +15,8 @@ const email = emailChannel({ defaults: { from: 'hello@example.com' } });
 const rpc = createNotify({ channels: { email } });
 
 const catalog = rpc.catalog({
-  welcome: rpc.email()
+  welcome: rpc
+    .email()
     .input(z.object({ name: z.string() }))
     .subject(({ input }) => `Welcome, ${input.name}`)
     .template({ render: async ({ input }) => ({ html: `<p>Hi ${input.name}</p>` }) }),
@@ -37,7 +38,11 @@ const transactional = rpc.catalog({ welcome, passwordReset });
 const marketing = rpc.catalog({ newsletter });
 const root = rpc.catalog({ transactional, marketing });
 
-const mail = createClient({ catalog: root, channels: { email }, transportsByChannel: { email: t } });
+const mail = createClient({
+  catalog: root,
+  channels: { email },
+  transportsByChannel: { email: t },
+});
 await mail.transactional.welcome.send({ to, input }); // logs route: "transactional.welcome"
 ```
 
@@ -53,8 +58,15 @@ const rpc = createNotify({ channels });
 
 const catalog = rpc.catalog({
   welcomeEmail: rpc.email().input(/*...*/).subject('Welcome').template(/*...*/),
-  welcomeSms:   rpc.sms().input(/*...*/).body(({ input }) => `Hi ${input.name}`),
-  welcomePush:  rpc.push().input(/*...*/).title('Welcome').body(({ input }) => `Hi ${input.name}`),
+  welcomeSms: rpc
+    .sms()
+    .input(/*...*/)
+    .body(({ input }) => `Hi ${input.name}`),
+  welcomePush: rpc
+    .push()
+    .input(/*...*/)
+    .title('Welcome')
+    .body(({ input }) => `Hi ${input.name}`),
 });
 
 const notify = createClient({
@@ -81,9 +93,7 @@ const slackChannel = defineChannel({
   validateArgs: z.object({ channel: z.string(), threadTs: z.string().optional() }),
   render: ({ runtime, args }) => ({
     channel: args.channel,
-    text: typeof runtime.text === 'function'
-      ? runtime.text({ input: args.input })
-      : runtime.text,
+    text: typeof runtime.text === 'function' ? runtime.text({ input: args.input }) : runtime.text,
   }),
 });
 ```
@@ -109,19 +119,19 @@ Each channel package re-exports these factories pre-parameterized for that chann
 
 ## Packages
 
-| Package                 | Purpose                                                                    |
-| ----------------------- | -------------------------------------------------------------------------- |
+| Package                 | Purpose                                                                                                                                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `@emailrpc/core`        | `Channel<>`, `Transport<>`, `defineChannel`, `createNotify`, `createClient`, `createCatalog`, middleware, hooks, plugins, stores, sinks, tracers, generic transport factories (`createTransport`, `multiTransport`, `createMockTransport`) |
-| `@emailrpc/email`       | `emailChannel()`, `mockTransport`, address helpers, `multiTransport`/`createTransport` parameterized for email |
-| `@emailrpc/sms`         | `smsChannel()`, `mockSmsTransport`, sms-typed `multiTransport`/`createTransport`               |
-| `@emailrpc/push`        | `pushChannel()`, `mockPushTransport`, push-typed `multiTransport`/`createTransport`            |
-| `@emailrpc/smtp`        | SMTP transport for the email channel (nodemailer-based)                                       |
-| `@emailrpc/react-email` | React Email template adapter                                                                  |
-| `@emailrpc/mjml`        | MJML template adapter (stub)                                                                  |
-| `@emailrpc/handlebars`  | Handlebars template adapter (stub)                                                            |
-| `@emailrpc/ses`         | AWS SES transport (stub)                                                                      |
-| `@emailrpc/resend`      | Resend transport (stub)                                                                       |
-| `@emailrpc/bullmq`      | BullMQ queue adapter (stub)                                                                   |
+| `@emailrpc/email`       | `emailChannel()`, `mockTransport`, address helpers, `multiTransport`/`createTransport` parameterized for email                                                                                                                             |
+| `@emailrpc/sms`         | `smsChannel()`, `mockSmsTransport`, sms-typed `multiTransport`/`createTransport`                                                                                                                                                           |
+| `@emailrpc/push`        | `pushChannel()`, `mockPushTransport`, push-typed `multiTransport`/`createTransport`                                                                                                                                                        |
+| `@emailrpc/smtp`        | SMTP transport for the email channel (nodemailer-based)                                                                                                                                                                                    |
+| `@emailrpc/react-email` | React Email template adapter                                                                                                                                                                                                               |
+| `@emailrpc/mjml`        | MJML template adapter (stub)                                                                                                                                                                                                               |
+| `@emailrpc/handlebars`  | Handlebars template adapter (stub)                                                                                                                                                                                                         |
+| `@emailrpc/ses`         | AWS SES transport (stub)                                                                                                                                                                                                                   |
+| `@emailrpc/resend`      | Resend transport (stub)                                                                                                                                                                                                                    |
+| `@emailrpc/bullmq`      | BullMQ queue adapter (stub)                                                                                                                                                                                                                |
 
 ## Development
 

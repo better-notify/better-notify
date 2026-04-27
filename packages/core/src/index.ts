@@ -128,11 +128,7 @@ export type {
   ConsoleEventSinkOptions,
   CreateEventSinkOptions,
 } from './sinks/index.js';
-export {
-  createEventSink,
-  inMemoryEventSink,
-  consoleEventSink,
-} from './sinks/index.js';
+export { createEventSink, inMemoryEventSink, consoleEventSink } from './sinks/index.js';
 
 export type {
   SpanLike,

@@ -16,7 +16,9 @@ export type EmailSendArgs<TInput = unknown> = {
 };
 
 export type SubjectResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
-export type FromResolver<TInput> = FromInput | ((args: { input: TInput; ctx: unknown }) => FromInput);
+export type FromResolver<TInput> =
+  | FromInput
+  | ((args: { input: TInput; ctx: unknown }) => FromInput);
 
 export type TemplateInput<TInput = any, TCtx = any> =
   | TemplateAdapter<TInput, TCtx>

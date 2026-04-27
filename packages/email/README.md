@@ -49,14 +49,14 @@ await mail.welcome.send({
 
 The email channel is built on `defineChannel` and exposes these slots:
 
-| Slot       | Required | Type                                              | Description                                            |
-| ---------- | -------- | ------------------------------------------------- | ------------------------------------------------------ |
-| `subject`  | yes      | `string \| ({input}) => string`                   | Resolved per-send                                      |
-| `template` | yes      | `TemplateAdapter \| ({input,ctx}) => RenderedOutput` | Renders `{ html, text?, subject? }`                   |
-| `from`     | no       | `string \| { name?, email }`                      | Per-route override of `defaults.from`                  |
-| `replyTo`  | no       | `Address`                                         | Per-route override of `defaults.replyTo`               |
-| `tags`     | no       | `Tags`                                            | Surfaces in `RenderedMessage.tags` for transports      |
-| `priority` | no       | `'low' \| 'normal' \| 'high'`                     | Hint to provider                                       |
+| Slot       | Required | Type                                                 | Description                                       |
+| ---------- | -------- | ---------------------------------------------------- | ------------------------------------------------- |
+| `subject`  | yes      | `string \| ({input}) => string`                      | Resolved per-send                                 |
+| `template` | yes      | `TemplateAdapter \| ({input,ctx}) => RenderedOutput` | Renders `{ html, text?, subject? }`               |
+| `from`     | no       | `string \| { name?, email }`                         | Per-route override of `defaults.from`             |
+| `replyTo`  | no       | `Address`                                            | Per-route override of `defaults.replyTo`          |
+| `tags`     | no       | `Tags`                                               | Surfaces in `RenderedMessage.tags` for transports |
+| `priority` | no       | `'low' \| 'normal' \| 'high'`                        | Hint to provider                                  |
 
 Plus `.input(schema)` (any Standard Schema) and `.use(mw)` (middleware) on every builder.
 

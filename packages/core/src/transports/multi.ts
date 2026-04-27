@@ -212,7 +212,11 @@ export const multiTransport = <TRendered = unknown, TData = unknown>(
       throw failures[0];
     }
     const first = successes[0];
-    if (!first) throw new NotifyRpcError({ code: 'CONFIG', message: 'parallel requires at least one transport' });
+    if (!first)
+      throw new NotifyRpcError({
+        code: 'CONFIG',
+        message: 'parallel requires at least one transport',
+      });
     return first;
   };
 
@@ -221,7 +225,11 @@ export const multiTransport = <TRendered = unknown, TData = unknown>(
     ctx: SendContext,
   ): Promise<TransportResult<TData>> => {
     const primary = entries[0];
-    if (!primary) throw new NotifyRpcError({ code: 'CONFIG', message: 'mirrored requires at least one transport' });
+    if (!primary)
+      throw new NotifyRpcError({
+        code: 'CONFIG',
+        message: 'mirrored requires at least one transport',
+      });
     const result = await sendOne(primary.transport, message, ctx);
     log.debug('multi mirrored primary ok', { transportName: primary.transport.name });
     for (let i = 1; i < entries.length; i++) {

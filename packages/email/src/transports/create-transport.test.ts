@@ -84,5 +84,4 @@ describe('createTransport', () => {
     await t.close!();
     expect(closed).toBe(true);
   });
-
 });

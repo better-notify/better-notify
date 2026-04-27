@@ -42,8 +42,18 @@ const makeSetup = () => {
 describe('plugin lifecycle', () => {
   it('runs onCreate in array order at createClient time', () => {
     const order: string[] = [];
-    const a: Plugin = { name: 'a', onCreate: () => { order.push('a'); } };
-    const b: Plugin = { name: 'b', onCreate: () => { order.push('b'); } };
+    const a: Plugin = {
+      name: 'a',
+      onCreate: () => {
+        order.push('a');
+      },
+    };
+    const b: Plugin = {
+      name: 'b',
+      onCreate: () => {
+        order.push('b');
+      },
+    };
     const { ch, catalog } = makeSetup();
     createClient({
       catalog,
@@ -56,8 +66,18 @@ describe('plugin lifecycle', () => {
 
   it('runs onClose in REVERSE order on mail.close()', async () => {
     const order: string[] = [];
-    const a: Plugin = { name: 'a', onClose: () => { order.push('a'); } };
-    const b: Plugin = { name: 'b', onClose: () => { order.push('b'); } };
+    const a: Plugin = {
+      name: 'a',
+      onClose: () => {
+        order.push('a');
+      },
+    };
+    const b: Plugin = {
+      name: 'b',
+      onClose: () => {
+        order.push('b');
+      },
+    };
     const { ch, catalog } = makeSetup();
     const mail = createClient({
       catalog,
@@ -73,7 +93,11 @@ describe('plugin lifecycle', () => {
     const order: string[] = [];
     const plugin: Plugin = {
       name: 'p',
-      hooks: { onAfterSend: () => { order.push('plugin'); } },
+      hooks: {
+        onAfterSend: () => {
+          order.push('plugin');
+        },
+      },
     };
     const { ch, catalog } = makeSetup();
     const mail = createClient({
@@ -81,7 +105,11 @@ describe('plugin lifecycle', () => {
       channels: { email: ch },
       transportsByChannel: { email: mockTransport() },
       plugins: [plugin],
-      hooks: { onAfterSend: () => { order.push('user'); } },
+      hooks: {
+        onAfterSend: () => {
+          order.push('user');
+        },
+      },
     });
     await mail.welcome.send({ to: 'x@y.com', input: { name: 'John Doe' } });
     expect(order).toEqual(['plugin', 'user']);
@@ -124,7 +152,9 @@ describe('plugin lifecycle', () => {
   it('onCreate failure aborts createClient', () => {
     const failing: Plugin = {
       name: 'failing',
-      onCreate: () => { throw new Error('init boom'); },
+      onCreate: () => {
+        throw new Error('init boom');
+      },
     };
     const { ch, catalog } = makeSetup();
     expect(() =>

@@ -7,11 +7,7 @@ export type {
   RenderedMessage,
 } from './types.js';
 
-export type {
-  TemplateAdapter,
-  RenderedOutput,
-  AnyTemplateAdapter,
-} from './template.js';
+export type { TemplateAdapter, RenderedOutput, AnyTemplateAdapter } from './template.js';
 
 export { formatAddress } from './lib/format-address.js';
 export { normalizeAddress } from './lib/normalize-address.js';

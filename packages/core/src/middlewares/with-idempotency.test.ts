@@ -24,7 +24,14 @@ const callMw = async (
   next: () => Promise<SendResult>,
   args: SendArgsLike = { to: 'x@y.com', input: {} },
 ): Promise<SendResult> =>
-  (await mw({ input: {}, ctx: {}, route: 'welcome', messageId: 'test-msg', args, next })) as SendResult;
+  (await mw({
+    input: {},
+    ctx: {},
+    route: 'welcome',
+    messageId: 'test-msg',
+    args,
+    next,
+  })) as SendResult;
 
 describe('withIdempotency', () => {
   it('caches the first send and replays on subsequent calls', async () => {

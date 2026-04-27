@@ -1,9 +1,4 @@
-export type {
-  SendEvent,
-  SendEventStatus,
-  SendEventError,
-  EventSink,
-} from './types.js';
+export type { SendEvent, SendEventStatus, SendEventError, EventSink } from './types.js';
 export { createEventSink } from './create-event-sink.js';
 export type { CreateEventSinkOptions } from './create-event-sink.js';
 export { inMemoryEventSink } from './in-memory-event-sink.js';

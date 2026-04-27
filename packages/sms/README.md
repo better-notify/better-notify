@@ -36,9 +36,9 @@ await notify.loginCode.send({ to: '+15555555555', input: { code: '424242' } });
 
 ## Builder slots
 
-| Slot   | Required | Type                              |
-| ------ | -------- | --------------------------------- |
-| `body` | yes      | `string \| ({input}) => string`   |
+| Slot   | Required | Type                            |
+| ------ | -------- | ------------------------------- |
+| `body` | yes      | `string \| ({input}) => string` |
 
 Plus `.input(schema)` and `.use(mw)`.
 

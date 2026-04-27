@@ -74,11 +74,7 @@ describe('pushChannel', () => {
 
   it('render passes through static data and badge values', async () => {
     const ch = pushChannel();
-    const builder = buildBuilder(ch)
-      .title('t')
-      .body('b')
-      .data({ key: 'value' })
-      .badge(42);
+    const builder = buildBuilder(ch).title('t').body('b').data({ key: 'value' }).badge(42);
     const def = ch.finalize(builder, 'greet');
     const out = await ch.render(def, { to: 'token-1', input: { name: 'A' } }, {});
     expect(out).toEqual({

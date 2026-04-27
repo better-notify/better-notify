@@ -35,8 +35,7 @@ export const withIdempotency = <TInput = unknown>(
   opts: WithIdempotencyOptions<TInput>,
 ): Middleware<TInput> => {
   return async ({ input, ctx, route, args, next }) => {
-    const key =
-      typeof opts.key === 'function' ? opts.key({ input, ctx, route, args }) : opts.key;
+    const key = typeof opts.key === 'function' ? opts.key({ input, ctx, route, args }) : opts.key;
     const cached = await opts.store.get(key);
     if (cached) return cached;
     const [err, result] = await handlePromise(next());

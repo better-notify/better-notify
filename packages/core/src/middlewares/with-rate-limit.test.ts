@@ -21,7 +21,14 @@ const okResult: SendResult = {
 };
 
 const callMw = (mw: Middleware, args: SendArgsLike = { to: 'x@y.com', input: {} }) =>
-  mw({ input: {}, ctx: {}, route: 'welcome', messageId: 'test-msg', args, next: async () => okResult });
+  mw({
+    input: {},
+    ctx: {},
+    route: 'welcome',
+    messageId: 'test-msg',
+    args,
+    next: async () => okResult,
+  });
 
 describe('withRateLimit', () => {
   it('passes through under the limit', async () => {

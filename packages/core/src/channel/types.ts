@@ -16,13 +16,7 @@ export type ChannelBuilderCtx = {
   readonly rootMiddleware: ReadonlyArray<AnyMiddleware>;
 };
 
-export type Channel<
-  TName extends string,
-  TBuilder,
-  TArgs,
-  TRendered,
-  TTransport,
-> = {
+export type Channel<TName extends string, TBuilder, TArgs, TRendered, TTransport> = {
   readonly name: TName;
   readonly createBuilder: (ctx: ChannelBuilderCtx) => TBuilder;
   readonly finalize: (state: unknown, id: string) => ChannelDefinition<TArgs, TRendered>;
@@ -48,6 +42,9 @@ export type TransportsFor<M extends ChannelMap> = {
   [K in keyof M]: M[K] extends Channel<any, any, any, any, infer T> ? T : never;
 };
 
-export type ArgsFor<C extends AnyChannel> = C extends Channel<any, any, infer A, any, any> ? A : never;
-export type RenderedFor<C extends AnyChannel> = C extends Channel<any, any, any, infer R, any> ? R : never;
-export type BuilderFor<C extends AnyChannel> = C extends Channel<any, infer B, any, any, any> ? B : never;
+export type ArgsFor<C extends AnyChannel> =
+  C extends Channel<any, any, infer A, any, any> ? A : never;
+export type RenderedFor<C extends AnyChannel> =
+  C extends Channel<any, any, any, infer R, any> ? R : never;
+export type BuilderFor<C extends AnyChannel> =
+  C extends Channel<any, infer B, any, any, any> ? B : never;

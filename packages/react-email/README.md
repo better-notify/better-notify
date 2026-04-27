@@ -31,7 +31,8 @@ const email = emailChannel();
 const rpc = createNotify<{ email: typeof email }, { baseUrl: string }>({ channels: { email } });
 
 export const catalog = rpc.catalog({
-  welcome: rpc.email()
+  welcome: rpc
+    .email()
     .input(z.object({ name: z.string(), token: z.string() }))
     .subject(({ input }) => `Welcome, ${input.name}!`)
     .template(({ input, ctx }) =>
@@ -49,12 +50,12 @@ export const catalog = rpc.catalog({
 
 ### `reactEmail(Component, props, opts?)`
 
-| Arg | Type | Notes |
-|---|---|---|
-| `Component` | `(props: TProps) => ReactElement` | Your React Email component. |
-| `props` | `TProps` | Already-resolved props. Type-checked against `Component`. |
-| `opts.plainText` | `boolean` (default `false`) | When `true`, also produces a plain-text alternative via `react-email`'s `toPlainText`. |
-| `opts.pretty` | `boolean` (default `false`) | When `true`, formats the rendered HTML with indentation/newlines. |
+| Arg              | Type                              | Notes                                                                                  |
+| ---------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
+| `Component`      | `(props: TProps) => ReactElement` | Your React Email component.                                                            |
+| `props`          | `TProps`                          | Already-resolved props. Type-checked against `Component`.                              |
+| `opts.plainText` | `boolean` (default `false`)       | When `true`, also produces a plain-text alternative via `react-email`'s `toPlainText`. |
+| `opts.pretty`    | `boolean` (default `false`)       | When `true`, formats the rendered HTML with indentation/newlines.                      |
 
 Returns `Promise<RenderedOutput>` (`{ html, text? }`) ready to return from your `.template()` callback.
 

@@ -115,9 +115,9 @@ const fakeTransport = (
 
 describe('multiTransport — construction', () => {
   it('throws CONFIG on empty transports', () => {
-    expect(() =>
-      multiTransport<R, D>({ strategy: 'failover', transports: [] }),
-    ).toThrow(NotifyRpcError);
+    expect(() => multiTransport<R, D>({ strategy: 'failover', transports: [] })).toThrow(
+      NotifyRpcError,
+    );
   });
 
   it('throws CONFIG on invalid maxAttemptsPerTransport', () => {
@@ -589,7 +589,10 @@ describe('mapTransport', () => {
         return { ok: true, data: { id: 'x' } };
       },
     });
-    const wrapped = mapTransport<R, D>(inner, async (msg) => ({ ...msg, body: msg.body.toUpperCase() }));
+    const wrapped = mapTransport<R, D>(inner, async (msg) => ({
+      ...msg,
+      body: msg.body.toUpperCase(),
+    }));
     await wrapped.send({ body: 'hi' }, baseCtx);
     expect(captured?.body).toBe('HI');
   });

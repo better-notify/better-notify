@@ -98,17 +98,15 @@ type CatalogOf<R> = R extends Catalog<infer M, any> ? M : never;
 
 export type CtxOf<R> = R extends Catalog<any, infer Ctx> ? Ctx : unknown;
 
-export type InputOf<R extends AnyCatalog, K extends keyof CatalogOf<R> & string> = InferInput<
-  SchemaOf<CatalogOf<R>[K]>
-> extends never
-  ? unknown
-  : InferInput<SchemaOf<CatalogOf<R>[K]>>;
+export type InputOf<R extends AnyCatalog, K extends keyof CatalogOf<R> & string> =
+  InferInput<SchemaOf<CatalogOf<R>[K]>> extends never
+    ? unknown
+    : InferInput<SchemaOf<CatalogOf<R>[K]>>;
 
-export type OutputOf<R extends AnyCatalog, K extends keyof CatalogOf<R> & string> = InferOutput<
-  SchemaOf<CatalogOf<R>[K]>
-> extends never
-  ? unknown
-  : InferOutput<SchemaOf<CatalogOf<R>[K]>>;
+export type OutputOf<R extends AnyCatalog, K extends keyof CatalogOf<R> & string> =
+  InferOutput<SchemaOf<CatalogOf<R>[K]>> extends never
+    ? unknown
+    : InferOutput<SchemaOf<CatalogOf<R>[K]>>;
 
 export type CatalogMap = Record<string, unknown>;
 

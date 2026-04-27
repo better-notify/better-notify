@@ -140,7 +140,8 @@ describe('multiTransport — failover strategy', () => {
       transports: [{ transport: a }, { transport: b }],
     });
     const res = await m.send(baseMessage, baseCtx);
-    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('a-id');
+    if (!res.ok) throw new Error('expected ok');
+    expect(res.data.transportMessageId).toBe('a-id');
     expect(a.calls).toBe(1);
     expect(b.calls).toBe(0);
   });
@@ -153,7 +154,8 @@ describe('multiTransport — failover strategy', () => {
       transports: [{ transport: a }, { transport: b }],
     });
     const res = await m.send(baseMessage, baseCtx);
-    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('b-id');
+    if (!res.ok) throw new Error('expected ok');
+    expect(res.data.transportMessageId).toBe('b-id');
     expect(a.calls).toBe(1);
     expect(b.calls).toBe(1);
   });
@@ -184,7 +186,8 @@ describe('multiTransport — failover strategy', () => {
       logger: log,
     });
     const res = await m.send(baseMessage, baseCtx);
-    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('b-id');
+    if (!res.ok) throw new Error('expected ok');
+    expect(res.data.transportMessageId).toBe('b-id');
     const failed = log.records.find(
       (r) => r.message === 'multi attempt failed' && r.payload.transportName === 'a',
     );
@@ -200,7 +203,8 @@ describe('multiTransport — failover strategy', () => {
       maxAttemptsPerTransport: 3,
     });
     const res = await m.send(baseMessage, baseCtx);
-    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('b-id');
+    if (!res.ok) throw new Error('expected ok');
+    expect(res.data.transportMessageId).toBe('b-id');
     expect(a.calls).toBe(3);
     expect(b.calls).toBe(1);
   });
@@ -211,7 +215,8 @@ describe('multiTransport — failover strategy', () => {
     sparse[1] = { transport: a };
     const m = multiTransport({ strategy: 'failover', transports: sparse });
     const res = await m.send(baseMessage, baseCtx);
-    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('a-id');
+    if (!res.ok) throw new Error('expected ok');
+    expect(res.data.transportMessageId).toBe('a-id');
     expect(a.calls).toBe(1);
   });
 });
@@ -292,7 +297,8 @@ describe('multiTransport — random strategy', () => {
         transports: [{ transport: a }, { transport: b }, { transport: c }],
       });
       const res = await m.send(baseMessage, baseCtx);
-      if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('c-id');
+      if (!res.ok) throw new Error('expected ok');
+      expect(res.data.transportMessageId).toBe('c-id');
       expect(b.calls).toBe(1);
       expect(c.calls).toBe(1);
       expect(a.calls).toBe(0);

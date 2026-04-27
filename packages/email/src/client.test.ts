@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import {
-  createClient,
-  createNotify,
-  NotifyRpcError,
-  type Middleware,
-} from '@emailrpc/core';
+import { createClient, createNotify, NotifyRpcError, type Middleware } from '@emailrpc/core';
 import { emailChannel, mockTransport, multiTransport } from './index.js';
 import type { TemplateAdapter } from './template.js';
 import type { LoggerLike, LogLevel } from '@emailrpc/core';
@@ -65,8 +60,11 @@ const stubAdapter: TemplateAdapter<{ name: string }> = {
   }),
 };
 
-const buildEmailChannel = (defaults?: { from?: string | { name?: string; email?: string }; replyTo?: string | { name?: string; email: string }; headers?: Record<string, string> }) =>
-  emailChannel(defaults ? { defaults } : undefined);
+const buildEmailChannel = (defaults?: {
+  from?: string | { name?: string; email?: string };
+  replyTo?: string | { name?: string; email: string };
+  headers?: Record<string, string>;
+}) => emailChannel(defaults ? { defaults } : undefined);
 
 const createTestCatalog = (defaults?: { from?: string }) => {
   const ch = buildEmailChannel(defaults);
@@ -92,7 +90,10 @@ describe('executeRender', () => {
       transportsByChannel: { email: mockTransport() },
     });
 
-    const output = (await mail.welcome.render({ name: 'John Doe' })) as { html: string; text?: string };
+    const output = (await mail.welcome.render({ name: 'John Doe' })) as {
+      html: string;
+      text?: string;
+    };
     expect(output.html).toBe('<p>Hello John Doe</p>');
     expect(output.text).toBe('Hello John Doe');
   });
@@ -482,10 +483,7 @@ describe('multi-transport failover order', () => {
       transportsByChannel: {
         email: multiTransport({
           strategy: 'failover',
-          transports: [
-            { transport: primary },
-            { transport: secondary },
-          ],
+          transports: [{ transport: primary }, { transport: secondary }],
         }),
       },
     });
@@ -1374,7 +1372,13 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   };
 
   it('chains all three: rate limit OK, not suppressed, fresh — provider sends and idempotency caches', async () => {
-    const { withRateLimit, withIdempotency, inMemoryRateLimitStore, inMemorySuppressionList, inMemoryIdempotencyStore } = await import('@emailrpc/core');
+    const {
+      withRateLimit,
+      withIdempotency,
+      inMemoryRateLimitStore,
+      inMemorySuppressionList,
+      inMemoryIdempotencyStore,
+    } = await import('@emailrpc/core');
     const { withSuppressionList } = await import('./index.js');
 
     const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
@@ -1401,7 +1405,8 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   });
 
   it('suppression short-circuit does NOT write to idempotency store', async () => {
-    const { withIdempotency, inMemorySuppressionList, inMemoryIdempotencyStore } = await import('@emailrpc/core');
+    const { withIdempotency, inMemorySuppressionList, inMemoryIdempotencyStore } =
+      await import('@emailrpc/core');
     const { withSuppressionList } = await import('./index.js');
 
     const list = inMemorySuppressionList();
@@ -1434,7 +1439,13 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   });
 
   it('rate-limit throw does NOT write to idempotency store', async () => {
-    const { withRateLimit, withIdempotency, inMemoryRateLimitStore, inMemoryIdempotencyStore, NotifyRpcRateLimitedError } = await import('@emailrpc/core');
+    const {
+      withRateLimit,
+      withIdempotency,
+      inMemoryRateLimitStore,
+      inMemoryIdempotencyStore,
+      NotifyRpcRateLimitedError,
+    } = await import('@emailrpc/core');
 
     const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
     const { ch, catalog } = buildKitchenCatalog([
@@ -1458,11 +1469,7 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
     const cachedAfterFirst = await idemStore.get('idem-key');
     expect(cachedAfterFirst).not.toBeNull();
 
-    await idemStore.set(
-      'idem-key',
-      { ...cachedAfterFirst!, messageId: 'sentinel' },
-      60_000,
-    );
+    await idemStore.set('idem-key', { ...cachedAfterFirst!, messageId: 'sentinel' }, 60_000);
 
     await expect(
       mail.welcome.send({ to: 'b@x.com', input: { name: 'John Doe' } }),

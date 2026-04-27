@@ -143,7 +143,9 @@ describe('client.batch', () => {
       { to: 'b@x.com', input: { name: 'Bob' } },
     ]);
 
-    const intervalCalls = setTimeoutSpy.mock.calls.filter(([, ms]) => typeof ms === 'number' && ms > 0);
+    const intervalCalls = setTimeoutSpy.mock.calls.filter(
+      ([, ms]) => typeof ms === 'number' && ms > 0,
+    );
     expect(intervalCalls).toHaveLength(0);
     setTimeoutSpy.mockRestore();
   });
@@ -197,9 +199,7 @@ describe('client.batch', () => {
         bcc: ['bcc@x.com'],
         replyTo: 'reply@x.com',
         headers: { 'X-Vip': 'yes' },
-        attachments: [
-          { filename: 'a.txt', content: Buffer.from('hi'), contentType: 'text/plain' },
-        ],
+        attachments: [{ filename: 'a.txt', content: Buffer.from('hi'), contentType: 'text/plain' }],
         input: { name: 'Alice' },
       },
     ]);

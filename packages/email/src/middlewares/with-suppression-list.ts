@@ -17,10 +17,7 @@ type SuppressedSendResult = {
 
 const DEFAULT_FIELDS: ReadonlyArray<SuppressionField> = ['to', 'cc', 'bcc'];
 
-const collectAddresses = (
-  args: RawSendArgs,
-  fields: ReadonlyArray<SuppressionField>,
-): string[] => {
+const collectAddresses = (args: RawSendArgs, fields: ReadonlyArray<SuppressionField>): string[] => {
   const out: string[] = [];
   for (const field of fields) {
     const value = args[field];

@@ -56,10 +56,7 @@ export type ClientHooks<R extends AnyCatalog = AnyCatalog> = {
   onError?: HookFn<ErrorCtx<R>> | HookFn<ErrorCtx<R>>[];
 };
 
-export type CreateClientOptions<
-  R extends AnyCatalog,
-  Channels extends ChannelMap = ChannelMap,
-> = {
+export type CreateClientOptions<R extends AnyCatalog, Channels extends ChannelMap = ChannelMap> = {
   catalog: R;
   channels: Channels;
   transportsByChannel: Partial<TransportsFor<Channels>>;
@@ -86,7 +83,10 @@ type BatchOptions = { interval?: number };
 
 type ChannelRouteMethods<TArgs> = {
   send(args: TArgs): Promise<ChannelSendResult>;
-  batch(entries: ReadonlyArray<TArgs>, opts?: BatchOptions): Promise<BatchResult<ChannelSendResult>>;
+  batch(
+    entries: ReadonlyArray<TArgs>,
+    opts?: BatchOptions,
+  ): Promise<BatchResult<ChannelSendResult>>;
   queue(...args: unknown[]): Promise<never>;
   render(input: unknown, opts?: { ctx?: unknown }): Promise<unknown>;
 };
@@ -101,8 +101,7 @@ type ClientFromMap<M> = {
       : ChannelRouteMethods<unknown>;
 };
 
-export type Client<R extends AnyCatalog> =
-  R extends Catalog<infer M> ? ClientFromMap<M> : never;
+export type Client<R extends AnyCatalog> = R extends Catalog<infer M> ? ClientFromMap<M> : never;
 
 const HANDLED = Symbol.for('notifyrpc.error.handled');
 
@@ -201,10 +200,7 @@ const composeMiddleware = (
   return (ctx) => chain(ctx);
 };
 
-export const createClient = <
-  R extends AnyCatalog,
-  Channels extends ChannelMap = ChannelMap,
->(
+export const createClient = <R extends AnyCatalog, Channels extends ChannelMap = ChannelMap>(
   options: CreateClientOptions<R, Channels>,
 ): Client<R> & { close: () => Promise<void> } => {
   const { catalog } = options;
@@ -284,7 +280,12 @@ export const createClient = <
       log.warn('validate failed', { err: validateErr });
       await runHooks(
         normalizedHooks.onError,
-        { ...baseHookCtx, input: undefined, error: validateErr as NotifyRpcError, phase: 'validate' as const },
+        {
+          ...baseHookCtx,
+          input: undefined,
+          error: validateErr as NotifyRpcError,
+          phase: 'validate' as const,
+        },
         (e) => reportHookError(normalizedHooks.onError, baseHookCtx, e, log, 'onError'),
       );
       markHandled(validateErr);
@@ -394,7 +395,14 @@ export const createClient = <
     };
 
     const allMiddleware = [...pluginMiddleware, ...channelDef.middleware];
-    const composed = composeMiddleware(allMiddleware, core, input, argsWithInput, flatKey, messageId);
+    const composed = composeMiddleware(
+      allMiddleware,
+      core,
+      input,
+      argsWithInput,
+      flatKey,
+      messageId,
+    );
 
     const mwTuple = await handlePromise(composed(initialCtx));
     const mwErr = mwTuple[0];
@@ -420,7 +428,11 @@ export const createClient = <
     }
     const result = mwTuple[1];
 
-    const afterSendParams = { ...beforeSendParams, result, durationMs: timing.renderMs + timing.sendMs };
+    const afterSendParams = {
+      ...beforeSendParams,
+      result,
+      durationMs: timing.renderMs + timing.sendMs,
+    };
     await runHooks(normalizedHooks.onAfterSend, afterSendParams, (e) =>
       reportHookError(normalizedHooks.onError, afterSendParams, e, log, 'onAfterSend'),
     );
@@ -446,7 +458,9 @@ export const createClient = <
         let errorCount = 0;
         const interval = batchOpts?.interval ?? 0;
         for (let i = 0; i < entries.length; i++) {
-          const [err, res] = await handlePromise(executeChannelSend(channelDef, entries[i], flatKey));
+          const [err, res] = await handlePromise(
+            executeChannelSend(channelDef, entries[i], flatKey),
+          );
           if (err) {
             errorCount++;
             results.push({

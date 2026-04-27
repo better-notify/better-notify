@@ -30,7 +30,7 @@ describe('withTagInject', () => {
           input: {},
           ctx: { ...newCtx },
           route: 'r',
-      messageId: 'test-msg',
+          messageId: 'test-msg',
           args: { to: 'x@y.com', input: {} },
           next: noopNext as never,
         })) as never,

@@ -5,7 +5,8 @@ import { emailChannel } from './channel.js';
 const schema = z.object({ name: z.string() });
 
 const makeBuilder = (ch: ReturnType<typeof emailChannel>) =>
-  ch.createBuilder({ ctx: undefined, rootMiddleware: [] })
+  ch
+    .createBuilder({ ctx: undefined, rootMiddleware: [] })
     .input(schema)
     .subject(({ input }) => `Hi ${input.name}`)
     .template(({ input }) => ({ html: `<p>${input.name}</p>`, text: `Hi ${input.name}` }));
@@ -28,7 +29,8 @@ describe('emailChannel', () => {
 
   it('finalize on a complete builder produces a ChannelDefinition tagged "email"', () => {
     const ch = emailChannel();
-    const builder = ch.createBuilder({ ctx: undefined, rootMiddleware: [] })
+    const builder = ch
+      .createBuilder({ ctx: undefined, rootMiddleware: [] })
       .input(schema)
       .subject(({ input }) => `Hi ${input.name}`)
       .template(({ input }) => ({ html: `<p>${input.name}</p>` }));
@@ -78,16 +80,16 @@ describe('emailChannel', () => {
       makeBuilder(ch).from(({ ctx }) => (ctx as { tenantFrom: string }).tenantFrom),
       'welcome',
     );
-    const rendered = await ch.render(
-      def,
-      { to: 'a@b.com', input: { name: 'Lucas' } } as any,
-      { tenantFrom: 'tenant-a@example.com' },
-    );
+    const rendered = await ch.render(def, { to: 'a@b.com', input: { name: 'Lucas' } } as any, {
+      tenantFrom: 'tenant-a@example.com',
+    });
     expect(rendered.from).toEqual({ email: 'tenant-a@example.com' });
   });
 
   it('per-call args.from merges name from defaults when args only provide email via object', async () => {
-    const ch = emailChannel({ defaults: { from: { name: 'Default Name', email: 'default@example.com' } } });
+    const ch = emailChannel({
+      defaults: { from: { name: 'Default Name', email: 'default@example.com' } },
+    });
     const def = ch.finalize(makeBuilder(ch), 'welcome');
     const rendered = await ch.render(
       def,
@@ -98,21 +100,35 @@ describe('emailChannel', () => {
   });
 
   it('replyTo falls back through args → runtime → defaults', async () => {
-    const ch = emailChannel({ defaults: { from: 'sender@example.com', replyTo: { email: 'defaults-reply@example.com' } } });
+    const ch = emailChannel({
+      defaults: { from: 'sender@example.com', replyTo: { email: 'defaults-reply@example.com' } },
+    });
     const builder = makeBuilder(ch);
     const def = ch.finalize(builder, 'welcome');
 
-    const withDefault = await ch.render(def, { to: 'a@b.com', input: { name: 'Lucas' } } as any, {});
+    const withDefault = await ch.render(
+      def,
+      { to: 'a@b.com', input: { name: 'Lucas' } } as any,
+      {},
+    );
     expect(withDefault.replyTo).toEqual({ email: 'defaults-reply@example.com' });
 
     const builderWithReplyTo = makeBuilder(ch).replyTo({ email: 'runtime-reply@example.com' });
     const defWithRuntime = ch.finalize(builderWithReplyTo, 'welcome2');
-    const withRuntime = await ch.render(defWithRuntime, { to: 'a@b.com', input: { name: 'Lucas' } } as any, {});
+    const withRuntime = await ch.render(
+      defWithRuntime,
+      { to: 'a@b.com', input: { name: 'Lucas' } } as any,
+      {},
+    );
     expect(withRuntime.replyTo).toEqual({ email: 'runtime-reply@example.com' });
 
     const withArgs = await ch.render(
       defWithRuntime,
-      { to: 'a@b.com', replyTo: { email: 'args-reply@example.com' }, input: { name: 'Lucas' } } as any,
+      {
+        to: 'a@b.com',
+        replyTo: { email: 'args-reply@example.com' },
+        input: { name: 'Lucas' },
+      } as any,
       {},
     );
     expect(withArgs.replyTo).toEqual({ email: 'args-reply@example.com' });
@@ -128,7 +144,11 @@ describe('emailChannel', () => {
     const def = ch.finalize(makeBuilder(ch), 'welcome');
     const rendered = await ch.render(
       def,
-      { to: 'a@b.com', headers: { 'X-Shared': 'args-wins', 'X-Custom': 'custom' }, input: { name: 'Lucas' } } as any,
+      {
+        to: 'a@b.com',
+        headers: { 'X-Shared': 'args-wins', 'X-Custom': 'custom' },
+        input: { name: 'Lucas' },
+      } as any,
       {},
     );
     expect(rendered.headers).toEqual({
@@ -165,10 +185,7 @@ describe('emailChannel', () => {
         headers: { 'X-Default': 'yes' },
       },
     });
-    const def = ch.finalize(
-      makeBuilder(ch).tags({ env: 'test' }).priority('low'),
-      'welcome',
-    );
+    const def = ch.finalize(makeBuilder(ch).tags({ env: 'test' }).priority('low'), 'welcome');
     const rendered = await ch.render(
       def,
       {
@@ -198,7 +215,9 @@ describe('emailChannel', () => {
     const ch = emailChannel();
     const mw = async () => undefined as never;
     const builder = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
-    expect((builder as unknown as { _state: { middleware: unknown[] } })._state.middleware).toEqual([mw]);
+    expect((builder as unknown as { _state: { middleware: unknown[] } })._state.middleware).toEqual(
+      [mw],
+    );
   });
 
   it('validateArgs rejects non-object args', () => {

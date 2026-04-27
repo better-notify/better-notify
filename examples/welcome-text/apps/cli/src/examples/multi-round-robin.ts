@@ -58,6 +58,8 @@ export const runMultiRoundRobin = async (): Promise<void> => {
       to: env.SMTP_DESTINATION_EMAIL,
       input: { name: `User ${i}`, verifyUrl: `https://example.com/verify?token=abc${i}` },
     });
-    console.log(`Send #${i}: id=${result.messageId.slice(0, 8)} (see [provider] log above for from)`);
+    console.log(
+      `Send #${i}: id=${result.messageId.slice(0, 8)} (see [provider] log above for from)`,
+    );
   }
 };

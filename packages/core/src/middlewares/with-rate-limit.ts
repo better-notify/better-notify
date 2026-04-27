@@ -36,8 +36,7 @@ export const withRateLimit = <TInput = unknown>(
 ): Middleware<TInput> => {
   const algorithm = opts.algorithm ?? 'fixed';
   return async ({ input, ctx, route, args, next }) => {
-    const key =
-      typeof opts.key === 'function' ? opts.key({ input, ctx, route, args }) : opts.key;
+    const key = typeof opts.key === 'function' ? opts.key({ input, ctx, route, args }) : opts.key;
     const { count, resetAtMs } = await opts.store.record(key, opts.window, algorithm);
     if (count > opts.max) {
       throw new NotifyRpcRateLimitedError({

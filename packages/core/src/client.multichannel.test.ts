@@ -56,9 +56,11 @@ const testChannel = () => {
       def: ChannelDefinition<TestArgs, TestRendered>,
       args: TestArgs,
     ): Promise<TestRendered> => {
-      const runtime = (def as ChannelDefinition<TestArgs, TestRendered> & {
-        runtime: { template: (input: { name: string }) => string };
-      }).runtime;
+      const runtime = (
+        def as ChannelDefinition<TestArgs, TestRendered> & {
+          runtime: { template: (input: { name: string }) => string };
+        }
+      ).runtime;
       return { body: runtime.template(args.input), to: args.to };
     },
     _transport: undefined as never,
@@ -241,7 +243,9 @@ describe('createClient multi-channel', () => {
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
-    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(NotifyRpcError);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(
+      NotifyRpcError,
+    );
     expect(errors).toEqual([{ phase: 'middleware', code: 'UNKNOWN' }]);
   });
 
@@ -271,7 +275,9 @@ describe('createClient multi-channel', () => {
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
-    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(NotifyRpcError);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(
+      NotifyRpcError,
+    );
     expect(errors).toEqual([{ phase: 'render', code: 'RENDER' }]);
   });
 
@@ -296,7 +302,9 @@ describe('createClient multi-channel', () => {
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
-    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(NotifyRpcError);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeInstanceOf(
+      NotifyRpcError,
+    );
     expect(errors).toEqual([{ phase: 'send', code: 'PROVIDER' }]);
   });
 
@@ -329,9 +337,9 @@ describe('createClient multi-channel', () => {
       channels: {},
       transportsByChannel: {},
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
-    await expect(
-      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
-    ).rejects.toThrow(/No channel/);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toThrow(
+      /No channel/,
+    );
   });
 
   it('throws PROVIDER when transport is missing for the channel', async () => {
@@ -341,9 +349,9 @@ describe('createClient multi-channel', () => {
       channels: { test: testChannel() },
       transportsByChannel: {},
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
-    await expect(
-      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
-    ).rejects.toThrow(/No transport/);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toThrow(
+      /No transport/,
+    );
   });
 
   it('builds envelope when rendered has from + to addresses', async () => {
@@ -359,7 +367,9 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: ch as unknown as AnyChannel },
       transportsByChannel: { test: transport },
-    }) as unknown as { ping: { send: (a: TestArgs) => Promise<{ envelope?: { from?: string; to: string[] } }> } };
+    }) as unknown as {
+      ping: { send: (a: TestArgs) => Promise<{ envelope?: { from?: string; to: string[] } }> };
+    };
     const result = await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
     expect(result.envelope).toEqual({ from: 'sender@x.com', to: ['rcpt@x.com'] });
   });
@@ -406,15 +416,16 @@ describe('createClient multi-channel', () => {
         error: (m: string, p?: unknown) => {
           errs.push({ m, p });
         },
-        child: () => ({
-          debug: () => {},
-          info: () => {},
-          warn: () => {},
-          error: (m: string, p?: unknown) => {
-            errs.push({ m, p });
-          },
-          child: () => ({}) as never,
-        }) as never,
+        child: () =>
+          ({
+            debug: () => {},
+            info: () => {},
+            warn: () => {},
+            error: (m: string, p?: unknown) => {
+              errs.push({ m, p });
+            },
+            child: () => ({}) as never,
+          }) as never,
       } as never,
     }) as unknown as { close: () => Promise<void> };
     await mail.close();
@@ -451,7 +462,17 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
-    }) as unknown as { ping: { batch: (entries: ReadonlyArray<TestArgs>) => Promise<{ okCount: number; errorCount: number; results: ReadonlyArray<{ status: 'ok' | 'error'; index: number }> }> } };
+    }) as unknown as {
+      ping: {
+        batch: (
+          entries: ReadonlyArray<TestArgs>,
+        ) => Promise<{
+          okCount: number;
+          errorCount: number;
+          results: ReadonlyArray<{ status: 'ok' | 'error'; index: number }>;
+        }>;
+      };
+    };
     const r = await mail.ping.batch([
       { to: 'a@x.com', input: { name: 'A' } },
       { to: 'b@x.com', input: { name: 1 as unknown as string } },
@@ -532,9 +553,7 @@ describe('createClient multi-channel', () => {
       channels: { test: testChannel() },
       transportsByChannel: { test: transport as unknown as TestTransport },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
-    await expect(
-      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
-    ).rejects.toThrow(/soft/);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toThrow(/soft/);
   });
 
   it('preserves NotifyRpcError thrown from middleware', async () => {
@@ -569,7 +588,15 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: testChannel() },
       transportsByChannel: { test: transport as unknown as TestTransport },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }> }> } };
+    }) as unknown as {
+      ping: {
+        batch: (
+          e: ReadonlyArray<TestArgs>,
+        ) => Promise<{
+          results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }>;
+        }>;
+      };
+    };
     const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
     const first = r.results[0];
     if (!first || first.status !== 'error') throw new Error('expected error');
@@ -584,7 +611,14 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>, opts?: { interval?: number }) => Promise<{ okCount: number }> } };
+    }) as unknown as {
+      ping: {
+        batch: (
+          e: ReadonlyArray<TestArgs>,
+          opts?: { interval?: number },
+        ) => Promise<{ okCount: number }>;
+      };
+    };
     const start = Date.now();
     await mail.ping.batch(
       [
@@ -651,9 +685,7 @@ describe('createClient multi-channel', () => {
         },
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
-    await expect(
-      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
-    ).rejects.toBeTruthy();
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeTruthy();
     expect(errors.some((e) => e.phase === 'hook')).toBe(true);
   });
 
@@ -671,7 +703,15 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: testChannel() },
       transportsByChannel: { test: transport as unknown as TestTransport },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }> }> } };
+    }) as unknown as {
+      ping: {
+        batch: (
+          e: ReadonlyArray<TestArgs>,
+        ) => Promise<{
+          results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }>;
+        }>;
+      };
+    };
     const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
     const first = r.results[0];
     if (!first || first.status !== 'error') throw new Error('expected error');
@@ -685,7 +725,11 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>, opts?: { interval?: number }) => Promise<unknown> } };
+    }) as unknown as {
+      ping: {
+        batch: (e: ReadonlyArray<TestArgs>, opts?: { interval?: number }) => Promise<unknown>;
+      };
+    };
     await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }], { interval: 100 });
     expect(transport.sent).toHaveLength(1);
   });
@@ -707,9 +751,7 @@ describe('createClient multi-channel', () => {
         },
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
-    await expect(
-      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
-    ).rejects.toBe(original);
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBe(original);
     expect(errors.some((e) => e.error === original)).toBe(true);
   });
 
@@ -770,7 +812,13 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: ch as unknown as AnyChannel },
       transportsByChannel: { test: createTestTransport() },
-    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: string; error?: NotifyRpcError }> }> } };
+    }) as unknown as {
+      ping: {
+        batch: (
+          e: ReadonlyArray<TestArgs>,
+        ) => Promise<{ results: ReadonlyArray<{ status: string; error?: NotifyRpcError }> }>;
+      };
+    };
     const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
     const first = r.results[0];
     if (!first || first.status !== 'error') throw new Error('expected error');
@@ -791,7 +839,9 @@ describe('createClient multi-channel', () => {
       catalog,
       channels: { test: ch as unknown as AnyChannel },
       transportsByChannel: { test: transport },
-    }) as unknown as { ping: { send: (a: TestArgs) => Promise<{ envelope?: { from?: string; to: string[] } }> } };
+    }) as unknown as {
+      ping: { send: (a: TestArgs) => Promise<{ envelope?: { from?: string; to: string[] } }> };
+    };
     const result = await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
     expect(result.envelope).toEqual({ from: '', to: [''] });
   });
@@ -824,9 +874,7 @@ describe('createClient multi-channel', () => {
         },
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
-    await expect(
-      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
-    ).rejects.toBeTruthy();
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeTruthy();
     expect(logs.filter((l) => l.msg === 'hook failed').length).toBeGreaterThanOrEqual(2);
   });
 });

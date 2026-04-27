@@ -63,10 +63,7 @@ describe('withEventLogger', () => {
   it('records duration', async () => {
     const sink = inMemoryEventSink();
     const mw = withEventLogger({ sink });
-    await callMw(
-      mw,
-      () => new Promise((resolve) => setTimeout(() => resolve(okResult), 5)),
-    );
+    await callMw(mw, () => new Promise((resolve) => setTimeout(() => resolve(okResult), 5)));
     expect(sink.events[0]?.durationMs).toBeGreaterThanOrEqual(0);
   });
 });

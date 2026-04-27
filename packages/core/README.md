@@ -59,8 +59,16 @@ import { smtpTransport } from '@emailrpc/smtp';
 const transport = multiTransport({
   strategy: 'failover',
   transports: [
-    { transport: smtpTransport({ /* primary */ }) },
-    { transport: smtpTransport({ /* backup */ }) },
+    {
+      transport: smtpTransport({
+        /* primary */
+      }),
+    },
+    {
+      transport: smtpTransport({
+        /* backup */
+      }),
+    },
   ],
 });
 ```
@@ -79,9 +87,10 @@ Each strategy decides which inner transport to try **first** on every `send()`. 
 
 ### Retry within a transport
 
-`maxAttemptsPerTransport` controls how many times a single inner is retried on a *retriable* error before advancing. `backoff: { initialMs, factor, maxMs }` gives exponential delay between retries on the same transport (no jitter). `isRetriable(err) => boolean` lets you advance immediately on non-retriable errors. Defaults: `maxAttemptsPerTransport=1` (no retry), `isRetriable=() => true`.
+`maxAttemptsPerTransport` controls how many times a single inner is retried on a _retriable_ error before advancing. `backoff: { initialMs, factor, maxMs }` gives exponential delay between retries on the same transport (no jitter). `isRetriable(err) => boolean` lets you advance immediately on non-retriable errors. Defaults: `maxAttemptsPerTransport=1` (no retry), `isRetriable=() => true`.
 
 A failure can be either:
+
 - A thrown error from the inner `send()`
 - A returned `{ ok: false, error }` (soft failure — same retry/advance semantics as a throw)
 
@@ -116,12 +125,12 @@ mock.reset();
 
 All framework errors extend `NotifyRpcError` and are JSON-serializable. Each carries `code`, `route?`, `messageId?`, plus subclass-specific fields:
 
-| Class                               | Code on instances                  |
-| ----------------------------------- | ---------------------------------- |
-| `NotifyRpcError`                    | any of `ErrorCode`                 |
-| `NotifyRpcValidationError`          | `'VALIDATION'` + `issues`          |
-| `NotifyRpcRateLimitedError`         | `'RATE_LIMITED'` + `key`/`retryAfterMs` |
-| `NotifyRpcNotImplementedError`      | `'NOT_IMPLEMENTED'`                |
+| Class                          | Code on instances                       |
+| ------------------------------ | --------------------------------------- |
+| `NotifyRpcError`               | any of `ErrorCode`                      |
+| `NotifyRpcValidationError`     | `'VALIDATION'` + `issues`               |
+| `NotifyRpcRateLimitedError`    | `'RATE_LIMITED'` + `key`/`retryAfterMs` |
+| `NotifyRpcNotImplementedError` | `'NOT_IMPLEMENTED'`                     |
 
 `ErrorCode` union: `'VALIDATION' | 'PROVIDER' | 'CONFIG' | 'TIMEOUT' | 'RENDER' | 'SUPPRESSED' | 'RATE_LIMITED' | 'NOT_IMPLEMENTED' | 'CHANNEL_NOT_QUEUEABLE' | 'BATCH_EMPTY' | 'UNKNOWN'`.
 

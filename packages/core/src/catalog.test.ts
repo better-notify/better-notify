@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { createCatalog, isCatalog, type InputOf, type OutputOf } from './catalog.js';
 import type { ChannelDefinition } from './channel/types.js';
 
-const buildFakeChannelBuilder = (channel: string, schema: z.ZodTypeAny = z.object({ name: z.string() })) => ({
+const buildFakeChannelBuilder = (
+  channel: string,
+  schema: z.ZodTypeAny = z.object({ name: z.string() }),
+) => ({
   _channel: channel,
   _finalize: (id: string): ChannelDefinition<unknown, unknown> => ({
     id,

@@ -33,10 +33,7 @@ export const runMultiMirrored = async (): Promise<void> => {
   const composite = multiTransport({
     name: 'mirrored',
     strategy: 'mirrored',
-    transports: [
-      { transport: mockTransport('primary') },
-      { transport: flakyMirror },
-    ],
+    transports: [{ transport: mockTransport('primary') }, { transport: flakyMirror }],
     logger: consoleLogger({ level: 'debug' }),
   });
 

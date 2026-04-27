@@ -19,7 +19,9 @@ const email = emailChannel({
   defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
 });
 const rpc = createNotify({ channels: { email } });
-const catalog = rpc.catalog({ /* routes */ });
+const catalog = rpc.catalog({
+  /* routes */
+});
 
 const mail = createClient({
   catalog,
