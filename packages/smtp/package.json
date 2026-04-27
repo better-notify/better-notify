@@ -24,15 +24,15 @@
   "dependencies": {
     "@emailrpc/core": "workspace:*",
     "@emailrpc/email": "workspace:*",
-    "nodemailer": "8.0.6"
+    "nodemailer": "catalog:"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
-    "@types/nodemailer": "8.0.0",
-    "rolldown": "1.0.0-rc.17",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "@types/nodemailer": "catalog:",
+    "rolldown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=22"

@@ -27,12 +27,12 @@
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
-    "rolldown": "1.0.0-rc.17",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "rolldown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
-    "mjml": "^4.15.0"
+    "mjml": "catalog:"
   },
   "engines": {
     "node": ">=22"

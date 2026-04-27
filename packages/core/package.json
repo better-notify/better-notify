@@ -62,15 +62,15 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@standard-schema/spec": "^1.0.0"
+    "@standard-schema/spec": "catalog:"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
-    "rolldown": "1.0.0-rc.17",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
-    "zod": "^3.24.1"
+    "rolldown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
   },
   "engines": {
     "node": ">=22"

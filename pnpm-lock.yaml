@@ -4,36 +4,99 @@ settings:
   autoInstallPeers: false
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@changesets/cli':
+      specifier: 2.31.0
+      version: 2.31.0
+    '@standard-schema/spec':
+      specifier: 1.1.0
+      version: 1.1.0
+    '@turbo/gen':
+      specifier: 2.9.6
+      version: 2.9.6
+    '@types/nodemailer':
+      specifier: 8.0.0
+      version: 8.0.0
+    '@types/react':
+      specifier: 19.2.14
+      version: 19.2.14
+    '@types/react-dom':
+      specifier: 19.2.3
+      version: 19.2.3
+    '@vitest/coverage-v8':
+      specifier: 2.1.9
+      version: 2.1.9
+    nodemailer:
+      specifier: 8.0.6
+      version: 8.0.6
+    oxfmt:
+      specifier: 0.46.0
+      version: 0.46.0
+    oxlint:
+      specifier: 1.61.0
+      version: 1.61.0
+    react:
+      specifier: 19.2.5
+      version: 19.2.5
+    react-dom:
+      specifier: 19.2.5
+      version: 19.2.5
+    react-email:
+      specifier: 6.0.0
+      version: 6.0.0
+    rolldown:
+      specifier: 1.0.0-rc.17
+      version: 1.0.0-rc.17
+    rolldown-plugin-dts:
+      specifier: 0.18.4
+      version: 0.18.4
+    tsx:
+      specifier: 4.21.0
+      version: 4.21.0
+    turbo:
+      specifier: 2.9.6
+      version: 2.9.6
+    typescript:
+      specifier: 5.9.3
+      version: 5.9.3
+    vitest:
+      specifier: 2.1.9
+      version: 2.1.9
+    zod:
+      specifier: 4.3.6
+      version: 4.3.6
+
 importers:
 
   .:
     devDependencies:
       '@changesets/cli':
-        specifier: ^2.27.9
+        specifier: 'catalog:'
         version: 2.31.0(@types/node@22.19.17)
       '@turbo/gen':
-        specifier: ^2.3.3
+        specifier: 'catalog:'
         version: 2.9.6(@types/node@22.19.17)
       '@vitest/coverage-v8':
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(vitest@2.1.9(@types/node@22.19.17))
       oxfmt:
-        specifier: 0.46.0
+        specifier: 'catalog:'
         version: 0.46.0
       oxlint:
-        specifier: 1.61.0
+        specifier: 'catalog:'
         version: 1.61.0
       tsx:
-        specifier: ^4.21.0
+        specifier: 'catalog:'
         version: 4.21.0
       turbo:
-        specifier: ^2.3.3
+        specifier: 'catalog:'
         version: 2.9.6
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
 
   examples/welcome-text: {}
@@ -99,23 +162,23 @@ importers:
         specifier: workspace:*
         version: link:../../packages/email
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@internal/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
 
   internal/rolldown-config:
     dependencies:
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       rolldown-plugin-dts:
-        specifier: ^0.18.0
+        specifier: 'catalog:'
         version: 0.18.4(rolldown@1.0.0-rc.17)(typescript@5.9.3)
 
   internal/tsconfig: {}
@@ -133,19 +196,19 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
 
   packages/core:
     dependencies:
       '@standard-schema/spec':
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.1.0
     devDependencies:
       '@internal/rolldown-config':
@@ -155,17 +218,17 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
 
   packages/email:
     dependencies:
@@ -173,7 +236,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@standard-schema/spec':
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.1.0
     devDependencies:
       '@internal/rolldown-config':
@@ -183,17 +246,17 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
 
   packages/handlebars:
     dependencies:
@@ -211,13 +274,13 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
 
   packages/mjml:
@@ -236,13 +299,13 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
 
   packages/push:
@@ -251,7 +314,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@standard-schema/spec':
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.1.0
     devDependencies:
       '@internal/rolldown-config':
@@ -261,17 +324,17 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
 
   packages/react-email:
     dependencies:
@@ -289,32 +352,32 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       '@types/react':
-        specifier: 19.2.14
+        specifier: 'catalog:'
         version: 19.2.14
       '@types/react-dom':
-        specifier: ^19.0.0
+        specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.14)
       react:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5
       react-dom:
-        specifier: 19.2.5
+        specifier: 'catalog:'
         version: 19.2.5(react@19.2.5)
       react-email:
-        specifier: 6.0.0
+        specifier: 'catalog:'
         version: 6.0.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
 
   packages/resend:
     dependencies:
@@ -332,13 +395,13 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
 
   packages/ses:
@@ -357,13 +420,13 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
 
   packages/sms:
@@ -372,7 +435,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@standard-schema/spec':
-        specifier: ^1.0.0
+        specifier: 'catalog:'
         version: 1.1.0
     devDependencies:
       '@internal/rolldown-config':
@@ -382,17 +445,17 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
 
   packages/smtp:
     dependencies:
@@ -403,7 +466,7 @@ importers:
         specifier: workspace:*
         version: link:../email
       nodemailer:
-        specifier: 8.0.6
+        specifier: 'catalog:'
         version: 8.0.6
     devDependencies:
       '@internal/rolldown-config':
@@ -413,16 +476,16 @@ importers:
         specifier: workspace:*
         version: link:../../internal/tsconfig
       '@types/nodemailer':
-        specifier: 8.0.0
+        specifier: 'catalog:'
         version: 8.0.0
       rolldown:
-        specifier: 1.0.0-rc.17
+        specifier: 'catalog:'
         version: 1.0.0-rc.17
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^2.1.8
+        specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.17)
 
 packages:
@@ -3141,9 +3204,6 @@ packages:
     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
     engines: {node: '>=18'}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
@@ -5505,7 +5565,5 @@ snapshots:
   yoctocolors-cjs@2.1.3: {}
 
   yoctocolors@2.1.2: {}
-
-  zod@3.25.76: {}
 
   zod@4.3.6: {}
