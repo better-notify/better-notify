@@ -3,7 +3,7 @@ import type {
   MultiTransportEntry as CoreMultiTransportEntry,
   MultiTransportBackoff as CoreMultiTransportBackoff,
   MultiTransportStrategy as CoreMultiTransportStrategy,
-} from '@emailrpc/core';
+} from '@betternotify/core';
 import type { RenderedMessage } from '../types.js';
 import type { EmailTransportData } from './types.js';
 

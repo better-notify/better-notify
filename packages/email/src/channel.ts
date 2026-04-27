@@ -1,5 +1,5 @@
-import { defineChannel, slot } from '@emailrpc/core';
-import type { Priority, Tags } from '@emailrpc/core';
+import { defineChannel, slot } from '@betternotify/core';
+import type { Priority, Tags } from '@betternotify/core';
 import type { Address, Attachment, FromInput, RenderedMessage } from './types.js';
 import type { RenderedOutput, TemplateAdapter } from './template.js';
 import { resolveFrom } from './lib/resolve-from.js';

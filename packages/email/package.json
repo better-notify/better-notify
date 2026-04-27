@@ -1,7 +1,7 @@
 {
-  "name": "@emailrpc/email",
+  "name": "@betternotify/email",
   "version": "0.0.1",
-  "description": "Email channel plugin for emailrpc.",
+  "description": "Email channel plugin for betternotify.",
   "license": "MIT",
   "files": [
     "dist",
@@ -25,7 +25,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
+    "@betternotify/core": "workspace:*",
     "@standard-schema/spec": "catalog:"
   },
   "devDependencies": {

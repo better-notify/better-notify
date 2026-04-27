@@ -1,4 +1,4 @@
-import type { LoggerLike, SuppressionList } from '@emailrpc/core';
+import type { LoggerLike, SuppressionList } from '@betternotify/core';
 
 export type SuppressionField = 'to' | 'cc' | 'bcc';
 

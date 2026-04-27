@@ -1,7 +1,7 @@
-import { createNotify, createClient, NotifyRpcError } from '@emailrpc/core';
-import type { Address } from '@emailrpc/email';
-import { emailChannel } from '@emailrpc/email';
-import { createTransport, formatAddress, normalizeAddress } from '@emailrpc/email/transports';
+import { createNotify, createClient, NotifyRpcError } from '@betternotify/core';
+import type { Address } from '@betternotify/email';
+import { emailChannel } from '@betternotify/email';
+import { createTransport, formatAddress, normalizeAddress } from '@betternotify/email/transports';
 import { z } from 'zod';
 
 type HttpTransportOptions = {

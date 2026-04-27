@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createClient, createNotify, NotifyRpcError, type Middleware } from '@emailrpc/core';
+import { createClient, createNotify, NotifyRpcError, type Middleware } from '@betternotify/core';
 import { emailChannel, mockTransport, multiTransport } from './index.js';
 import type { TemplateAdapter } from './template.js';
-import type { LoggerLike, LogLevel } from '@emailrpc/core';
+import type { LoggerLike, LogLevel } from '@betternotify/core';
 
 type LogRecord = {
   level: LogLevel;
@@ -1143,7 +1143,7 @@ describe('integration: full end-to-end', () => {
 });
 
 type LoggerTestOpts = {
-  logger?: import('@emailrpc/core').LoggerLike;
+  logger?: import('@betternotify/core').LoggerLike;
   transportThrows?: Error;
   onAfterSend?: () => void;
 };
@@ -1378,7 +1378,7 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
       inMemoryRateLimitStore,
       inMemorySuppressionList,
       inMemoryIdempotencyStore,
-    } = await import('@emailrpc/core');
+    } = await import('@betternotify/core');
     const { withSuppressionList } = await import('./index.js');
 
     const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
@@ -1406,7 +1406,7 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
 
   it('suppression short-circuit does NOT write to idempotency store', async () => {
     const { withIdempotency, inMemorySuppressionList, inMemoryIdempotencyStore } =
-      await import('@emailrpc/core');
+      await import('@betternotify/core');
     const { withSuppressionList } = await import('./index.js');
 
     const list = inMemorySuppressionList();
@@ -1445,7 +1445,7 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
       inMemoryRateLimitStore,
       inMemoryIdempotencyStore,
       NotifyRpcRateLimitedError,
-    } = await import('@emailrpc/core');
+    } = await import('@betternotify/core');
 
     const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
     const { ch, catalog } = buildKitchenCatalog([

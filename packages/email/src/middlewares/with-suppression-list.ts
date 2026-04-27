@@ -1,5 +1,5 @@
-import { consoleLogger } from '@emailrpc/core';
-import type { Middleware } from '@emailrpc/core';
+import { consoleLogger } from '@betternotify/core';
+import type { Middleware } from '@betternotify/core';
 import { normalizeAddress } from '../lib/normalize-address.js';
 import type { Address, RawSendArgs } from '../types.js';
 import type {

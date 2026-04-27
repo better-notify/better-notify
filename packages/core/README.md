@@ -1,11 +1,11 @@
-# @emailrpc/core
+# @betternotify/core
 
 Channel-agnostic notification infrastructure: contracts, client pipeline, transport factories, middleware, hooks, plugins, and observability primitives. See the [root README](../../README.md) for the high-level overview and quick-start.
 
 ## Install
 
 ```sh
-pnpm add @emailrpc/core
+pnpm add @betternotify/core
 ```
 
 ## What's in here
@@ -27,7 +27,7 @@ pnpm add @emailrpc/core
 ## defineChannel
 
 ```ts
-import { defineChannel, slot } from '@emailrpc/core';
+import { defineChannel, slot } from '@betternotify/core';
 import { z } from 'zod';
 
 const slackChannel = defineChannel({
@@ -53,8 +53,8 @@ const slackChannel = defineChannel({
 Composes multiple `Transport<TRendered, TData>` into one composite. The result is itself a `Transport<TRendered, TData>` — register it like any other.
 
 ```ts
-import { multiTransport } from '@emailrpc/email/transports'; // pre-parameterized for email
-import { smtpTransport } from '@emailrpc/smtp';
+import { multiTransport } from '@betternotify/email/transports'; // pre-parameterized for email
+import { smtpTransport } from '@betternotify/smtp';
 
 const transport = multiTransport({
   strategy: 'failover',
@@ -103,7 +103,7 @@ A failure can be either:
 Generic builders for the `Transport<TRendered, TData>` contract:
 
 ```ts
-import { createTransport, createMockTransport } from '@emailrpc/core';
+import { createTransport, createMockTransport } from '@betternotify/core';
 
 const real = createTransport<MyRendered, MyData>({
   name: 'my-api',

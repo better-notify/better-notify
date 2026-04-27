@@ -1,7 +1,7 @@
 {
-  "name": "@emailrpc/sms",
+  "name": "@betternotify/sms",
   "version": "0.0.1",
-  "description": "SMS channel plugin for emailrpc.",
+  "description": "SMS channel plugin for betternotify.",
   "license": "MIT",
   "files": [
     "dist",
@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
+    "@betternotify/core": "workspace:*",
     "@standard-schema/spec": "catalog:"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 import { createElement, type ReactElement } from 'react';
 import { pretty, toPlainText, render } from 'react-email';
-import type { RenderedOutput } from '@emailrpc/email';
+import type { RenderedOutput } from '@betternotify/email';
 
 export type ReactEmailRenderOptions = {
   plainText?: boolean;

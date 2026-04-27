@@ -1,4 +1,4 @@
-import { createTransport, type Transport } from '@emailrpc/email/transports';
+import { createTransport, type Transport } from '@betternotify/email/transports';
 
 export const mockOkSend: Transport['send'] = async (message) => ({
   ok: true,

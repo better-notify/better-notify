@@ -12,8 +12,8 @@ import {
   withIdempotency,
   withRateLimit,
   withTracing,
-} from '@emailrpc/core';
-import { emailChannel, withSuppressionList } from '@emailrpc/email';
+} from '@betternotify/core';
+import { emailChannel, withSuppressionList } from '@betternotify/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';

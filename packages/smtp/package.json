@@ -1,7 +1,7 @@
 {
-  "name": "@emailrpc/smtp",
+  "name": "@betternotify/smtp",
   "version": "0.0.1",
-  "description": "Nodemailer-backed SMTP transport for emailRpc.",
+  "description": "Nodemailer-backed SMTP transport for BetterNotify.",
   "license": "MIT",
   "files": [
     "dist",
@@ -22,8 +22,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
-    "@emailrpc/email": "workspace:*",
+    "@betternotify/core": "workspace:*",
+    "@betternotify/email": "workspace:*",
     "nodemailer": "catalog:"
   },
   "devDependencies": {

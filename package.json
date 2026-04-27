@@ -1,7 +1,14 @@
 {
-  "name": "emailrpc",
+  "name": "betternotify",
   "version": "0.0.0",
   "private": true,
+  "description": "End-to-end typed notification library for Node.js",
+  "homepage": "https://better-notify.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/better-notify/better-notify"
+  },
   "type": "module",
   "scripts": {
     "build": "turbo run build",

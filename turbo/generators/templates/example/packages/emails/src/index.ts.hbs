@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createEmailRpc, type TemplateAdapter } from '@emailrpc/core';
+import { createBetterNotify, type TemplateAdapter } from '@betternotify/core';
 
 function textTemplate<TInput>(body: (input: TInput) => string): TemplateAdapter<TInput> {
   return {
@@ -11,7 +11,7 @@ const helloInputSchema = z.object({
   name: z.string().min(1),
 });
 
-const rpc = createEmailRpc();
+const rpc = createBetterNotify();
 
 export const emails = rpc.catalog({
   hello: rpc

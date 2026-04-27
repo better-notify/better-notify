@@ -1,5 +1,5 @@
-import { createTransport as createCoreTransport } from '@emailrpc/core';
-import type { CreateTransportOptions as CoreCreateTransportOptions } from '@emailrpc/core';
+import { createTransport as createCoreTransport } from '@betternotify/core';
+import type { CreateTransportOptions as CoreCreateTransportOptions } from '@betternotify/core';
 import type { RenderedMessage } from '../types.js';
 import type { EmailTransportData, Transport } from './types.js';
 

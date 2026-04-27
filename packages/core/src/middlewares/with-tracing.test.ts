@@ -40,10 +40,10 @@ describe('withTracing', () => {
     await callMw(mw, async () => okResult);
     expect(tracer.spans).toHaveLength(1);
     expect(tracer.spans[0]).toMatchObject({
-      name: 'emailrpc.send.welcome',
+      name: 'betternotify.send.welcome',
       attributes: {
-        'emailrpc.route': 'welcome',
-        'emailrpc.message_id': 'msg-1',
+        'betternotify.route': 'welcome',
+        'betternotify.message_id': 'msg-1',
       },
       status: { code: 'ok' },
       ended: true,

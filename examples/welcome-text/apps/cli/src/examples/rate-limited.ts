@@ -4,8 +4,8 @@ import {
   createClient,
   inMemoryRateLimitStore,
   withRateLimit,
-} from '@emailrpc/core';
-import { emailChannel } from '@emailrpc/email';
+} from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';
 

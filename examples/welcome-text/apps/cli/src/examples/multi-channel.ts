@@ -1,7 +1,7 @@
-import { createNotify, createClient, withEventLogger, inMemoryEventSink } from '@emailrpc/core';
-import { emailChannel, mockTransport } from '@emailrpc/email';
-import { smsChannel, mockSmsTransport } from '@emailrpc/sms';
-import { pushChannel, mockPushTransport } from '@emailrpc/push';
+import { createNotify, createClient, withEventLogger, inMemoryEventSink } from '@betternotify/core';
+import { emailChannel, mockTransport } from '@betternotify/email';
+import { smsChannel, mockSmsTransport } from '@betternotify/sms';
+import { pushChannel, mockPushTransport } from '@betternotify/push';
 import { z } from 'zod';
 
 export const runMultiChannel = async (): Promise<void> => {

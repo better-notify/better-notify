@@ -1,5 +1,5 @@
-import { createMockTransport } from '@emailrpc/core';
-import type { MockTransport as CoreMockTransport } from '@emailrpc/core';
+import { createMockTransport } from '@betternotify/core';
+import type { MockTransport as CoreMockTransport } from '@betternotify/core';
 import type { RenderedPush } from '../types.js';
 import type { PushTransportData } from './types.js';
 

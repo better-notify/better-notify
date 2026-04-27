@@ -2,7 +2,7 @@ import type {
   Transport as CoreTransport,
   TransportResult as CoreTransportResult,
   SendContext,
-} from '@emailrpc/core';
+} from '@betternotify/core';
 import type { RenderedMessage } from '../types.js';
 
 export type EmailTransportData = {

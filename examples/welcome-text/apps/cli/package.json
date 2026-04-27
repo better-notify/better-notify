@@ -10,12 +10,12 @@
     "dotenvx": "dotenvx"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
-    "@emailrpc/email": "workspace:*",
-    "@emailrpc/push": "workspace:*",
-    "@emailrpc/react-email": "workspace:*",
-    "@emailrpc/sms": "workspace:*",
-    "@emailrpc/smtp": "workspace:*",
+    "@betternotify/core": "workspace:*",
+    "@betternotify/email": "workspace:*",
+    "@betternotify/push": "workspace:*",
+    "@betternotify/react-email": "workspace:*",
+    "@betternotify/sms": "workspace:*",
+    "@betternotify/smtp": "workspace:*",
     "@t3-oss/env-core": "0.13.11",
     "react": "19.2.5",
     "react-email": "6.0.0",

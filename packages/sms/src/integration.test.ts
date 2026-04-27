@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { createNotify, createClient } from '@emailrpc/core';
+import { createNotify, createClient } from '@betternotify/core';
 import { smsChannel, mockSmsTransport } from './index.js';
 
 describe('sms channel end-to-end', () => {

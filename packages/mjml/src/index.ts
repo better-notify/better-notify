@@ -1,10 +1,10 @@
-import { NotifyRpcNotImplementedError } from '@emailrpc/core';
-import type { TemplateAdapter } from '@emailrpc/email';
+import { NotifyRpcNotImplementedError } from '@betternotify/core';
+import type { TemplateAdapter } from '@betternotify/email';
 
 export const mjmlTemplate = <TInput>(_source: string): TemplateAdapter<TInput> => {
   return {
     render: async (_args) => {
-      throw new NotifyRpcNotImplementedError('@emailrpc/mjml (v0.4)');
+      throw new NotifyRpcNotImplementedError('@betternotify/mjml (v0.4)');
     },
   };
 };

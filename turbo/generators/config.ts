@@ -9,7 +9,7 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
   );
 
   plop.setGenerator('package', {
-    description: 'Scaffold a new @emailrpc/* package under packages/',
+    description: 'Scaffold a new @betternotify/* package under packages/',
     prompts: [
       {
         type: 'input',

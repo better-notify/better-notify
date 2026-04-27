@@ -1,18 +1,18 @@
-# @emailrpc/email
+# @betternotify/email
 
-Email channel for [emailRpc](../../README.md). Provides `emailChannel()`, a `mockTransport` for tests, address helpers, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedMessage`.
+Email channel for [BetterNotify](../../README.md). Provides `emailChannel()`, a `mockTransport` for tests, address helpers, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedMessage`.
 
 ## Install
 
 ```sh
-pnpm add @emailrpc/email @emailrpc/core
+pnpm add @betternotify/email @betternotify/core
 ```
 
 ## Usage
 
 ```ts
-import { createNotify, createClient } from '@emailrpc/core';
-import { emailChannel, mockTransport } from '@emailrpc/email';
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel, mockTransport } from '@betternotify/email';
 import { z } from 'zod';
 
 const email = emailChannel({
@@ -86,7 +86,7 @@ import {
   createTransport,
   formatAddress,
   normalizeAddress,
-} from '@emailrpc/email/transports';
+} from '@betternotify/email/transports';
 ```
 
 - `mockTransport()` — records sent messages for tests; returns `{ ok: true, data: { accepted, rejected } }`.
@@ -96,9 +96,9 @@ import {
 
 Provider transports for the email channel:
 
-- [`@emailrpc/smtp`](../smtp) — SMTP via nodemailer
-- [`@emailrpc/ses`](../ses) — AWS SES (stub)
-- [`@emailrpc/resend`](../resend) — Resend (stub)
+- [`@betternotify/smtp`](../smtp) — SMTP via nodemailer
+- [`@betternotify/ses`](../ses) — AWS SES (stub)
+- [`@betternotify/resend`](../resend) — Resend (stub)
 
 ## Custom render output
 

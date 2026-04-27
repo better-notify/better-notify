@@ -1,4 +1,4 @@
-import type { LoggerLike, LogLevel } from '@emailrpc/core';
+import type { LoggerLike, LogLevel } from '@betternotify/core';
 
 export type LogRecord = {
   level: LogLevel;

@@ -1,4 +1,4 @@
-import { defineChannel, slot } from '@emailrpc/core';
+import { defineChannel, slot } from '@betternotify/core';
 import type { PushDeviceToken, PushSendArgs, RenderedPush } from './types.js';
 
 export type TitleResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);

@@ -1,5 +1,5 @@
-# @emailrpc/handlebars
+# @betternotify/handlebars
 
-Handlebars adapter for emailRpc. **v0.1 stub** — full implementation lands in v0.4.
+Handlebars adapter for BetterNotify. **v0.1 stub** — full implementation lands in v0.4.
 
-See the [emailRpc README](../../README.md).
+See the [BetterNotify README](../../README.md).

@@ -1,7 +1,7 @@
 {
-  "name": "@emailrpc/react-email",
+  "name": "@betternotify/react-email",
   "version": "0.0.1",
-  "description": "React Email adapter for emailRpc.",
+  "description": "React Email adapter for BetterNotify.",
   "license": "MIT",
   "files": [
     "dist",
@@ -21,8 +21,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
-    "@emailrpc/email": "workspace:*"
+    "@betternotify/core": "workspace:*",
+    "@betternotify/email": "workspace:*"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",

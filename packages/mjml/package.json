@@ -1,7 +1,7 @@
 {
-  "name": "@emailrpc/mjml",
+  "name": "@betternotify/mjml",
   "version": "0.0.1",
-  "description": "MJML adapter for emailRpc.",
+  "description": "MJML adapter for BetterNotify.",
   "license": "MIT",
   "files": [
     "dist",
@@ -21,8 +21,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*",
-    "@emailrpc/email": "workspace:*"
+    "@betternotify/core": "workspace:*",
+    "@betternotify/email": "workspace:*"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
