@@ -98,6 +98,10 @@ export const emailChannel = (options: EmailChannelOptions = {}) => {
 
       return message;
     },
+    previewRender: async (def, input, ctx) => {
+      const runtime = (def as ChannelDefinition<EmailSendArgs<unknown>, RenderedMessage> & { runtime: EmailRuntime }).runtime;
+      return runtime.template.render({ input, ctx });
+    },
     _transport: undefined as never,
   };
   return channel;

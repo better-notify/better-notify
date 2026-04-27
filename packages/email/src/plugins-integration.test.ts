@@ -1,11 +1,13 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { z } from 'zod';
-import { createClient } from '../client.js';
-import { createEmailRpc } from '../factory.js';
-import type { Middleware } from '../middlewares/types.js';
-import type { Plugin } from './types.js';
-import type { AnyEmailCatalog } from '../catalog.js';
-import { mockTransport } from '../lib/mock-transport.js';
+import {
+  createClient,
+  createNotify,
+  type AnyEmailCatalog,
+  type Middleware,
+  type Plugin,
+} from '@emailrpc/core';
+import { emailChannel, mockTransport } from './index.js';
 
 describe('Plugin type', () => {
   it('accepts the minimum shape', () => {
@@ -24,36 +26,29 @@ describe('Plugin type', () => {
   });
 });
 
-const makeRouter = () => {
-  const rpc = createEmailRpc();
-  return rpc.catalog({
+const makeSetup = () => {
+  const ch = emailChannel({ defaults: { from: 'a@b.com' } });
+  const rpc = createNotify({ channels: { email: ch } });
+  const catalog = rpc.catalog({
     welcome: rpc
       .email()
       .input(z.object({ name: z.string() }))
       .subject('hi')
       .template({ render: async () => ({ html: '<p/>' }) }),
   });
+  return { ch, catalog };
 };
 
 describe('plugin lifecycle', () => {
   it('runs onCreate in array order at createClient time', () => {
     const order: string[] = [];
-    const a: Plugin = {
-      name: 'a',
-      onCreate: () => {
-        order.push('a');
-      },
-    };
-    const b: Plugin = {
-      name: 'b',
-      onCreate: () => {
-        order.push('b');
-      },
-    };
+    const a: Plugin = { name: 'a', onCreate: () => { order.push('a'); } };
+    const b: Plugin = { name: 'b', onCreate: () => { order.push('b'); } };
+    const { ch, catalog } = makeSetup();
     createClient({
-      catalog: makeRouter(),
-      transports: [{ name: 'mock', transport: mockTransport(), priority: 1 }],
-      defaults: { from: 'a@b.com' },
+      catalog,
+      channels: { email: ch },
+      transportsByChannel: { email: mockTransport() },
       plugins: [a, b],
     });
     expect(order).toEqual(['a', 'b']);
@@ -61,22 +56,13 @@ describe('plugin lifecycle', () => {
 
   it('runs onClose in REVERSE order on mail.close()', async () => {
     const order: string[] = [];
-    const a: Plugin = {
-      name: 'a',
-      onClose: () => {
-        order.push('a');
-      },
-    };
-    const b: Plugin = {
-      name: 'b',
-      onClose: () => {
-        order.push('b');
-      },
-    };
+    const a: Plugin = { name: 'a', onClose: () => { order.push('a'); } };
+    const b: Plugin = { name: 'b', onClose: () => { order.push('b'); } };
+    const { ch, catalog } = makeSetup();
     const mail = createClient({
-      catalog: makeRouter(),
-      transports: [{ name: 'mock', transport: mockTransport(), priority: 1 }],
-      defaults: { from: 'a@b.com' },
+      catalog,
+      channels: { email: ch },
+      transportsByChannel: { email: mockTransport() },
       plugins: [a, b],
     });
     await mail.close();
@@ -87,22 +73,15 @@ describe('plugin lifecycle', () => {
     const order: string[] = [];
     const plugin: Plugin = {
       name: 'p',
-      hooks: {
-        onAfterSend: () => {
-          order.push('plugin');
-        },
-      },
+      hooks: { onAfterSend: () => { order.push('plugin'); } },
     };
+    const { ch, catalog } = makeSetup();
     const mail = createClient({
-      catalog: makeRouter(),
-      transports: [{ name: 'mock', transport: mockTransport(), priority: 1 }],
-      defaults: { from: 'a@b.com' },
+      catalog,
+      channels: { email: ch },
+      transportsByChannel: { email: mockTransport() },
       plugins: [plugin],
-      hooks: {
-        onAfterSend: () => {
-          order.push('user');
-        },
-      },
+      hooks: { onAfterSend: () => { order.push('user'); } },
     });
     await mail.welcome.send({ to: 'x@y.com', input: { name: 'John Doe' } });
     expect(order).toEqual(['plugin', 'user']);
@@ -122,19 +101,20 @@ describe('plugin lifecycle', () => {
       order.push('route exit');
       return r;
     };
-    const rpc = createEmailRpc();
+    const ch = emailChannel({ defaults: { from: 'a@b.com' } });
+    const rpc = createNotify({ channels: { email: ch } });
     const catalog = rpc.catalog({
       welcome: rpc
-        .use(routeMw)
         .email()
+        .use(routeMw)
         .input(z.object({ name: z.string() }))
         .subject('hi')
         .template({ render: async () => ({ html: '<p/>' }) }),
     });
     const mail = createClient({
       catalog,
-      transports: [{ name: 'mock', transport: mockTransport(), priority: 1 }],
-      defaults: { from: 'a@b.com' },
+      channels: { email: ch },
+      transportsByChannel: { email: mockTransport() },
       plugins: [{ name: 'p', middleware: [pluginMw] }],
     });
     await mail.welcome.send({ to: 'x@y.com', input: { name: 'John Doe' } });
@@ -144,15 +124,14 @@ describe('plugin lifecycle', () => {
   it('onCreate failure aborts createClient', () => {
     const failing: Plugin = {
       name: 'failing',
-      onCreate: () => {
-        throw new Error('init boom');
-      },
+      onCreate: () => { throw new Error('init boom'); },
     };
+    const { ch, catalog } = makeSetup();
     expect(() =>
       createClient({
-        catalog: makeRouter(),
-        transports: [{ name: 'mock', transport: mockTransport(), priority: 1 }],
-        defaults: { from: 'a@b.com' },
+        catalog,
+        channels: { email: ch },
+        transportsByChannel: { email: mockTransport() },
         plugins: [failing],
       }),
     ).toThrow('init boom');

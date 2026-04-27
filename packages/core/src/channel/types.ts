@@ -32,6 +32,11 @@ export type Channel<
     args: TArgs,
     ctx: unknown,
   ) => Promise<TRendered>;
+  readonly previewRender?: (
+    def: ChannelDefinition<TArgs, TRendered>,
+    input: unknown,
+    ctx: unknown,
+  ) => Promise<unknown>;
   readonly _transport: TTransport;
 };
 

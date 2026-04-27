@@ -1,15 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { createEmailRpc } from './index.js';
 import { createClient } from './client.js';
-import { mockTransport } from './lib/mock-transport.js';
 import { EmailRpcError } from './errors.js';
-import type {
-  AnyChannel,
-  AnyEmailCatalog,
-  ChannelDefinition,
-  TemplateAdapter,
-} from './index.js';
+import type { AnyChannel, AnyEmailCatalog, ChannelDefinition } from './index.js';
 
 type TestRendered = { body: string; to: string };
 
@@ -94,7 +87,6 @@ describe('createClient multi-channel', () => {
     const transport = createTestTransport();
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
     }) as unknown as {
@@ -116,7 +108,6 @@ describe('createClient multi-channel', () => {
     const transport = createTestTransport();
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
     }) as unknown as {
@@ -139,7 +130,6 @@ describe('createClient multi-channel', () => {
     const transport = createTestTransport();
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
     }) as unknown as { ping: { queue: () => Promise<unknown> } };
@@ -154,38 +144,6 @@ describe('createClient multi-channel', () => {
     })();
     expect(err).toBeInstanceOf(EmailRpcError);
     expect((err as EmailRpcError).code).toBe('CHANNEL_NOT_QUEUEABLE');
-  });
-
-  it('email path still works under dual-options shape', async () => {
-    const stubAdapter: TemplateAdapter<{ name: string }> = {
-      render: async ({ input }) => ({
-        html: `<p>Hello ${input.name}</p>`,
-        text: `Hello ${input.name}`,
-      }),
-    };
-    const t = createEmailRpc();
-    const catalog = t.catalog({
-      welcome: t
-        .email()
-        .input(z.object({ name: z.string() }))
-        .subject(({ input }) => `Welcome, ${input.name}!`)
-        .from('sender@x.com')
-        .template(stubAdapter),
-    });
-    const transport = mockTransport();
-    const mail = createClient({
-      catalog,
-      transports: [{ name: 'mock', transport, priority: 1 }],
-      channels: { test: testChannel() },
-      transportsByChannel: { test: createTestTransport() },
-    });
-    const result = await mail.welcome.send({
-      to: 'alice@x.com',
-      input: { name: 'Alice' },
-    });
-    expect(result.messageId).toBeDefined();
-    expect(transport.sent).toHaveLength(1);
-    expect(transport.sent[0]?.subject).toBe('Welcome, Alice!');
   });
 
   it('runs middleware on non-email channel route and threads ctx into render', async () => {
@@ -217,7 +175,6 @@ describe('createClient multi-channel', () => {
 
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: ch as unknown as AnyChannel },
       transportsByChannel: { test: transport },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<{ messageId: string }> } };
@@ -232,7 +189,6 @@ describe('createClient multi-channel', () => {
     const order: string[] = [];
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
       hooks: {
@@ -269,7 +225,6 @@ describe('createClient multi-channel', () => {
     ping.middleware = [mw];
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
       hooks: {
@@ -300,7 +255,6 @@ describe('createClient multi-channel', () => {
     const errors: Array<{ phase: string; code: string }> = [];
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: ch as unknown as AnyChannel },
       transportsByChannel: { test: transport },
       hooks: {
@@ -326,7 +280,6 @@ describe('createClient multi-channel', () => {
     const errors: Array<{ phase: string; code: string }> = [];
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
       hooks: {
@@ -346,7 +299,6 @@ describe('createClient multi-channel', () => {
     const errors: Array<{ phase: string }> = [];
     const mail = createClient({
       catalog,
-      transports: [],
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
       hooks: {
