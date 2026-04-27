@@ -1,0 +1,64 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "prerelease": true,
+  "include-component-in-tag": true,
+  "packages": {
+    "packages/core": {
+      "release-type": "node",
+      "component": "@betternotify/core",
+      "prerelease-type": "alpha"
+    },
+    "packages/email": {
+      "release-type": "node",
+      "component": "@betternotify/email",
+      "prerelease-type": "alpha"
+    },
+    "packages/sms": {
+      "release-type": "node",
+      "component": "@betternotify/sms",
+      "prerelease-type": "alpha"
+    },
+    "packages/push": {
+      "release-type": "node",
+      "component": "@betternotify/push",
+      "prerelease-type": "alpha"
+    },
+    "packages/react-email": {
+      "release-type": "node",
+      "component": "@betternotify/react-email",
+      "prerelease-type": "alpha"
+    },
+    "packages/mjml": {
+      "release-type": "node",
+      "component": "@betternotify/mjml",
+      "prerelease-type": "alpha"
+    },
+    "packages/handlebars": {
+      "release-type": "node",
+      "component": "@betternotify/handlebars",
+      "prerelease-type": "alpha"
+    },
+    "packages/smtp": {
+      "release-type": "node",
+      "component": "@betternotify/smtp",
+      "prerelease-type": "alpha"
+    },
+    "packages/ses": {
+      "release-type": "node",
+      "component": "@betternotify/ses",
+      "prerelease-type": "alpha"
+    },
+    "packages/resend": {
+      "release-type": "node",
+      "component": "@betternotify/resend",
+      "prerelease-type": "alpha"
+    },
+    "packages/bullmq": {
+      "release-type": "node",
+      "component": "@betternotify/bullmq",
+      "prerelease-type": "alpha"
+    }
+  }
+}

@@ -9,7 +9,6 @@ minimumReleaseAge: 2880
 
 catalog:
   '@aws-sdk/client-sesv2': 3.0.0
-  '@changesets/cli': 2.31.0
   '@react-email/components': 0.0.30
   '@standard-schema/spec': 1.1.0
   '@turbo/gen': 2.9.6

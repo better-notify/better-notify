@@ -12,7 +12,6 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
-    "changeset": "changeset",
     "ci": "turbo run build typecheck test //#oxlint",
     "dev": "turbo run dev --filter=@welcome-text/cli",
     "fmt": "turbo run //#oxfmt",
@@ -22,14 +21,12 @@
     "oxfmt": "oxfmt",
     "oxlint": "oxlint .",
     "oxlint:fix": "oxlint --fix .",
-    "release": "turbo run build && changeset publish",
+    "release": "turbo run build",
     "test": "turbo run test",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "turbo run typecheck",
-    "version-packages": "changeset version"
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "@changesets/cli": "catalog:",
     "@turbo/gen": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "oxfmt": "catalog:",
