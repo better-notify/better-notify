@@ -4,6 +4,7 @@
   "bump-patch-for-minor-pre-major": true,
   "prerelease": true,
   "include-component-in-tag": true,
+  "separate-pull-requests": false,
   "packages": {
     "packages/core": {
       "release-type": "node",
