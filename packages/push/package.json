@@ -3,6 +3,11 @@
   "version": "0.0.2-alpha.0",
   "description": "Push notification channel plugin for betternotify.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/better-notify/better-notify",
+    "directory": "packages/push"
+  },
   "files": [
     "dist",
     "README.md",

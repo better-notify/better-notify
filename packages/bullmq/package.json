@@ -3,6 +3,11 @@
   "version": "0.0.2-alpha.0",
   "description": "BullMQ queue adapter for BetterNotify.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/better-notify/better-notify",
+    "directory": "packages/bullmq"
+  },
   "files": [
     "dist",
     "README.md",

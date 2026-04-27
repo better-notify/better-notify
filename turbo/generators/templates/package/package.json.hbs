@@ -1,5 +1,5 @@
 { "name": "@betternotify/{{kebab name}}", "version": "0.1.0", "description": "{{description}}",
-"license": "MIT", "files": ["dist", "README.md", "LICENSE"], "type": "module", "exports": { ".": {
+"license": "MIT", "repository": { "type": "git", "url": "https://github.com/better-notify/better-notify", "directory": "packages/{{kebab name}}" }, "files": ["dist", "README.md", "LICENSE"], "type": "module", "exports": { ".": {
 "types": "./dist/index.d.ts", "default": "./dist/index.js" } }, "scripts": { "build":
 "NODE_OPTIONS='--import tsx/esm' rolldown -c", "typecheck": "tsc --noEmit", "test": "vitest run" },
 "dependencies": { "@betternotify/core": "workspace:*" }, "devDependencies": {
