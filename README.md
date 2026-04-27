@@ -119,8 +119,8 @@ Each channel package re-exports these factories pre-parameterized for that chann
 
 ## Packages
 
-| Package                 | Purpose                                                                                                                                                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Package                     | Purpose                                                                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `@betternotify/core`        | `Channel<>`, `Transport<>`, `defineChannel`, `createNotify`, `createClient`, `createCatalog`, middleware, hooks, plugins, stores, sinks, tracers, generic transport factories (`createTransport`, `multiTransport`, `createMockTransport`) |
 | `@betternotify/email`       | `emailChannel()`, `mockTransport`, address helpers, `multiTransport`/`createTransport` parameterized for email                                                                                                                             |
 | `@betternotify/sms`         | `smsChannel()`, `mockSmsTransport`, sms-typed `multiTransport`/`createTransport`                                                                                                                                                           |

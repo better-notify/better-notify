@@ -21,7 +21,6 @@ pnpm test:coverage   # vitest run --coverage (root config; collocated *.test-d.t
 pnpm lint            # oxlint --fix per package
 pnpm fmt             # oxfmt
 pnpm ci              # build + typecheck + test + lint
-pnpm changeset       # add a changeset for any user-facing change
 ```
 
 Per-package work:
@@ -93,7 +92,7 @@ Rolldown bundles each package via the shared `internal/rolldown-config/base.ts`.
 - **Don't commit unless asked.** (User global rule.)
 - Tests are **collocated** under `packages/*/src/**/*.test.ts` (root `vitest.config.ts` enforces this — top-level `test/` directories are deprecated and being removed).
 - Linter is **oxlint** + formatter is **oxfmt** (not ESLint/Prettier). `import/no-cycle` is enforced as `error`.
-- Changesets: every user-facing change needs a changeset. Internal packages (`@internal/*`, `@example/*`) are ignored.
+- Releases are managed by **release-please** (conventional commits). Internal packages (`@internal/*`, `@example/*`) are not tracked.
 - **Middleware naming**: middleware factories use the `withName` pattern (e.g. `withDryRun`, `withTagInject`). They live in `packages/core/src/middlewares/<withName>.ts`. Per-middleware option types (e.g. `WithTagInjectOptions`) live in `<withName>.types.ts` only when the middleware has its own options; the shared `Middleware`/`AnyMiddleware`/`MiddlewareParams` types live in `middlewares/types.ts`. The barrel `middlewares/index.ts` re-exports everything.
 - **Plugin organization**: each plugin lives in `packages/core/src/plugins/<pluginName>.ts` with per-plugin types in `<pluginName>.types.ts` when applicable; the shared `Plugin` type lives in `plugins/types.ts`; barrel re-exports through `plugins/index.ts`.
 - **Transport organization**: each transport implementation lives in `packages/core/src/transports/<name>.ts` (or in its own package like `@betternotify/smtp`, `@betternotify/ses` for transports that pull non-trivial peers). Per-transport option types live in `<name>.types.ts` when applicable; the shared `Transport`/`TransportResult`/`TransportEntry` types live in `transports/types.ts`. Barrel re-exports through `transports/index.ts`. The `Transport` type is the wire-level email send adapter (SMTP, SES, Resend) — distinct from `Sender` at Layer 2.

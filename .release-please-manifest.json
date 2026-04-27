@@ -1,0 +1,13 @@
+{
+  "packages/core": "0.0.1",
+  "packages/email": "0.0.1",
+  "packages/sms": "0.0.1",
+  "packages/push": "0.0.1",
+  "packages/react-email": "0.0.1",
+  "packages/mjml": "0.0.1",
+  "packages/handlebars": "0.0.1",
+  "packages/smtp": "0.0.1",
+  "packages/ses": "0.0.1",
+  "packages/resend": "0.0.1",
+  "packages/bullmq": "0.0.1"
+}
