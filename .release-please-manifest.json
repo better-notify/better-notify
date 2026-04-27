@@ -1,13 +1,13 @@
 {
-  "packages/core": "0.0.2-alpha.0",
-  "packages/email": "0.0.2-alpha.0",
-  "packages/sms": "0.0.2-alpha.0",
-  "packages/push": "0.0.2-alpha.0",
-  "packages/react-email": "0.0.2-alpha.0",
-  "packages/mjml": "0.0.2-alpha.0",
-  "packages/handlebars": "0.0.2-alpha.0",
-  "packages/smtp": "0.0.2-alpha.0",
-  "packages/ses": "0.0.2-alpha.0",
-  "packages/resend": "0.0.2-alpha.0",
-  "packages/bullmq": "0.0.2-alpha.0"
+  "packages/core": "0.0.3-alpha.0",
+  "packages/email": "0.0.3-alpha.0",
+  "packages/sms": "0.0.3-alpha.0",
+  "packages/push": "0.0.3-alpha.0",
+  "packages/react-email": "0.0.3-alpha.0",
+  "packages/mjml": "0.0.3-alpha.0",
+  "packages/handlebars": "0.0.3-alpha.0",
+  "packages/smtp": "0.0.3-alpha.0",
+  "packages/ses": "0.0.3-alpha.0",
+  "packages/resend": "0.0.3-alpha.0",
+  "packages/bullmq": "0.0.3-alpha.0"
 }

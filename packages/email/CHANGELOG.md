@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3-alpha.0](https://github.com/better-notify/better-notify/compare/@betternotify/email-v0.0.2-alpha.0...@betternotify/email-v0.0.3-alpha.0) (2026-04-27)
+
+
+### Bug Fixes
+
+* add repository field and ci improvements ([#7](https://github.com/better-notify/better-notify/issues/7)) ([b3212f0](https://github.com/better-notify/better-notify/commit/b3212f03e4ca49a15fb602748d2f38a8237c3f21))
+
 ## [0.0.2-alpha.0](https://github.com/better-notify/better-notify/compare/@betternotify/email-v0.0.1-alpha.0...@betternotify/email-v0.0.2-alpha.0) (2026-04-27)
 
 
