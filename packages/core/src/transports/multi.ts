@@ -2,8 +2,7 @@ import { handlePromise } from '../lib/handle-promise.js';
 import { waitFor } from '../lib/wait-for.js';
 import { EmailRpcError } from '../errors.js';
 import { consoleLogger, type LoggerLike } from '../logger.js';
-import type { RenderedMessage, SendContext } from '../types.js';
-import type { Transport, TransportResult } from './types.js';
+import type { SendContext, Transport, TransportResult } from '../transport.js';
 import type {
   MultiTransportBackoff,
   MultiTransportEntry,
@@ -73,7 +72,7 @@ const buildOrder = (
 };
 
 const runVerify = async (
-  inner: Transport,
+  inner: Transport<any, any>,
 ): Promise<{ name: string; ok: boolean; details?: unknown }> => {
   if (!inner.verify) return { name: inner.name, ok: true };
 
@@ -86,7 +85,7 @@ const runVerify = async (
     : { name: inner.name, ok: res.ok, details: res.details };
 };
 
-const runClose = async (inner: Transport, log: LoggerLike): Promise<void> => {
+const runClose = async (inner: Transport<any, any>, log: LoggerLike): Promise<void> => {
   if (!inner.close) return;
   const [err] = await handlePromise(inner.close());
   if (err) {
@@ -133,7 +132,9 @@ const runClose = async (inner: Transport, log: LoggerLike): Promise<void> => {
  *   invalid configs throw `EmailRpcError({ code: 'CONFIG' })` from the call
  *   site, not from the first `send()`.
  */
-export const multiTransport = (opts: MultiTransportOptions): Transport => {
+export const multiTransport = <TRendered = unknown, TData = unknown>(
+  opts: MultiTransportOptions<TRendered, TData>,
+): Transport<TRendered, TData> => {
   validateOptions(opts);
 
   const name = opts.name ?? 'multi';
@@ -147,7 +148,7 @@ export const multiTransport = (opts: MultiTransportOptions): Transport => {
   });
   const counter = { value: 0 };
 
-  const send = async (message: RenderedMessage, ctx: SendContext): Promise<TransportResult> => {
+  const send = async (message: TRendered, ctx: SendContext): Promise<TransportResult<TData>> => {
     const order = buildOrder(strategy, entries.length, counter);
     let lastErr: unknown;
     let attempts = 0;
@@ -159,16 +160,17 @@ export const multiTransport = (opts: MultiTransportOptions): Transport => {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         attempts += 1;
         const [err, result] = await handlePromise(transport.send(message, ctx));
-        if (!err) {
+        const failure: unknown = err ? err : result && result.ok === false ? result.error : null;
+        if (!failure) {
           log.debug('multi attempt ok', {
             transportName: transport.name,
             attempt,
             strategy,
           });
-          return result;
+          return result as TransportResult<TData>;
         }
-        lastErr = err;
-        const retriable = isRetriable(err);
+        lastErr = failure;
+        const retriable = isRetriable(failure);
         log.warn('multi attempt failed', {
           err,
           transportName: transport.name,
@@ -188,13 +190,13 @@ export const multiTransport = (opts: MultiTransportOptions): Transport => {
     throw lastErr;
   };
 
-  const verify: Transport['verify'] = async () => {
+  const verify = async (): Promise<{ ok: boolean; details?: unknown }> => {
     const results = await Promise.all(entries.map((e) => runVerify(e.transport)));
     const ok = results.some((r) => r.ok);
     return { ok, details: { results } };
   };
 
-  const close: Transport['close'] = async () => {
+  const close = async (): Promise<void> => {
     await Promise.all(entries.map((e) => runClose(e.transport, log)));
   };
 

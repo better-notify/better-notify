@@ -5,14 +5,13 @@ import { isEmailCatalog } from './catalog.js';
 import type { Plugin } from './plugins/types.js';
 import type { AnyMiddleware } from './middlewares/types.js';
 import type { AnyChannel, ChannelDefinition, ChannelMap, TransportsFor } from './channel/types.js';
+import type { Transport, TransportResult } from './transport.js';
 import { consoleLogger, type LoggerLike } from './logger.js';
 import { handlePromise } from './lib/handle-promise.js';
 
-export type ChannelSendResult = {
+export type ChannelSendResult<TData = unknown> = {
   messageId: string;
-  providerMessageId?: string;
-  accepted: string[];
-  rejected: string[];
+  data: TData;
   envelope?: { from?: string; to: string[] };
   timing: { renderMs: number; sendMs: number };
 };
@@ -37,7 +36,7 @@ export type ExecuteCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
 };
 
 export type AfterSendCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
-  result: ChannelSendResult;
+  result: ChannelSendResult<unknown>;
   durationMs: number;
 };
 
@@ -212,12 +211,7 @@ export const createClient = <
   const channels = options.channels as Record<string, AnyChannel>;
   const transportsByChannel = options.transportsByChannel as Record<
     string,
-    {
-      send: (
-        rendered: unknown,
-        ctx: { route: string; messageId: string; attempt: number },
-      ) => Promise<{ transportMessageId?: string; accepted?: string[]; rejected?: string[] }>;
-    }
+    Transport<unknown, unknown>
   >;
   const cache = new Map<string, unknown>();
 
@@ -280,7 +274,7 @@ export const createClient = <
     const log = baseLogger.child({ route: flatKey, messageId });
     const startedAt = performance.now();
     const initialCtx: unknown = options.ctx ?? {};
-    const args = channel.validateArgs(rawArgs);
+    const args = await channel.validateArgs(rawArgs);
     const baseHookCtx = { route: flatKey, args, ctx: initialCtx, messageId };
 
     const [validateErr, input] = await handlePromise(
@@ -347,18 +341,24 @@ export const createClient = <
       const sendCtx = { route: flatKey, messageId, attempt: 1 };
       const sendTuple = await handlePromise(transport.send(rendered, sendCtx));
       timing.sendMs = performance.now() - sendStart;
-      const sendErr = sendTuple[0];
-      if (sendErr) {
-        log.error('send failed', { err: sendErr, durationMs: timing.sendMs });
+      const sendThrow = sendTuple[0];
+      const sendReturn = sendTuple[1];
+      const failure: Error | null = sendThrow
+        ? sendThrow
+        : sendReturn && sendReturn.ok === false
+          ? sendReturn.error
+          : null;
+      if (failure) {
+        log.error('send failed', { err: failure, durationMs: timing.sendMs });
         const wrapped =
-          sendErr instanceof EmailRpcError
-            ? sendErr
+          failure instanceof EmailRpcError
+            ? failure
             : new EmailRpcError({
-                message: `Transport send failed for route "${flatKey}": ${sendErr.message}`,
+                message: `Transport send failed for route "${flatKey}": ${failure.message}`,
                 code: 'PROVIDER',
                 route: flatKey,
                 messageId,
-                cause: sendErr,
+                cause: failure,
               });
         await runHooks(
           normalizedHooks.onError,
@@ -368,7 +368,7 @@ export const createClient = <
         markHandled(wrapped);
         throw wrapped;
       }
-      const tr = sendTuple[1];
+      const data = (sendReturn as TransportResult<unknown> & { ok: true }).data;
 
       const renderedAny = rendered as Record<string, unknown> | undefined;
       const renderedFrom = renderedAny?.from;
@@ -383,15 +383,12 @@ export const createClient = <
           : undefined;
       const result: ChannelSendResult = {
         messageId,
-        providerMessageId: tr.transportMessageId,
-        accepted: tr.accepted ?? [],
-        rejected: tr.rejected ?? [],
+        data,
         timing,
       };
       if (envelope) result.envelope = envelope;
       log.info('send ok', {
         durationMs: performance.now() - startedAt,
-        transportMessageId: result.providerMessageId,
       });
       return result;
     };

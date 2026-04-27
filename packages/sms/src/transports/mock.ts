@@ -1,22 +1,27 @@
-import type { Transport } from './types.js';
+import { createMockTransport } from '@emailrpc/core';
+import type { MockTransport as CoreMockTransport } from '@emailrpc/core';
 import type { RenderedSms } from '../types.js';
+import type { SmsTransportData } from './types.js';
 
-export const mockSmsTransport = () => {
-  const messages: Array<RenderedSms & { id: string }> = [];
+export type MockSmsTransport = CoreMockTransport<RenderedSms, SmsTransportData> & {
+  readonly messages: ReadonlyArray<RenderedSms & { id: string }>;
+};
+
+export const mockSmsTransport = (): MockSmsTransport => {
   let counter = 0;
-  const t: Transport & { messages: typeof messages; reset: () => void } = {
+  const messages: Array<RenderedSms & { id: string }> = [];
+  const base = createMockTransport<RenderedSms, SmsTransportData>({
     name: 'mock-sms',
-    send: async (rendered) => {
+    reply: (rendered) => {
       counter += 1;
       const id = `sms-mock-${counter}`;
       messages.push({ ...rendered, id });
       return { messageId: id };
     },
-    messages,
-    reset: () => {
-      messages.length = 0;
-      counter = 0;
+  });
+  return Object.assign(base, {
+    get messages() {
+      return messages;
     },
-  };
-  return t;
+  });
 };

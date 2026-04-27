@@ -1,5 +1,5 @@
 import type { LoggerLike } from '../logger.js';
-import type { Transport } from './types.js';
+import type { Transport } from '../transport.js';
 
 /**
  * Strategy controlling which inner transport is tried first on each `send()`.
@@ -25,9 +25,9 @@ export type MultiTransportStrategy = 'failover' | 'round-robin' | 'random';
  * One inner transport in the composite list. Currently a thin wrapper so
  * weighted entries can grow into it without breaking the call site.
  */
-export type MultiTransportEntry = {
+export type MultiTransportEntry<TRendered = unknown, TData = unknown> = {
   /** The transport to delegate to. Receives the fully-resolved message and context unchanged. */
-  transport: Transport;
+  transport: Transport<TRendered, TData>;
 };
 
 /**
@@ -48,7 +48,7 @@ export type MultiTransportBackoff = {
  * Options for {@link multiTransport}. Validated synchronously at construction;
  * invalid configs throw `EmailRpcError({ code: 'CONFIG' })`.
  */
-export type MultiTransportOptions = {
+export type MultiTransportOptions<TRendered = unknown, TData = unknown> = {
   /**
    * Identifier surfaced as the composite's `Transport.name` and on every
    * orchestration log line. Defaults to `'multi'`. Override when registering
@@ -83,7 +83,7 @@ export type MultiTransportOptions = {
    * `'round-robin'`. The same `Transport` instance can appear more than once
    * (e.g. wrapped under different names) — the composite never deduplicates.
    */
-  transports: MultiTransportEntry[];
+  transports: MultiTransportEntry<TRendered, TData>[];
 
   /**
    * Number of times to call a single inner transport before advancing to the

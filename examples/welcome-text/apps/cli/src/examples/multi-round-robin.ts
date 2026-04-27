@@ -1,15 +1,14 @@
-import {
-  createClient,
-  consoleLogger,
-  createEmailRpc,
-  type TransportEntry,
-} from '@emailrpc/core';
-import { multiTransport } from '@emailrpc/core/transports';
+import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
+import { multiTransport } from '@emailrpc/email/transports';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -34,15 +33,11 @@ export const runMultiRoundRobin = async (): Promise<void> => {
     logger: consoleLogger({ level: 'debug' }),
   });
 
-  const transports: TransportEntry[] = [
-    { name: 'round-robin', priority: 1, transport: composite },
-  ];
-
   const mail = createClient({
     catalog,
-    transports,
+    channels: { email: ch },
+    transportsByChannel: { email: composite },
     logger: consoleLogger({ level: 'debug' }),
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
   });
 
   for (let i = 1; i <= 4; i++) {
@@ -50,6 +45,6 @@ export const runMultiRoundRobin = async (): Promise<void> => {
       to: env.SMTP_DESTINATION_EMAIL,
       input: { name: `User ${i}`, verifyUrl: `https://example.com/verify?token=abc${i}` },
     });
-    console.log(`Send #${i}:`, result.messageId, '→', result.envelope.to.join(', '));
+    console.log(`Send #${i}:`, result.messageId, '→', result.envelope?.to.join(', '));
   }
 };

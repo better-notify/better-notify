@@ -1,14 +1,13 @@
-import {
-  createClient,
-  consoleLogger,
-  createEmailRpc,
-  type TransportEntry,
-} from '@emailrpc/core';
+import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { smtpTransport } from '@emailrpc/smtp';
 import { z } from 'zod';
 import { env } from '../env';
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -23,23 +22,17 @@ const catalog = rpc.catalog({
 });
 
 export const runSmtp = async (): Promise<void> => {
-  const transports: TransportEntry[] = [
-    {
-      name: 'smtp',
-      priority: 1,
-      transport: smtpTransport({
+  const mail = createClient({
+    catalog,
+    channels: { email: ch },
+    transportsByChannel: {
+      email: smtpTransport({
         host: env.SMTP_HOST,
         port: env.SMTP_PORT,
         auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
       }),
     },
-  ];
-
-  const mail = createClient({
-    catalog,
-    transports,
     logger: consoleLogger({ level: 'debug' }),
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
   });
 
   const result = await mail.welcome.send({
@@ -48,8 +41,8 @@ export const runSmtp = async (): Promise<void> => {
   });
 
   console.log('Message ID:', result.messageId);
-  console.log('From:      ', result.envelope.from);
-  console.log('To:        ', result.envelope.to.join(', '));
+  console.log('From:      ', result.envelope?.from);
+  console.log('To:        ', result.envelope?.to.join(', '));
   console.log('Render:    ', `${result.timing.renderMs.toFixed(1)}ms`);
   console.log('Send:      ', `${result.timing.sendMs.toFixed(1)}ms`);
 };

@@ -1,11 +1,11 @@
+import type { Transport as CoreTransport } from '@emailrpc/core';
 import type { RenderedPush } from '../types.js';
 
-export type PushTransportResult = {
+export type PushTransportData = {
   messageId: string;
   provider?: string;
 };
 
-export type Transport = {
-  readonly name: string;
-  send(rendered: RenderedPush, ctx: unknown): Promise<PushTransportResult>;
-};
+export type PushTransportResult = PushTransportData;
+
+export type Transport = CoreTransport<RenderedPush, PushTransportData>;

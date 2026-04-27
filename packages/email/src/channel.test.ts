@@ -39,10 +39,11 @@ describe('emailChannel', () => {
     expect(def.id).toBe('welcome');
   });
 
-  it('validateArgs requires `to`', () => {
+  it('validateArgs requires `to`', async () => {
     const ch = emailChannel();
     expect(() => ch.validateArgs({ input: {} } as any)).toThrow();
-    expect(ch.validateArgs({ to: 'a@b.com', input: { x: 1 } } as any).to).toBe('a@b.com');
+    const validated = await ch.validateArgs({ to: 'a@b.com', input: { x: 1 } } as any);
+    expect(validated.to).toBe('a@b.com');
   });
 
   it('render returns html, text, subject from a complete definition', async () => {
@@ -179,5 +180,27 @@ describe('emailChannel', () => {
     expect(rendered.headers).toEqual({ 'X-Default': 'yes', 'X-Custom': 'value' });
     expect(rendered.tags).toEqual({ env: 'test' });
     expect(rendered.priority).toBe('low');
+  });
+
+  it('createBuilder seeds rootMiddleware when provided', () => {
+    const ch = emailChannel();
+    const mw = async () => undefined as never;
+    const builder = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
+    expect((builder as unknown as { _state: { middleware: unknown[] } })._state.middleware).toEqual([mw]);
+  });
+
+  it('validateArgs rejects non-object args', () => {
+    const ch = emailChannel();
+    expect(() => ch.validateArgs(null)).toThrow(/must be an object/);
+    expect(() => ch.validateArgs('string' as unknown)).toThrow(/must be an object/);
+  });
+
+  it('email package _finalize throws when builder is incomplete', () => {
+    const ch = emailChannel();
+    const builder = ch.createBuilder({ ctx: undefined, rootMiddleware: [] }) as unknown as {
+      input: (s: unknown) => { _finalize: (id: string) => unknown };
+    };
+    const partial = builder.input(z.object({ name: z.string() }));
+    expect(() => partial._finalize('x')).toThrow(/incomplete/);
   });
 });

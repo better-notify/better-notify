@@ -1,9 +1,13 @@
-import { createClient, consoleLogger, createEmailRpc } from '@emailrpc/core';
+import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -20,9 +24,9 @@ const catalog = rpc.catalog({
 export const runBatch = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
     logger: consoleLogger({ level: 'info' }),
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
   });
 
   const recipients: { name: string; email: string; verifyUrl: string }[] = [

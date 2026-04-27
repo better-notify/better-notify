@@ -26,7 +26,7 @@ export type Channel<
   readonly name: TName;
   readonly createBuilder: (ctx: ChannelBuilderCtx) => TBuilder;
   readonly finalize: (state: unknown, id: string) => ChannelDefinition<TArgs, TRendered>;
-  readonly validateArgs: (args: unknown) => TArgs;
+  readonly validateArgs: (args: unknown) => TArgs | Promise<TArgs>;
   readonly render: (
     def: ChannelDefinition<TArgs, TRendered>,
     args: TArgs,

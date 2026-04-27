@@ -1,0 +1,231 @@
+import type { AnyStandardSchema, InferOutput } from '../schema.js';
+import { validate } from '../schema.js';
+import type { AnyMiddleware, Middleware } from '../middlewares/types.js';
+import type { Transport } from '../transport.js';
+import type { Channel, ChannelBuilderCtx, ChannelDefinition } from './types.js';
+
+export type ResolverSlot<TValue> = TValue | ((args: { input: any }) => TValue);
+
+export type SlotKind = 'resolver' | 'value';
+
+export type SlotConfig<K extends SlotKind = SlotKind> = { kind: K };
+
+export type SlotMap = Record<string, SlotConfig>;
+
+type SlotValueType<S, TValue, TInput> = S extends { kind: 'resolver' }
+  ? TValue | ((args: { input: TInput }) => TValue)
+  : TValue;
+
+type ArgsBase<TArgs> = TArgs extends { input: any } ? Omit<TArgs, 'input'> : TArgs;
+
+export type ChannelBuilder<
+  TInput,
+  TSlotValues extends Record<string, unknown>,
+  TSlotConfig extends SlotMap,
+  TArgsBase,
+  TRendered,
+> = {
+  readonly _channel: string;
+  readonly _state: BuilderState;
+  readonly _args: TArgsBase & { input: TInput };
+  readonly _rendered: TRendered;
+  input<TSchema extends AnyStandardSchema>(
+    schema: TSchema,
+  ): ChannelBuilder<InferOutput<TSchema>, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+  use<TCtxOut = unknown>(
+    middleware: Middleware<TInput, unknown, TCtxOut>,
+  ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+  _finalize(id: string): ChannelDefinition<TArgsBase & { input: TInput }, TRendered>;
+} & {
+  [K in keyof TSlotValues & keyof TSlotConfig & string]: (
+    value: SlotValueType<TSlotConfig[K], TSlotValues[K], TInput>,
+  ) => ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+};
+
+type BuilderState = {
+  schema: AnyStandardSchema | undefined;
+  middleware: ReadonlyArray<AnyMiddleware>;
+  runtime: Record<string, unknown>;
+};
+
+type ValueOf<S> = S extends { __value?: infer V } ? V : unknown;
+
+type SlotValuesOf<S extends SlotMap> = { [K in keyof S]: ValueOf<S[K]> };
+
+type ArgsFromValidator<V> = V extends AnyStandardSchema
+  ? InferOutput<V>
+  : V extends (args: unknown) => infer R
+    ? Awaited<R>
+    : never;
+
+type WithInput<TArgs> = TArgs extends { input: any } ? TArgs : TArgs & { input: unknown };
+
+export type DefineChannelOptions<
+  TName extends string,
+  TValidator,
+  TRendered,
+  TSlotConfig extends SlotMap,
+> = {
+  readonly name: TName;
+  readonly slots: TSlotConfig;
+  readonly validateArgs: TValidator;
+  readonly render: (params: {
+    runtime: { [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
+    args: WithInput<ArgsFromValidator<TValidator>>;
+    ctx: unknown;
+  }) => Promise<TRendered> | TRendered;
+  readonly previewRender?: (params: {
+    runtime: { [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
+    input: unknown;
+    ctx: unknown;
+  }) => Promise<unknown> | unknown;
+};
+
+const isStandardSchema = (v: unknown): v is AnyStandardSchema =>
+  !!v && typeof v === 'object' && '~standard' in v;
+
+const buildBuilder = <
+  TInput,
+  TSlotValues extends Record<string, unknown>,
+  TSlotConfig extends SlotMap,
+  TArgsBase,
+  TRendered,
+>(
+  channelName: string,
+  slots: TSlotConfig,
+  state: BuilderState,
+): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered> => {
+  const next = (
+    patch: Partial<BuilderState>,
+  ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered> =>
+    buildBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>(channelName, slots, {
+      ...state,
+      ...patch,
+      runtime: { ...state.runtime, ...(patch.runtime ?? {}) },
+    });
+
+  const builder: Record<string | symbol, unknown> = {
+    _channel: channelName,
+    _state: state,
+    _args: undefined,
+    _rendered: undefined,
+    input<TSchema extends AnyStandardSchema>(schema: TSchema) {
+      if (state.schema) throw new Error(`Slot "input" already set on channel "${channelName}".`);
+      return next({ schema: schema as AnyStandardSchema });
+    },
+    use(mw: AnyMiddleware) {
+      return next({ middleware: [...state.middleware, mw] });
+    },
+    _finalize(id: string): ChannelDefinition<TArgsBase & { input: TInput }, TRendered> {
+      if (!state.schema) {
+        throw new Error(`Channel "${channelName}" route "${id}" missing required slot: input.`);
+      }
+      for (const key of Object.keys(slots)) {
+        if (state.runtime[key] === undefined) {
+          throw new Error(`Channel "${channelName}" route "${id}" missing required slot: ${key}.`);
+        }
+      }
+      return {
+        id,
+        channel: channelName,
+        schema: state.schema,
+        middleware: state.middleware,
+        runtime: state.runtime,
+        _args: undefined as never,
+        _rendered: undefined as never,
+      };
+    },
+  };
+
+  for (const key of Object.keys(slots)) {
+    builder[key] = (value: unknown) => {
+      if (state.runtime[key] !== undefined) {
+        throw new Error(`Slot "${key}" already set on channel "${channelName}".`);
+      }
+      return next({ runtime: { [key]: value } });
+    };
+  }
+
+  return builder as ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+};
+
+export const defineChannel = <
+  TName extends string,
+  TValidator,
+  TRendered,
+  TSlotConfig extends SlotMap,
+>(
+  opts: DefineChannelOptions<TName, TValidator, TRendered, TSlotConfig>,
+): Channel<
+  TName,
+  ChannelBuilder<
+    unknown,
+    SlotValuesOf<TSlotConfig>,
+    TSlotConfig,
+    ArgsBase<ArgsFromValidator<TValidator>>,
+    TRendered
+  >,
+  ArgsFromValidator<TValidator>,
+  TRendered,
+  Transport<TRendered, unknown>
+> => ({
+  name: opts.name,
+  createBuilder: (ctx: ChannelBuilderCtx) =>
+    buildBuilder<
+      unknown,
+      SlotValuesOf<TSlotConfig>,
+      TSlotConfig,
+      ArgsBase<ArgsFromValidator<TValidator>>,
+      TRendered
+    >(opts.name, opts.slots, {
+      schema: undefined,
+      middleware: [...ctx.rootMiddleware],
+      runtime: {},
+    }),
+  finalize: (state, id) =>
+    (
+      state as ChannelBuilder<
+        unknown,
+        SlotValuesOf<TSlotConfig>,
+        TSlotConfig,
+        ArgsBase<ArgsFromValidator<TValidator>>,
+        TRendered
+      >
+    )._finalize(id) as ChannelDefinition<ArgsFromValidator<TValidator>, TRendered>,
+  validateArgs: isStandardSchema(opts.validateArgs)
+    ? async (args: unknown) => {
+        const validated = (await validate(opts.validateArgs as AnyStandardSchema, args, {
+          route: opts.name,
+        })) as Record<string, unknown>;
+        const inputField =
+          args && typeof args === 'object' && 'input' in args
+            ? (args as { input: unknown }).input
+            : undefined;
+        return { input: inputField, ...validated } as ArgsFromValidator<TValidator>;
+      }
+    : (opts.validateArgs as (
+        args: unknown,
+      ) => ArgsFromValidator<TValidator> | Promise<ArgsFromValidator<TValidator>>),
+  render: async (def, args, ctx) => {
+    const runtime = def.runtime as {
+      [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
+    };
+    return opts.render({ runtime, args: args as WithInput<ArgsFromValidator<TValidator>>, ctx });
+  },
+  previewRender: opts.previewRender
+    ? async (def, input, ctx) => {
+        const runtime = def.runtime as {
+          [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
+        };
+        const fn = opts.previewRender;
+        if (!fn) return undefined;
+        return fn({ runtime, input, ctx });
+      }
+    : undefined,
+  _transport: undefined as never,
+});
+
+export const slot = {
+  resolver: <TValue>(): SlotConfig<'resolver'> & { __value?: TValue } => ({ kind: 'resolver' }),
+  value: <TValue>(): SlotConfig<'value'> & { __value?: TValue } => ({ kind: 'value' }),
+};

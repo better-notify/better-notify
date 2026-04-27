@@ -114,8 +114,8 @@ describe('executeSend', () => {
     });
 
     expect(result.messageId).toBeDefined();
-    expect(result.accepted).toEqual(['john@x.com']);
-    expect(result.rejected).toEqual([]);
+    expect((result.data as { accepted: string[] }).accepted).toEqual(['john@x.com']);
+    expect((result.data as { rejected: string[] }).rejected).toEqual([]);
     expect(result.envelope).toEqual({
       from: 'hello@example.com',
       to: ['john@x.com'],
@@ -375,7 +375,7 @@ describe('client hooks', () => {
       to: 'john@x.com',
       input: { name: 'John Doe' },
     });
-    expect(result.accepted).toEqual(['john@x.com']);
+    expect((result.data as { accepted: string[] }).accepted).toEqual(['john@x.com']);
   });
 
   it('fires onExecute with the rendered message', async () => {
@@ -1003,13 +1003,13 @@ describe('client middleware (onion)', () => {
 
   it('short-circuit middleware skips render and provider.send', async () => {
     const transport = mockTransport();
-    const shortCircuit: Middleware = async () => ({
-      messageId: 'fake',
-      accepted: [],
-      rejected: ['x@y.com'],
-      envelope: { from: 'a@b.com', to: ['x@y.com'] },
-      timing: { renderMs: 0, sendMs: 0 },
-    });
+    const shortCircuit: Middleware = async () =>
+      ({
+        messageId: 'fake',
+        data: { accepted: [], rejected: ['x@y.com'] },
+        envelope: { from: 'a@b.com', to: ['x@y.com'] },
+        timing: { renderMs: 0, sendMs: 0 },
+      }) as never;
 
     const ch = buildEmailChannel({ from: 'a@b.com' });
     const rpc = createNotify({ channels: { email: ch } });
@@ -1034,7 +1034,7 @@ describe('client middleware (onion)', () => {
       to: 'x@y.com',
       input: { name: 'John Doe' },
     });
-    expect(result.rejected).toEqual(['x@y.com']);
+    expect((result.data as { rejected: string[] }).rejected).toEqual(['x@y.com']);
     expect(transport.sent).toEqual([]);
   });
 
@@ -1119,7 +1119,7 @@ describe('integration: full end-to-end', () => {
     });
 
     expect(result.messageId).toBeDefined();
-    expect(result.accepted).toEqual(['john@x.com']);
+    expect((result.data as { accepted: string[] }).accepted).toEqual(['john@x.com']);
     expect(result.envelope).toEqual({
       from: 'hello@example.com',
       to: ['john@x.com'],
@@ -1288,7 +1288,7 @@ describe('coverage gaps', () => {
       input: { name: 'John Doe' },
     });
 
-    expect(result.accepted).toEqual(['john@x.com']);
+    expect((result.data as { accepted: string[] }).accepted).toEqual(['john@x.com']);
     expect(transport.sent[0]).toMatchObject({
       html: '<p>Hi John Doe at example.com</p>',
       text: 'Hi John Doe at example.com',

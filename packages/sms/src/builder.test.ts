@@ -27,4 +27,14 @@ describe('SmsBuilder', () => {
     const stage = partial.body('hello');
     expect(() => stage._finalize('greet')).toThrow(/incomplete/);
   });
+
+  it('use() appends middleware', () => {
+    const b = createSmsBuilder<unknown>({});
+    const mw = (async ({ next }: { next: () => Promise<unknown> }) => next()) as never;
+    const b2 = b.use(mw);
+    expect(b2).not.toBe(b);
+    expect(
+      (b2 as unknown as { _state: { middleware: unknown[] } })._state.middleware,
+    ).toEqual([mw]);
+  });
 });

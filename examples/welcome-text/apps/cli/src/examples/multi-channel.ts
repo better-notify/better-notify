@@ -59,9 +59,9 @@ export const runMultiChannel = async (): Promise<void> => {
     input: { name: 'Lucas' },
   });
 
-  console.log('email:', { messageId: emailResult.messageId, accepted: emailResult.accepted });
-  console.log('sms:  ', { messageId: smsResult.messageId, accepted: smsResult.accepted });
-  console.log('push: ', { messageId: pushResult.messageId, accepted: pushResult.accepted });
+  console.log('email:', { messageId: emailResult.messageId, data: emailResult.data });
+  console.log('sms:  ', { messageId: smsResult.messageId, data: smsResult.data });
+  console.log('push: ', { messageId: pushResult.messageId, data: pushResult.data });
   console.log('---');
   console.log('email rendered:', emailMock.sent[0]);
   console.log('sms rendered:  ', smsMock.messages[0]);

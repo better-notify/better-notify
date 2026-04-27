@@ -2,7 +2,7 @@ import {
   EmailRpcRateLimitedError,
   consoleLogger,
   createClient,
-  createEmailRpc,
+  createNotify,
   inMemoryEventSink,
   inMemoryIdempotencyStore,
   inMemoryRateLimitStore,
@@ -14,9 +14,14 @@ import {
   withSuppressionList,
   withTracing,
 } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
+
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
 
 const welcomeInput = z.object({ name: z.string(), verifyUrl: z.string().url() });
 const resetInput = z.object({ name: z.string(), resetUrl: z.string().url() });
@@ -37,7 +42,7 @@ const observability = {
   tracer: inMemoryTracer(),
 };
 
-const rpc = createEmailRpc()
+const rpc = createNotify({ channels: { email: ch } })
   .use(withTracing({ tracer: observability.tracer }))
   .use(withEventLogger({ sink: observability.sink }))
   .use(withSuppressionList({ list: stores.suppression }))
@@ -98,9 +103,9 @@ const catalog = rpc.catalog({ transactional, marketing });
 export const runKitchenSink = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
     logger: consoleLogger({ level: 'warn' }),
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
   });
 
   const sendWelcome = async (

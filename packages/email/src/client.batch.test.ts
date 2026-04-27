@@ -91,10 +91,10 @@ describe('client.batch', () => {
     let calls = 0;
     const flakyTransport = {
       name: 'flaky',
-      send: async () => {
+      send: async (): Promise<{ ok: true; data: { accepted: string[]; rejected: string[] } }> => {
         calls++;
         if (calls === 2) throw new Error('boom');
-        return { accepted: ['x'], rejected: [] };
+        return { ok: true, data: { accepted: ['x'], rejected: [] } };
       },
     };
     const mail = createClient({

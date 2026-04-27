@@ -8,14 +8,19 @@ type TestRendered = { body: string; to: string };
 
 type TestArgs = { to: string; input: { name: string } };
 
+type TestTransportData = {
+  transportMessageId: string;
+  accepted: string[];
+  rejected: string[];
+};
+
 type TestTransport = {
   name: string;
   sent: Array<{ rendered: TestRendered; route: string }>;
-  send: (rendered: TestRendered, ctx: { route: string; messageId: string; attempt: number }) => Promise<{
-    transportMessageId: string;
-    accepted: string[];
-    rejected: string[];
-  }>;
+  send: (
+    rendered: TestRendered,
+    ctx: { route: string; messageId: string; attempt: number },
+  ) => Promise<{ ok: true; data: TestTransportData }>;
 };
 
 const createTestTransport = (): TestTransport => {
@@ -26,9 +31,12 @@ const createTestTransport = (): TestTransport => {
     send: async (rendered, ctx) => {
       sent.push({ rendered, route: ctx.route });
       return {
-        transportMessageId: `test-${ctx.messageId}`,
-        accepted: [rendered.to],
-        rejected: [],
+        ok: true,
+        data: {
+          transportMessageId: `test-${ctx.messageId}`,
+          accepted: [rendered.to],
+          rejected: [],
+        },
       };
     },
   };
@@ -91,7 +99,7 @@ describe('createClient multi-channel', () => {
       transportsByChannel: { test: transport },
     }) as unknown as {
       ping: {
-        send: (a: TestArgs) => Promise<{ messageId: string; providerMessageId?: string }>;
+        send: (a: TestArgs) => Promise<{ messageId: string; data: TestTransportData }>;
       };
     };
 
@@ -100,7 +108,7 @@ describe('createClient multi-channel', () => {
     expect(transport.sent[0]?.rendered.body).toBe('Hello Alice');
     expect(transport.sent[0]?.rendered.to).toBe('alice@x.com');
     expect(transport.sent[0]?.route).toBe('ping');
-    expect(result.providerMessageId).toBe(`test-${result.messageId}`);
+    expect(result.data.transportMessageId).toBe(`test-${result.messageId}`);
   });
 
   it('batches non-email routes', async () => {
@@ -313,5 +321,515 @@ describe('createClient multi-channel', () => {
 
     await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeTruthy();
     expect(errors.some((e) => e.phase === 'hook')).toBe(true);
+  });
+
+  it('throws CONFIG when channel is missing for the route', async () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: {},
+      transportsByChannel: {},
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(
+      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
+    ).rejects.toThrow(/No channel/);
+  });
+
+  it('throws PROVIDER when transport is missing for the channel', async () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: {},
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(
+      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
+    ).rejects.toThrow(/No transport/);
+  });
+
+  it('builds envelope when rendered has from + to addresses', async () => {
+    const ch = testChannel() as unknown as { render: (...a: unknown[]) => Promise<unknown> };
+    ch.render = async () => ({
+      from: { email: 'sender@x.com' },
+      to: [{ email: 'rcpt@x.com' }],
+      body: 'hi',
+    });
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: ch as unknown as AnyChannel },
+      transportsByChannel: { test: transport },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<{ envelope?: { from?: string; to: string[] } }> } };
+    const result = await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(result.envelope).toEqual({ from: 'sender@x.com', to: ['rcpt@x.com'] });
+  });
+
+  it('handles plugin onCreate / onClose lifecycle', async () => {
+    const order: string[] = [];
+    const plugin = {
+      name: 'p',
+      onCreate: () => order.push('create'),
+      onClose: () => {
+        order.push('close');
+      },
+    };
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+      plugins: [plugin],
+    }) as unknown as { close: () => Promise<void> };
+    expect(order).toEqual(['create']);
+    await mail.close();
+    expect(order).toEqual(['create', 'close']);
+  });
+
+  it('logs and swallows plugin onClose errors', async () => {
+    const errs: unknown[] = [];
+    const plugin = {
+      name: 'p',
+      onClose: () => {
+        throw new Error('close fail');
+      },
+    };
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+      plugins: [plugin],
+      logger: {
+        debug: () => {},
+        info: () => {},
+        warn: () => {},
+        error: (m: string, p?: unknown) => {
+          errs.push({ m, p });
+        },
+        child: () => ({
+          debug: () => {},
+          info: () => {},
+          warn: () => {},
+          error: (m: string, p?: unknown) => {
+            errs.push({ m, p });
+          },
+          child: () => ({}) as never,
+        }) as never,
+      } as never,
+    }) as unknown as { close: () => Promise<void> };
+    await mail.close();
+    expect(errs.some((e) => (e as { m: string }).m === 'plugin close failed')).toBe(true);
+  });
+
+  it('returns undefined for unknown route on the proxy', () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as Record<string, unknown>;
+    expect(mail.unknownRoute).toBeUndefined();
+    expect(mail[Symbol.iterator as never]).toBeUndefined();
+  });
+
+  it('caches built proc methods (second access returns same instance)', () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as { ping: unknown };
+    const a = mail.ping;
+    const b = mail.ping;
+    expect(a).toBe(b);
+  });
+
+  it('batch with errors per-entry, including BATCH_EMPTY guard', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+    }) as unknown as { ping: { batch: (entries: ReadonlyArray<TestArgs>) => Promise<{ okCount: number; errorCount: number; results: ReadonlyArray<{ status: 'ok' | 'error'; index: number }> }> } };
+    const r = await mail.ping.batch([
+      { to: 'a@x.com', input: { name: 'A' } },
+      { to: 'b@x.com', input: { name: 1 as unknown as string } },
+    ]);
+    expect(r.okCount).toBe(1);
+    expect(r.errorCount).toBe(1);
+  });
+
+  it('queue() rejects with CHANNEL_NOT_QUEUEABLE through .catch()', async () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as { ping: { queue: () => Promise<unknown> } };
+    await expect(mail.ping.queue()).rejects.toBeInstanceOf(EmailRpcError);
+  });
+
+  it('render() throws CONFIG when channel does not implement previewRender', async () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as { ping: { render: (i: unknown) => Promise<unknown> } };
+    await expect(mail.ping.render({ name: 'A' })).rejects.toThrow(/does not support .render/);
+  });
+
+  it('render() runs previewRender when channel provides it', async () => {
+    const ch = testChannel() as unknown as {
+      previewRender?: (def: unknown, input: unknown, ctx: unknown) => Promise<unknown>;
+    };
+    ch.previewRender = async (_d, input) => ({ preview: input });
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: ch as unknown as AnyChannel },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as { ping: { render: (i: unknown) => Promise<unknown> } };
+    const out = await mail.ping.render({ name: 'A' });
+    expect(out).toEqual({ preview: { name: 'A' } });
+  });
+
+  it('preserves EmailRpcError when transport throws one (no re-wrap)', async () => {
+    const orig = new EmailRpcError({ message: 'specific', code: 'PROVIDER' });
+    const transport = {
+      name: 'failing',
+      sent: [] as unknown[],
+      send: async () => {
+        throw orig;
+      },
+    };
+    const errors: Array<EmailRpcError> = [];
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport as unknown as TestTransport },
+      hooks: {
+        onError: ({ error }) => {
+          errors.push(error);
+        },
+      },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBe(orig);
+    expect(errors[0]).toBe(orig);
+  });
+
+  it('treats { ok: false } returned by transport as a soft failure', async () => {
+    const transport = {
+      name: 'soft-fail',
+      sent: [] as unknown[],
+      send: async () => ({ ok: false as const, error: new Error('soft') }),
+    };
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport as unknown as TestTransport },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(
+      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
+    ).rejects.toThrow(/soft/);
+  });
+
+  it('preserves EmailRpcError thrown from middleware', async () => {
+    const orig = new EmailRpcError({ message: 'mw orig', code: 'CONFIG' });
+    const catalog = buildTestCatalog();
+    const defs = catalog.definitions as unknown as Record<string, { middleware: unknown[] }>;
+    const ping = defs.ping;
+    if (!ping) throw new Error('ping missing');
+    ping.middleware = [
+      async () => {
+        throw orig;
+      },
+    ];
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBe(orig);
+  });
+
+  it('batch wraps non-EmailRpcError transport throws with route-tagged EmailRpcError', async () => {
+    const transport = {
+      name: 'bad',
+      sent: [] as unknown[],
+      send: async () => {
+        throw new Error('plain');
+      },
+    };
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport as unknown as TestTransport },
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: EmailRpcError }> }> } };
+    const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
+    const first = r.results[0];
+    if (!first || first.status !== 'error') throw new Error('expected error');
+    expect(first.error).toBeInstanceOf(EmailRpcError);
+    expect(first.error?.route).toBe('ping');
+  });
+
+  it('batch with interval delays between entries', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>, opts?: { interval?: number }) => Promise<{ okCount: number }> } };
+    const start = Date.now();
+    await mail.ping.batch(
+      [
+        { to: 'a@x.com', input: { name: 'A' } },
+        { to: 'b@x.com', input: { name: 'B' } },
+      ],
+      { interval: 5 },
+    );
+    expect(Date.now() - start).toBeGreaterThanOrEqual(4);
+  });
+
+  it('batch throws BATCH_EMPTY on empty entries array', async () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<unknown> } };
+    await expect(mail.ping.batch([])).rejects.toThrow(EmailRpcError);
+  });
+
+  it('access via nested catalog path works', async () => {
+    const inner = buildTestCatalog();
+    const outerCatalog = {
+      _brand: 'EmailCatalog' as const,
+      _ctx: undefined as never,
+      emails: {},
+      definitions: { 'ns.ping': inner.definitions.ping! },
+      nested: { ns: inner },
+      routes: ['ns.ping'],
+    } as unknown as AnyEmailCatalog;
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog: outerCatalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+    }) as unknown as { ns: { ping: { send: (a: TestArgs) => Promise<unknown> } } };
+    await mail.ns.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(transport.sent).toHaveLength(1);
+  });
+
+  it('proxy returns undefined for symbol keys', () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as Record<symbol, unknown>;
+    expect(mail[Symbol.iterator]).toBeUndefined();
+  });
+
+  it('routes onExecute hook errors through onError with phase=hook', async () => {
+    const errors: Array<{ phase: string }> = [];
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+      hooks: {
+        onExecute: () => {
+          throw new Error('execute hook boom');
+        },
+        onError: ({ phase }) => {
+          errors.push({ phase });
+        },
+      },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(
+      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
+    ).rejects.toBeTruthy();
+    expect(errors.some((e) => e.phase === 'hook')).toBe(true);
+  });
+
+  it('batch preserves EmailRpcError thrown from transport', async () => {
+    const orig = new EmailRpcError({ message: 'original', code: 'PROVIDER' });
+    const transport = {
+      name: 'bad',
+      sent: [] as unknown[],
+      send: async () => {
+        throw orig;
+      },
+    };
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport as unknown as TestTransport },
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: EmailRpcError }> }> } };
+    const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
+    const first = r.results[0];
+    if (!first || first.status !== 'error') throw new Error('expected error');
+    expect(first.error).toBe(orig);
+  });
+
+  it('batch single entry runs without delay branch', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>, opts?: { interval?: number }) => Promise<unknown> } };
+    await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }], { interval: 100 });
+    expect(transport.sent).toHaveLength(1);
+  });
+
+  it('reportHookError preserves err when hook threw an EmailRpcError directly', async () => {
+    const original = new EmailRpcError({ message: 'pre-wrapped', code: 'UNKNOWN' });
+    const errors: Array<{ error: EmailRpcError }> = [];
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+      hooks: {
+        onBeforeSend: () => {
+          throw original;
+        },
+        onError: ({ error }) => {
+          errors.push({ error });
+        },
+      },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(
+      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
+    ).rejects.toBe(original);
+    expect(errors.some((e) => e.error === original)).toBe(true);
+  });
+
+  it('proxy returns undefined when nested entry has no matching definition', () => {
+    const def = {
+      id: 'ping',
+      channel: 'test',
+      schema: z.object({ name: z.string() }),
+      middleware: [],
+      runtime: { template: () => 'x' },
+      _args: undefined as never,
+      _rendered: undefined as never,
+    };
+    const orphan: AnyEmailCatalog = {
+      _brand: 'EmailCatalog' as const,
+      _ctx: undefined as never,
+      emails: {},
+      definitions: {},
+      nested: { ghost: def as unknown as Record<string, unknown> },
+      routes: ['ghost'],
+    };
+    const mail = createClient({
+      catalog: orphan,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as Record<string, unknown>;
+    expect(mail.ghost).toBeUndefined();
+  });
+
+  it('routes onAfterSend hook errors through onError reporter', async () => {
+    const errors: Array<{ phase: string }> = [];
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+      hooks: {
+        onAfterSend: () => {
+          throw new Error('after boom');
+        },
+        onError: ({ phase }) => {
+          errors.push({ phase });
+        },
+      },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(errors.some((e) => e.phase === 'hook')).toBe(true);
+  });
+
+  it('batch wraps non-EmailRpcError thrown by validateArgs', async () => {
+    const ch = testChannel() as unknown as {
+      validateArgs: (a: unknown) => unknown;
+    };
+    ch.validateArgs = () => {
+      throw new Error('validate boom');
+    };
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: ch as unknown as AnyChannel },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as { ping: { batch: (e: ReadonlyArray<TestArgs>) => Promise<{ results: ReadonlyArray<{ status: string; error?: EmailRpcError }> }> } };
+    const r = await mail.ping.batch([{ to: 'a@x.com', input: { name: 'A' } }]);
+    const first = r.results[0];
+    if (!first || first.status !== 'error') throw new Error('expected error');
+    expect(first.error).toBeInstanceOf(EmailRpcError);
+    expect(first.error?.message).toMatch(/validate boom/);
+  });
+
+  it('toEmailString returns empty string for malformed address values', async () => {
+    const ch = testChannel() as unknown as { render: (...a: unknown[]) => Promise<unknown> };
+    ch.render = async () => ({
+      from: 42,
+      to: [42],
+      body: 'x',
+    });
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: ch as unknown as AnyChannel },
+      transportsByChannel: { test: transport },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<{ envelope?: { from?: string; to: string[] } }> } };
+    const result = await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(result.envelope).toEqual({ from: '', to: [''] });
+  });
+
+  it('logs nested hook failures when onError itself throws', async () => {
+    const logs: Array<{ msg: string }> = [];
+    const customLogger = {
+      debug: () => {},
+      info: () => {},
+      warn: () => {},
+      error: (m: string) => {
+        logs.push({ msg: m });
+      },
+      child: function (this: unknown) {
+        return this as never;
+      },
+    };
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+      logger: customLogger as never,
+      hooks: {
+        onBeforeSend: () => {
+          throw new Error('outer hook failure');
+        },
+        onError: () => {
+          throw new Error('error-handler also throws');
+        },
+      },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await expect(
+      mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
+    ).rejects.toBeTruthy();
+    expect(logs.filter((l) => l.msg === 'hook failed').length).toBeGreaterThanOrEqual(2);
   });
 });

@@ -1,9 +1,11 @@
-import { createClient, createEmailRpc, withDryRun } from '@emailrpc/core';
+import { createNotify, createClient, withDryRun } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';
 
 export const runDryRun = async (): Promise<void> => {
-  const rpc = createEmailRpc().use(withDryRun());
+  const ch = emailChannel({ defaults: { from: 'demo@example.com' } });
+  const rpc = createNotify({ channels: { email: ch } }).use(withDryRun());
   const catalog = rpc.catalog({
     welcome: rpc
       .email()
@@ -16,8 +18,8 @@ export const runDryRun = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
-    defaults: { from: 'demo@example.com' },
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
   });
 
   const result = await mail.welcome.send({

@@ -1,11 +1,11 @@
+import type { Transport as CoreTransport } from '@emailrpc/core';
 import type { RenderedSms } from '../types.js';
 
-export type SmsTransportResult = {
+export type SmsTransportData = {
   messageId: string;
   provider?: string;
 };
 
-export type Transport = {
-  readonly name: string;
-  send(rendered: RenderedSms, ctx: unknown): Promise<SmsTransportResult>;
-};
+export type SmsTransportResult = SmsTransportData;
+
+export type Transport = CoreTransport<RenderedSms, SmsTransportData>;

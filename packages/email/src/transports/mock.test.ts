@@ -20,8 +20,9 @@ describe('mockTransport', () => {
       { route: 'welcome', messageId: 'test-id', attempt: 1 },
     );
 
-    expect(result.accepted).toEqual(['john@x.com']);
-    expect(result.rejected).toEqual([]);
+    if (!result.ok) throw new Error('expected ok');
+    expect(result.data.accepted).toEqual(['john@x.com']);
+    expect(result.data.rejected).toEqual([]);
     expect(transport.sent).toHaveLength(1);
     expect(transport.sent[0]).toMatchObject({
       route: 'welcome',

@@ -23,11 +23,12 @@ describe('createTransport', () => {
   it('returns a Transport with the given name and send', async () => {
     const t = createTransport({
       name: 'my-api',
-      send: async () => ({ accepted: ['a@b.com'], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: ['a@b.com'], rejected: [] } }),
     });
     expect(t.name).toBe('my-api');
     const result = await t.send(baseMessage, baseCtx);
-    expect(result.accepted).toEqual(['a@b.com']);
+    if (!result.ok) throw new Error('expected ok');
+    expect(result.data.accepted).toEqual(['a@b.com']);
   });
 
   it('passes message and ctx through to the user-supplied send', async () => {
@@ -36,7 +37,7 @@ describe('createTransport', () => {
       name: 'capture',
       send: async (message, ctx) => {
         captured = { message, ctx };
-        return { accepted: [], rejected: [] };
+        return { ok: true, data: { accepted: [], rejected: [] } };
       },
     });
     await t.send(baseMessage, baseCtx);
@@ -47,7 +48,7 @@ describe('createTransport', () => {
   it('default verify resolves to { ok: true }', async () => {
     const t = createTransport({
       name: 'my-api',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
     });
     const res = await t.verify!();
     expect(res).toEqual({ ok: true });
@@ -56,7 +57,7 @@ describe('createTransport', () => {
   it('default close resolves to undefined', async () => {
     const t = createTransport({
       name: 'my-api',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
     });
     await expect(t.close!()).resolves.toBeUndefined();
   });
@@ -64,7 +65,7 @@ describe('createTransport', () => {
   it('honors a custom verify', async () => {
     const t = createTransport({
       name: 'my-api',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => ({ ok: false, details: 'down' }),
     });
     const res = await t.verify!();
@@ -75,7 +76,7 @@ describe('createTransport', () => {
     let closed = false;
     const t = createTransport({
       name: 'my-api',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       close: async () => {
         closed = true;
       },

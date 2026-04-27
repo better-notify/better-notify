@@ -143,4 +143,20 @@ describe('EmailBuilder.use()', () => {
     const router = t.catalog({ welcome });
     expect(router.emails.welcome.middleware).toEqual([mw]);
   });
+
+  it('.template(fn) accepts a render function and normalizes it to an adapter', async () => {
+    const t = createEmailRpc();
+    const built = t
+      .email()
+      .input(z.object({ name: z.string() }))
+      .subject('hi')
+      .template(({ input }) => ({ html: `<p>${input.name}</p>`, text: `Hi ${input.name}` }));
+    const router = t.catalog({ welcome: built });
+    const out = await router.emails.welcome.template.render({
+      input: { name: 'Lucas' },
+      ctx: undefined,
+    });
+    expect(out.html).toBe('<p>Lucas</p>');
+    expect(out.text).toBe('Hi Lucas');
+  });
 });

@@ -61,10 +61,13 @@ export const smtpTransport = (opts: SmtpTransportOptions): Transport => {
       });
 
       return {
-        transportMessageId: info.messageId,
-        accepted: info.accepted.map(String),
-        rejected: info.rejected.map(String),
-        raw: info,
+        ok: true,
+        data: {
+          transportMessageId: info.messageId,
+          accepted: info.accepted.map(String),
+          rejected: info.rejected.map(String),
+          raw: info,
+        },
       };
     },
     async verify() {

@@ -1,5 +1,6 @@
-import type { Priority, RenderedMessage, SendContext, Tags } from '../types.js';
-import type { Transport, TransportResult } from './types.js';
+import { createMockTransport } from '@emailrpc/core';
+import type { Priority, RenderedMessage, Tags } from '../types.js';
+import type { EmailTransportData, Transport } from './types.js';
 import { normalizeAddress } from '../lib/normalize-address.js';
 
 type MockTransportRecord = {
@@ -18,19 +19,15 @@ type MockTransportRecord = {
 };
 
 export type MockTransport = Transport & {
-  readonly sent: MockTransportRecord[];
+  readonly sent: ReadonlyArray<MockTransportRecord>;
   reset(): void;
 };
 
 export const mockTransport = (): MockTransport => {
   const records: MockTransportRecord[] = [];
-
-  return {
+  const base = createMockTransport<RenderedMessage, EmailTransportData>({
     name: 'mock',
-    get sent() {
-      return records;
-    },
-    async send(message: RenderedMessage, ctx: SendContext): Promise<TransportResult> {
+    reply: (message, ctx) => {
       const to = message.to.map(normalizeAddress);
       records.push({
         route: ctx.route,
@@ -48,8 +45,16 @@ export const mockTransport = (): MockTransport => {
       });
       return { accepted: to, rejected: [] };
     },
+  });
+  return {
+    name: base.name,
+    send: base.send,
+    get sent() {
+      return records;
+    },
     reset() {
       records.length = 0;
+      base.reset();
     },
   };
 };

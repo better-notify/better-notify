@@ -1,15 +1,17 @@
 import {
   EmailRpcRateLimitedError,
+  createNotify,
   createClient,
-  createEmailRpc,
   inMemoryRateLimitStore,
   withRateLimit,
 } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';
 
 export const runRateLimited = async (): Promise<void> => {
-  const rpc = createEmailRpc().use(
+  const ch = emailChannel({ defaults: { from: 'demo@example.com' } });
+  const rpc = createNotify({ channels: { email: ch } }).use(
     withRateLimit({
       store: inMemoryRateLimitStore(),
       key: ({ args }) => (Array.isArray(args.to) ? 'multi' : String(args.to)),
@@ -28,8 +30,8 @@ export const runRateLimited = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
-    defaults: { from: 'demo@example.com' },
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
   });
 
   const send = async (i: number): Promise<void> => {

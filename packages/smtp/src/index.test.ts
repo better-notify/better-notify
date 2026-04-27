@@ -64,9 +64,10 @@ describe('smtpTransport', () => {
     expect(arg.html).toBe('<p>hi</p>');
     expect(arg.text).toBe('hi');
 
-    expect(result.transportMessageId).toBe('<abc@x>');
-    expect(result.accepted).toEqual(['to@example.com']);
-    expect(result.rejected).toEqual([]);
+    if (!result.ok) throw new Error('expected ok');
+    expect(result.data.transportMessageId).toBe('<abc@x>');
+    expect(result.data.accepted).toEqual(['to@example.com']);
+    expect(result.data.rejected).toEqual([]);
   });
 
   it('verify() returns { ok: true } when nodemailer resolves true', async () => {

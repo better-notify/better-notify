@@ -1,9 +1,13 @@
-import { createClient, consoleLogger, createEmailRpc } from '@emailrpc/core';
+import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -20,9 +24,9 @@ const catalog = rpc.catalog({
 export const runSingle = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
     logger: consoleLogger({ level: 'debug' }),
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
   });
 
   const result = await mail.welcome.send({
@@ -30,7 +34,8 @@ export const runSingle = async (): Promise<void> => {
     input: { name: 'John Doe', verifyUrl: 'https://example.com/verify?token=abc123' },
   });
 
+  const data = result.data as { accepted: string[] };
   console.log('Message ID:', result.messageId);
-  console.log('Accepted:  ', result.accepted.join(', '));
+  console.log('Accepted:  ', data.accepted.join(', '));
   console.log('Send:      ', `${result.timing.sendMs.toFixed(1)}ms`);
 };

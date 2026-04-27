@@ -1,9 +1,14 @@
-import { createClient, consoleLogger, createEmailRpc, multiTransport } from '@emailrpc/core';
+import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
+import { multiTransport } from '@emailrpc/email/transports';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -20,24 +25,20 @@ const catalog = rpc.catalog({
 export const runMultiRandom = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    transports: [
-      {
+    channels: { email: ch },
+    transportsByChannel: {
+      email: multiTransport({
         name: 'random',
-        priority: 1,
-        transport: multiTransport({
-          name: 'random',
-          strategy: 'random',
-          transports: [
-            { transport: mockTransport('transport-1') },
-            { transport: mockTransport('transport-2') },
-            { transport: mockTransport('transport-3') },
-          ],
-          logger: consoleLogger({ level: 'debug' }),
-        }),
-      },
-    ],
+        strategy: 'random',
+        transports: [
+          { transport: mockTransport('transport-1') },
+          { transport: mockTransport('transport-2') },
+          { transport: mockTransport('transport-3') },
+        ],
+        logger: consoleLogger({ level: 'debug' }),
+      }),
+    },
     logger: consoleLogger({ level: 'debug' }),
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
   });
 
   const result = await mail.welcome.send({

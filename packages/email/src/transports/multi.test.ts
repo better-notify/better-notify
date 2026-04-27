@@ -31,10 +31,13 @@ type FakeTransport = Transport & {
 
 const fakeTransport = (name: string, queue: FakeBehavior[]): FakeTransport => {
   let calls = 0;
-  const result: TransportResult = {
-    accepted: ['rcpt@example.com'],
-    rejected: [],
-    transportMessageId: `${name}-id`,
+  const okResult: TransportResult = {
+    ok: true,
+    data: {
+      accepted: ['rcpt@example.com'],
+      rejected: [],
+      transportMessageId: `${name}-id`,
+    },
   };
   return {
     name,
@@ -48,7 +51,7 @@ const fakeTransport = (name: string, queue: FakeBehavior[]): FakeTransport => {
       calls += 1;
       const behavior = queue[Math.min(calls - 1, queue.length - 1)] ?? 'ok';
       const decided = typeof behavior === 'function' ? behavior(calls) : behavior;
-      if (decided === 'ok') return result;
+      if (decided === 'ok') return okResult;
       throw decided;
     },
   };
@@ -137,7 +140,7 @@ describe('multiTransport — failover strategy', () => {
       transports: [{ transport: a }, { transport: b }],
     });
     const res = await m.send(baseMessage, baseCtx);
-    expect(res.transportMessageId).toBe('a-id');
+    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('a-id');
     expect(a.calls).toBe(1);
     expect(b.calls).toBe(0);
   });
@@ -150,7 +153,7 @@ describe('multiTransport — failover strategy', () => {
       transports: [{ transport: a }, { transport: b }],
     });
     const res = await m.send(baseMessage, baseCtx);
-    expect(res.transportMessageId).toBe('b-id');
+    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('b-id');
     expect(a.calls).toBe(1);
     expect(b.calls).toBe(1);
   });
@@ -181,7 +184,7 @@ describe('multiTransport — failover strategy', () => {
       logger: log,
     });
     const res = await m.send(baseMessage, baseCtx);
-    expect(res.transportMessageId).toBe('b-id');
+    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('b-id');
     const failed = log.records.find(
       (r) => r.message === 'multi attempt failed' && r.payload.transportName === 'a',
     );
@@ -197,7 +200,7 @@ describe('multiTransport — failover strategy', () => {
       maxAttemptsPerTransport: 3,
     });
     const res = await m.send(baseMessage, baseCtx);
-    expect(res.transportMessageId).toBe('b-id');
+    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('b-id');
     expect(a.calls).toBe(3);
     expect(b.calls).toBe(1);
   });
@@ -208,7 +211,7 @@ describe('multiTransport — failover strategy', () => {
     sparse[1] = { transport: a };
     const m = multiTransport({ strategy: 'failover', transports: sparse });
     const res = await m.send(baseMessage, baseCtx);
-    expect(res.transportMessageId).toBe('a-id');
+    if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('a-id');
     expect(a.calls).toBe(1);
   });
 });
@@ -289,7 +292,7 @@ describe('multiTransport — random strategy', () => {
         transports: [{ transport: a }, { transport: b }, { transport: c }],
       });
       const res = await m.send(baseMessage, baseCtx);
-      expect(res.transportMessageId).toBe('c-id');
+      if (!res.ok) throw new Error("expected ok"); expect(res.data.transportMessageId).toBe('c-id');
       expect(b.calls).toBe(1);
       expect(c.calls).toBe(1);
       expect(a.calls).toBe(0);
@@ -419,12 +422,12 @@ describe('multiTransport — verify()', () => {
   it('all inner verify ok → ok=true with per-inner results', async () => {
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => ({ ok: true, details: 'a-ok' }),
     };
     const b: Transport = {
       name: 'b',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => ({ ok: true }),
     };
     const m = multiTransport({
@@ -444,12 +447,12 @@ describe('multiTransport — verify()', () => {
   it('any inner ok → composite ok=true', async () => {
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => ({ ok: false, details: 'down' }),
     };
     const b: Transport = {
       name: 'b',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => ({ ok: true }),
     };
     const m = multiTransport({
@@ -463,12 +466,12 @@ describe('multiTransport — verify()', () => {
   it('no inner ok → composite ok=false', async () => {
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => ({ ok: false }),
     };
     const b: Transport = {
       name: 'b',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => ({ ok: false }),
     };
     const m = multiTransport({
@@ -482,7 +485,7 @@ describe('multiTransport — verify()', () => {
   it('inner without verify → reported as ok: true', async () => {
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
     };
     const m = multiTransport({
       strategy: 'failover',
@@ -497,7 +500,7 @@ describe('multiTransport — verify()', () => {
     const err = new Error('verify boom');
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       verify: async () => {
         throw err;
       },
@@ -517,14 +520,14 @@ describe('multiTransport — close()', () => {
     const closes: string[] = [];
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       close: async () => {
         closes.push('a');
       },
     };
     const b: Transport = {
       name: 'b',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       close: async () => {
         closes.push('b');
       },
@@ -541,14 +544,14 @@ describe('multiTransport — close()', () => {
     const err = new Error('close boom');
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       close: async () => {
         throw err;
       },
     };
     const b: Transport = {
       name: 'b',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
       close: async () => {},
     };
     const log = memoryLogger();
@@ -567,7 +570,7 @@ describe('multiTransport — close()', () => {
   it('inner without close → skipped silently', async () => {
     const a: Transport = {
       name: 'a',
-      send: async () => ({ accepted: [], rejected: [] }),
+      send: async () => ({ ok: true, data: { accepted: [], rejected: [] } }),
     };
     const m = multiTransport({
       strategy: 'failover',

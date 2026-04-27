@@ -1,17 +1,15 @@
-import {
-  createClient,
-  consoleLogger,
-  createTransport,
-  createEmailRpc,
-  type TransportEntry,
-} from '@emailrpc/core';
-import { multiTransport } from '@emailrpc/core/transports';
+import { createNotify, createClient, consoleLogger } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
+import { createTransport, multiTransport } from '@emailrpc/email/transports';
 import { smtpTransport } from '@emailrpc/smtp';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockFailSend } from '../test-utils';
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -47,15 +45,11 @@ export const runMultiFailover = async (): Promise<void> => {
     logger: consoleLogger({ level: 'debug' }),
   });
 
-  const transports: TransportEntry[] = [
-    { name: 'failover', priority: 1, transport: composite },
-  ];
-
   const mail = createClient({
     catalog,
-    transports,
+    channels: { email: ch },
+    transportsByChannel: { email: composite },
     logger: consoleLogger({ level: 'debug' }),
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
   });
 
   const result = await mail.welcome.send({

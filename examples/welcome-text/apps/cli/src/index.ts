@@ -13,6 +13,7 @@ import { runHooks } from './examples/hooks';
 import { runPlugins } from './examples/plugins';
 import { runHttpTransport } from './examples/http-transport';
 import { runMultiChannel } from './examples/multi-channel';
+import { runCustomChannel } from './examples/custom-channel';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -30,6 +31,7 @@ const examples: Record<string, () => Promise<void>> = {
   plugins: runPlugins,
   'http-transport': runHttpTransport,
   'multi-channel': runMultiChannel,
+  'custom-channel': runCustomChannel,
 };
 
 const main = async (): Promise<void> => {

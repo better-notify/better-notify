@@ -1,9 +1,14 @@
-import { createClient, createEmailRpc, type ClientHooks } from '@emailrpc/core';
+import { createNotify, createClient, type ClientHooks } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
+import type { RenderedMessage } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -27,11 +32,15 @@ const hooks: ClientHooks<typeof catalog> = {
     ({ route, messageId }) => log(`onBeforeSend#1 route=${route} id=${messageId.slice(0, 8)}`),
     ({ input }) => log(`onBeforeSend#2 name=${(input as { name: string }).name}`),
   ],
-  onExecute: ({ rendered }) =>
-    log(`onExecute    subject="${rendered.subject}" attachments=${rendered.attachments.length}`),
+  onExecute: ({ rendered }) => {
+    const r = rendered as RenderedMessage;
+    log(`onExecute    subject="${r.subject}" attachments=${r.attachments?.length ?? 0}`);
+  },
   onAfterSend: [
-    ({ result, durationMs }) =>
-      log(`onAfterSend#1 ok in ${durationMs.toFixed(1)}ms accepted=${result.accepted.join(',')}`),
+    ({ result, durationMs }) => {
+      const data = result.data as { accepted: string[] };
+      log(`onAfterSend#1 ok in ${durationMs.toFixed(1)}ms accepted=${data.accepted.join(',')}`);
+    },
     ({ result }) => log(`onAfterSend#2 messageId=${result.messageId.slice(0, 8)}`),
   ],
   onError: [
@@ -43,8 +52,8 @@ const hooks: ClientHooks<typeof catalog> = {
 export const runHooks = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
     hooks,
   });
 

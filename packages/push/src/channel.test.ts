@@ -66,4 +66,30 @@ describe('pushChannel', () => {
       to: 'token-1',
     });
   });
+
+  it('createBuilder seeds rootMiddleware when provided', () => {
+    const ch = pushChannel();
+    const mw = async () => undefined as never;
+    const b = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
+    expect((b as unknown as { _state: { middleware: unknown[] } })._state.middleware).toEqual([mw]);
+  });
+
+  it('render passes through static data and badge values', async () => {
+    const ch = pushChannel();
+    const builder = createPushBuilder<unknown>({})
+      .input(z.object({ name: z.string() }))
+      .title('t')
+      .body('b')
+      .data({ key: 'value' })
+      .badge(42);
+    const def = ch.finalize(builder, 'greet');
+    const out = await ch.render(def, { to: 'token-1', input: { name: 'A' } }, {});
+    expect(out).toEqual({
+      title: 't',
+      body: 'b',
+      data: { key: 'value' },
+      badge: 42,
+      to: 'token-1',
+    });
+  });
 });

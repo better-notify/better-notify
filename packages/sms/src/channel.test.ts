@@ -34,4 +34,21 @@ describe('smsChannel', () => {
     const out = await ch.render(def, { to: '+1', input: { name: 'Lucas' } }, {});
     expect(out).toEqual({ body: 'Hi Lucas', to: '+1' });
   });
+
+  it('createBuilder seeds rootMiddleware when provided', () => {
+    const ch = smsChannel();
+    const mw = async () => undefined as never;
+    const b = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
+    expect((b as unknown as { _state: { middleware: unknown[] } })._state.middleware).toEqual([mw]);
+  });
+
+  it('renders a static body resolver (string form)', async () => {
+    const ch = smsChannel();
+    const builder = createSmsBuilder<unknown>({})
+      .input(z.object({ name: z.string() }))
+      .body('Static message');
+    const def = ch.finalize(builder, 'greet');
+    const out = await ch.render(def, { to: '+1', input: { name: 'Lucas' } }, {});
+    expect(out).toEqual({ body: 'Static message', to: '+1' });
+  });
 });

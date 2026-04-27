@@ -1,22 +1,27 @@
-import type { Transport } from './types.js';
+import { createMockTransport } from '@emailrpc/core';
+import type { MockTransport as CoreMockTransport } from '@emailrpc/core';
 import type { RenderedPush } from '../types.js';
+import type { PushTransportData } from './types.js';
 
-export const mockPushTransport = () => {
-  const messages: Array<RenderedPush & { id: string }> = [];
+export type MockPushTransport = CoreMockTransport<RenderedPush, PushTransportData> & {
+  readonly messages: ReadonlyArray<RenderedPush & { id: string }>;
+};
+
+export const mockPushTransport = (): MockPushTransport => {
   let counter = 0;
-  const t: Transport & { messages: typeof messages; reset: () => void } = {
+  const messages: Array<RenderedPush & { id: string }> = [];
+  const base = createMockTransport<RenderedPush, PushTransportData>({
     name: 'mock-push',
-    send: async (rendered) => {
+    reply: (rendered) => {
       counter += 1;
       const id = `push-mock-${counter}`;
       messages.push({ ...rendered, id });
       return { messageId: id };
     },
-    messages,
-    reset: () => {
-      messages.length = 0;
-      counter = 0;
+  });
+  return Object.assign(base, {
+    get messages() {
+      return messages;
     },
-  };
-  return t;
+  });
 };

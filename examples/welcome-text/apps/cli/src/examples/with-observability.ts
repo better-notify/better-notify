@@ -1,12 +1,13 @@
 import {
   consoleEventSink,
+  createNotify,
   createClient,
-  createEmailRpc,
   inMemoryEventSink,
   inMemoryTracer,
   withEventLogger,
   withTracing,
 } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';
 
@@ -14,7 +15,8 @@ export const runObservability = async (): Promise<void> => {
   const sink = inMemoryEventSink();
   const tracer = inMemoryTracer();
 
-  const rpc = createEmailRpc()
+  const ch = emailChannel({ defaults: { from: 'demo@example.com' } });
+  const rpc = createNotify({ channels: { email: ch } })
     .use(withTracing({ tracer }))
     .use(withEventLogger({ sink }))
     .use(withEventLogger({ sink: consoleEventSink() }));
@@ -29,8 +31,8 @@ export const runObservability = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
-    defaults: { from: 'demo@example.com' },
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
   });
 
   await mail.welcome.send({ to: 'john@example.com', input: { name: 'John Doe' } });

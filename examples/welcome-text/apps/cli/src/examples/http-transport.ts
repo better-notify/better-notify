@@ -1,5 +1,6 @@
-import { createClient, createEmailRpc, EmailRpcError } from '@emailrpc/core';
-import { createTransport, formatAddress, normalizeAddress } from '@emailrpc/core/transports';
+import { createNotify, createClient, EmailRpcError } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
+import { createTransport, formatAddress, normalizeAddress } from '@emailrpc/email/transports';
 import { z } from 'zod';
 import { env } from '../env';
 
@@ -49,15 +50,16 @@ const httpTransport = (opts: HttpTransportOptions) => {
         });
       }
 
-      const payload = (await response.json().catch(() => ({}))) as {
-        id?: string;
-      };
+      const payload = (await response.json().catch(() => ({}))) as { id?: string };
 
       return {
-        transportMessageId: payload.id ?? response.headers.get('x-request-id') ?? undefined,
-        accepted: message.to.map(normalizeAddress),
-        rejected: [],
-        raw: payload,
+        ok: true,
+        data: {
+          transportMessageId: payload.id ?? response.headers.get('x-request-id') ?? undefined,
+          accepted: message.to.map(normalizeAddress),
+          rejected: [],
+          raw: payload,
+        },
       };
     },
     verify: async () => {
@@ -67,7 +69,10 @@ const httpTransport = (opts: HttpTransportOptions) => {
   });
 };
 
-const rpc = createEmailRpc();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify({ channels: { email: ch } });
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -86,17 +91,13 @@ export const runHttpTransport = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    transports: [
-      {
-        name: 'http',
-        priority: 1,
-        transport: httpTransport({
-          url: targetUrl,
-          apiKey: process.env.HTTP_TRANSPORT_API_KEY,
-        }),
-      },
-    ],
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+    channels: { email: ch },
+    transportsByChannel: {
+      email: httpTransport({
+        url: targetUrl,
+        apiKey: process.env.HTTP_TRANSPORT_API_KEY,
+      }),
+    },
   });
 
   console.log(`POSTing rendered email to ${targetUrl}`);
@@ -106,10 +107,11 @@ export const runHttpTransport = async (): Promise<void> => {
     input: { name: 'Demo User', verifyUrl: 'https://example.com/verify?token=abc' },
   });
 
+  const data = result.data as { accepted: string[]; transportMessageId?: string };
   console.log('---');
   console.log('Message ID:    ', result.messageId);
-  console.log('Provider ID:   ', result.providerMessageId ?? '(none)');
-  console.log('Accepted:      ', result.accepted.join(', '));
+  console.log('Provider ID:   ', data.transportMessageId ?? '(none)');
+  console.log('Accepted:      ', data.accepted.join(', '));
   console.log('Render time:   ', `${result.timing.renderMs.toFixed(1)}ms`);
   console.log('HTTP send time:', `${result.timing.sendMs.toFixed(1)}ms`);
 };

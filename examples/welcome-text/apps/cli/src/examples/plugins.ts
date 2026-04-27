@@ -1,9 +1,15 @@
-import { createClient, createEmailRpc, type Plugin } from '@emailrpc/core';
+import { createNotify, createClient, type Plugin } from '@emailrpc/core';
+import { emailChannel } from '@emailrpc/email';
 import { z } from 'zod';
 import { env } from '../env';
 import { mockTransport } from '../test-utils';
 
-const rpc = createEmailRpc<{ requestId?: string; tenantId?: string }>();
+const ch = emailChannel({
+  defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
+});
+const rpc = createNotify<{ email: typeof ch }, { requestId?: string; tenantId?: string }>({
+  channels: { email: ch },
+});
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
@@ -20,7 +26,7 @@ const catalog = rpc.catalog({
 type AuditEvent = { messageId: string; route: string; status: 'ok' | 'error'; tenantId?: string };
 const auditLog: AuditEvent[] = [];
 
-const requestIdPlugin: Plugin<typeof catalog> = {
+const requestIdPlugin: Plugin = {
   name: 'request-id',
   middleware: [
     async ({ next, ctx }) => {
@@ -33,7 +39,7 @@ const requestIdPlugin: Plugin<typeof catalog> = {
   onClose: () => console.log('[request-id] onClose'),
 };
 
-const metricsPlugin: Plugin<typeof catalog> = {
+const metricsPlugin: Plugin = {
   name: 'metrics',
   hooks: {
     onAfterSend: ({ route, durationMs }) =>
@@ -45,7 +51,7 @@ const metricsPlugin: Plugin<typeof catalog> = {
   onClose: () => console.log('[metrics] onClose'),
 };
 
-const auditPlugin: Plugin<typeof catalog> = {
+const auditPlugin: Plugin = {
   name: 'audit',
   hooks: {
     onAfterSend: ({ route, ctx, result }) => {
@@ -72,9 +78,9 @@ const auditPlugin: Plugin<typeof catalog> = {
 export const runPlugins = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    transports: [{ name: 'mock', priority: 1, transport: mockTransport('mock') }],
-    defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
-    ctx: { tenantId: 'acme-corp' },
+    channels: { email: ch },
+    transportsByChannel: { email: mockTransport('mock') },
+    ctx: { tenantId: 'acme-corp' } as never,
     plugins: [requestIdPlugin, metricsPlugin, auditPlugin],
   });
 

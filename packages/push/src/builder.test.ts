@@ -31,4 +31,14 @@ describe('PushBuilder', () => {
     const stage = partial.title('Hello').body('World');
     expect(() => stage._finalize('greet')).toThrow(/incomplete/);
   });
+
+  it('use() appends middleware', () => {
+    const b = createPushBuilder<unknown>({});
+    const mw = (async ({ next }: { next: () => Promise<unknown> }) => next()) as never;
+    const b2 = b.use(mw);
+    expect(b2).not.toBe(b);
+    expect(
+      (b2 as unknown as { _state: { middleware: unknown[] } })._state.middleware,
+    ).toEqual([mw]);
+  });
 });

@@ -10,3 +10,5 @@ export type {
   MultiTransportBackoff,
   MultiTransportStrategy,
 } from './multi.types.js';
+export { createMockTransport } from './mock-transport.js';
+export type { CreateMockTransportOptions, MockTransport } from './mock-transport.js';

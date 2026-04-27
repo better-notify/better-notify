@@ -1,8 +1,11 @@
-import { createTransport, type Transport } from '@emailrpc/core';
+import { createTransport, type Transport } from '@emailrpc/email/transports';
 
 export const mockOkSend: Transport['send'] = async (message) => ({
-  accepted: message.to.map((a) => (typeof a === 'string' ? a : a.email)),
-  rejected: [],
+  ok: true,
+  data: {
+    accepted: message.to.map((a) => (typeof a === 'string' ? a : a.email)),
+    rejected: [],
+  },
 });
 
 export const mockFailSend =

@@ -46,14 +46,18 @@ export type {
 
 export type { Plugin } from './plugins/index.js';
 
-export { multiTransport, createTransport } from './transports/index.js';
+export type { Transport, TransportResult, AnyTransport, SendContext } from './transport.js';
+
+export { multiTransport, createTransport, createMockTransport } from './transports/index.js';
 export type {
-  Transport,
-  TransportResult,
   TransportEntry,
   MultiTransportOptions,
   MultiTransportEntry,
+  MultiTransportBackoff,
+  MultiTransportStrategy,
   CreateTransportOptions,
+  CreateMockTransportOptions,
+  MockTransport,
 } from './transports/index.js';
 
 export {
@@ -113,7 +117,6 @@ export type {
   QueueResult,
   RawSendArgs,
   RenderedMessage,
-  SendContext,
   SendResult,
   Tags,
 } from './types.js';
@@ -175,6 +178,16 @@ export type {
   RenderedFor,
   BuilderFor,
 } from './channel/types.js';
+
+export { defineChannel, slot } from './channel/define-channel.js';
+export type {
+  DefineChannelOptions,
+  ChannelBuilder,
+  ResolverSlot,
+  SlotKind,
+  SlotConfig,
+  SlotMap,
+} from './channel/define-channel.js';
 
 export { createNotify } from './notify.js';
 export type { RootBuilder as NotifyRootBuilder, CreateNotifyOptions } from './notify.js';

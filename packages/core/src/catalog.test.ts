@@ -176,3 +176,91 @@ describe('createCatalog type-level guarantees', () => {
     }>();
   });
 });
+
+describe('createCatalog (channel-builder path)', () => {
+  it('finalizes a non-email channel builder into definitions only', () => {
+    const builder = {
+      _channel: 'sms',
+      _finalize: (id: string) => ({
+        id,
+        channel: 'sms',
+        schema: z.object({ name: z.string() }),
+        middleware: [],
+        runtime: { body: 'hi' },
+        _args: undefined as never,
+        _rendered: undefined as never,
+      }),
+    };
+    const catalog = createCatalog({ greet: builder as never });
+    expect(catalog.definitions.greet?.channel).toBe('sms');
+    expect(catalog.emails).toEqual({});
+    expect(catalog.routes).toEqual(['greet']);
+  });
+
+  it('finalizes an email channel builder into both emails and definitions', () => {
+    const builder = {
+      _channel: 'email',
+      _finalize: (id: string) => ({
+        id,
+        channel: 'email',
+        schema: z.object({ name: z.string() }),
+        middleware: [],
+        runtime: {
+          subject: 'Welcome',
+          template: { render: async () => ({ html: '<p>hi</p>' }) },
+          from: 'a@b.com',
+          replyTo: undefined,
+          tags: undefined,
+          priority: undefined,
+        },
+        _args: undefined as never,
+        _rendered: undefined as never,
+      }),
+    };
+    const catalog = createCatalog({ welcome: builder as never });
+    const emails = catalog.emails as Record<string, { id: string; tags: unknown; priority: unknown }>;
+    expect(emails.welcome?.id).toBe('welcome');
+    expect(catalog.definitions.welcome?.channel).toBe('email');
+    expect(emails.welcome?.tags).toEqual({});
+    expect(emails.welcome?.priority).toBe('normal');
+  });
+
+  it('falls back to default tags/priority when builder state lacks them', () => {
+    const minimalBuilder = {
+      _state: {
+        schema: z.object({ name: z.string() }),
+        subject: 'hi',
+        template: { render: async () => ({ html: '<p/>' }) },
+        from: undefined,
+        replyTo: undefined,
+        tags: undefined,
+        priority: undefined,
+        middleware: undefined,
+      },
+    };
+    const catalog = createCatalog({ welcome: minimalBuilder as never });
+    const emails = catalog.emails as Record<string, { tags: unknown; priority: unknown; middleware: unknown }>;
+    expect(emails.welcome?.tags).toEqual({});
+    expect(emails.welcome?.priority).toBe('normal');
+    expect(emails.welcome?.middleware).toEqual([]);
+  });
+
+  it('flattens nested catalogs that contain channel-builder definitions', () => {
+    const smsBuilder = {
+      _channel: 'sms',
+      _finalize: (id: string) => ({
+        id,
+        channel: 'sms',
+        schema: z.object({ name: z.string() }),
+        middleware: [],
+        runtime: { body: 'hi' },
+        _args: undefined as never,
+        _rendered: undefined as never,
+      }),
+    };
+    const inner = createCatalog({ greet: smsBuilder as never });
+    const root = createCatalog({ outbound: inner });
+    expect(root.definitions['outbound.greet']?.channel).toBe('sms');
+    expect(root.routes).toEqual(['outbound.greet']);
+  });
+});
