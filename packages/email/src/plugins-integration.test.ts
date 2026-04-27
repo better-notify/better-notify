@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   createClient,
   createNotify,
-  type AnyEmailCatalog,
+  type AnyCatalog,
   type Middleware,
   type Plugin,
 } from '@emailrpc/core';
@@ -16,7 +16,7 @@ describe('Plugin type', () => {
   });
 
   it('accepts middleware, onCreate, onClose', () => {
-    const p: Plugin<AnyEmailCatalog> = {
+    const p: Plugin<AnyCatalog> = {
       name: 'full',
       middleware: [],
       onCreate: () => {},

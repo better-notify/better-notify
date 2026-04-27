@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod';
 import { createEmailBuilder } from './builder.js';
-import { createCatalog, isEmailCatalog, type InputOf, type OutputOf } from './catalog.js';
+import { createCatalog, isCatalog, type InputOf, type OutputOf } from './catalog.js';
 import { createEmailRpc } from './factory.js';
 import type { TemplateAdapter } from './template.js';
 
@@ -16,10 +16,10 @@ const buildEmail = (id: string) =>
     .template({ render: async () => ({ html: `<p>${id}</p>` }) });
 
 describe('createCatalog (flat)', () => {
-  it('produces a catalog branded as EmailCatalog', () => {
+  it('produces a catalog branded as Catalog', () => {
     const catalog = createCatalog({ welcome: buildEmail('welcome') });
-    expect(isEmailCatalog(catalog)).toBe(true);
-    expect(catalog._brand).toBe('EmailCatalog');
+    expect(isCatalog(catalog)).toBe(true);
+    expect(catalog._brand).toBe('Catalog');
   });
 
   it('flattens single-level keys to dot-path-free ids', () => {
@@ -64,7 +64,7 @@ describe('createCatalog (nested)', () => {
   it('preserves the nested view for proxy-based clients', () => {
     const transactional = createCatalog({ welcome: buildEmail('welcome') });
     const root = createCatalog({ transactional });
-    expect(isEmailCatalog(root.nested.transactional)).toBe(true);
+    expect(isCatalog(root.nested.transactional)).toBe(true);
   });
 
   it('supports three-level nesting', () => {

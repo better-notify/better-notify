@@ -8,13 +8,17 @@ export type ResolverSlot<TValue> = TValue | ((args: { input: any }) => TValue);
 
 export type SlotKind = 'resolver' | 'value';
 
-export type SlotConfig<K extends SlotKind = SlotKind> = { kind: K };
+export type SlotConfig<K extends SlotKind = SlotKind> = { kind: K; required: boolean };
 
 export type SlotMap = Record<string, SlotConfig>;
 
 type SlotValueType<S, TValue, TInput> = S extends { kind: 'resolver' }
   ? TValue | ((args: { input: TInput }) => TValue)
   : TValue;
+
+type SlotRuntimeType<S, TValue, TInput> = S extends { required: false }
+  ? SlotValueType<S, TValue, TInput> | undefined
+  : SlotValueType<S, TValue, TInput>;
 
 type ArgsBase<TArgs> = TArgs extends { input: any } ? Omit<TArgs, 'input'> : TArgs;
 
@@ -70,12 +74,12 @@ export type DefineChannelOptions<
   readonly slots: TSlotConfig;
   readonly validateArgs: TValidator;
   readonly render: (params: {
-    runtime: { [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
+    runtime: { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
     args: WithInput<ArgsFromValidator<TValidator>>;
     ctx: unknown;
   }) => Promise<TRendered> | TRendered;
   readonly previewRender?: (params: {
-    runtime: { [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
+    runtime: { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown> };
     input: unknown;
     ctx: unknown;
   }) => Promise<unknown> | unknown;
@@ -121,7 +125,7 @@ const buildBuilder = <
         throw new Error(`Channel "${channelName}" route "${id}" missing required slot: input.`);
       }
       for (const key of Object.keys(slots)) {
-        if (state.runtime[key] === undefined) {
+        if (slots[key]?.required && state.runtime[key] === undefined) {
           throw new Error(`Channel "${channelName}" route "${id}" missing required slot: ${key}.`);
         }
       }
@@ -208,14 +212,14 @@ export const defineChannel = <
       ) => ArgsFromValidator<TValidator> | Promise<ArgsFromValidator<TValidator>>),
   render: async (def, args, ctx) => {
     const runtime = def.runtime as {
-      [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
+      [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
     };
     return opts.render({ runtime, args: args as WithInput<ArgsFromValidator<TValidator>>, ctx });
   },
   previewRender: opts.previewRender
     ? async (def, input, ctx) => {
         const runtime = def.runtime as {
-          [K in keyof TSlotConfig]: SlotValueType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
+          [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>, unknown>;
         };
         const fn = opts.previewRender;
         if (!fn) return undefined;
@@ -225,7 +229,31 @@ export const defineChannel = <
   _transport: undefined as never,
 });
 
+type ResolverSlotSpec<TValue, R extends boolean> = SlotConfig<'resolver'> & {
+  required: R;
+  __value?: TValue;
+  optional: () => ResolverSlotSpec<TValue, false>;
+};
+
+type ValueSlotSpec<TValue, R extends boolean> = SlotConfig<'value'> & {
+  required: R;
+  __value?: TValue;
+  optional: () => ValueSlotSpec<TValue, false>;
+};
+
+const makeResolverSlot = <TValue, R extends boolean>(required: R): ResolverSlotSpec<TValue, R> => ({
+  kind: 'resolver',
+  required,
+  optional: () => makeResolverSlot<TValue, false>(false),
+});
+
+const makeValueSlot = <TValue, R extends boolean>(required: R): ValueSlotSpec<TValue, R> => ({
+  kind: 'value',
+  required,
+  optional: () => makeValueSlot<TValue, false>(false),
+});
+
 export const slot = {
-  resolver: <TValue>(): SlotConfig<'resolver'> & { __value?: TValue } => ({ kind: 'resolver' }),
-  value: <TValue>(): SlotConfig<'value'> & { __value?: TValue } => ({ kind: 'value' }),
+  resolver: <TValue>(): ResolverSlotSpec<TValue, true> => makeResolverSlot<TValue, true>(true),
+  value: <TValue>(): ValueSlotSpec<TValue, true> => makeValueSlot<TValue, true>(true),
 };

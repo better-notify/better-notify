@@ -16,16 +16,6 @@ export type {
 export { formatAddress } from './lib/format-address.js';
 export { normalizeAddress } from './lib/normalize-address.js';
 
-export { EmailBuilder, createEmailBuilder } from './builder.js';
-export type {
-  AnyEmailBuilder,
-  CompleteEmailBuilder,
-  EmailDefinition,
-  EmailDefinitionOf,
-  IsComplete,
-  SubjectResolver,
-} from './builder.js';
-
 export { createTransport, multiTransport, mockTransport } from './transports/index.js';
 export type {
   Transport,
@@ -40,4 +30,9 @@ export type {
 } from './transports/index.js';
 
 export { emailChannel } from './channel.js';
-export type { EmailSendArgs } from './channel.js';
+export type {
+  EmailSendArgs,
+  SubjectResolver,
+  TemplateInput,
+  EmailChannelOptions,
+} from './channel.js';

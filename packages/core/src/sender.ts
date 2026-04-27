@@ -1,8 +1,8 @@
 import { EmailRpcNotImplementedError } from './errors.js';
-import type { AnyEmailCatalog } from './catalog.js';
+import type { AnyCatalog } from './catalog.js';
 import type { QueueResult, SendResult } from './types.js';
 
-export type CreateSenderOptions<R extends AnyEmailCatalog, Ctx> = {
+export type CreateSenderOptions<R extends AnyCatalog, Ctx> = {
   catalog: R;
   transport: unknown;
   defaults?: {
@@ -24,7 +24,7 @@ export type QueueSendOptions = {
   removeOnComplete?: { age: number };
 };
 
-export type Sender<R extends AnyEmailCatalog> = {
+export type Sender<R extends AnyCatalog> = {
   [K in keyof R['emails']]: ((input: unknown) => Promise<SendResult>) & {
     queue: (input: unknown, opts?: QueueSendOptions) => Promise<QueueResult>;
     render: (input: unknown, opts?: { format?: 'html' | 'text' | 'mime' }) => Promise<unknown>;
@@ -34,7 +34,7 @@ export type Sender<R extends AnyEmailCatalog> = {
 };
 
 /** @deprecated Use createClient from @emailrpc/core instead. */
-export const createSender = <R extends AnyEmailCatalog, Ctx = {}>(
+export const createSender = <R extends AnyCatalog, Ctx = {}>(
   _opts: CreateSenderOptions<R, Ctx>,
 ): Sender<R> => {
   throw new EmailRpcNotImplementedError('createSender is deprecated, use createClient instead');

@@ -1,7 +1,7 @@
 import { validate } from './schema.js';
 import { EmailRpcError } from './errors.js';
-import type { AnyEmailCatalog, CtxOf, EmailCatalog, InputOf } from './catalog.js';
-import { isEmailCatalog } from './catalog.js';
+import type { AnyCatalog, CtxOf, Catalog, InputOf } from './catalog.js';
+import { isCatalog } from './catalog.js';
 import type { Plugin } from './plugins/types.js';
 import type { AnyMiddleware } from './middlewares/types.js';
 import type { AnyChannel, ChannelDefinition, ChannelMap, TransportsFor } from './channel/types.js';
@@ -18,38 +18,38 @@ export type ChannelSendResult<TData = unknown> = {
 
 export type SendArgs<TInput> = { input: TInput; [k: string]: unknown };
 
-export type RouteUnion<R extends AnyEmailCatalog> = {
+export type RouteUnion<R extends AnyCatalog> = {
   [K in keyof R['emails'] & string]: {
     route: K;
-    input: R extends EmailCatalog<any> ? InputOf<R, K> : unknown;
+    input: R extends Catalog<any> ? InputOf<R, K> : unknown;
   };
 }[keyof R['emails'] & string];
 
-export type BeforeSendCtx<R extends AnyEmailCatalog> = RouteUnion<R> & {
+export type BeforeSendCtx<R extends AnyCatalog> = RouteUnion<R> & {
   args: SendArgs<unknown>;
   ctx: unknown;
   messageId: string;
 };
 
-export type ExecuteCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
+export type ExecuteCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
   rendered: unknown;
 };
 
-export type AfterSendCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
+export type AfterSendCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
   result: ChannelSendResult<unknown>;
   durationMs: number;
 };
 
 export type ErrorPhase = 'validate' | 'middleware' | 'render' | 'send' | 'hook';
 
-export type ErrorCtx<R extends AnyEmailCatalog> = BeforeSendCtx<R> & {
+export type ErrorCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
   error: EmailRpcError;
   phase: ErrorPhase;
 };
 
 export type HookFn<T> = (params: T) => void | Promise<void>;
 
-export type ClientHooks<R extends AnyEmailCatalog = AnyEmailCatalog> = {
+export type ClientHooks<R extends AnyCatalog = AnyCatalog> = {
   onBeforeSend?: HookFn<BeforeSendCtx<R>> | HookFn<BeforeSendCtx<R>>[];
   onExecute?: HookFn<ExecuteCtx<R>> | HookFn<ExecuteCtx<R>>[];
   onAfterSend?: HookFn<AfterSendCtx<R>> | HookFn<AfterSendCtx<R>>[];
@@ -57,7 +57,7 @@ export type ClientHooks<R extends AnyEmailCatalog = AnyEmailCatalog> = {
 };
 
 export type CreateClientOptions<
-  R extends AnyEmailCatalog,
+  R extends AnyCatalog,
   Channels extends ChannelMap = ChannelMap,
 > = {
   catalog: R;
@@ -94,15 +94,15 @@ type ChannelRouteMethods<TArgs> = {
 type ArgsOfBuilder<B> = B extends { readonly _args: infer A } ? A : unknown;
 
 type ClientFromMap<M> = {
-  [K in keyof M]: M[K] extends AnyEmailCatalog
-    ? ClientFromMap<M[K] extends EmailCatalog<infer SubM> ? SubM : never>
+  [K in keyof M]: M[K] extends AnyCatalog
+    ? ClientFromMap<M[K] extends Catalog<infer SubM> ? SubM : never>
     : M[K] extends { readonly _channel: string }
       ? ChannelRouteMethods<ArgsOfBuilder<M[K]>>
       : ChannelRouteMethods<unknown>;
 };
 
-export type EmailClient<R extends AnyEmailCatalog> =
-  R extends EmailCatalog<infer M> ? ClientFromMap<M> : never;
+export type Client<R extends AnyCatalog> =
+  R extends Catalog<infer M> ? ClientFromMap<M> : never;
 
 const HANDLED = Symbol.for('emailrpc.error.handled');
 
@@ -202,11 +202,11 @@ const composeMiddleware = (
 };
 
 export const createClient = <
-  R extends AnyEmailCatalog,
+  R extends AnyCatalog,
   Channels extends ChannelMap = ChannelMap,
 >(
   options: CreateClientOptions<R, Channels>,
-): EmailClient<R> & { close: () => Promise<void> } => {
+): Client<R> & { close: () => Promise<void> } => {
   const { catalog } = options;
   const channels = options.channels as Record<string, AnyChannel>;
   const transportsByChannel = options.transportsByChannel as Record<
@@ -498,7 +498,7 @@ export const createClient = <
           const value = nestedNode[key];
           if (value === undefined) return undefined;
           const flatKey = pathPrefix ? `${pathPrefix}.${key}` : key;
-          if (isEmailCatalog(value)) {
+          if (isCatalog(value)) {
             return buildNestedProxy(value.nested as Record<string, unknown>, flatKey);
           }
           const cached = cache.get(flatKey);
@@ -517,7 +517,7 @@ export const createClient = <
 
   const target = { close } as { close: () => Promise<void> };
   const nestedProxy = buildNestedProxy(catalog.nested as Record<string, unknown>, '');
-  const proxy = new Proxy(target as unknown as EmailClient<R> & { close: () => Promise<void> }, {
+  const proxy = new Proxy(target as unknown as Client<R> & { close: () => Promise<void> }, {
     get(t, key) {
       if (typeof key !== 'string') return undefined;
       if (key === 'close') return (t as { close: () => Promise<void> }).close;

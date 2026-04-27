@@ -11,10 +11,10 @@ export type {
   SubjectResolver,
 } from './builder.js';
 
-export { createCatalog, isEmailCatalog } from './catalog.js';
+export { createCatalog, isCatalog } from './catalog.js';
 export type {
-  EmailCatalog,
-  AnyEmailCatalog,
+  Catalog,
+  AnyCatalog,
   CatalogMap,
   ValidateCatalog,
   InputOf,
@@ -33,7 +33,7 @@ export type {
   SendOptions,
   SendArgs,
   RenderOptions,
-  EmailClient,
+  Client,
   HookFn,
   RouteUnion,
   BeforeSendCtx,

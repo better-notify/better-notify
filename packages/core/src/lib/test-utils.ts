@@ -1,16 +1,16 @@
 import { EmailRpcNotImplementedError } from '../errors.js';
 import type { LoggerLike, LogLevel } from '../logger.js';
 import type { Transport } from '../transports/types.js';
-import type { AnyEmailCatalog } from '../catalog.js';
+import type { AnyCatalog } from '../catalog.js';
 import type { Sender } from '../sender.js';
 
-export type CreateTestSenderOptions<R extends AnyEmailCatalog> = {
+export type CreateTestSenderOptions<R extends AnyCatalog> = {
   router: R;
   transport: Transport;
   hooks?: HookRecorder;
 };
 
-export const createTestSender = <R extends AnyEmailCatalog>(
+export const createTestSender = <R extends AnyCatalog>(
   _opts: CreateTestSenderOptions<R>,
 ): Sender<R> => {
   throw new EmailRpcNotImplementedError('createTestSender() (Layer 2 test utilities)');

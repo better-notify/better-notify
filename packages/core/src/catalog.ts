@@ -3,9 +3,9 @@ import type { TemplateAdapter } from './template.js';
 import type { EmailBuilder, EmailDefinition, EmailDefinitionOf } from './builder.js';
 import type { ChannelDefinition } from './channel/types.js';
 
-const CATALOG_BRAND = 'EmailCatalog' as const;
+const CATALOG_BRAND = 'Catalog' as const;
 
-export type EmailCatalog<M, Ctx = unknown> = {
+export type Catalog<M, Ctx = unknown> = {
   readonly _brand: typeof CATALOG_BRAND;
   readonly _ctx: Ctx;
   readonly emails: { readonly [K in FlatKeys<M> & string]: EmailDefinition<Ctx, any, any> };
@@ -14,7 +14,7 @@ export type EmailCatalog<M, Ctx = unknown> = {
   readonly routes: ReadonlyArray<string>;
 };
 
-export type AnyEmailCatalog = {
+export type AnyCatalog = {
   readonly _brand: typeof CATALOG_BRAND;
   readonly _ctx: any;
   readonly emails: Record<string, EmailDefinition<any, any, any>>;
@@ -52,10 +52,10 @@ export type ValidateCatalog<M> = {
           }
           ? M[K]
           : `Email "${K & string}" is incomplete: input, subject, and template are required.`
-        : `Value at "${K & string}" is not an EmailBuilder or EmailCatalog.`;
+        : `Value at "${K & string}" is not an EmailBuilder or Catalog.`;
 };
 
-export const isEmailCatalog = (v: unknown): v is AnyEmailCatalog => {
+export const isCatalog = (v: unknown): v is AnyCatalog => {
   return !!v && typeof v === 'object' && (v as { _brand?: string })._brand === CATALOG_BRAND;
 };
 
@@ -105,7 +105,7 @@ const isChannelBuilder = (
 
 export const createCatalog = <const M extends Record<string, unknown>, Ctx = unknown>(
   map: M & ValidateCatalog<M>,
-): EmailCatalog<M, Ctx> => {
+): Catalog<M, Ctx> => {
   const flat: Record<string, EmailDefinition<unknown, AnyStandardSchema, TemplateAdapter<unknown, unknown>>> = {};
   const definitions: Record<string, ChannelDefinition<any, any>> = {};
   const nested: Record<string, unknown> = {};
@@ -113,7 +113,7 @@ export const createCatalog = <const M extends Record<string, unknown>, Ctx = unk
 
   for (const key of Object.keys(map)) {
     const value = (map as Record<string, unknown>)[key];
-    if (isEmailCatalog(value)) {
+    if (isCatalog(value)) {
       nested[key] = value;
       for (const subKey of value.routes) {
         const flatKey = `${key}.${subKey}`;
@@ -171,9 +171,9 @@ export const createCatalog = <const M extends Record<string, unknown>, Ctx = unk
   return {
     _brand: CATALOG_BRAND,
     _ctx: undefined as never,
-    emails: flat as EmailCatalog<M, Ctx>['emails'],
+    emails: flat as Catalog<M, Ctx>['emails'],
     definitions,
-    nested: nested as EmailCatalog<M, Ctx>['nested'],
+    nested: nested as Catalog<M, Ctx>['nested'],
     routes,
   };
 };
@@ -186,15 +186,15 @@ type SchemaOf<B> = B extends EmailBuilder<any, infer S>
     : never
   : never;
 
-type CatalogOf<R> = R extends EmailCatalog<infer M, any> ? M : never;
+type CatalogOf<R> = R extends Catalog<infer M, any> ? M : never;
 
-export type CtxOf<R> = R extends EmailCatalog<any, infer Ctx> ? Ctx : unknown;
+export type CtxOf<R> = R extends Catalog<any, infer Ctx> ? Ctx : unknown;
 
-export type InputOf<R extends AnyEmailCatalog, K extends keyof CatalogOf<R> & string> = InferInput<
+export type InputOf<R extends AnyCatalog, K extends keyof CatalogOf<R> & string> = InferInput<
   SchemaOf<CatalogOf<R>[K]>
 >;
 
-export type OutputOf<R extends AnyEmailCatalog, K extends keyof CatalogOf<R> & string> = InferOutput<
+export type OutputOf<R extends AnyCatalog, K extends keyof CatalogOf<R> & string> = InferOutput<
   SchemaOf<CatalogOf<R>[K]>
 >;
 

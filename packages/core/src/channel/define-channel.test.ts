@@ -189,7 +189,34 @@ describe('defineChannel', () => {
   });
 
   it('slot.resolver and slot.value tag with the right kind', () => {
-    expect(slot.resolver<string>()).toEqual({ kind: 'resolver' });
-    expect(slot.value<number>()).toEqual({ kind: 'value' });
+    expect(slot.resolver<string>()).toMatchObject({ kind: 'resolver', required: true });
+    expect(slot.value<number>()).toMatchObject({ kind: 'value', required: true });
+  });
+
+  it('slot.resolver().optional() marks the slot as optional', () => {
+    expect(slot.resolver<string>().optional()).toMatchObject({ kind: 'resolver', required: false });
+    expect(slot.value<number>().optional()).toMatchObject({ kind: 'value', required: false });
+  });
+
+  it('finalize succeeds without optional slots', () => {
+    const ch = defineChannel({
+      name: 'opt' as const,
+      slots: {
+        body: slot.resolver<string>(),
+        extra: slot.resolver<string>().optional(),
+      },
+      validateArgs: (args: unknown): { input: unknown; to: string } =>
+        args as { input: unknown; to: string },
+      render: ({ runtime, args }) => ({
+        body: typeof runtime.body === 'function' ? runtime.body({ input: args.input }) : runtime.body,
+        to: args.to,
+      }),
+    });
+    const def = ch
+      .createBuilder({ ctx: undefined, rootMiddleware: [] })
+      .input(z.object({ x: z.string() }))
+      .body('hi')
+      ._finalize('r1');
+    expect(def.runtime).toEqual({ body: 'hi' });
   });
 });

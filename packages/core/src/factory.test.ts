@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createEmailRpc } from './factory.js';
-import { isEmailCatalog } from './catalog.js';
+import { isCatalog } from './catalog.js';
 
 describe('createEmailRpc', () => {
   it('returns a root builder with email/use/catalog methods', () => {
@@ -19,7 +19,7 @@ describe('createEmailRpc', () => {
       .subject(({ input }) => `Hi ${input.name}`)
       .template({ render: async () => ({ html: '<p>hi</p>' }) });
     const catalog = rpc.catalog({ welcome });
-    expect(isEmailCatalog(catalog)).toBe(true);
+    expect(isCatalog(catalog)).toBe(true);
     expect(catalog.routes).toEqual(['welcome']);
   });
 

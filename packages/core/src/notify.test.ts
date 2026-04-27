@@ -50,10 +50,10 @@ describe('createNotify', () => {
     expect(typeof rpc2.catalog).toBe('function');
   });
 
-  it('catalog() builds an EmailCatalog from registered builders', () => {
+  it('catalog() builds an Catalog from registered builders', () => {
     const rpc = createNotify({ channels: { fake: fakeChannel } });
     const cat = rpc.catalog({ greet: rpc.fake() as never });
-    expect(cat._brand).toBe('EmailCatalog');
+    expect(cat._brand).toBe('Catalog');
     expect(cat.routes).toEqual(['greet']);
   });
 });

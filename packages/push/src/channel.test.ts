@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { pushChannel } from './channel.js';
-import { createPushBuilder } from './builder.js';
+
+const buildBuilder = (ch: ReturnType<typeof pushChannel>) =>
+  ch.createBuilder({ ctx: undefined, rootMiddleware: [] }).input(z.object({ name: z.string() }));
 
 describe('pushChannel', () => {
   it('has name "push"', () => {
     expect(pushChannel().name).toBe('push');
   });
 
-  it('createBuilder returns a PushBuilder with _channel="push"', () => {
+  it('createBuilder returns a builder with _channel="push"', () => {
     const b = pushChannel().createBuilder({ ctx: undefined, rootMiddleware: [] });
     expect((b as unknown as { _channel: string })._channel).toBe('push');
   });
@@ -39,10 +41,7 @@ describe('pushChannel', () => {
 
   it('render returns title, body, to from static resolvers', async () => {
     const ch = pushChannel();
-    const builder = createPushBuilder<unknown>({})
-      .input(z.object({ name: z.string() }))
-      .title('Static Title')
-      .body('Static Body');
+    const builder = buildBuilder(ch).title('Static Title').body('Static Body');
     const def = ch.finalize(builder, 'greet');
     const out = await ch.render(def, { to: 'token-1', input: { name: 'Lucas' } }, {});
     expect(out).toEqual({ title: 'Static Title', body: 'Static Body', to: 'token-1' });
@@ -50,12 +49,11 @@ describe('pushChannel', () => {
 
   it('render returns title, body, data, badge from function resolvers', async () => {
     const ch = pushChannel();
-    const builder = createPushBuilder<unknown>({})
-      .input(z.object({ name: z.string() }))
-      .title(({ input }) => `Hi ${input.name}`)
-      .body(({ input }) => `Welcome ${input.name}`)
-      .data(({ input }) => ({ user: input.name }))
-      .badge(({ input }) => input.name.length);
+    const builder = buildBuilder(ch)
+      .title(({ input }) => `Hi ${(input as { name: string }).name}`)
+      .body(({ input }) => `Welcome ${(input as { name: string }).name}`)
+      .data(({ input }) => ({ user: (input as { name: string }).name }))
+      .badge(({ input }) => (input as { name: string }).name.length);
     const def = ch.finalize(builder, 'greet');
     const out = await ch.render(def, { to: 'token-1', input: { name: 'Lucas' } }, {});
     expect(out).toEqual({
@@ -76,8 +74,7 @@ describe('pushChannel', () => {
 
   it('render passes through static data and badge values', async () => {
     const ch = pushChannel();
-    const builder = createPushBuilder<unknown>({})
-      .input(z.object({ name: z.string() }))
+    const builder = buildBuilder(ch)
       .title('t')
       .body('b')
       .data({ key: 'value' })
@@ -91,5 +88,18 @@ describe('pushChannel', () => {
       badge: 42,
       to: 'token-1',
     });
+  });
+
+  it('finalize throws when title is missing', () => {
+    const ch = pushChannel();
+    const partial = buildBuilder(ch).body('b');
+    expect(() => ch.finalize(partial, 'r')).toThrow(/missing required slot: title/);
+  });
+
+  it('finalize succeeds without optional data/badge', () => {
+    const ch = pushChannel();
+    const builder = buildBuilder(ch).title('t').body('b');
+    const def = ch.finalize(builder, 'r');
+    expect(def.id).toBe('r');
   });
 });

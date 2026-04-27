@@ -1,8 +1,8 @@
-import type { AnyEmailCatalog } from '../catalog.js';
+import type { AnyCatalog } from '../catalog.js';
 import type { AnyMiddleware } from '../middlewares/types.js';
 import type { ClientHooks } from '../client.js';
 
-export type Plugin<R extends AnyEmailCatalog = AnyEmailCatalog> = {
+export type Plugin<R extends AnyCatalog = AnyCatalog> = {
   name: string;
   hooks?: ClientHooks<R>;
   middleware?: AnyMiddleware[];

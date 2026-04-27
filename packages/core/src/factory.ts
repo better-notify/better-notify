@@ -1,5 +1,5 @@
 import { createEmailBuilder, type EmailBuilder } from './builder.js';
-import { createCatalog, type EmailCatalog, type ValidateCatalog } from './catalog.js';
+import { createCatalog, type Catalog, type ValidateCatalog } from './catalog.js';
 import type { AnyMiddleware, Middleware } from './middlewares/types.js';
 
 export type RootBuilder<Ctx> = {
@@ -9,7 +9,7 @@ export type RootBuilder<Ctx> = {
   ): RootBuilder<TCtxOut>;
   catalog<const M extends Record<string, unknown>>(
     map: M & ValidateCatalog<M>,
-  ): EmailCatalog<M, Ctx>;
+  ): Catalog<M, Ctx>;
 };
 
 const buildRoot = <Ctx>(rootMiddleware: ReadonlyArray<AnyMiddleware>): RootBuilder<Ctx> => ({
@@ -26,7 +26,7 @@ const buildRoot = <Ctx>(rootMiddleware: ReadonlyArray<AnyMiddleware>): RootBuild
     return buildRoot<TCtxOut>([...rootMiddleware, middleware as AnyMiddleware]);
   },
   catalog<const M extends Record<string, unknown>>(map: M & ValidateCatalog<M>) {
-    return createCatalog(map as never) as EmailCatalog<M, Ctx>;
+    return createCatalog(map as never) as Catalog<M, Ctx>;
   },
 });
 

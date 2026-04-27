@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
 import { emailChannel } from './channel.js';
-import { EmailBuilder } from './builder.js';
 
 const schema = z.object({ name: z.string() });
 
@@ -21,11 +20,10 @@ describe('emailChannel', () => {
     expect(typeof ch.finalize).toBe('function');
   });
 
-  it('createBuilder returns an EmailBuilder', () => {
+  it('createBuilder returns a builder with _channel="email"', () => {
     const ch = emailChannel();
     const builder = ch.createBuilder({ ctx: undefined, rootMiddleware: [] });
-    expect(builder).toBeInstanceOf(EmailBuilder);
-    expect((builder as any)._channel).toBe('email');
+    expect((builder as { _channel: string })._channel).toBe('email');
   });
 
   it('finalize on a complete builder produces a ChannelDefinition tagged "email"', () => {
@@ -201,6 +199,6 @@ describe('emailChannel', () => {
       input: (s: unknown) => { _finalize: (id: string) => unknown };
     };
     const partial = builder.input(z.object({ name: z.string() }));
-    expect(() => partial._finalize('x')).toThrow(/incomplete/);
+    expect(() => partial._finalize('x')).toThrow(/missing required slot/);
   });
 });

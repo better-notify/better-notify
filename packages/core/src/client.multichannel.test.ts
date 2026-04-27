@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createClient } from './client.js';
 import { EmailRpcError } from './errors.js';
-import type { AnyChannel, AnyEmailCatalog, ChannelDefinition } from './index.js';
+import type { AnyChannel, AnyCatalog, ChannelDefinition } from './index.js';
 
 type TestRendered = { body: string; to: string };
 
@@ -66,7 +66,7 @@ const testChannel = () => {
   return channel as unknown as AnyChannel;
 };
 
-const buildTestCatalog = (): AnyEmailCatalog => {
+const buildTestCatalog = (): AnyCatalog => {
   const schema = z.object({ name: z.string() });
   const def: ChannelDefinition<TestArgs, TestRendered> = {
     id: 'ping',
@@ -80,7 +80,7 @@ const buildTestCatalog = (): AnyEmailCatalog => {
     _rendered: undefined as never,
   };
   return {
-    _brand: 'EmailCatalog' as const,
+    _brand: 'Catalog' as const,
     _ctx: undefined as never,
     emails: {},
     definitions: { ping: def },
@@ -610,13 +610,13 @@ describe('createClient multi-channel', () => {
   it('access via nested catalog path works', async () => {
     const inner = buildTestCatalog();
     const outerCatalog = {
-      _brand: 'EmailCatalog' as const,
+      _brand: 'Catalog' as const,
       _ctx: undefined as never,
       emails: {},
       definitions: { 'ns.ping': inner.definitions.ping! },
       nested: { ns: inner },
       routes: ['ns.ping'],
-    } as unknown as AnyEmailCatalog;
+    } as unknown as AnyCatalog;
     const transport = createTestTransport();
     const mail = createClient({
       catalog: outerCatalog,
@@ -725,8 +725,8 @@ describe('createClient multi-channel', () => {
       _args: undefined as never,
       _rendered: undefined as never,
     };
-    const orphan: AnyEmailCatalog = {
-      _brand: 'EmailCatalog' as const,
+    const orphan: AnyCatalog = {
+      _brand: 'Catalog' as const,
       _ctx: undefined as never,
       emails: {},
       definitions: {},

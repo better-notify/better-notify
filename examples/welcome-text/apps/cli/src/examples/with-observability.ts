@@ -40,6 +40,7 @@ export const runObservability = async (): Promise<void> => {
 
   console.log('---');
   console.log(`captured events: ${sink.events.length}`);
+
   for (const ev of sink.events) {
     console.log(
       `  ${ev.status.padEnd(7)} route=${ev.route} messageId=${ev.messageId.slice(0, 8)} duration=${ev.durationMs.toFixed(1)}ms`,

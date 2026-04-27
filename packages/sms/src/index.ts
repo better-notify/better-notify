@@ -1,7 +1,6 @@
 export type { SmsAddress, SmsSendArgs, RenderedSms } from './types.js';
-export { SmsBuilder, createSmsBuilder } from './builder.js';
-export type { BodyResolver } from './builder.js';
 export { smsChannel } from './channel.js';
+export type { BodyResolver } from './channel.js';
 export {
   mockSmsTransport,
   multiTransport,

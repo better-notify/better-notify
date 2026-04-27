@@ -1,16 +1,25 @@
-import type {
-  Channel,
-  ChannelBuilderCtx,
-  ChannelDefinition,
-} from '@emailrpc/core';
-import { createEmailBuilder, type EmailBuilder } from './builder.js';
-import type { EmailSendArgs } from './builder.js';
-import type { Transport } from './transports/types.js';
-import type { RenderedMessage, Address, FromInput, Priority, Tags } from './types.js';
-import type { TemplateAdapter } from './template.js';
+import { defineChannel, slot } from '@emailrpc/core';
+import type { Priority, Tags } from '@emailrpc/core';
+import type { Address, Attachment, FromInput, RenderedMessage } from './types.js';
+import type { RenderedOutput, TemplateAdapter } from './template.js';
 import { resolveFrom } from './lib/resolve-from.js';
 
-export type { EmailSendArgs };
+export type EmailSendArgs<TInput = unknown> = {
+  to: Address | ReadonlyArray<Address>;
+  cc?: Address | ReadonlyArray<Address>;
+  bcc?: Address | ReadonlyArray<Address>;
+  replyTo?: Address;
+  from?: FromInput;
+  headers?: Record<string, string>;
+  attachments?: Attachment[];
+  input: TInput;
+};
+
+export type SubjectResolver<TInput> = string | ((args: { input: TInput }) => string);
+
+export type TemplateInput<TInput = any, TCtx = any> =
+  | TemplateAdapter<TInput, TCtx>
+  | ((args: { input: TInput; ctx: TCtx }) => RenderedOutput | Promise<RenderedOutput>);
 
 export type EmailChannelOptions = {
   defaults?: {
@@ -20,61 +29,41 @@ export type EmailChannelOptions = {
   };
 };
 
-type EmailRuntime = {
-  subject: string | ((args: { input: unknown }) => string);
-  template: TemplateAdapter<unknown, unknown>;
-  from?: FromInput;
-  replyTo?: Address;
-  tags?: Tags;
-  priority?: Priority;
-};
-
 const toAddressArray = (value: Address | ReadonlyArray<Address>): Address[] =>
   Array.isArray(value) ? [...value] : [value as Address];
 
-export const emailChannel = (options: EmailChannelOptions = {}) => {
-  const channel: Channel<
-    'email',
-    EmailBuilder<unknown>,
-    EmailSendArgs<unknown>,
-    RenderedMessage,
-    Transport
-  > = {
-    name: 'email',
-    createBuilder: (ctx: ChannelBuilderCtx) => {
-      const builder = createEmailBuilder<unknown>({});
-      if (ctx.rootMiddleware.length > 0) {
-        const seeded = builder as unknown as { _state: { middleware: ReadonlyArray<unknown> } };
-        seeded._state = { ...seeded._state, middleware: [...ctx.rootMiddleware] };
-      }
-      return builder;
-    },
-    finalize: (state, id) => {
-      const builder = state as { _finalize: (id: string) => ChannelDefinition<EmailSendArgs<unknown>, RenderedMessage> };
-      return builder._finalize(id);
-    },
-    validateArgs: (args) => {
-      if (!args || typeof args !== 'object') {
-        throw new Error('email args must be an object');
-      }
-      const a = args as Record<string, unknown>;
-      if (!a.to) throw new Error('email args.to is required');
-      return a as EmailSendArgs<unknown>;
-    },
-    render: async (def, args, ctx) => {
-      const runtime = (def as ChannelDefinition<EmailSendArgs<unknown>, RenderedMessage> & { runtime: EmailRuntime }).runtime;
-      const rendered = await runtime.template.render({ input: args.input, ctx });
-      const subj = typeof runtime.subject === 'function'
-        ? runtime.subject({ input: args.input })
-        : runtime.subject;
+const toAdapter = (template: TemplateInput): TemplateAdapter<unknown, unknown> =>
+  typeof template === 'function'
+    ? { render: async (args) => template(args) }
+    : (template as TemplateAdapter<unknown, unknown>);
 
-      const from = resolveFrom(
-        args.from ?? runtime.from,
-        options.defaults?.from,
-      );
+const validateEmailArgs = (args: unknown): EmailSendArgs => {
+  if (!args || typeof args !== 'object') throw new Error('email args must be an object');
+  const a = args as Record<string, unknown>;
+  if (!a.to) throw new Error('email args.to is required');
+  return a as EmailSendArgs;
+};
 
+export const emailChannel = (options: EmailChannelOptions = {}) =>
+  defineChannel({
+    name: 'email' as const,
+    slots: {
+      subject: slot.resolver<string>(),
+      template: slot.value<TemplateInput>(),
+      from: slot.value<FromInput>().optional(),
+      replyTo: slot.value<Address>().optional(),
+      tags: slot.value<Tags>().optional(),
+      priority: slot.value<Priority>().optional(),
+    },
+    validateArgs: validateEmailArgs,
+    render: async ({ runtime, args, ctx }): Promise<RenderedMessage> => {
+      const adapter = toAdapter(runtime.template);
+      const rendered = await adapter.render({ input: args.input, ctx });
+      const subj =
+        typeof runtime.subject === 'function' ? runtime.subject({ input: args.input }) : runtime.subject;
+
+      const from = resolveFrom(args.from ?? runtime.from, options.defaults?.from);
       const replyTo = args.replyTo ?? runtime.replyTo ?? options.defaults?.replyTo;
-
       const mergedHeaders = {
         ...(options.defaults?.headers ?? {}),
         ...(args.headers ?? {}),
@@ -98,11 +87,8 @@ export const emailChannel = (options: EmailChannelOptions = {}) => {
 
       return message;
     },
-    previewRender: async (def, input, ctx) => {
-      const runtime = (def as ChannelDefinition<EmailSendArgs<unknown>, RenderedMessage> & { runtime: EmailRuntime }).runtime;
-      return runtime.template.render({ input, ctx });
+    previewRender: async ({ runtime, input, ctx }) => {
+      const adapter = toAdapter(runtime.template);
+      return adapter.render({ input, ctx });
     },
-    _transport: undefined as never,
-  };
-  return channel;
-};
+  });
