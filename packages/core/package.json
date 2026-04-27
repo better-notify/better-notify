@@ -3,6 +3,11 @@
   "version": "0.0.1-alpha.0",
   "description": "End-to-end typed email contracts, sender, and webhook router for Node.js.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/better-notify/better-notify",
+    "directory": "packages/core"
+  },
   "files": [
     "dist",
     "README.md",
