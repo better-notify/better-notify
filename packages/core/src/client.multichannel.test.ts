@@ -464,9 +464,7 @@ describe('createClient multi-channel', () => {
       transportsByChannel: { test: transport },
     }) as unknown as {
       ping: {
-        batch: (
-          entries: ReadonlyArray<TestArgs>,
-        ) => Promise<{
+        batch: (entries: ReadonlyArray<TestArgs>) => Promise<{
           okCount: number;
           errorCount: number;
           results: ReadonlyArray<{ status: 'ok' | 'error'; index: number }>;
@@ -590,9 +588,7 @@ describe('createClient multi-channel', () => {
       transportsByChannel: { test: transport as unknown as TestTransport },
     }) as unknown as {
       ping: {
-        batch: (
-          e: ReadonlyArray<TestArgs>,
-        ) => Promise<{
+        batch: (e: ReadonlyArray<TestArgs>) => Promise<{
           results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }>;
         }>;
       };
@@ -705,9 +701,7 @@ describe('createClient multi-channel', () => {
       transportsByChannel: { test: transport as unknown as TestTransport },
     }) as unknown as {
       ping: {
-        batch: (
-          e: ReadonlyArray<TestArgs>,
-        ) => Promise<{
+        batch: (e: ReadonlyArray<TestArgs>) => Promise<{
           results: ReadonlyArray<{ status: 'ok' | 'error'; index: number; error?: NotifyRpcError }>;
         }>;
       };

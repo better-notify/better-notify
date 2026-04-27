@@ -9,10 +9,10 @@
   "dependencies": {
     "@emailrpc/core": "workspace:*",
     "@emailrpc/email": "workspace:*",
-    "zod": "^3.24.1"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@internal/tsconfig": "workspace:*",
-    "typescript": "^5.7.2"
+    "typescript": "catalog:"
   }
 }

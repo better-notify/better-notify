@@ -22,15 +22,15 @@
     "version-packages": "changeset version"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.9",
-    "@turbo/gen": "^2.3.3",
-    "@vitest/coverage-v8": "^2.1.8",
-    "oxfmt": "0.46.0",
-    "oxlint": "1.61.0",
-    "tsx": "^4.21.0",
-    "turbo": "^2.3.3",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "@changesets/cli": "catalog:",
+    "@turbo/gen": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "tsx": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=22"
