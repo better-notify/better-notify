@@ -1,18 +1,23 @@
-import { EmailRpcNotImplementedError } from './errors.js'
-import type { AnyEmailRouter } from './router.js'
-import type { Provider } from './provider.js'
-import type { QueueAdapter, Worker } from './queue.js'
+import { NotifyRpcNotImplementedError } from './errors.js';
+import type { AnyCatalog } from './catalog.js';
+import type { Transport } from './transports/types.js';
 
-export interface CreateWorkerOptions<R extends AnyEmailRouter, Ctx> {
-  router: R
-  provider: Provider
-  queue: QueueAdapter
-  concurrency?: number
-  context?: (params: { job: { id: string; attemptsMade: number } }) => Ctx
-}
+export type Worker = {
+  on(event: 'completed' | 'failed', handler: (...args: any[]) => void): void;
+  start(): Promise<void>;
+  close(): Promise<void>;
+};
 
-export function createWorker<R extends AnyEmailRouter, Ctx = {}>(
+export type CreateWorkerOptions<R extends AnyCatalog, Ctx> = {
+  catalog: R;
+  transport: Transport;
+  queue: unknown;
+  concurrency?: number;
+  context?: (params: { job: { id: string; attemptsMade: number } }) => Ctx;
+};
+
+export const createWorker = <R extends AnyCatalog, Ctx = {}>(
   _opts: CreateWorkerOptions<R, Ctx>,
-): Worker {
-  throw new EmailRpcNotImplementedError('createWorker() (Layer 5)')
-}
+): Worker => {
+  throw new NotifyRpcNotImplementedError('createWorker() (Layer 5)');
+};

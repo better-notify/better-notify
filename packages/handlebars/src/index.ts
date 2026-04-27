@@ -1,9 +1,10 @@
-import { EmailRpcNotImplementedError, type TemplateAdapter } from '@emailrpc/core'
+import { NotifyRpcNotImplementedError } from '@emailrpc/core';
+import type { TemplateAdapter } from '@emailrpc/email';
 
-export function handlebarsTemplate<TInput>(_source: string): TemplateAdapter<TInput> {
+export const handlebarsTemplate = <TInput>(_source: string): TemplateAdapter<TInput> => {
   return {
-    render: async () => {
-      throw new EmailRpcNotImplementedError('@emailrpc/handlebars (v0.4)')
+    render: async (_args) => {
+      throw new NotifyRpcNotImplementedError('@emailrpc/handlebars (v0.4)');
     },
-  }
-}
+  };
+};

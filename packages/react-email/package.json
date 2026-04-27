@@ -1,11 +1,14 @@
 {
   "name": "@emailrpc/react-email",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "React Email adapter for emailRpc.",
   "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
-  "engines": { "node": ">=22" },
-  "files": ["dist", "README.md", "LICENSE"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,28 +16,38 @@
     }
   },
   "scripts": {
-    "build": "rolldown -c",
+    "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "lint": "eslint src test"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@emailrpc/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0",
-    "@react-email/components": "^0.0.30",
-    "@react-email/render": "^1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@react-email/components": { "optional": true }
+    "@emailrpc/core": "workspace:*",
+    "@emailrpc/email": "workspace:*"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
-    "@internal/eslint-config": "workspace:*",
-    "rolldown": "^1.0.0-beta.49",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "^19.0.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "react-email": "6.0.0",
+    "rolldown": "1.0.0-rc.17",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "@react-email/components": "^0.0.30",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-email": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-email/components": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

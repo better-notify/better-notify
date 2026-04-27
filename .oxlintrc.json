@@ -1,0 +1,54 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "unicorn"],
+  "env": {
+    "node": true
+  },
+  "settings": {
+    "react": {
+      "version": "18.2.0"
+    },
+    "custom": {
+      "option": true
+    }
+  },
+  "rules": {
+    "eqeqeq": "allow",
+    "import/no-cycle": "error",
+    "typescript/consistent-type-definitions": ["error", "type"],
+    "typescript/no-non-null-assertion": "error",
+    "no-console": "error",
+    "no-else-return": ["error", { "allowElseIf": false }],
+    "func-style": ["error", "expression"],
+    "react/self-closing-comp": [
+      "error",
+      {
+        "html": false
+      }
+    ],
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }]
+  },
+  "overrides": [
+    {
+      "files": ["*.test.ts", "*.spec.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "typescript/no-non-null-assertion": "off",
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["packages/core/src/logger.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["examples/**/*.ts"],
+      "rules": {
+        "no-console": "off",
+        "typescript/no-non-null-assertion": "off"
+      }
+    }
+  ]
+}

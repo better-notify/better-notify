@@ -1,0 +1,35 @@
+{
+  "name": "@welcome-text/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "dotenvx run -e ./.env -- tsx src/index.ts",
+    "dev": "dotenvx run -e ./.env -- tsx --watch src/index.ts",
+    "fmt": "oxfmt src",
+    "dotenvx": "dotenvx"
+  },
+  "dependencies": {
+    "@emailrpc/core": "workspace:*",
+    "@emailrpc/email": "workspace:*",
+    "@emailrpc/push": "workspace:*",
+    "@emailrpc/react-email": "workspace:*",
+    "@emailrpc/sms": "workspace:*",
+    "@emailrpc/smtp": "workspace:*",
+    "@t3-oss/env-core": "0.13.11",
+    "react": "19.2.5",
+    "react-email": "6.0.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "1.63.0",
+    "@internal/tsconfig": "workspace:*",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -3,25 +3,37 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.33.0",
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
     "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "lint": "turbo run lint",
-    "ci": "turbo run build typecheck test lint",
     "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "turbo run build && changeset publish"
+    "ci": "turbo run build typecheck test //#oxlint",
+    "dev": "turbo run dev --filter=@welcome-text/cli",
+    "fmt": "turbo run //#oxfmt",
+    "gen": "turbo gen",
+    "lint": "turbo run //#oxlint",
+    "lint:fix": "turbo run //#oxlint:fix",
+    "oxfmt": "oxfmt",
+    "oxlint": "oxlint .",
+    "oxlint:fix": "oxlint --fix .",
+    "release": "turbo run build && changeset publish",
+    "test": "turbo run test",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "turbo run typecheck",
+    "version-packages": "changeset version"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.9",
+    "@turbo/gen": "^2.3.3",
+    "@vitest/coverage-v8": "^2.1.8",
+    "oxfmt": "0.46.0",
+    "oxlint": "1.61.0",
+    "tsx": "^4.21.0",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
-    "@vitest/coverage-v8": "^2.1.8"
-  }
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.33.0"
 }

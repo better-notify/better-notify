@@ -8,3 +8,6 @@ coverage
 .env.local
 .env.*.local
 *.log
+vitest.config.ts*
+docs/
+plan/

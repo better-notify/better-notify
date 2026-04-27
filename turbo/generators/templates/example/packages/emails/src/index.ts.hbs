@@ -1,0 +1,29 @@
+import { z } from 'zod';
+import { createEmailRpc, type TemplateAdapter } from '@emailrpc/core';
+
+function textTemplate<TInput>(body: (input: TInput) => string): TemplateAdapter<TInput> {
+  return {
+    render: async (input) => ({ text: body(input) }),
+  };
+}
+
+const helloInputSchema = z.object({
+  name: z.string().min(1),
+});
+
+const rpc = createEmailRpc();
+
+export const emails = rpc.catalog({
+  hello: rpc
+    .email()
+    .input(helloInputSchema)
+    .from('hello@example.com')
+    .subject(({ input }) => `Hello, ${input.name}!`)
+    .template(
+      textTemplate<z.infer<typeof helloInputSchema>>(
+        ({ name }) => `Hi ${name},\n\nThis is the {{ kebab name }} example.\n`,
+      ),
+    ),
+});
+
+export type EmailCatalog = typeof emails;

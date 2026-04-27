@@ -1,21 +1,38 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "ui": "stream",
+  "ui": "tui",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
     "typecheck": {
-      "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
+      "dependsOn": ["^build"]
     },
     "test": {
       "dependsOn": ["^build"],
       "outputs": []
     },
-    "lint": {
+    "start": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": false
+    },
+    "dev": {
+      "env": ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD"],
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "//#oxlint": {
       "outputs": []
+    },
+    "//#oxlint:fix": {
+      "cache": false
+    },
+    "//#oxfmt": {
+      "cache": false
     }
   }
 }

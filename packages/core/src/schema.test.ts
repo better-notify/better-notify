@@ -1,0 +1,56 @@
+import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
+import { validate } from './schema.js';
+import { NotifyRpcValidationError } from './errors.js';
+
+describe('validate', () => {
+  it('returns the parsed value on success', async () => {
+    const schema = z.object({ to: z.string().email(), name: z.string() });
+    const value = await validate(schema, {
+      to: 'user@example.com',
+      name: 'John Doe',
+    });
+    expect(value).toEqual({ to: 'user@example.com', name: 'John Doe' });
+  });
+
+  it('applies schema defaults', async () => {
+    const schema = z.object({ locale: z.enum(['en', 'pt-BR']).default('en') });
+    const value = await validate(schema, {});
+    expect(value).toEqual({ locale: 'en' });
+  });
+
+  it('throws NotifyRpcValidationError with issues populated', async () => {
+    const schema = z.object({ to: z.string().email() });
+    await expect(validate(schema, { to: 'not-an-email' })).rejects.toMatchObject({
+      name: 'NotifyRpcValidationError',
+      code: 'VALIDATION',
+    });
+    try {
+      await validate(schema, { to: 'not-an-email' });
+    } catch (err) {
+      expect(err).toBeInstanceOf(NotifyRpcValidationError);
+      const e = err as NotifyRpcValidationError;
+      expect(e.issues.length).toBeGreaterThan(0);
+      expect(e.issues[0]).toHaveProperty('message');
+    }
+  });
+
+  it('attaches the route name to the error message when provided', async () => {
+    const schema = z.object({ to: z.string().email() });
+    await expect(validate(schema, { to: 'bad' }, { route: 'welcome' })).rejects.toThrow(
+      /route "welcome"/,
+    );
+  });
+
+  it('awaits a Promise-returning standard schema validate', async () => {
+    const asyncSchema = {
+      '~standard': {
+        version: 1 as const,
+        vendor: 'test',
+        validate: (input: unknown) => Promise.resolve({ value: input as { ok: true } }),
+      },
+    };
+    const value = await validate(asyncSchema, { ok: true });
+    expect(value).toEqual({ ok: true });
+  });
+});

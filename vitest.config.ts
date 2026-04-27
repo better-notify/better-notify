@@ -1,11 +1,35 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['packages/*/test/**/*.test.ts'],
+    include: ['packages/*/src/**/*.test.ts'],
     typecheck: {
-      enabled: true,
-      include: ['packages/*/test/**/*.test-d.ts', 'packages/*/test/**/*.test.ts'],
+      enabled: false,
+      include: ['packages/*/src/**/*.test-d.ts', 'packages/*/src/**/*.test.ts'],
+    },
+    coverage: {
+      provider: 'v8',
+      reportsDirectory: 'coverage',
+      include: ['packages/*/src/**/*.ts'],
+      exclude: [
+        '**/*.test.ts',
+        '**/*.test-d.ts',
+        '**/types.ts',
+        '**/multi.types.ts',
+        '**/with-*.types.ts',
+        '**/template.ts',
+        '**/transport.ts',
+        '**/test-utils.ts',
+        'packages/*/src/index.ts',
+        'packages/*/src/transports/index.ts',
+        'packages/*/src/middlewares/index.ts',
+        'packages/*/src/plugins/index.ts',
+        'packages/*/src/sinks/index.ts',
+        'packages/*/src/stores/index.ts',
+        'packages/*/src/tracers/index.ts',
+        'packages/*/src/channel/index.ts',
+      ],
+      reporter: ['text', 'html', 'lcov'],
     },
   },
-})
+});

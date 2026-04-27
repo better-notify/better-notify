@@ -1,20 +1,20 @@
-import { EmailRpcNotImplementedError } from '@emailrpc/core'
-import type { Provider } from '@emailrpc/core/provider'
-import type { WebhookAdapter } from '@emailrpc/core/webhook'
+import { NotifyRpcNotImplementedError } from '@emailrpc/core';
+import type { Transport } from '@emailrpc/email/transports';
+import type { WebhookAdapter } from '@emailrpc/core/webhook';
 
-export interface ResendOptions {
-  apiKey: string
-  baseUrl?: string
-}
+export type ResendTransportOptions = {
+  apiKey: string;
+  baseUrl?: string;
+};
 
-export function resend(_opts: ResendOptions): Provider {
-  throw new EmailRpcNotImplementedError('@emailrpc/resend provider (v0.3)')
-}
+export const resendTransport = (_opts: ResendTransportOptions): Transport => {
+  throw new NotifyRpcNotImplementedError('@emailrpc/resend transport (v0.3)');
+};
 
-export interface ResendAdapterOptions {
-  webhookSecret?: string
-}
+export type ResendAdapterOptions = {
+  webhookSecret?: string;
+};
 
-export function resendAdapter(_opts: ResendAdapterOptions = {}): WebhookAdapter {
-  throw new EmailRpcNotImplementedError('@emailrpc/resend webhook adapter (v0.3)')
-}
+export const resendAdapter = (_opts: ResendAdapterOptions = {}): WebhookAdapter => {
+  throw new NotifyRpcNotImplementedError('@emailrpc/resend webhook adapter (v0.3)');
+};

@@ -7,11 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@internal/tsconfig",
-    "@internal/rolldown-config",
-    "@internal/eslint-config",
-    "@internal/fixtures",
-    "@example/*"
-  ]
+  "ignore": ["@internal/tsconfig", "@internal/rolldown-config", "@internal/fixtures", "@example/*"]
 }

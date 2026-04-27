@@ -1,25 +1,18 @@
 {
   "name": "@emailrpc/core",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "End-to-end typed email contracts, sender, and webhook router for Node.js.",
   "license": "MIT",
-  "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./sender": {
-      "types": "./dist/sender.d.ts",
-      "default": "./dist/sender.js"
     },
     "./worker": {
       "types": "./dist/worker.d.ts",
@@ -29,37 +22,44 @@
       "types": "./dist/webhook.d.ts",
       "default": "./dist/webhook.js"
     },
-    "./provider": {
-      "types": "./dist/provider.d.ts",
-      "default": "./dist/provider.js"
+    "./transports": {
+      "types": "./dist/transports.d.ts",
+      "default": "./dist/transports.js"
     },
-    "./template": {
-      "types": "./dist/template.d.ts",
-      "default": "./dist/template.js"
+    "./middlewares": {
+      "types": "./dist/middlewares.d.ts",
+      "default": "./dist/middlewares.js"
     },
-    "./queue": {
-      "types": "./dist/queue.d.ts",
-      "default": "./dist/queue.js"
-    },
-    "./middleware": {
-      "types": "./dist/middleware.d.ts",
-      "default": "./dist/middleware.js"
-    },
-    "./test": {
-      "types": "./dist/test.d.ts",
-      "default": "./dist/test.js"
+    "./plugins": {
+      "types": "./dist/plugins.d.ts",
+      "default": "./dist/plugins.js"
     },
     "./config": {
       "types": "./dist/config.d.ts",
       "default": "./dist/config.js"
+    },
+    "./logger": {
+      "types": "./dist/logger.d.ts",
+      "default": "./dist/logger.js"
+    },
+    "./stores": {
+      "types": "./dist/stores.d.ts",
+      "default": "./dist/stores.js"
+    },
+    "./sinks": {
+      "types": "./dist/sinks.d.ts",
+      "default": "./dist/sinks.js"
+    },
+    "./tracers": {
+      "types": "./dist/tracers.d.ts",
+      "default": "./dist/tracers.js"
     }
   },
   "scripts": {
-    "build": "rolldown -c",
+    "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint src test"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@standard-schema/spec": "^1.0.0"
@@ -67,10 +67,12 @@
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
-    "@internal/eslint-config": "workspace:*",
-    "rolldown": "^1.0.0-beta.49",
+    "rolldown": "1.0.0-rc.17",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
     "zod": "^3.24.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
