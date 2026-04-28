@@ -31,7 +31,11 @@
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
+    "bullmq": "catalog:",
+    "ioredis": "catalog:",
+    "ioredis-mock": "^8.13.1",
     "rolldown": "catalog:",
+    "tslib": "^2.8.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
