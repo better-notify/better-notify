@@ -3,6 +3,7 @@ import { baseConfig } from '@internal/rolldown-config';
 export default baseConfig({
   entries: {
     index: 'src/index.ts',
+    queue: 'src/queue/index.ts',
     worker: 'src/worker.ts',
     webhook: 'src/webhook.ts',
     transports: 'src/transports/index.ts',

@@ -3,6 +3,7 @@ import { createWorker } from './worker.js';
 import { NotifyRpcNotImplementedError } from './errors.js';
 import type { Transport } from './transports/types.js';
 import type { AnyCatalog } from './catalog.js';
+import type { QueueAdapter } from './queue/types.js';
 
 describe('worker stubs', () => {
   it('createWorker() throws NotifyRpcNotImplementedError', () => {
@@ -14,7 +15,7 @@ describe('worker stubs', () => {
       routes: [],
     };
     const transport = {} as Transport;
-    const queue = {};
+    const queue = {} as QueueAdapter;
     expect(() => createWorker({ catalog, transport, queue })).toThrow(NotifyRpcNotImplementedError);
   });
 });

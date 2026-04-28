@@ -8,6 +8,12 @@ import type { AnyChannel, ChannelDefinition, ChannelMap, TransportsFor } from '.
 import type { Transport, TransportResult } from './transport.js';
 import { consoleLogger, type LoggerLike } from './logger.js';
 import { handlePromise } from './lib/handle-promise.js';
+import type {
+  QueueAdapter,
+  EnqueueOptions,
+  EnqueueResult,
+  EmailJobPayload,
+} from './queue/types.js';
 
 export type ChannelSendResult<TData = unknown> = {
   messageId: string;
@@ -116,6 +122,8 @@ export type CreateClientOptions<R extends AnyCatalog, Channels extends ChannelMa
   catalog: R;
   channels: Channels;
   transportsByChannel: Partial<TransportsFor<Channels>>;
+  /** Queue adapter enabling `.queue()` on route methods. Omitting it leaves `.queue()` throwing CHANNEL_NOT_QUEUEABLE. */
+  queue?: QueueAdapter;
   ctx?: CtxOf<R>;
   hooks?: ClientHooks<R>;
   logger?: LoggerLike;
@@ -143,7 +151,7 @@ type ChannelRouteMethods<TArgs> = {
     entries: ReadonlyArray<TArgs>,
     opts?: BatchOptions,
   ): Promise<BatchResult<ChannelSendResult>>;
-  queue(...args: unknown[]): Promise<never>;
+  queue(args: TArgs, opts?: EnqueueOptions): Promise<EnqueueResult>;
   render(input: unknown, opts?: { ctx?: unknown }): Promise<unknown>;
 };
 
@@ -537,14 +545,22 @@ export const createClient = <R extends AnyCatalog, Channels extends ChannelMap =
         }
         return { okCount, errorCount, results };
       },
-      queue: () =>
-        Promise.reject(
-          new NotifyRpcError({
-            message: `Channel "${channelDef.channel}" does not support queueing.`,
+      queue: async (rawArgs: unknown, queueOpts?: EnqueueOptions): Promise<EnqueueResult> => {
+        if (!options.queue) {
+          throw new NotifyRpcError({
+            message: `No queue adapter configured. Pass queue: adapter to createClient().`,
             code: 'CHANNEL_NOT_QUEUEABLE',
             route: flatKey,
-          }),
-        ),
+          });
+        }
+        const messageId = crypto.randomUUID();
+        const [validateErr, input] = await handlePromise(
+          validate(channelDef.schema, (rawArgs as { input?: unknown })?.input, { route: flatKey }),
+        );
+        if (validateErr) throw validateErr;
+        const payload: EmailJobPayload = { _v: 1, route: flatKey, input, messageId };
+        return options.queue.enqueue(payload, queueOpts);
+      },
       render: async (input: unknown, renderOpts?: { ctx?: unknown }) => {
         const channel = channels[channelDef.channel];
         if (!channel?.previewRender) {

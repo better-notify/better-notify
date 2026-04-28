@@ -1,6 +1,7 @@
 import { NotifyRpcNotImplementedError } from './errors.js';
 import type { AnyCatalog } from './catalog.js';
 import type { Transport } from './transports/types.js';
+import type { QueueAdapter, JobEnvelope } from './queue/types.js';
 
 /** @experimental Layer 5 queue worker — not yet implemented; ships in v0.3. */
 export type Worker = {
@@ -13,9 +14,9 @@ export type Worker = {
 export type CreateWorkerOptions<R extends AnyCatalog, Ctx> = {
   catalog: R;
   transport: Transport;
-  queue: unknown;
+  queue: QueueAdapter;
   concurrency?: number;
-  context?: (params: { job: { id: string; attemptsMade: number } }) => Ctx;
+  context?: (params: { job: JobEnvelope }) => Ctx;
 };
 
 /** @experimental Layer 5 queue worker — not yet implemented; ships in v0.3. */
