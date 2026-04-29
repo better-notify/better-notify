@@ -199,11 +199,28 @@ A failure can be either a thrown error or a returned `{ ok: false, error }` — 
 
 ### Naming and logging
 
-Use `name` to distinguish composites when you register more than one. The orchestration logger (separate from the per-send `createClient` logger) emits events for every inner attempt:
+Use `name` to distinguish composites when you register more than one. The orchestration logger (separate from the per-send `createClient` logger) emits strategy-specific events:
 
+Sequential (`'failover'`, `'round-robin'`, `'random'`):
 - `debug` `multi attempt ok` — a transport succeeded
 - `warn` `multi attempt failed` — a transport failed; may retry or advance
 - `error` `multi exhausted` — all transports failed; about to throw
+
+Race (`'race'`):
+- `debug` `multi race winner` — the first transport to succeed
+- `warn` `multi race attempt failed` — one concurrent attempt failed
+- `error` `multi race exhausted` — all concurrent attempts failed
+
+Parallel (`'parallel'`):
+- `debug` `multi parallel branch ok` — a branch succeeded
+- `warn` `multi parallel branch failed` — a branch failed
+- `error` `multi parallel partial failure` — at least one branch failed; about to throw
+
+Mirrored (`'mirrored'`):
+- `debug` `multi mirrored primary ok` — primary transport succeeded
+- `warn` `multi mirror failed` — a mirror transport failed (does not affect outcome)
+
+All strategies:
 - `error` `multi close failed` — an inner `close()` threw during shutdown
 
 ```ts
