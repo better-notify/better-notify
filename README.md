@@ -93,7 +93,7 @@ const slackChannel = defineChannel({
   validateArgs: z.object({ channel: z.string(), threadTs: z.string().optional() }),
   render: ({ runtime, args }) => ({
     channel: args.channel,
-    text: typeof runtime.text === 'function' ? runtime.text({ input: args.input }) : runtime.text,
+    text: runtime.text,
   }),
 });
 ```
