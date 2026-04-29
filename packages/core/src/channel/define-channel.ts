@@ -121,7 +121,7 @@ const buildBuilder = <
     buildBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>(channelName, slots, {
       ...state,
       ...patch,
-      runtime: { ...state.runtime, ...(patch.runtime ?? {}) },
+      runtime: { ...state.runtime, ...patch.runtime },
     });
 
   const builder: Record<string | symbol, unknown> = {
