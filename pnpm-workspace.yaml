@@ -1,6 +1,7 @@
 packages:
   - 'packages/*'
   - 'internal/*'
+  - 'apps/*'
   - 'examples/*'
   - 'examples/*/apps/*'
   - 'examples/*/packages/*'

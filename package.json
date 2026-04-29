@@ -25,7 +25,8 @@
     "release": "turbo run build",
     "test": "turbo run test",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "web:dev": "turbo run dev --filter=@betternotify/web"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

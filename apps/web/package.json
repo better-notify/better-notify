@@ -1,0 +1,39 @@
+{
+  "name": "@betternotify/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "generate:changelog": "tsx scripts/generate-changelog.ts",
+    "prebuild": "tsx scripts/generate-changelog.ts",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "pnpm build && wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "fumadocs-mdx"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.168.23",
+    "@tanstack/react-start": "1.167.42",
+    "fumadocs-core": "16.8.2",
+    "fumadocs-mdx": "14.3.1",
+    "fumadocs-ui": "16.8.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.32.3",
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/mdx": "^2.0.13",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.1.0",
+    "tsx": "catalog:",
+    "typescript": "^5.9.3",
+    "vite": "8.0.8",
+    "wrangler": "^4.0.0"
+  }
+}
