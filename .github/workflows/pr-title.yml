@@ -10,7 +10,6 @@ permissions:
 jobs:
   semantic-title:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'github-actions[bot]' && github.actor != 'release-please[bot]' }}
     steps:
       - uses: amannn/action-semantic-pull-request@v5
         env:
