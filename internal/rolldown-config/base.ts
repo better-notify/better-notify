@@ -16,6 +16,7 @@ export const baseConfig = (opts: BaseConfigOptions): RolldownOptions => {
       {
         dir: 'dist',
         format: 'esm',
+        sourcemap: false,
         entryFileNames: '[name].js',
         chunkFileNames: 'shared/[name]-[hash].js',
       },
@@ -23,7 +24,7 @@ export const baseConfig = (opts: BaseConfigOptions): RolldownOptions => {
     platform: 'node',
     external: [/^node:/, /^@betternotify\//, /^@standard-schema\//, ...(opts.external ?? [])],
     plugins: [
-      dts({ resolve: true }),
+      dts({ resolve: true, sourcemap: false }),
       ...(shouldAnalyzeBundle
         ? [
             bundleAnalyzerPlugin({
