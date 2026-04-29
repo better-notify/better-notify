@@ -15,6 +15,7 @@
     "pnpm-lock.yaml",
     "prisma",
     ".claude",
-    "docs"
+    "docs",
+    "**/CHANGELOG.md"
   ]
 }
