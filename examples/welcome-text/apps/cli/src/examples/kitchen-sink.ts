@@ -3,16 +3,20 @@ import {
   consoleLogger,
   createClient,
   createNotify,
-  inMemoryEventSink,
-  inMemoryIdempotencyStore,
-  inMemoryRateLimitStore,
-  inMemorySuppressionList,
-  inMemoryTracer,
+} from '@betternotify/core';
+import {
   withEventLogger,
   withIdempotency,
   withRateLimit,
   withTracing,
-} from '@betternotify/core';
+} from '@betternotify/core/middlewares';
+import { inMemoryEventSink } from '@betternotify/core/sinks';
+import {
+  inMemoryIdempotencyStore,
+  inMemoryRateLimitStore,
+  inMemorySuppressionList,
+} from '@betternotify/core/stores';
+import { inMemoryTracer } from '@betternotify/core/tracers';
 import { emailChannel, withSuppressionList } from '@betternotify/email';
 import { z } from 'zod';
 import { env } from '../env';

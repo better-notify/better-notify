@@ -1,4 +1,5 @@
-import { createNotify, createClient, withDryRun } from '@betternotify/core';
+import { createNotify, createClient } from '@betternotify/core';
+import { withDryRun } from '@betternotify/core/middlewares';
 import { emailChannel } from '@betternotify/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';

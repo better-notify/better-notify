@@ -1,12 +1,11 @@
 import {
   createNotify,
   createClient,
-  createTransport,
-  createMockTransport,
   defineChannel,
   slot,
   type Transport,
 } from '@betternotify/core';
+import { createTransport, createMockTransport } from '@betternotify/core/transports';
 import { z } from 'zod';
 
 type RenderedSlack = {

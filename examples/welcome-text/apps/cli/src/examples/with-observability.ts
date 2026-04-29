@@ -1,12 +1,7 @@
-import {
-  consoleEventSink,
-  createNotify,
-  createClient,
-  inMemoryEventSink,
-  inMemoryTracer,
-  withEventLogger,
-  withTracing,
-} from '@betternotify/core';
+import { createNotify, createClient } from '@betternotify/core';
+import { withEventLogger, withTracing } from '@betternotify/core/middlewares';
+import { consoleEventSink, inMemoryEventSink } from '@betternotify/core/sinks';
+import { inMemoryTracer } from '@betternotify/core/tracers';
 import { emailChannel } from '@betternotify/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';
