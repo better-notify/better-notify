@@ -1,5 +1,8 @@
 import { defineConfig, type RolldownOptions } from 'rolldown';
 import { dts } from 'rolldown-plugin-dts';
+import { bundleAnalyzerPlugin } from 'rolldown/experimental';
+
+const shouldAnalyzeBundle = process.env.BUNDLE_ANALYZE === 'true';
 
 export type BaseConfigOptions = {
   entries: Record<string, string>;
@@ -19,7 +22,17 @@ export const baseConfig = (opts: BaseConfigOptions): RolldownOptions => {
     ],
     platform: 'node',
     external: [/^node:/, /^@betternotify\//, /^@standard-schema\//, ...(opts.external ?? [])],
-    plugins: [dts({ resolve: true })],
+    plugins: [
+      dts({ resolve: true }),
+      ...(shouldAnalyzeBundle
+        ? [
+            bundleAnalyzerPlugin({
+              fileName: 'bundle-analysis.json',
+              format: 'json',
+            }),
+          ]
+        : []),
+    ],
     treeshake: true,
   });
 };
