@@ -19,9 +19,9 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -41,13 +41,13 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6.0.2
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v6.4.0
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -62,7 +62,8 @@ jobs:
           task: build
           summary-title: Affected Bundle Projects
 
-      - uses: preactjs/compressed-size-action@2.9.1
+      - if: steps.projects.outputs.pattern != ''
+        uses: preactjs/compressed-size-action@2.9.1
         env:
           BUNDLE_ANALYZE: 'true'
         with:
@@ -89,11 +90,11 @@ jobs:
       matrix:
         project: ${{ fromJSON(needs.bundle-projects.outputs.projects) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
@@ -101,7 +102,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm build
+      - run: pnpm exec turbo run build --filter="${{ matrix.project.name }}..."
 
       - id: meta
         shell: bash
