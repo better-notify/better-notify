@@ -88,8 +88,8 @@ export type HookFn<T> = (params: T) => void | Promise<void>;
 /**
  * Lifecycle hooks for a {@link createClient} instance.
  *
- * Hooks observe the pipeline but cannot alter whether an email is sent — use
- * middleware for that. Each hook accepts a single handler or an array of
+ * Hooks observe the pipeline but cannot short-circuit the pipeline with a
+ * successful synthetic result — use middleware for that. Each hook accepts a single handler or an array of
  * handlers executed in order.
  *
  * Execution order per send:

@@ -229,15 +229,15 @@ Middleware is composed in a **first-added wraps outermost** order:
 
 Within each group, earlier entries wrap outer. The execution flow for a single send:
 
-```
-plugin[0].before → plugin[1].before → route[0].before → route[1].before
-  → validate input
+```text
+validate input
   → onBeforeSend hooks
-  → render
-  → onExecute hooks
-  → transport.send
-  → onAfterSend hooks
+  → plugin[0].before → plugin[1].before → route[0].before → route[1].before
+    → render
+    → onExecute hooks
+    → transport.send
 ← route[1].after ← route[0].after ← plugin[1].after ← plugin[0].after
+  → onAfterSend hooks
 ```
 
 ### Built-in middleware
