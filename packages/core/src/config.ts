@@ -1,3 +1,4 @@
+/** @experimental Config-file-driven setup — not yet implemented; ships in a future release. */
 export type NotifyRpcConfig = {
   router: string;
   transport: string;
@@ -11,6 +12,7 @@ export type NotifyRpcConfig = {
   };
 };
 
+/** @experimental Config-file-driven setup — not yet implemented; ships in a future release. */
 export const defineConfig = (config: NotifyRpcConfig): NotifyRpcConfig => {
   return config;
 };
