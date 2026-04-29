@@ -59,40 +59,178 @@ import { smtpTransport } from '@betternotify/smtp';
 const transport = multiTransport({
   strategy: 'failover',
   transports: [
-    {
-      transport: smtpTransport({
-        /* primary */
-      }),
-    },
-    {
-      transport: smtpTransport({
-        /* backup */
-      }),
-    },
+    { transport: smtpTransport({ /* primary */ }) },
+    { transport: smtpTransport({ /* backup */ }) },
   ],
 });
 ```
 
 ### Strategies
 
-Each strategy decides which inner transport to try **first** on every `send()`. On failure, every strategy walks forward through the rest (modulo `n`) before giving up.
+Six strategies cover the common delivery patterns. The first three are _sequential_ — on failure they walk forward through the remaining transports (modulo `n`). The last three are _parallel_ — all transports fire concurrently.
 
-| Strategy        | First pick on each send                                | Use when                                                                                                                      |
-| --------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `'failover'`    | Always `transports[0]`                                 | You have a clear primary + backup ordering — try the cheap/preferred provider first, fall back to the others only on failure. |
-| `'round-robin'` | Cycles `0, 1, 2, …, 0, 1, …` via an in-process counter | You want even load distribution across equivalent providers within one process.                                               |
-| `'random'`      | Uniformly random index                                 | You want load spreading without per-process coordination — multiple workers distribute on average without sharing state.      |
+| Strategy        | Concurrency | First pick on each `send()`                       | Use when                                                                                            |
+| --------------- | ----------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `'failover'`    | sequential  | always `transports[0]`                             | Clear primary + backup ordering — prefer the cheap/reliable provider, fall back only on failure.    |
+| `'round-robin'` | sequential  | cycles `0, 1, 2, …` via an in-process counter      | Even load distribution across equivalent providers within one process.                              |
+| `'random'`      | sequential  | uniformly random index                             | Load spreading without per-process coordination — multiple workers distribute without sharing state. |
+| `'race'`        | parallel    | all at once                                        | Latency redundancy — first to succeed wins; the others stay in-flight but their result is ignored.  |
+| `'parallel'`    | parallel    | all at once                                        | Verified-redundancy delivery — ALL must succeed (e.g. primary + audit copy). Throws if any fail.   |
+| `'mirrored'`    | mixed       | primary awaited; mirrors fire after primary succeeds | Primary + observability mirrors — mirror failures are logged at `warn` and never affect the outcome. |
 
 > Weighted distribution is deferred to v0.3 — the union expands without a breaking change.
 
+### Failover
+
+Always starts at `transports[0]`. On failure, walks forward through the rest. Use when you have a clear primary + backup ordering.
+
+```ts
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: primaryProvider },
+    { transport: backupProvider },
+  ],
+});
+```
+
+### Round-robin
+
+An in-process counter advances after each `send()`, so successive sends start at different indices. On failure, walks forward (modulo `n`). Use for even load distribution across equivalent providers within one process.
+
+```ts
+const transport = multiTransport({
+  strategy: 'round-robin',
+  transports: [
+    { transport: providerA },
+    { transport: providerB },
+    { transport: providerC },
+  ],
+});
+// Send order: A → B → C → A → B → C → …
+// If B fails on a given send: tries C, then A
+```
+
+### Random
+
+Picks a uniformly random start index on each `send()`, then walks forward (modulo `n`) on failure. Use when you want load spreading without per-process counter coordination — multiple workers distribute naturally without sharing state.
+
+```ts
+const transport = multiTransport({
+  strategy: 'random',
+  transports: [
+    { transport: providerA },
+    { transport: providerB },
+    { transport: providerC },
+  ],
+});
+```
+
+### Race
+
+Dispatches to **all** transports concurrently via `Promise.any()`. Returns the first successful result; the remaining in-flight sends are not cancelled. Throws when all fail (the last error from `AggregateError`). Use for latency redundancy across equivalent providers.
+
+```ts
+const transport = multiTransport({
+  strategy: 'race',
+  transports: [
+    { transport: fastProvider },
+    { transport: slowFallbackProvider },
+  ],
+});
+// fastest wins; the other stays in-flight but its result is discarded
+```
+
+> `maxAttemptsPerTransport` and `backoff` are ignored for parallel strategies.
+
+### Parallel
+
+Dispatches to **all** transports concurrently via `Promise.allSettled()`. Requires ALL to succeed — throws the first failure if any branch fails. Returns the first transport's data as canonical. Use for verified-redundancy delivery (e.g. primary + audit copy, both must succeed).
+
+```ts
+const transport = multiTransport({
+  strategy: 'parallel',
+  transports: [
+    { transport: primaryProvider },
+    { transport: auditCopyProvider },
+  ],
+});
+```
+
+### Mirrored
+
+Awaits `transports[0]` (primary) and returns its result immediately. The remaining transports are fired in the background — their errors are logged at `warn` and never propagate. If the primary fails, mirrors never run. Use when secondary providers are observability mirrors whose failure must not affect the user-visible outcome.
+
+```ts
+const transport = multiTransport({
+  strategy: 'mirrored',
+  transports: [
+    { transport: primaryProvider },     // awaited; failure throws
+    { transport: observabilityMirror }, // fire-and-forget; failure only logged
+  ],
+});
+```
+
 ### Retry within a transport
 
-`maxAttemptsPerTransport` controls how many times a single inner is retried on a _retriable_ error before advancing. `backoff: { initialMs, factor, maxMs }` gives exponential delay between retries on the same transport (no jitter). `isRetriable(err) => boolean` lets you advance immediately on non-retriable errors. Defaults: `maxAttemptsPerTransport=1` (no retry), `isRetriable=() => true`.
+Applies to sequential strategies only (`'failover'`, `'round-robin'`, `'random'`).
 
-A failure can be either:
+`maxAttemptsPerTransport` controls how many total attempts are made per transport on a _retriable_ error before advancing (including the initial attempt; so "retries" are `maxAttemptsPerTransport - 1`). Defaults to `1` (no retry). A non-retriable error advances immediately regardless of this value.
 
-- A thrown error from the inner `send()`
-- A returned `{ ok: false, error }` (soft failure — same retry/advance semantics as a throw)
+`backoff: { initialMs, factor, maxMs }` adds exponential delay between retries on the _same_ transport. Delay formula: `min(maxMs, initialMs × factor^(attempt-1))`. No jitter applied. Backoff resets when advancing to the next transport; advancing between transports never sleeps.
+
+`isRetriable(err) => boolean` lets you advance immediately on certain errors without retrying. Returning `false` still lets the composite try the remaining transports — it does not abort the whole send. Default: `() => true`.
+
+```ts
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: providerA },
+    { transport: providerB },
+  ],
+  maxAttemptsPerTransport: 3,
+  backoff: { initialMs: 100, factor: 2, maxMs: 2000 },
+  isRetriable: (err) => err instanceof TimeoutError,
+  // providerA attempt delays: 100ms, 200ms → advance to providerB on any non-retriable error
+});
+```
+
+A failure can be either a thrown error or a returned `{ ok: false, error }` — both trigger the same retry/advance semantics.
+
+### Naming and logging
+
+Use `name` to distinguish composites when you register more than one. The orchestration logger (separate from the per-send `createClient` logger) emits strategy-specific events:
+
+Sequential (`'failover'`, `'round-robin'`, `'random'`):
+- `debug` `multi attempt ok` — a transport succeeded
+- `warn` `multi attempt failed` — a transport failed; may retry or advance
+- `error` `multi exhausted` — all transports failed; about to throw
+
+Race (`'race'`):
+- `debug` `multi race winner` — the first transport to succeed
+- `warn` `multi race attempt failed` — one concurrent attempt failed
+- `error` `multi race exhausted` — all concurrent attempts failed
+
+Parallel (`'parallel'`):
+- `debug` `multi parallel branch ok` — a branch succeeded
+- `warn` `multi parallel branch failed` — a branch failed
+- `error` `multi parallel partial failure` — at least one branch failed; about to throw
+
+Mirrored (`'mirrored'`):
+- `debug` `multi mirrored primary ok` — primary transport succeeded
+- `warn` `multi mirror failed` — a mirror transport failed (does not affect outcome)
+
+All strategies:
+- `error` `multi close failed` — an inner `close()` threw during shutdown
+
+```ts
+const transport = multiTransport({
+  name: 'failover-bulk',
+  strategy: 'failover',
+  transports: [{ transport: providerA }, { transport: providerB }],
+  logger: consoleLogger({ level: 'debug' }),
+});
+```
 
 ### verify / close
 
