@@ -133,6 +133,43 @@ Each channel package re-exports these factories pre-parameterized for that chann
 | `@betternotify/resend`      | Resend transport (stub)                                                                                                                                                                                                                    |
 | `@betternotify/bullmq`      | BullMQ queue adapter (stub)                                                                                                                                                                                                                |
 
+## Implementation status
+
+✅ = ships and works today · 🚧 = package is published but throws `NotImplementedError` at runtime
+
+### Packages
+
+| Package                     | Status | Planned |
+| --------------------------- | ------ | ------- |
+| `@betternotify/core`        | ✅     | —       |
+| `@betternotify/email`       | ✅     | —       |
+| `@betternotify/sms`         | ✅     | —       |
+| `@betternotify/push`        | ✅     | —       |
+| `@betternotify/smtp`        | ✅     | —       |
+| `@betternotify/react-email` | ✅     | —       |
+| `@betternotify/ses`         | 🚧     | v0.3    |
+| `@betternotify/resend`      | 🚧     | v0.3    |
+| `@betternotify/bullmq`      | 🚧     | v0.3    |
+| `@betternotify/mjml`        | 🚧     | v0.4    |
+| `@betternotify/handlebars`  | 🚧     | v0.4    |
+
+### Core APIs
+
+| Feature                                                                                                          | Subpath export                   | Status | Planned |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------ | ------- |
+| Channel contracts (`Channel<>`, `defineChannel`, `slot`)                                                         | `@betternotify/core`             | ✅     | —       |
+| Catalog builder (`createNotify`, `createCatalog`)                                                                | `@betternotify/core`             | ✅     | —       |
+| Typed client (`createClient`, `.send()`, `.batch()`)                                                             | `@betternotify/core`             | ✅     | —       |
+| Middleware (`withDryRun`, `withRateLimit`, `withIdempotency`, `withEventLogger`, `withTagInject`, `withTracing`) | `@betternotify/core/middlewares` | ✅     | —       |
+| Suppression-list middleware (`withSuppressionList`)                                                              | `@betternotify/email`            | ✅     | —       |
+| Stores (idempotency, rate-limit, suppression)                                                                    | `@betternotify/core/stores`      | ✅     | —       |
+| Event sinks (`inMemoryEventSink`, `consoleEventSink`)                                                            | `@betternotify/core/sinks`       | ✅     | —       |
+| Tracing (`inMemoryTracer`)                                                                                       | `@betternotify/core/tracers`     | ✅     | —       |
+| Logger (`consoleLogger`, `fromPino`)                                                                             | `@betternotify/core/logger`      | ✅     | —       |
+| Config (`defineConfig`)                                                                                          | `@betternotify/core/config`      | ✅     | —       |
+| Queue worker (`createWorker`)                                                                                    | `@betternotify/core/worker`      | 🚧     | v0.3    |
+| Webhook router (`toNodeHandler`, `toFetchHandler`)                                                               | `@betternotify/core/webhook`     | 🚧     | v0.3    |
+
 ## Development
 
 ```sh
