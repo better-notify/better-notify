@@ -1,0 +1,56 @@
+name: Preview Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+env:
+  DO_NOT_TRACK: '1'
+  TURBO_TELEMETRY_DISABLED: '1'
+  TURBO_TELEMETRY_MESSAGE_DISABLED: '1'
+
+jobs:
+  cleanup:
+    name: Unpublish preview packages
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Unpublish preview versions and remove dist-tag
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          pr_number="${{ github.event.pull_request.number }}"
+          tag="pr-${pr_number}"
+          prefix="0.0.0-preview.${pr_number}."
+
+          for manifest in packages/*/package.json; do
+            name="$(jq -r '.name' "$manifest")"
+            [[ "$(jq -r '.private // false' "$manifest")" == "true" ]] && continue
+
+            versions="$(npm view "$name" versions --json 2>/dev/null \
+              | jq -r --arg prefix "$prefix" 'if type == "array" then .[] else . end | select(startswith($prefix))' 2>/dev/null)" || continue
+
+            [[ -z "$versions" ]] && continue
+
+            while IFS= read -r version; do
+              echo "Unpublishing ${name}@${version}"
+              npm unpublish "${name}@${version}" --force || true
+            done <<< "$versions"
+
+            echo "Removing dist-tag ${tag} from ${name}"
+            npm dist-tag rm "$name" "$tag" 2>/dev/null || true
+          done
