@@ -65,8 +65,8 @@ export const emailChannel = (options: EmailChannelOptions = {}) =>
       const from = resolveFrom(args.from ?? runtime.from, options.defaults?.from);
       const replyTo = args.replyTo ?? runtime.replyTo ?? options.defaults?.replyTo;
       const mergedHeaders = {
-        ...(options.defaults?.headers ?? {}),
-        ...(args.headers ?? {}),
+        ...options.defaults?.headers,
+        ...args.headers,
       };
 
       const message: RenderedMessage = {

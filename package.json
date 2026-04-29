@@ -11,6 +11,7 @@
   },
   "type": "module",
   "scripts": {
+    "postinstall": "husky install",
     "build": "turbo run build",
     "ci": "turbo run build typecheck test //#oxlint",
     "dev": "turbo run dev --filter=@welcome-text/cli",
@@ -27,8 +28,11 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@turbo/gen": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "husky": "^8.0.3",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "tsx": "catalog:",
