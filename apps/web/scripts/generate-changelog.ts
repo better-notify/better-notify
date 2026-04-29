@@ -12,7 +12,7 @@ type VersionEntry = {
   body: string;
 };
 
-function parseChangelog(filePath: string): VersionEntry[] {
+const parseChangelog = (filePath: string): VersionEntry[] => {
   const lines = readFileSync(filePath, 'utf-8').split('\n');
   const entries: VersionEntry[] = [];
   const versionRegex =
@@ -48,9 +48,9 @@ function parseChangelog(filePath: string): VersionEntry[] {
   }
 
   return entries;
-}
+};
 
-function run() {
+const run = () => {
   if (existsSync(OUTPUT_DIR)) {
     rmSync(OUTPUT_DIR, { recursive: true });
   }
@@ -107,6 +107,6 @@ ${versionsBody}${olderLink}
   writeFileSync(join(OUTPUT_DIR, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
 
   console.log(`[changelog] generated ${slugs.length} package changelogs`);
-}
+};
 
 run();

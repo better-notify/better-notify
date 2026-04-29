@@ -3,6 +3,22 @@ import { RootProvider } from 'fumadocs-ui/provider/tanstack';
 
 import appCss from '@/styles/app.css?url';
 
+const RootComponent = () => {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body className="flex min-h-screen flex-col">
+        <RootProvider>
+          <Outlet />
+        </RootProvider>
+        <Scripts />
+      </body>
+    </html>
+  );
+};
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -18,19 +34,3 @@ export const Route = createRootRoute({
   }),
   component: RootComponent,
 });
-
-function RootComponent() {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body className="flex min-h-screen flex-col">
-        <RootProvider>
-          <Outlet />
-        </RootProvider>
-        <Scripts />
-      </body>
-    </html>
-  );
-}

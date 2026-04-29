@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/CHANGELOG.md"],
+  "ignorePatterns": ["**/CHANGELOG.md", "**/routeTree.gen.ts"],
   "plugins": ["import", "typescript", "unicorn"],
   "env": {
     "node": true
@@ -49,6 +49,12 @@
       "rules": {
         "no-console": "off",
         "typescript/no-non-null-assertion": "off"
+      }
+    },
+    {
+      "files": ["apps/web/scripts/**/*.ts"],
+      "rules": {
+        "no-console": "off"
       }
     }
   ]

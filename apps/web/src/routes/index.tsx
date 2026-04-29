@@ -3,11 +3,7 @@ import { HomeLayout } from 'fumadocs-ui/layouts/home';
 
 import { baseOptions } from '@/lib/layout.shared';
 
-export const Route = createFileRoute('/')({
-  component: LandingPage,
-});
-
-function LandingPage() {
+const LandingPage = () => {
   return (
     <HomeLayout {...baseOptions()}>
       <section className="flex flex-1 flex-col items-center justify-center px-6 py-24">
@@ -52,4 +48,8 @@ await mail.welcome.send({ to: "user@example.com", input: { name: "Ada" } })`}</c
       </section>
     </HomeLayout>
   );
-}
+};
+
+export const Route = createFileRoute('/')({
+  component: LandingPage,
+});

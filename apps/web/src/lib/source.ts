@@ -14,11 +14,11 @@ export const source = loader({
   },
 });
 
-export function getPageMarkdownUrl(page: (typeof source)['$inferPage']) {
+export const getPageMarkdownUrl = (page: (typeof source)['$inferPage']) => {
   const segments = [...page.slugs, 'content.md'];
 
   return {
     segments,
     url: `/llms.mdx/docs/${segments.join('/')}`,
   };
-}
+};
