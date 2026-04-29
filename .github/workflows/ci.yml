@@ -7,6 +7,11 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  DO_NOT_TRACK: '1'
+  TURBO_TELEMETRY_DISABLED: '1'
+  TURBO_TELEMETRY_MESSAGE_DISABLED: '1'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       projects: ${{ steps.projects.outputs.projects }}
+      pattern: ${{ steps.projects.outputs.pattern }}
       has-projects: ${{ steps.projects.outputs.has_projects }}
       count: ${{ steps.projects.outputs.count }}
     steps:
@@ -41,69 +47,18 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - id: projects
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          affected="$(pnpm exec turbo query affected --tasks build --base origin/${{ github.base_ref }} --head HEAD | sed -n '/^{/,$p')"
-          workspaces="$(pnpm exec turbo ls --output=json | sed -n '/^{/,$p')"
-          projects="[]"
-
-          while IFS= read -r project; do
-            path="$(jq -r '.path' <<< "$project")"
-            manifest="$path/package.json"
-
-            if jq -e '
-              .private != true
-              and (.scripts.build | type == "string")
-              and (.files | type == "array" and index("dist") != null)
-            ' "$manifest" > /dev/null; then
-              name="$(jq -r '.name' <<< "$project")"
-              slug="$(jq -nr --arg name "$name" '$name | sub("^@"; "") | gsub("[^a-zA-Z0-9]+"; "-") | sub("^-"; "") | sub("-$"; "")')"
-              projects="$(jq -c --arg name "$name" --arg path "$path" --arg slug "$slug" '. + [{ name: $name, path: $path, slug: $slug }]' <<< "$projects")"
-            fi
-          done < <(
-            jq -c --argjson workspaces "$workspaces" '
-              [.data.affectedTasks.items[].package.name]
-              | unique
-              | map(. as $name | $workspaces.packages.items[] | select(.name == $name))
-              | map(select(.path | startswith("packages/")))
-              | .[]
-            ' <<< "$affected"
-          )
-
-          projects="$(jq -c 'sort_by(.name)' <<< "$projects")"
-          count="$(jq 'length' <<< "$projects")"
-
-          echo "projects=$projects" >> "$GITHUB_OUTPUT"
-          echo "has_projects=$([[ "$count" -gt 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "count=$count" >> "$GITHUB_OUTPUT"
-
-          if [[ "$count" -gt 0 ]]; then
-            {
-              echo "### Affected Bundle Projects"
-              echo
-              echo "| Package | Path |"
-              echo "| --- | --- |"
-              jq -r '.[] | "| \(.name) | `\(.path)` |"' <<< "$projects"
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            {
-              echo "### Affected Bundle Projects"
-              echo
-              echo "No affected publishable packages with build output."
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
+        uses: ./.github/actions/affected-projects
+        with:
+          base: origin/${{ github.base_ref }}
+          head: HEAD
+          task: build
+          summary-title: Affected Bundle Projects
 
   bundle-size:
     needs: bundle-projects
     if: ${{ needs.bundle-projects.outputs.has-projects == 'true' }}
     runs-on: ubuntu-latest
-    name: Bundle size (${{ matrix.project.name }})
-    strategy:
-      fail-fast: false
-      matrix:
-        project: ${{ fromJSON(needs.bundle-projects.outputs.projects) }}
+    name: Bundle size
     steps:
       - uses: actions/checkout@v6.0.2
         with:
@@ -119,9 +74,8 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           install-script: pnpm install --frozen-lockfile
-          cwd: ${{ matrix.project.path }}
           build-script: build
-          pattern: dist/**/*.js
+          pattern: ${{ needs.bundle-projects.outputs.pattern }}
           exclude: '{**/*.map,**/node_modules/**,**/bundle-analysis.json}'
-          comment-key: bundle-${{ matrix.project.slug }}
+          comment-key: betternotify-dist
           strip-hash: '-([A-Za-z0-9_-]{8})(?=\.js$)'

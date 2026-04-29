@@ -42,6 +42,7 @@ jobs:
             release
             deps
             repo
+            ci
           requireScope: false
           subjectPattern: ^(?![A-Z]).+$
           subjectPatternError: |
