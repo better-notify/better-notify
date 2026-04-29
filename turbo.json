@@ -3,14 +3,26 @@
   "ui": "tui",
   "tasks": {
     "build": {
+      "cache": true,
+      "inputs": [
+        "src/**",
+        "tsdown.config.ts",
+        "tsconfig.json",
+        "package.json",
+        "!src/**/*.test.ts",
+        "!**/.DS_Store",
+        "!**/node_modules/**"
+      ],
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".next/**", "build/**", ".output/**", "**/.tsbuildinfo"]
     },
     "typecheck": {
+      "cache": true,
       "outputs": [],
       "dependsOn": ["^build"]
     },
     "test": {
+      "cache": true,
       "dependsOn": ["^build"],
       "outputs": []
     },
@@ -26,13 +38,14 @@
       "persistent": true
     },
     "//#oxlint": {
+      "cache": true,
       "outputs": []
     },
     "//#oxlint:fix": {
-      "cache": false
+      "cache": true
     },
     "//#oxfmt": {
-      "cache": false
+      "cache": true
     }
   }
 }
