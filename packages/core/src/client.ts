@@ -25,34 +25,90 @@ export type RouteUnion<R extends AnyCatalog> = {
   };
 }[keyof R['definitions'] & string];
 
+/**
+ * Context passed to {@link ClientHooks.onBeforeSend | `onBeforeSend`} hooks.
+ * Available on every hook type as the base set of fields.
+ */
 export type BeforeSendCtx<R extends AnyCatalog> = RouteUnion<R> & {
+  /** Full send arguments (includes `input` plus channel-specific fields). */
   args: SendArgs<unknown>;
+  /** Context object at the time the hook fires. */
   ctx: unknown;
+  /** UUID assigned to this individual send attempt. */
   messageId: string;
 };
 
+/**
+ * Context passed to {@link ClientHooks.onExecute | `onExecute`} hooks.
+ * Fires after a successful render, before the transport send.
+ */
 export type ExecuteCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
+  /** The rendered output produced by the template adapter. */
   rendered: unknown;
 };
 
+/**
+ * Context passed to {@link ClientHooks.onAfterSend | `onAfterSend`} hooks.
+ * Fires only on a successful send.
+ */
 export type AfterSendCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
+  /** The result returned by the transport. */
   result: ChannelSendResult<unknown>;
+  /** Combined render + send duration in milliseconds. */
   durationMs: number;
 };
 
+/**
+ * The stage of the send pipeline where an error originated.
+ *
+ * | Phase        | When it fires                                                          |
+ * | ------------ | ---------------------------------------------------------------------- |
+ * | `validate`   | Input fails the schema declared with `.input()`                        |
+ * | `middleware` | A middleware throws (or calls `next` which throws) outside render/send |
+ * | `render`     | The template adapter throws during `render()`                          |
+ * | `send`       | The transport throws or returns `{ ok: false }`                        |
+ * | `hook`       | A lifecycle hook (`onBeforeSend`, `onExecute`, `onAfterSend`) throws   |
+ */
 export type ErrorPhase = 'validate' | 'middleware' | 'render' | 'send' | 'hook';
 
+/**
+ * Context passed to {@link ClientHooks.onError | `onError`} hooks.
+ * Fires on any error regardless of phase; use `phase` to distinguish sources.
+ */
 export type ErrorCtx<R extends AnyCatalog> = BeforeSendCtx<R> & {
+  /** The `NotifyRpcError` that triggered this hook (always a `NotifyRpcError`). */
   error: NotifyRpcError;
+  /** Pipeline stage where the error originated — see {@link ErrorPhase}. */
   phase: ErrorPhase;
 };
 
+/** A lifecycle hook handler. May be async; failures are isolated and reported via `onError`. */
 export type HookFn<T> = (params: T) => void | Promise<void>;
 
+/**
+ * Lifecycle hooks for a {@link createClient} instance.
+ *
+ * Hooks observe the pipeline but cannot short-circuit the pipeline with a
+ * successful synthetic result — use middleware for that. Each hook accepts a single handler or an array of
+ * handlers executed in order.
+ *
+ * Execution order per send:
+ * 1. `onBeforeSend` — after validation, before the middleware chain
+ * 2. `onExecute` — after render succeeds, before transport send
+ * 3. `onAfterSend` — after a successful transport send
+ * 4. `onError` — whenever any phase throws; also called if another hook throws
+ *
+ * Hook failures are logged and routed to `onError` (with `phase: 'hook'`).
+ * A failing hook does not stop other hooks in the same array from running.
+ */
 export type ClientHooks<R extends AnyCatalog = AnyCatalog> = {
+  /** Fires after validation passes, before the middleware chain. */
   onBeforeSend?: HookFn<BeforeSendCtx<R>> | HookFn<BeforeSendCtx<R>>[];
+  /** Fires after render succeeds, before the transport send. */
   onExecute?: HookFn<ExecuteCtx<R>> | HookFn<ExecuteCtx<R>>[];
+  /** Fires after a successful transport send. Not called on error. */
   onAfterSend?: HookFn<AfterSendCtx<R>> | HookFn<AfterSendCtx<R>>[];
+  /** Fires on any pipeline error regardless of phase. Also fires when another hook throws. */
   onError?: HookFn<ErrorCtx<R>> | HookFn<ErrorCtx<R>>[];
 };
 
