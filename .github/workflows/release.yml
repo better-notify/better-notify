@@ -18,7 +18,7 @@ jobs:
       paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
       - name: Release Please
-        uses: googleapis/release-please-action@v5
+        uses: googleapis/release-please-action@v5.0.0
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -54,7 +54,9 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Publish
-        run: pnpm --filter "./${{ matrix.path }}" publish --access public --no-git-checks --provenance --tag alpha
+      - uses: ./.github/actions/publish-packages
+        with:
+          filter: './${{ matrix.path }}'
+          tag: alpha
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

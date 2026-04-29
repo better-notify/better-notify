@@ -1,0 +1,37 @@
+name: Publish Packages
+description: >
+  Publish workspace packages to npm with optional version override.
+  Requires NODE_AUTH_TOKEN set in the calling step's environment.
+
+inputs:
+  filter:
+    description: pnpm --filter selector for the package(s) to publish.
+    required: true
+  tag:
+    description: npm dist-tag (e.g., latest, alpha, pr-42).
+    required: true
+  version:
+    description: Override version to set before publishing. Skipped when empty.
+    default: ''
+  access:
+    description: npm access level (public or restricted).
+    default: public
+  provenance:
+    description: Include provenance attestation (requires id-token write permission).
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Override version
+      if: inputs.version != ''
+      shell: bash
+      run: pnpm --filter "${{ inputs.filter }}" exec npm version "${{ inputs.version }}" --no-git-tag-version --allow-same-version
+
+    - name: Publish
+      shell: bash
+      run: |
+        set -euo pipefail
+        args=(--access "${{ inputs.access }}" --no-git-checks --tag "${{ inputs.tag }}")
+        [[ "${{ inputs.provenance }}" == "true" ]] && args+=(--provenance)
+        pnpm --filter "${{ inputs.filter }}" publish "${args[@]}"
