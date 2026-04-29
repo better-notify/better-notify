@@ -71,9 +71,7 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
 
     const ctx = context?.({ job }) ?? ({} as Ctx);
 
-    const [renderErr, rendered] = await handlePromise(
-      channel.render(def as never, { input }, ctx),
-    );
+    const [renderErr, rendered] = await handlePromise(channel.render(def as never, { input }, ctx));
     if (renderErr) {
       throw new NotifyRpcError({
         message: `Render failed for route "${payload.route}": ${renderErr.message}`,

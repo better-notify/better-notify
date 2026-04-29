@@ -10,7 +10,10 @@ import type {
 
 /** @experimental BullMQ queue adapter — not yet implemented; ships in v0.3. */
 export type BullmqOptions = {
-  connection: { url: string } | { host: string; port: number; password?: string } | ConnectionOptions;
+  connection:
+    | { url: string }
+    | { host: string; port: number; password?: string }
+    | ConnectionOptions;
   prefix?: string;
   defaultJobOptions?: {
     attempts?: number;
