@@ -42,14 +42,14 @@ jobs:
             [[ "$(jq -r '.private // false' "$manifest")" == "true" ]] && continue
 
             versions="$(npm view "$name" versions --json 2>/dev/null \
-              | jq -r --arg prefix "$prefix" 'if type == "array" then .[] else . end | select(startswith($prefix))' 2>/dev/null)" || continue
+              | jq -r --arg prefix "$prefix" 'if type == "array" then .[] else . end | select(startswith($prefix))' 2>/dev/null)" || versions=""
 
-            [[ -z "$versions" ]] && continue
-
-            while IFS= read -r version; do
-              echo "Unpublishing ${name}@${version}"
-              npm unpublish "${name}@${version}" --force || true
-            done <<< "$versions"
+            if [[ -n "$versions" ]]; then
+              while IFS= read -r version; do
+                echo "Unpublishing ${name}@${version}"
+                npm unpublish "${name}@${version}" --force || true
+              done <<< "$versions"
+            fi
 
             echo "Removing dist-tag ${tag} from ${name}"
             npm dist-tag rm "$name" "$tag" 2>/dev/null || true
