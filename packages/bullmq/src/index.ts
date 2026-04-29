@@ -1,5 +1,6 @@
 import { NotifyRpcNotImplementedError } from '@betternotify/core';
 
+/** @experimental BullMQ queue adapter — not yet implemented; ships in v0.3. */
 export type BullmqOptions = {
   connection: { url: string } | { host: string; port: number; password?: string };
   prefix?: string;
@@ -11,6 +12,7 @@ export type BullmqOptions = {
   };
 };
 
+/** @experimental BullMQ queue adapter — not yet implemented; ships in v0.3. */
 export const bullmq = (_opts: BullmqOptions): never => {
   throw new NotifyRpcNotImplementedError('@betternotify/bullmq queue adapter (v0.3)');
 };
