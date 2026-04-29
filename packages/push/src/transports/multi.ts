@@ -1,11 +1,11 @@
 import {
   multiTransport as coreMultiTransport,
   createTransport as coreCreateTransport,
-} from '@betternotify/core';
+} from '@betternotify/core/transports';
 import type {
   MultiTransportOptions as CoreMultiTransportOptions,
   CreateTransportOptions as CoreCreateTransportOptions,
-} from '@betternotify/core';
+} from '@betternotify/core/transports';
 import type { RenderedPush } from '../types.js';
 import type { PushTransportData, Transport } from './types.js';
 

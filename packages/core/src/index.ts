@@ -36,12 +36,6 @@ export { createPlugin } from './plugins/index.js';
 
 export type { Transport, TransportResult, AnyTransport, SendContext } from './transport.js';
 
-export {
-  multiTransport,
-  createTransport,
-  createMockTransport,
-  mapTransport,
-} from './transports/index.js';
 export type {
   TransportEntry,
   MultiTransportOptions,
@@ -54,15 +48,6 @@ export type {
   MapTransportFn,
 } from './transports/index.js';
 
-export {
-  createMiddleware,
-  withDryRun,
-  withTagInject,
-  withEventLogger,
-  withRateLimit,
-  withIdempotency,
-  withTracing,
-} from './middlewares/index.js';
 export type {
   Middleware,
   AnyMiddleware,
@@ -79,7 +64,7 @@ export type {
   TracingNameParams,
 } from './middlewares/index.js';
 
-export { consoleLogger, fromPino } from './logger.js';
+export { consoleLogger } from './logger.js';
 export type { LoggerLike, LogLevel, ConsoleLoggerOptions } from './logger.js';
 
 export { validate } from './schema.js';
@@ -108,14 +93,6 @@ export type {
   RateLimitStore,
   IdempotencyStore,
 } from './stores/types.js';
-export {
-  createSuppressionList,
-  createIdempotencyStore,
-  createRateLimitStore,
-  inMemorySuppressionList,
-  inMemoryRateLimitStore,
-  inMemoryIdempotencyStore,
-} from './stores/index.js';
 export type {
   CreateSuppressionListOptions,
   CreateIdempotencyStoreOptions,
@@ -132,7 +109,6 @@ export type {
   ConsoleEventSinkOptions,
   CreateEventSinkOptions,
 } from './sinks/index.js';
-export { createEventSink, inMemoryEventSink, consoleEventSink } from './sinks/index.js';
 
 export type {
   SpanLike,
@@ -142,7 +118,6 @@ export type {
   InMemoryTracer,
   RecordedSpan,
 } from './tracers/index.js';
-export { inMemoryTracer } from './tracers/index.js';
 
 export type {
   Channel,

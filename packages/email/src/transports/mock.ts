@@ -1,4 +1,4 @@
-import { createMockTransport } from '@betternotify/core';
+import { createMockTransport } from '@betternotify/core/transports';
 import type { Priority, RenderedMessage, Tags } from '../types.js';
 import type { EmailTransportData, Transport } from './types.js';
 import { normalizeAddress } from '../lib/normalize-address.js';
