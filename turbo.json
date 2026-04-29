@@ -42,10 +42,10 @@
       "outputs": []
     },
     "//#oxlint:fix": {
-      "cache": true
+      "cache": false
     },
     "//#oxfmt": {
-      "cache": true
+      "cache": false
     }
   }
 }
