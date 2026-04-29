@@ -11,7 +11,7 @@
   },
   "type": "module",
   "scripts": {
-    "prepare": "husky install",
+    "postinstall": "husky install",
     "build": "turbo run build",
     "ci": "turbo run build typecheck test //#oxlint",
     "dev": "turbo run dev --filter=@welcome-text/cli",
