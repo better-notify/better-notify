@@ -76,7 +76,7 @@ Six strategies cover the common delivery patterns. The first three are _sequenti
 | `'random'`      | sequential  | uniformly random index                             | Load spreading without per-process coordination — multiple workers distribute without sharing state. |
 | `'race'`        | parallel    | all at once                                        | Latency redundancy — first to succeed wins; the others stay in-flight but their result is ignored.  |
 | `'parallel'`    | parallel    | all at once                                        | Verified-redundancy delivery — ALL must succeed (e.g. primary + audit copy). Throws if any fail.   |
-| `'mirrored'`    | parallel    | primary only (awaited); mirrors are fire-and-forget | Primary + observability mirrors — mirror failures are logged at `warn` and never affect the outcome. |
+| `'mirrored'`    | mixed       | primary awaited; mirrors fire after primary succeeds | Primary + observability mirrors — mirror failures are logged at `warn` and never affect the outcome. |
 
 > Weighted distribution is deferred to v0.3 — the union expands without a breaking change.
 
@@ -175,7 +175,7 @@ const transport = multiTransport({
 
 Applies to sequential strategies only (`'failover'`, `'round-robin'`, `'random'`).
 
-`maxAttemptsPerTransport` controls how many times a single inner is retried on a _retriable_ error before advancing. Defaults to `1` (no retry). A non-retriable error advances immediately regardless of this value.
+`maxAttemptsPerTransport` controls how many total attempts are made per transport on a _retriable_ error before advancing (including the initial attempt; so "retries" are `maxAttemptsPerTransport - 1`). Defaults to `1` (no retry). A non-retriable error advances immediately regardless of this value.
 
 `backoff: { initialMs, factor, maxMs }` adds exponential delay between retries on the _same_ transport. Delay formula: `min(maxMs, initialMs × factor^(attempt-1))`. No jitter applied. Backoff resets when advancing to the next transport; advancing between transports never sleeps.
 
@@ -191,7 +191,7 @@ const transport = multiTransport({
   maxAttemptsPerTransport: 3,
   backoff: { initialMs: 100, factor: 2, maxMs: 2000 },
   isRetriable: (err) => err instanceof TimeoutError,
-  // providerA attempt delays: 100ms, 200ms → advance to providerB on any other error
+  // providerA attempt delays: 100ms, 200ms → advance to providerB on any non-retriable error
 });
 ```
 
