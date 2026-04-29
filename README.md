@@ -2,7 +2,7 @@
 
 End-to-end typed notification infrastructure for Node.js. Define a multi-channel `Catalog` once, get a typed client (`mail.<route>.send(...)` / `.batch(...)`) that dispatches to email, SMS, push, or any custom channel — all sharing the same validation, middleware, hooks, and transport contracts.
 
-> **Status:** v0.0.1. Multi-channel pipeline (email + SMS + push) is real, with generic `Channel<>` and `Transport<TRendered, TData>` contracts in `@betternotify/core` and a `defineChannel` factory for custom channels. Queue/worker and webhook router for non-email channels land later.
+> **Status:** v0.0.3-alpha. Multi-channel pipeline (email + SMS + push) is real, with generic `Channel<>` and `Transport<TRendered, TData>` contracts in `@betternotify/core` and a `defineChannel` factory for custom channels. Queue/worker and webhook router for non-email channels land later.
 
 ## Quick start
 
@@ -143,11 +143,7 @@ pnpm typecheck
 pnpm test:coverage
 ```
 
-Add a changeset for any user-facing change:
-
-```sh
-pnpm changeset
-```
+Releases are managed by release-please via conventional commits — no manual changeset step needed.
 
 Requires Node ≥ 22 and pnpm 10.
 
