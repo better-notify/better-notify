@@ -1,0 +1,127 @@
+name: Affected Projects
+description: Query Turborepo for affected projects and expose reusable GitHub Actions outputs.
+
+inputs:
+  base:
+    description: Git ref to compare from.
+    required: true
+  head:
+    description: Git ref to compare to.
+    default: HEAD
+  task:
+    description: Turbo task used to calculate affected projects.
+    default: build
+  package-glob:
+    description: Package manifest glob used to map workspace metadata.
+    default: packages/*/package.json
+  include-private:
+    description: Include private packages.
+    default: 'false'
+  require-script:
+    description: Require package.json to define the selected task as a script.
+    default: 'true'
+  require-dist:
+    description: Require package.json files to include dist.
+    default: 'true'
+  dist-glob:
+    description: File glob appended to each selected project path for bundle reports.
+    default: dist/**/*.js
+  summary-title:
+    description: Step summary heading.
+    default: Affected Projects
+
+outputs:
+  projects:
+    description: JSON array of affected projects with name, path, and slug.
+    value: ${{ steps.projects.outputs.projects }}
+  names:
+    description: JSON array of affected package names.
+    value: ${{ steps.projects.outputs.names }}
+  paths:
+    description: JSON array of affected package paths.
+    value: ${{ steps.projects.outputs.paths }}
+  slugs:
+    description: JSON array of affected package slugs.
+    value: ${{ steps.projects.outputs.slugs }}
+  pattern:
+    description: Combined minimatch pattern for affected project dist files.
+    value: ${{ steps.projects.outputs.pattern }}
+  has_projects:
+    description: Whether any affected projects matched.
+    value: ${{ steps.projects.outputs.has_projects }}
+  has-projects:
+    description: Whether any affected projects matched.
+    value: ${{ steps.projects.outputs.has_projects }}
+  count:
+    description: Number of matched affected projects.
+    value: ${{ steps.projects.outputs.count }}
+
+runs:
+  using: composite
+  steps:
+    - id: projects
+      shell: bash
+      run: |
+        set -euo pipefail
+        shopt -s nullglob
+
+        turbo_stderr="$(mktemp)"
+        if ! affected="$(pnpm exec turbo query affected --tasks "${{ inputs.task }}" --base "${{ inputs.base }}" --head "${{ inputs.head }}" 2> "$turbo_stderr" | sed -n '/^{/,$p')"; then
+          cat "$turbo_stderr" >&2
+          exit 1
+        fi
+        rm "$turbo_stderr"
+
+        affected_names="$(jq -c '[.data.affectedTasks.items[].package.name] | unique' <<< "$affected")"
+        projects="[]"
+
+        for manifest in ${{ inputs.package-glob }}; do
+          path="${manifest%/package.json}"
+
+          if jq -e \
+            --argjson affected_names "$affected_names" \
+            --arg include_private "${{ inputs.include-private }}" \
+            --arg require_script "${{ inputs.require-script }}" \
+            --arg require_dist "${{ inputs.require-dist }}" \
+            --arg task "${{ inputs.task }}" '
+              (.name as $name | $affected_names | index($name) != null)
+              and ($include_private == "true" or .private != true)
+              and ($require_script != "true" or (.scripts[$task] | type == "string"))
+              and ($require_dist != "true" or (.files | type == "array" and index("dist") != null))
+            ' "$manifest" > /dev/null; then
+            name="$(jq -r '.name' "$manifest")"
+            slug="$(jq -nr --arg name "$name" '$name | sub("^@"; "") | gsub("[^a-zA-Z0-9]+"; "-") | sub("^-"; "") | sub("-$"; "")')"
+            projects="$(jq -c --arg name "$name" --arg path "$path" --arg slug "$slug" '. + [{ name: $name, path: $path, slug: $slug }]' <<< "$projects")"
+          fi
+        done
+
+        projects="$(jq -c 'sort_by(.name)' <<< "$projects")"
+        names="$(jq -c 'map(.name)' <<< "$projects")"
+        paths="$(jq -c 'map(.path)' <<< "$projects")"
+        slugs="$(jq -c 'map(.slug)' <<< "$projects")"
+        count="$(jq 'length' <<< "$projects")"
+        pattern="$(jq -r --arg dist_glob "${{ inputs.dist-glob }}" 'if length == 0 then "" elif length == 1 then "\(.[0].path)/\($dist_glob)" else "{\(map(.path) | join(","))}/\($dist_glob)" end' <<< "$projects")"
+
+        echo "projects=$projects" >> "$GITHUB_OUTPUT"
+        echo "names=$names" >> "$GITHUB_OUTPUT"
+        echo "paths=$paths" >> "$GITHUB_OUTPUT"
+        echo "slugs=$slugs" >> "$GITHUB_OUTPUT"
+        echo "pattern=$pattern" >> "$GITHUB_OUTPUT"
+        echo "has_projects=$([[ "$count" -gt 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+        echo "count=$count" >> "$GITHUB_OUTPUT"
+
+        if [[ "$count" -gt 0 ]]; then
+          {
+            echo "### ${{ inputs.summary-title }}"
+            echo
+            echo "| Package | Path |"
+            echo "| --- | --- |"
+            jq -r '.[] | "| \(.name) | `\(.path)` |"' <<< "$projects"
+          } >> "$GITHUB_STEP_SUMMARY"
+        else
+          {
+            echo "### ${{ inputs.summary-title }}"
+            echo
+            echo "No affected projects matched."
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi

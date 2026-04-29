@@ -16,8 +16,5 @@
 | ![Before Screenshot](URL_BEFORE_IMAGE) | ![After Screenshot](URL_AFTER_IMAGE)
 -->
 
-<!---
-Reminders:
-- Have you updated any relevant documentation?
-- If there are variable changes, remember to update 1password and send a message to the team
--->
+<!-- start Preview packages update -->
+<!-- end Preview packages update -->
