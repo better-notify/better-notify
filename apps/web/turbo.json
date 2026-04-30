@@ -1,0 +1,19 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "src/**",
+        "content/**",
+        "public/**",
+        "source.config.ts",
+        "vite.config.ts",
+        "tsconfig.json",
+        "wrangler.toml",
+        "package.json",
+        "!**/node_modules/**"
+      ]
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "title": "Channels",
+  "icon": "Radio",
+  "pages": ["email", "sms", "push", "custom-channels"]
+}

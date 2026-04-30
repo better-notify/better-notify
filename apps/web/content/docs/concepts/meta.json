@@ -1,0 +1,5 @@
+{
+  "title": "Concepts",
+  "icon": "Lightbulb",
+  "pages": ["catalog-and-routes", "channels", "middleware", "hooks", "plugins", "standard-schema"]
+}

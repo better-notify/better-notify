@@ -1,0 +1,5 @@
+{
+  "title": "Infrastructure",
+  "icon": "Server",
+  "pages": ["queue-and-workers", "webhook-router", "stores", "sinks", "tracers", "logger"]
+}

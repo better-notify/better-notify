@@ -10,4 +10,5 @@ coverage
 *.log
 vitest.config.ts*
 docs/
+!apps/web/content/docs/
 plan/
