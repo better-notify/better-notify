@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 
 import { baseOptions } from '@/lib/layout.shared';
+import { gitConfig } from '@/lib/shared';
 
 const LandingPage = () => {
   return (
@@ -37,7 +38,7 @@ await mail.welcome.send({ to: "user@example.com", input: { name: "Ada" } })`}</c
             Get Started
           </Link>
           <a
-            href="https://github.com/better-notify/better-notify"
+            href={`https://github.com/${gitConfig.user}/${gitConfig.repo}`}
             target="_blank"
             rel="noopener noreferrer"
             className="border-fd-border text-fd-foreground hover:bg-fd-accent rounded-md border px-6 py-2.5 text-sm font-medium transition-colors"
