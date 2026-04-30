@@ -2,6 +2,16 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
+    "//#oxlint": {
+      "cache": true,
+      "outputs": []
+    },
+    "//#oxlint:fix": {
+      "cache": false
+    },
+    "//#oxfmt": {
+      "cache": false
+    },
     "build": {
       "cache": true,
       "inputs": [
@@ -37,15 +47,10 @@
       "cache": false,
       "persistent": true
     },
-    "//#oxlint": {
-      "cache": true,
-      "outputs": []
-    },
-    "//#oxlint:fix": {
-      "cache": false
-    },
-    "//#oxfmt": {
-      "cache": false
+    "deploy": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": false
     }
   }
 }

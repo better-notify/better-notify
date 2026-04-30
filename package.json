@@ -15,6 +15,7 @@
     "build": "turbo run build",
     "ci": "turbo run build typecheck test //#oxlint",
     "dev": "turbo run dev --filter=@welcome-text/cli",
+    "all:deploy": "turbo run deploy",
     "fmt": "turbo run //#oxfmt",
     "gen": "turbo gen",
     "lint": "turbo run //#oxlint",
@@ -26,7 +27,8 @@
     "test": "turbo run test",
     "test:coverage": "vitest run --coverage",
     "typecheck": "turbo run typecheck",
-    "web:dev": "turbo run dev --filter=@betternotify/web"
+    "web:dev": "turbo run dev --filter=@betternotify/web",
+    "web:deploy": "turbo run deploy --filter=@betternotify/web"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

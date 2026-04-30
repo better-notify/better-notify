@@ -43,6 +43,7 @@ jobs:
             deps
             repo
             ci
+            web
           requireScope: false
           subjectPattern: ^(?![A-Z]).+$
           subjectPatternError: |
