@@ -1,5 +1,6 @@
 import { Queue, Worker as BullWorker } from 'bullmq';
 import type { ConnectionOptions } from 'bullmq';
+import { NotifyRpcError } from '@betternotify/core';
 import type {
   QueueAdapter,
   EmailJobPayload,
@@ -57,7 +58,12 @@ export const bullmq = (opts: BullmqOptions): QueueAdapter => {
         jobId: jobOpts?.jobId,
       });
       if (!job.id) {
-        throw new Error(`BullMQ enqueued job for route "${payload.route}" but returned no id`);
+        throw new NotifyRpcError({
+          message: `BullMQ enqueued job for route "${payload.route}" but returned no id`,
+          code: 'PROVIDER',
+          route: payload.route,
+          messageId: payload.messageId,
+        });
       }
       return {
         jobId: job.id,

@@ -30,6 +30,7 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
 
   const completedHandlers: Array<(...args: any[]) => void> = [];
   const failedHandlers: Array<(...args: any[]) => void> = [];
+  let startPromise: Promise<void> | null = null;
 
   const processJob = async (job: JobEnvelope): Promise<void> => {
     const { payload } = job;
@@ -53,10 +54,10 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
       });
     }
 
-    const [validateErr, input] = await handlePromise(
+    const validateTuple = await handlePromise(
       validate(def.schema, payload.input, { route: payload.route }),
     );
-    if (validateErr) throw validateErr;
+    if (validateTuple[0]) throw validateTuple[0];
 
     const channel = channels[def.channel] as AnyChannel | undefined;
     if (!channel) {
@@ -82,10 +83,10 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
       });
     }
 
-    const [renderErr, _rendered] = await handlePromise(
-      Promise.resolve().then(() => channel.render(def as never, { input }, ctx)),
+    const renderTuple = await handlePromise(
+      Promise.resolve().then(() => channel.render(def as never, { input: validateTuple[1] }, ctx)),
     );
-    const rendered = _rendered as NonNullable<typeof _rendered>;
+    const renderErr = renderTuple[0];
     if (renderErr) {
       throw new NotifyRpcError({
         message: `Render failed for route "${payload.route}": ${renderErr.message}`,
@@ -95,6 +96,7 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
         cause: renderErr,
       });
     }
+    const rendered = renderTuple[1];
 
     const sendCtx: SendContext = {
       route: payload.route,
@@ -102,9 +104,11 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
       attempt: job.attempt,
     };
 
-    const [sendThrow, sendReturn] = await handlePromise(
+    const sendTuple = await handlePromise(
       Promise.resolve().then(() => transport.send(rendered, sendCtx)),
     );
+    const sendThrow = sendTuple[0];
+    const sendReturn = sendTuple[1];
     const failure: Error | null = sendThrow
       ? sendThrow
       : sendReturn && sendReturn.ok === false
@@ -124,7 +128,8 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
   };
 
   const handler = async (job: JobEnvelope): Promise<void> => {
-    const [err] = await handlePromise(processJob(job));
+    const processTuple = await handlePromise(processJob(job));
+    const err = processTuple[0];
     if (err) {
       for (const h of failedHandlers) {
         try {
@@ -147,7 +152,13 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
     },
 
     async start(): Promise<void> {
-      await queue.subscribe(handler);
+      if (!startPromise) {
+        startPromise = queue.subscribe(handler).catch((err) => {
+          startPromise = null;
+          throw err;
+        });
+      }
+      await startPromise;
     },
 
     async close(): Promise<void> {

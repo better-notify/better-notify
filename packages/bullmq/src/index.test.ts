@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NotifyRpcError } from '@betternotify/core';
 import type { EmailJobPayload } from '@betternotify/core/queue';
 
 const mockJobAdd = vi.fn();
@@ -74,12 +75,14 @@ describe('bullmq() — enqueue', () => {
     expect(opts).toMatchObject({ delay: 5000, priority: 2, jobId: 'custom-id' });
   });
 
-  it('throws when BullMQ returns no job id', async () => {
+  it('throws NotifyRpcError when BullMQ returns no job id', async () => {
     mockJobAdd.mockResolvedValue({ id: undefined });
     const adapter = bullmq({ connection: baseConnection });
-    await expect(adapter.enqueue(makePayload())).rejects.toThrow(
-      'BullMQ enqueued job for route "test.send" but returned no id',
-    );
+    await expect(adapter.enqueue(makePayload())).rejects.toThrow(NotifyRpcError);
+    await expect(adapter.enqueue(makePayload())).rejects.toMatchObject({
+      code: 'PROVIDER',
+      message: 'BullMQ enqueued job for route "test.send" but returned no id',
+    });
   });
 });
 
