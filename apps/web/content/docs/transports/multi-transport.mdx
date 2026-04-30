@@ -1,12 +1,12 @@
 ---
 title: Multi-Transport
 icon: GitFork
-description: Route notifications through multiple transports with failover, load balancing, and redundancy strategies
+description: Combine multiple transports with failover, load balancing, and redundancy
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-`multiTransport()` composes multiple transports behind a single `Transport` interface. Pick a strategy that matches your delivery requirements — from simple failover to full parallel redundancy.
+`multiTransport()` composes multiple transports behind a single `Transport` interface. Pick a strategy that matches how you want delivery to behave.
 
 Strategies split into two families:
 
@@ -22,7 +22,27 @@ Strategies split into two families:
 | `parallel` | Parallel | All fire, all must succeed |
 | `mirrored` | Parallel | Primary awaited, mirrors fire-and-forget |
 
-## Failover
+## Sequential Strategies
+
+Sequential strategies try one transport at a time. On failure, they advance to the next transport in the list. The starting point differs by strategy:
+
+```
+          failover                round-robin             random
+          ────────                ───────────             ──────
+
+send() ─► T1 ─────────►  send() ─► T1 ─────────►  send() ─► T2 ─────────►
+           │ fail                    │ fail                    │ fail
+           ▼                         ▼                         ▼
+          T2 ─────────►           T2 ─────────►            T3 ─────────►
+           │ fail                    │ fail                    │ fail
+           ▼                         ▼                         ▼
+          T3 ── ok ──►            T3 ── ok ──►             T1 ── ok ──►
+
+      always starts           advances start            random start
+       at T1                  index each call           index each call
+```
+
+### Failover
 
 Every `send()` starts at `transports[0]` and walks forward on failure. Use when you have a clear primary provider and one or more backups.
 
@@ -38,7 +58,7 @@ const transport = multiTransport({
 });
 ```
 
-## Round-Robin
+### Round-Robin
 
 An in-process counter advances the start index on each `send()`, distributing load evenly across equivalent providers. On failure within a single send, it still walks forward through the remaining transports.
 
@@ -53,7 +73,7 @@ const transport = multiTransport({
 });
 ```
 
-## Random
+### Random
 
 Each `send()` picks a uniformly random start index, then walks forward on failure. Spreads load without per-process counter coordination — useful across multiple server instances.
 
@@ -67,9 +87,28 @@ const transport = multiTransport({
 });
 ```
 
-## Race
+## Parallel Strategies
 
-Dispatches to all transports in parallel via `Promise.any()`. Returns the first successful result; throws when all fail. Use for latency-sensitive sends where any provider can fulfill the delivery.
+Parallel strategies fire all transports concurrently. They differ in what they wait for and how they handle failures:
+
+```
+          race                    parallel                mirrored
+          ────                    ────────                ────────
+
+          ┌─► T1 ── ok ──►       ┌─► T1 ── ok ──┐       T1 (primary)
+          │                       │               │        │
+send() ───┼─► T2 ── ok           │               ├─► ok   │ await
+          │                 send()┼─► T2 ── ok ──┤         ▼
+          └─► T3 ── ok           │               │       result ──►
+                                  └─► T3 ── ok ──┘
+      first success                                    T2, T3 (mirrors)
+      wins                    all must                  fire-and-forget
+                              succeed                   failures logged
+```
+
+### Race
+
+Dispatches to all transports in parallel via `Promise.any()`. Returns the first successful result; throws when all fail. Use for latency-sensitive sends where any provider can deliver.
 
 ```ts
 const transport = multiTransport({
@@ -82,9 +121,9 @@ const transport = multiTransport({
 });
 ```
 
-## Parallel
+### Parallel
 
-Dispatches to all transports in parallel via `Promise.allSettled()`. All must succeed — throws on any failure. Returns the first transport's data as the canonical result. Use for verified-redundancy delivery where every copy must land (e.g. primary delivery + audit copy).
+Dispatches to all transports in parallel via `Promise.allSettled()`. All must succeed — throws on any failure. Returns the first transport's data as the canonical result. Use for verified-redundancy delivery where every copy must land (e.g. primary + audit copy).
 
 ```ts
 const transport = multiTransport({
@@ -96,9 +135,9 @@ const transport = multiTransport({
 });
 ```
 
-## Mirrored
+### Mirrored
 
-Awaits `transports[0]` (the primary) and returns its result. Remaining transports fire-and-forget in the background — their failures are logged at `warn` level but never propagate. Use when secondary providers are observability mirrors whose failure should not affect the user-visible outcome.
+Awaits `transports[0]` (the primary) and returns its result. Remaining transports fire-and-forget in the background — failures log at `warn` level but never propagate. Use when secondary providers are observability mirrors whose failure should not affect the user-visible outcome.
 
 ```ts
 const transport = multiTransport({
@@ -170,7 +209,7 @@ const transport = multiTransport({
 });
 ```
 
-Delay between retries on the **same** transport follows `min(maxMs, initialMs × factor^(attempt-1))`. No jitter is applied. Backoff resets when advancing to the next transport — advancing never sleeps.
+Delay between retries on the **same** transport follows `min(maxMs, initialMs × factor^(attempt-1))`. The formula adds no jitter. Backoff resets when advancing to the next transport — advancing never sleeps.
 
 <TypeTable
   type={{
@@ -193,5 +232,5 @@ Delay between retries on the **same** transport follows `min(maxMs, initialMs ×
 
 The composite delegates `verify()` and `close()` to all inner transports in parallel.
 
-- **`verify()`** returns `{ ok: true }` if at least one inner transport verifies successfully. Individual failures are captured per-transport in the `details` field.
+- **`verify()`** returns `{ ok: true }` if at least one inner transport succeeds. Individual failures are captured per-transport in the `details` field.
 - **`close()`** runs every inner `close()` in parallel. Individual errors are logged and swallowed so one bad transport does not strand the others.
