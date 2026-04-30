@@ -297,6 +297,10 @@ export const createClient = <R extends AnyCatalog, Channels extends ChannelMap =
   }
 
   const close = async (): Promise<void> => {
+    if (options.queue) {
+      const [err] = await handlePromise(options.queue.close());
+      if (err) baseLogger.error('queue adapter close failed', { err });
+    }
     for (let i = plugins.length - 1; i >= 0; i--) {
       const plugin = plugins[i];
       if (!plugin) continue;

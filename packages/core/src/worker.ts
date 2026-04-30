@@ -6,14 +6,23 @@ import type { AnyChannel, ChannelMap } from './channel/types.js';
 import type { QueueAdapter, JobEnvelope } from './queue/types.js';
 import { handlePromise } from './lib/handle-promise.js';
 
-/** @experimental Layer 5 queue worker — not yet implemented; ships in v0.3. */
+/**
+ * A running notification worker. Call {@link Worker.start | `start()`} to begin consuming jobs
+ * and {@link Worker.close | `close()`} to shut down. Subscribe to `'completed'` and `'failed'`
+ * lifecycle events via {@link Worker.on | `on()`}.
+ */
 export type Worker = {
-  on(event: 'completed' | 'failed', handler: (...args: any[]) => void): void;
+  on(event: 'completed' | 'failed', handler: (...args: any[]) => void | Promise<void>): void;
   start(): Promise<void>;
   close(): Promise<void>;
 };
 
-/** @experimental Layer 5 queue worker — not yet implemented; ships in v0.3. */
+/**
+ * Options for {@link createWorker}.
+ *
+ * @typeParam R - The notification catalog.
+ * @typeParam Ctx - Per-job context type produced by the `context` factory.
+ */
 export type CreateWorkerOptions<R extends AnyCatalog, Ctx> = {
   catalog: R;
   channels: ChannelMap;
@@ -22,7 +31,13 @@ export type CreateWorkerOptions<R extends AnyCatalog, Ctx> = {
   context?: (params: { job: JobEnvelope }) => Ctx;
 };
 
-/** @experimental Layer 5 queue worker — not yet implemented; ships in v0.3. */
+/**
+ * Creates a queue-backed notification worker that validates, renders, and sends
+ * each dequeued job through the provided catalog, channels, and transport.
+ *
+ * @typeParam R - Catalog type to serve.
+ * @typeParam Ctx - Per-job context type returned by `opts.context`.
+ */
 export const createWorker = <R extends AnyCatalog, Ctx = {}>(
   opts: CreateWorkerOptions<R, Ctx>,
 ): Worker => {
@@ -132,16 +147,12 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
     const err = processTuple[0];
     if (err) {
       for (const h of failedHandlers) {
-        try {
-          h(job, err);
-        } catch {}
+        await handlePromise(Promise.resolve().then(() => h(job, err)));
       }
       throw err;
     }
     for (const h of completedHandlers) {
-      try {
-        h(job);
-      } catch {}
+      await handlePromise(Promise.resolve().then(() => h(job)));
     }
   };
 

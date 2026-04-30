@@ -11,6 +11,11 @@ let capturedProcessor:
   | ((job: { data: unknown; id: string; attemptsMade: number }) => Promise<void>)
   | undefined;
 
+vi.mock('ioredis', () => {
+  class FakeIORedis {}
+  return { default: FakeIORedis };
+});
+
 vi.mock('bullmq', () => {
   class FakeQueue {
     add = mockJobAdd;

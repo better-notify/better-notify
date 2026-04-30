@@ -1,5 +1,6 @@
 import { Queue, Worker as BullWorker } from 'bullmq';
 import type { ConnectionOptions } from 'bullmq';
+import IORedis from 'ioredis';
 import { NotifyRpcError } from '@betternotify/core';
 import type {
   QueueAdapter,
@@ -28,7 +29,7 @@ const QUEUE_NAME = 'betternotify';
 
 const resolveConnection = (connection: BullmqOptions['connection']): ConnectionOptions => {
   if (typeof connection === 'object' && 'url' in connection) {
-    return connection.url as unknown as ConnectionOptions;
+    return new IORedis(connection.url) as unknown as ConnectionOptions;
   }
   return connection as ConnectionOptions;
 };
