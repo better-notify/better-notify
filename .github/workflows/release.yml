@@ -51,6 +51,7 @@ jobs:
       matrix:
         path: ${{ fromJSON(needs.release-please.outputs.paths_released) }}
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/prepare
         with:
           registry-url: https://registry.npmjs.org
@@ -75,6 +76,7 @@ jobs:
       group: deploy-web
       cancel-in-progress: true
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/prepare
 
       - name: Deploy

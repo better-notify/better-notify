@@ -19,6 +19,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/prepare
       - run: pnpm run ci
 
@@ -35,9 +36,10 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: ./.github/actions/prepare
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      - uses: ./.github/actions/prepare
 
       - id: projects
         uses: ./.github/actions/affected-projects
@@ -75,6 +77,7 @@ jobs:
       matrix:
         project: ${{ fromJSON(needs.bundle-projects.outputs.projects) }}
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/prepare
         with:
           registry-url: https://registry.npmjs.org

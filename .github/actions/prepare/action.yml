@@ -1,23 +1,15 @@
 name: Prepare pipeline
-description: Checkout, install pnpm + Node 22, and run pnpm install
+description: Install pnpm + Node 22 and run pnpm install
 
 inputs:
   registry-url:
     description: npm registry URL (set when publishing)
     required: false
     default: ''
-  fetch-depth:
-    description: Git fetch depth for checkout
-    required: false
-    default: '1'
 
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: ${{ inputs.fetch-depth }}
-
     - uses: pnpm/action-setup@v6
 
     - uses: actions/setup-node@v6
