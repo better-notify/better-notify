@@ -106,7 +106,7 @@ ${versionsBody}${olderLink}
   };
   writeFileSync(join(OUTPUT_DIR, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
 
-  console.log(`[changelog] generated ${slugs.length} package changelogs`);
+  process.stdout.write(`[changelog] generated ${slugs.length} package changelogs\n`);
 };
 
 run();

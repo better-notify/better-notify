@@ -50,12 +50,6 @@
         "no-console": "off",
         "typescript/no-non-null-assertion": "off"
       }
-    },
-    {
-      "files": ["apps/web/scripts/**/*.ts"],
-      "rules": {
-        "no-console": "off"
-      }
     }
   ]
 }
