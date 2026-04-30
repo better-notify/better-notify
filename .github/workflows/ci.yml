@@ -19,13 +19,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/prepare
       - run: pnpm run ci
 
   bundle-projects:
@@ -41,18 +35,9 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: ./.github/actions/prepare
         with:
           fetch-depth: 0
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
 
       - id: projects
         uses: ./.github/actions/affected-projects
@@ -90,17 +75,9 @@ jobs:
       matrix:
         project: ${{ fromJSON(needs.bundle-projects.outputs.projects) }}
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
+      - uses: ./.github/actions/prepare
         with:
-          node-version: 22
           registry-url: https://registry.npmjs.org
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
 
       - run: pnpm exec turbo run build --filter="${{ matrix.project.name }}..."
 
