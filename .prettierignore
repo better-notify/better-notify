@@ -1,2 +1,3 @@
 turbo/generators/templates
 **/CHANGELOG.md
+**/routeTree.gen.ts
