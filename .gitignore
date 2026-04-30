@@ -11,4 +11,6 @@ coverage
 vitest.config.ts*
 docs/
 !apps/web/content/docs/
+!apps/web/src/routes/docs/
 plan/
+.tanstack

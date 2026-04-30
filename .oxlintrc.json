@@ -45,6 +45,12 @@
       }
     },
     {
+      "files": ["**/*.tsx"],
+      "rules": {
+        "func-style": "off"
+      }
+    },
+    {
       "files": ["examples/**/*.ts"],
       "rules": {
         "no-console": "off",

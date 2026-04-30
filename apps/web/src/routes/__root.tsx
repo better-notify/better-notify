@@ -2,10 +2,38 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-r
 import { RootProvider } from 'fumadocs-ui/provider/tanstack';
 
 import appCss from '@/styles/app.css?url';
+import { appConfig } from '@/lib/shared';
+import { seo } from '@/lib/seo';
 
-const RootComponent = () => {
+export const Route = createRootRoute({
+  head: () => {
+    const { meta: seoMeta, links: seoLinks } = seo({
+      title: appConfig.name,
+      description: 'End-to-end typed notifications for Node.js',
+      image: `${appConfig.baseUrl}/og-image.png`,
+      url: appConfig.baseUrl,
+      canonicalUrl: appConfig.baseUrl,
+    });
+
+    return {
+      meta: [
+        { charSet: 'utf-8' },
+        { name: 'application-name', content: appConfig.name },
+        ...seoMeta,
+      ],
+      links: [
+        { rel: 'stylesheet', href: appCss },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        ...seoLinks,
+      ],
+    };
+  },
+  component: RootComponent,
+});
+
+function RootComponent() {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={appConfig.locale.bcp47} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -17,20 +45,4 @@ const RootComponent = () => {
       </body>
     </html>
   );
-};
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'BetterNotify' },
-      {
-        name: 'description',
-        content: 'End-to-end typed notifications for Node.js',
-      },
-    ],
-    links: [{ rel: 'stylesheet', href: appCss }],
-  }),
-  component: RootComponent,
-});
+}

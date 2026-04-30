@@ -1,9 +1,9 @@
 import react from '@vitejs/plugin-react';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import { cloudflare } from '@cloudflare/vite-plugin';
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import mdx from 'fumadocs-mdx/vite';
+import { cloudflare } from '@cloudflare/vite-plugin';
 
 export default defineConfig({
   server: {
@@ -11,6 +11,10 @@ export default defineConfig({
   },
   resolve: {
     tsconfigPaths: true,
+    dedupe: ['react', 'react-dom'],
+    alias: {
+      tslib: 'tslib/tslib.es6.js',
+    },
   },
   plugins: [
     mdx(await import('./source.config')),
