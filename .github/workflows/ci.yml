@@ -23,6 +23,12 @@ jobs:
       - uses: ./.github/actions/prepare
       - run: pnpm run ci
 
+  preview-gate:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.fork == false
+    steps:
+      - run: echo "Preview gate passed"
+
   bundle-projects:
     name: Bundle and analyze affected projects
     runs-on: ubuntu-latest
@@ -65,7 +71,7 @@ jobs:
   publish-preview:
     name: Preview ${{ matrix.project.name }}
     runs-on: ubuntu-latest
-    needs: [bundle-projects]
+    needs: [bundle-projects, preview-gate]
     if: needs.bundle-projects.outputs.has-projects == 'true'
     environment: preview
     permissions:
@@ -137,6 +143,62 @@ jobs:
         with:
           content: ${{ steps.content.outputs.body }}
           regex: '<!-- start Preview packages update -->.*?<!-- end Preview packages update -->'
+          regexFlags: ims
+          appendContentOnMatchOnly: 'true'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-preview-web:
+    name: Deploy preview docs
+    runs-on: ubuntu-latest
+    needs: [ci, preview-gate]
+    environment: preview
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/prepare
+
+      - name: Build docs site
+        run: pnpm exec turbo run build --filter=@betternotify/web...
+
+      - name: Upload preview version
+        id: preview
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
+          command: versions upload --preview-alias "pr-${{ github.event.pull_request.number }}"
+
+      - name: Parse preview URL
+        id: url
+        shell: bash
+        run: |
+          url=$(echo "${{ steps.preview.outputs.command-output }}" | grep -oP 'https://pr-\d+-[^\s]+\.workers\.dev' | head -1)
+
+          if [[ -z "$url" ]]; then
+            echo "::error::Could not parse preview URL from wrangler output"
+            exit 1
+          fi
+
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Update PR description with preview URL
+        uses: nefrob/pr-description@4dcc9f3ad5ec06b2a197c5f8f93db5e69d2fdca7 # v1.2.0
+        with:
+          content: |
+            <!-- start Preview docs URL -->
+            <details>
+            <summary>Preview docs</summary>
+
+            | Site | URL |
+            | --- | --- |
+            | Docs | [${{ steps.url.outputs.url }}](${{ steps.url.outputs.url }}) |
+
+            </details>
+            <!-- end Preview docs URL -->
+          regex: '<!-- start Preview docs URL -->.*?<!-- end Preview docs URL -->'
           regexFlags: ims
           appendContentOnMatchOnly: 'true'
           token: ${{ secrets.GITHUB_TOKEN }}
