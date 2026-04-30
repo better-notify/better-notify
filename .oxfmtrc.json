@@ -16,6 +16,7 @@
     "prisma",
     ".claude",
     "docs",
-    "**/CHANGELOG.md"
+    "**/CHANGELOG.md",
+    "routeTree.gen.ts"
   ]
 }
