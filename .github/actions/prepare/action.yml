@@ -1,0 +1,22 @@
+name: Prepare pipeline
+description: Install pnpm + Node 22 and run pnpm install
+
+inputs:
+  registry-url:
+    description: npm registry URL (set when publishing)
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v6
+
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 22
+        registry-url: ${{ inputs.registry-url }}
+        cache: pnpm
+
+    - run: pnpm install --frozen-lockfile
+      shell: bash
