@@ -56,8 +56,11 @@ export const bullmq = (opts: BullmqOptions): QueueAdapter => {
         priority: jobOpts?.priority,
         jobId: jobOpts?.jobId,
       });
+      if (!job.id) {
+        throw new Error(`BullMQ enqueued job for route "${payload.route}" but returned no id`);
+      }
       return {
-        jobId: job.id ?? crypto.randomUUID(),
+        jobId: job.id,
         route: payload.route,
         messageId: payload.messageId,
       };
@@ -67,10 +70,11 @@ export const bullmq = (opts: BullmqOptions): QueueAdapter => {
       worker = new BullWorker(
         QUEUE_NAME,
         async (job) => {
+          const jobId = job.id ?? '';
           await handler({
             payload: job.data as EmailJobPayload,
             attempt: job.attemptsMade + 1,
-            jobId: job.id ?? '',
+            jobId,
           });
         },
         {

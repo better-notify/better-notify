@@ -19,7 +19,6 @@ export type CreateWorkerOptions<R extends AnyCatalog, Ctx> = {
   channels: ChannelMap;
   transport: Transport;
   queue: QueueAdapter;
-  concurrency?: number;
   context?: (params: { job: JobEnvelope }) => Ctx;
 };
 
@@ -69,9 +68,24 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
       });
     }
 
-    const ctx = context?.({ job }) ?? ({} as Ctx);
+    let ctx: Ctx;
+    try {
+      ctx = context?.({ job }) ?? ({} as Ctx);
+    } catch (e) {
+      const ctxErr = e instanceof Error ? e : new Error(String(e));
+      throw new NotifyRpcError({
+        message: `Context factory threw for route "${payload.route}": ${ctxErr.message}`,
+        code: 'CONFIG',
+        route: payload.route,
+        messageId: payload.messageId,
+        cause: ctxErr,
+      });
+    }
 
-    const [renderErr, rendered] = await handlePromise(channel.render(def as never, { input }, ctx));
+    const [renderErr, _rendered] = await handlePromise(
+      Promise.resolve().then(() => channel.render(def as never, { input }, ctx)),
+    );
+    const rendered = _rendered as NonNullable<typeof _rendered>;
     if (renderErr) {
       throw new NotifyRpcError({
         message: `Render failed for route "${payload.route}": ${renderErr.message}`,
@@ -88,7 +102,9 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
       attempt: job.attempt,
     };
 
-    const [sendThrow, sendReturn] = await handlePromise(transport.send(rendered, sendCtx));
+    const [sendThrow, sendReturn] = await handlePromise(
+      Promise.resolve().then(() => transport.send(rendered, sendCtx)),
+    );
     const failure: Error | null = sendThrow
       ? sendThrow
       : sendReturn && sendReturn.ok === false
@@ -110,10 +126,18 @@ export const createWorker = <R extends AnyCatalog, Ctx = {}>(
   const handler = async (job: JobEnvelope): Promise<void> => {
     const [err] = await handlePromise(processJob(job));
     if (err) {
-      for (const h of failedHandlers) h(job, err);
+      for (const h of failedHandlers) {
+        try {
+          h(job, err);
+        } catch {}
+      }
       throw err;
     }
-    for (const h of completedHandlers) h(job);
+    for (const h of completedHandlers) {
+      try {
+        h(job);
+      } catch {}
+    }
   };
 
   return {

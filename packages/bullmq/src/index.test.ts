@@ -74,12 +74,12 @@ describe('bullmq() — enqueue', () => {
     expect(opts).toMatchObject({ delay: 5000, priority: 2, jobId: 'custom-id' });
   });
 
-  it('falls back to crypto.randomUUID() when job.id is undefined', async () => {
+  it('throws when BullMQ returns no job id', async () => {
     mockJobAdd.mockResolvedValue({ id: undefined });
     const adapter = bullmq({ connection: baseConnection });
-    const result = await adapter.enqueue(makePayload());
-    expect(typeof result.jobId).toBe('string');
-    expect(result.jobId.length).toBeGreaterThan(0);
+    await expect(adapter.enqueue(makePayload())).rejects.toThrow(
+      'BullMQ enqueued job for route "test.send" but returned no id',
+    );
   });
 });
 

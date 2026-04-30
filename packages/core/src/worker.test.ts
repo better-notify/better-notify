@@ -6,7 +6,6 @@ import type { AnyCatalog } from './catalog.js';
 import type { QueueAdapter, JobEnvelope, JobHandler } from './queue/types.js';
 import type { Channel } from './channel/types.js';
 
-// Minimal fake channel that renders input as-is
 const fakeChannel: Channel<'fake', any, any, any, any> = {
   name: 'fake',
   createBuilder: () => ({
@@ -69,7 +68,6 @@ const makeTransport = (): Transport & { sent: unknown[] } => {
   };
 };
 
-// In-memory queue adapter: subscribe() registers handler; push() invokes it
 const makeQueue = (): QueueAdapter & { push: (job: JobEnvelope) => Promise<void> } => {
   let subscribedHandler: JobHandler | undefined;
   return {
