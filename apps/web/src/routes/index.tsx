@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 
 import { baseOptions } from '@/lib/layout.shared';
@@ -30,13 +30,12 @@ const mail = createSender({ catalog, transport })
 await mail.welcome.send({ to: "user@example.com", input: { name: "Ada" } })`}</code>
         </pre>
         <div className="flex gap-4">
-          <Link
-            to="/docs/$"
-            params={{ _splat: '' }}
+          <a
+            href="/docs"
             className="bg-fd-primary text-fd-primary-foreground rounded-md px-6 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
           >
             Get Started
-          </Link>
+          </a>
           <a
             href={`https://github.com/${gitConfig.user}/${gitConfig.repo}`}
             target="_blank"
