@@ -21,7 +21,8 @@
     "fumadocs-mdx": "catalog:",
     "fumadocs-ui": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "tslib": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "catalog:",
