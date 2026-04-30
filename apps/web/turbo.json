@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "inputs": [
-        "app/**",
+        "src/**",
         "content/**",
         "public/**",
         "source.config.ts",
