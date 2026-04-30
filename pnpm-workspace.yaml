@@ -10,13 +10,13 @@ minimumReleaseAge: 2880
 
 catalog:
   '@aws-sdk/client-sesv2': 3.0.0
-  '@cloudflare/vite-plugin': 1.32.3
+  '@cloudflare/vite-plugin': 1.33.2
   '@phosphor-icons/react': 2.1.10
   '@react-email/components': 0.0.30
   '@standard-schema/spec': 1.1.0
-  '@tailwindcss/vite': 4.1.0
-  '@tanstack/react-router': 1.168.23
-  '@tanstack/react-start': 1.167.42
+  '@tailwindcss/vite': 4.2.4
+  '@tanstack/react-router': 1.168.25
+  '@tanstack/react-start': 1.167.50
   '@turbo/gen': 2.9.6
   '@types/mdx': 2.0.13
   '@types/nodemailer': 8.0.0
@@ -25,9 +25,9 @@ catalog:
   '@vitejs/plugin-react': 6.0.1
   '@vitest/coverage-v8': 2.1.9
   'bullmq': 5.0.0
-  'fumadocs-core': 16.8.2
-  'fumadocs-mdx': 14.3.1
-  'fumadocs-ui': 16.8.2
+  'fumadocs-core': 16.8.5
+  'fumadocs-mdx': 14.3.2
+  'fumadocs-ui': 16.8.5
   'handlebars': 4.7.0
   'ioredis': 5.0.0
   'mjml': 4.15.0
@@ -40,13 +40,13 @@ catalog:
   'resend': 4.0.0
   'rolldown': 1.0.0-rc.17
   'rolldown-plugin-dts': 0.18.4
-  'tailwindcss': 4.1.0
+  'tailwindcss': 4.2.4
   'tsx': 4.21.0
   'turbo': 2.9.6
-  'typescript': 5.9.3
-  'vite': 8.0.8
+  'typescript': 6.0.3
+  'vite': 8.0.10
   'vitest': 2.1.9
-  'wrangler': 4.83.0
+  'wrangler': 4.85.0
   'zod': 4.3.6
 
 catalogs:
