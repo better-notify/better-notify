@@ -1,7 +1,197 @@
 ---
 title: Multi-Transport
 icon: GitFork
-description: Route notifications through multiple transports
+description: Route notifications through multiple transports with failover, load balancing, and redundancy strategies
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`multiTransport()` composes multiple transports behind a single `Transport` interface. Pick a strategy that matches your delivery requirements — from simple failover to full parallel redundancy.
+
+Strategies split into two families:
+
+- **Sequential** — tries one transport at a time, advancing on failure. Honors `maxAttemptsPerTransport` and `backoff`.
+- **Parallel** — fires all transports concurrently. Ignores retry options.
+
+| Strategy | Family | Behavior |
+|----------|--------|----------|
+| `failover` | Sequential | Try in order, stop on first success |
+| `round-robin` | Sequential | Rotate start index across calls |
+| `random` | Sequential | Random start index per call |
+| `race` | Parallel | All fire, first success wins |
+| `parallel` | Parallel | All fire, all must succeed |
+| `mirrored` | Parallel | Primary awaited, mirrors fire-and-forget |
+
+## Failover
+
+Every `send()` starts at `transports[0]` and walks forward on failure. Use when you have a clear primary provider and one or more backups.
+
+```ts
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: resendTransport },
+    { transport: sesTransport },
+  ],
+});
+```
+
+## Round-Robin
+
+An in-process counter advances the start index on each `send()`, distributing load evenly across equivalent providers. On failure within a single send, it still walks forward through the remaining transports.
+
+```ts
+const transport = multiTransport({
+  strategy: 'round-robin',
+  transports: [
+    { transport: sesAccountA },
+    { transport: sesAccountB },
+    { transport: sesAccountC },
+  ],
+});
+```
+
+## Random
+
+Each `send()` picks a uniformly random start index, then walks forward on failure. Spreads load without per-process counter coordination — useful across multiple server instances.
+
+```ts
+const transport = multiTransport({
+  strategy: 'random',
+  transports: [
+    { transport: providerA },
+    { transport: providerB },
+  ],
+});
+```
+
+## Race
+
+Dispatches to all transports in parallel via `Promise.any()`. Returns the first successful result; throws when all fail. Use for latency-sensitive sends where any provider can fulfill the delivery.
+
+```ts
+const transport = multiTransport({
+  strategy: 'race',
+  transports: [
+    { transport: regionUs },
+    { transport: regionEu },
+    { transport: regionApac },
+  ],
+});
+```
+
+## Parallel
+
+Dispatches to all transports in parallel via `Promise.allSettled()`. All must succeed — throws on any failure. Returns the first transport's data as the canonical result. Use for verified-redundancy delivery where every copy must land (e.g. primary delivery + audit copy).
+
+```ts
+const transport = multiTransport({
+  strategy: 'parallel',
+  transports: [
+    { transport: primaryProvider },
+    { transport: auditCopy },
+  ],
+});
+```
+
+## Mirrored
+
+Awaits `transports[0]` (the primary) and returns its result. Remaining transports fire-and-forget in the background — their failures are logged at `warn` level but never propagate. Use when secondary providers are observability mirrors whose failure should not affect the user-visible outcome.
+
+```ts
+const transport = multiTransport({
+  strategy: 'mirrored',
+  transports: [
+    { transport: primaryProvider },
+    { transport: analyticsProvider },
+    { transport: complianceArchive },
+  ],
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    name: {
+      description: 'Identifier surfaced as the composite Transport.name. Override when registering multiple composites in the same client.',
+      type: 'string',
+      default: "'multi'",
+    },
+    strategy: {
+      description: 'Dispatch strategy for inner transports.',
+      type: "MultiTransportStrategy",
+    },
+    transports: {
+      description: 'Inner transports in order. Must be non-empty. Order matters for failover (first = primary) and round-robin rotation.',
+      type: 'MultiTransportEntry[]',
+    },
+    maxAttemptsPerTransport: {
+      description: 'Retries per transport before advancing. Sequential strategies only.',
+      type: 'number',
+      default: '1',
+    },
+    backoff: {
+      description: 'Backoff policy for retries on the same transport. Only consulted when maxAttemptsPerTransport > 1.',
+      type: 'MultiTransportBackoff',
+    },
+    isRetriable: {
+      description: 'Predicate deciding whether an error should retry the same transport (true) or advance immediately (false). Non-retriable errors still attempt other transports.',
+      type: '(err: unknown) => boolean',
+      default: '() => true',
+    },
+    logger: {
+      description: 'Logger for orchestration events. Child-binds { component, name }.',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+## Retries and Backoff
+
+Sequential strategies support per-transport retries with exponential backoff. Parallel strategies ignore these options.
+
+```ts
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: primaryProvider },
+    { transport: fallbackProvider },
+  ],
+  maxAttemptsPerTransport: 3,
+  backoff: {
+    initialMs: 100,
+    factor: 2,
+    maxMs: 5_000,
+  },
+  isRetriable: (err) => !(err instanceof RateLimitError),
+});
+```
+
+Delay between retries on the **same** transport follows `min(maxMs, initialMs × factor^(attempt-1))`. No jitter is applied. Backoff resets when advancing to the next transport — advancing never sleeps.
+
+<TypeTable
+  type={{
+    initialMs: {
+      description: 'Delay before the second attempt in milliseconds. Must be > 0.',
+      type: 'number',
+    },
+    factor: {
+      description: 'Exponential growth factor. Use 1 for fixed delay. Must be >= 1.',
+      type: 'number',
+    },
+    maxMs: {
+      description: 'Upper cap on delay. Must be >= initialMs.',
+      type: 'number',
+    },
+  }}
+/>
+
+## Verify and Close
+
+The composite delegates `verify()` and `close()` to all inner transports in parallel.
+
+- **`verify()`** returns `{ ok: true }` if at least one inner transport verifies successfully. Individual failures are captured per-transport in the `details` field.
+- **`close()`** runs every inner `close()` in parallel. Individual errors are logged and swallowed so one bad transport does not strand the others.
