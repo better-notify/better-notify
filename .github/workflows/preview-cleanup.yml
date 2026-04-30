@@ -16,7 +16,7 @@ jobs:
   cleanup:
     name: Unpublish preview packages
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: always()
     steps:
       - uses: actions/checkout@v6
 
