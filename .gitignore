@@ -14,3 +14,4 @@ docs/
 !apps/web/src/routes/docs/
 plan/
 .tanstack
+.agents/skills/impeccable/scripts/

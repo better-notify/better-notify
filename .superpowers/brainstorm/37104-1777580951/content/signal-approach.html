@@ -1,0 +1,401 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Signal Flow Concept</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #111;
+        color: #e5e5e7;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+      }
+
+      h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        text-align: center;
+      }
+      .subtitle {
+        color: #86868b;
+        margin-bottom: 2rem;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+
+      .demo-container {
+        width: 100%;
+        max-width: 700px;
+        background: #1a1a1c;
+        border: 1px solid #333;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .strategy-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        justify-content: center;
+      }
+      .strategy-btn {
+        background: #2a2a2c;
+        border: 1px solid #444;
+        color: #aaa;
+        padding: 0.35rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+      .strategy-btn.active {
+        background: #0a84ff;
+        border-color: #0a84ff;
+        color: white;
+      }
+
+      /* Signal flow area */
+      .signal-flow {
+        position: relative;
+        height: 240px;
+        margin: 1rem 0;
+      }
+
+      /* Nodes */
+      .node {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .node-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.7rem;
+        border: 2px solid;
+        transition: all 0.3s;
+      }
+      .node-label {
+        font-size: 0.65rem;
+        color: #666;
+      }
+
+      /* Source node */
+      .source .node-circle {
+        background: #0a84ff;
+        border-color: #0a84ff;
+        color: white;
+        cursor: pointer;
+      }
+      .source .node-circle:hover {
+        box-shadow: 0 0 20px rgba(10, 132, 255, 0.5);
+      }
+
+      /* Transport nodes */
+      .transport .node-circle {
+        background: #1a1a1c;
+        border-color: #444;
+        color: #888;
+      }
+      .transport.healthy .node-circle {
+        border-color: #555;
+        color: #aaa;
+      }
+      .transport.unhealthy .node-circle {
+        border-color: #ff3b30;
+        color: #ff3b30;
+        opacity: 0.6;
+      }
+      .transport.active .node-circle {
+        border-color: #0a84ff;
+        color: #0a84ff;
+        box-shadow: 0 0 15px rgba(10, 132, 255, 0.3);
+      }
+      .transport.success .node-circle {
+        border-color: #34c759;
+        color: #34c759;
+        box-shadow: 0 0 15px rgba(52, 199, 89, 0.3);
+      }
+      .transport.failed .node-circle {
+        border-color: #ff3b30;
+        color: #ff3b30;
+        box-shadow: 0 0 15px rgba(255, 59, 48, 0.3);
+      }
+
+      /* Result node */
+      .result .node-circle {
+        background: #1a1a1c;
+        border-color: #333;
+        color: #555;
+        width: 38px;
+        height: 38px;
+        font-size: 0.6rem;
+      }
+      .result.delivered .node-circle {
+        border-color: #34c759;
+        color: #34c759;
+        box-shadow: 0 0 20px rgba(52, 199, 89, 0.3);
+      }
+
+      /* SVG lines */
+      .signal-lines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .wire {
+        stroke: #333;
+        stroke-width: 2;
+        fill: none;
+      }
+      .wire.active {
+        stroke: #0a84ff;
+        filter: drop-shadow(0 0 4px rgba(10, 132, 255, 0.5));
+      }
+      .wire.success {
+        stroke: #34c759;
+        filter: drop-shadow(0 0 4px rgba(52, 199, 89, 0.5));
+      }
+      .wire.failed {
+        stroke: #ff3b30;
+        opacity: 0.5;
+      }
+
+      /* Pulse animation */
+      .pulse-dot {
+        fill: #0a84ff;
+        filter: drop-shadow(0 0 6px rgba(10, 132, 255, 0.8));
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .wire.active {
+        animation: pulse-glow 0.8s ease-in-out infinite;
+      }
+
+      /* Health toggles */
+      .health-toggles {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+      .health-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.7rem;
+        color: #888;
+        cursor: pointer;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        background: #222;
+        border: 1px solid #333;
+      }
+      .health-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #34c759;
+      }
+      .health-dot.unhealthy {
+        background: #ff3b30;
+      }
+
+      /* Send button */
+      .send-area {
+        display: flex;
+        justify-content: center;
+        margin-top: 1.5rem;
+      }
+      .send-btn {
+        background: #0a84ff;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+      }
+      .send-btn:hover {
+        box-shadow: 0 0 20px rgba(10, 132, 255, 0.4);
+      }
+
+      /* Description area */
+      .desc {
+        text-align: center;
+        margin-top: 2rem;
+        max-width: 600px;
+      }
+      .desc h3 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .desc p {
+        color: #86868b;
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Signal Flow Simulator</h2>
+    <p class="subtitle">Click "Send" to emit a signal pulse through the transport chain</p>
+
+    <div class="demo-container">
+      <!-- Strategy tabs -->
+      <div class="strategy-bar">
+        <div class="strategy-btn active">failover</div>
+        <div class="strategy-btn">round-robin</div>
+        <div class="strategy-btn">random</div>
+        <div class="strategy-btn">race</div>
+        <div class="strategy-btn">parallel</div>
+        <div class="strategy-btn">mirrored</div>
+      </div>
+
+      <!-- Signal flow visualization -->
+      <div class="signal-flow" id="flow">
+        <!-- SVG wires -->
+        <svg class="signal-lines" viewBox="0 0 660 240" preserveAspectRatio="xMidYMid meet">
+          <!-- Source to T1 -->
+          <path class="wire active" d="M 90 120 C 150 120, 170 50, 230 50" />
+          <!-- Source to T2 -->
+          <path class="wire" d="M 90 120 C 150 120, 170 120, 230 120" />
+          <!-- Source to T3 -->
+          <path class="wire" d="M 90 120 C 150 120, 170 190, 230 190" />
+
+          <!-- T1 to Result -->
+          <path class="wire" d="M 280 50 C 340 50, 360 120, 430 120" />
+          <!-- T2 to Result -->
+          <path class="wire" d="M 280 120 C 340 120, 360 120, 430 120" />
+          <!-- T3 to Result -->
+          <path class="wire" d="M 280 190 C 340 190, 360 120, 430 120" />
+
+          <!-- Animated pulse dot on the active wire -->
+          <circle class="pulse-dot" r="5">
+            <animateMotion
+              dur="1s"
+              repeatCount="indefinite"
+              keyTimes="0;1"
+              keySplines="0.4 0 0.2 1"
+            >
+              <mpath href="#pulse-path-1" />
+            </animateMotion>
+          </circle>
+          <path
+            id="pulse-path-1"
+            d="M 90 120 C 150 120, 170 50, 230 50"
+            fill="none"
+            stroke="none"
+          />
+
+          <!-- Second pulse (failover: T1 fails, goes to T2) -->
+          <circle
+            class="pulse-dot"
+            r="4"
+            style="fill: #ff3b30; filter: drop-shadow(0 0 6px rgba(255, 59, 48, 0.8))"
+          >
+            <animateMotion dur="0.6s" begin="1s" fill="freeze">
+              <mpath href="#pulse-path-fail" />
+            </animateMotion>
+          </circle>
+          <path id="pulse-path-fail" d="M 230 50 L 230 50" fill="none" stroke="none" />
+        </svg>
+
+        <!-- Source node -->
+        <div class="node source" style="left: 50px; top: 96px">
+          <div class="node-circle">send</div>
+        </div>
+
+        <!-- Transport nodes -->
+        <div class="node transport failed" style="left: 210px; top: 26px">
+          <div class="node-circle">T1</div>
+          <div class="node-label">SES</div>
+        </div>
+
+        <div class="node transport active" style="left: 210px; top: 96px">
+          <div class="node-circle">T2</div>
+          <div class="node-label">SMTP</div>
+        </div>
+
+        <div class="node transport healthy" style="left: 210px; top: 166px">
+          <div class="node-circle">T3</div>
+          <div class="node-label">Resend</div>
+        </div>
+
+        <!-- Result node -->
+        <div class="node result" style="left: 412px; top: 99px">
+          <div class="node-circle">✓</div>
+        </div>
+      </div>
+
+      <!-- Health toggles -->
+      <div class="health-toggles">
+        <div class="health-toggle">
+          <div class="health-dot unhealthy"></div>
+          T1 — SES (down)
+        </div>
+        <div class="health-toggle">
+          <div class="health-dot"></div>
+          T2 — SMTP (up)
+        </div>
+        <div class="health-toggle">
+          <div class="health-dot"></div>
+          T3 — Resend (up)
+        </div>
+      </div>
+
+      <!-- Send button -->
+      <div class="send-area">
+        <button class="send-btn">▶ Send</button>
+      </div>
+    </div>
+
+    <!-- Concept description -->
+    <div class="desc">
+      <h3>The concept</h3>
+      <p>
+        Click <strong>Send</strong> and a signal pulse emits from the source node. The pulse travels
+        along the wire to each transport — the line glows and blinks as the signal passes through.
+        On failure (red flash), the pulse bounces to the next transport. On success (green glow), it
+        flows through to the result node. Toggle transports healthy/unhealthy to see different paths
+        light up. Switch strategies to see how the wiring changes — parallel strategies fan out all
+        wires simultaneously, race shows competing pulses.
+      </p>
+    </div>
+  </body>
+</html>

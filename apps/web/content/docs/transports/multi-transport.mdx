@@ -8,6 +8,16 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 `multiTransport()` composes multiple transports behind a single `Transport` interface. Pick a strategy that matches how you want delivery to behave.
 
+<SignalFlow
+  nodes={[
+    { id: 'ses', label: 'SES' },
+    { id: 'smtp', label: 'SMTP' },
+    { id: 'resend', label: 'Resend' },
+  ]}
+  defaultStrategy="failover"
+  maxRetries={2}
+/>
+
 Strategies split into two families:
 
 - **Sequential** — tries one transport at a time, advancing on failure. Honors `maxAttemptsPerTransport` and `backoff`.
