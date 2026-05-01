@@ -21,7 +21,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 Strategies split into two families:
 
 - **Sequential** — tries one transport at a time, advancing on failure. Honors `maxAttemptsPerTransport` and `backoff`.
-- **Parallel** — fires all transports concurrently. Ignores retry options.
+- **Parallel** — uses multi-transport execution instead of sequential failover. `race` and `parallel` start all transports immediately; `mirrored` awaits the primary first, then fires mirrors in the background. Ignores retry options.
 
 | Strategy | Family | Behavior |
 |----------|--------|----------|
@@ -34,23 +34,13 @@ Strategies split into two families:
 
 ## Sequential Strategies
 
-Sequential strategies try one transport at a time. On failure, they advance to the next transport in the list. The starting point differs by strategy:
+Sequential strategies try one transport at a time. They differ only in where each `send()` starts:
 
-```
-          failover                round-robin             random
-          ────────                ───────────             ──────
-
-send() ─► T1 ─────────►  send() ─► T1 ─────────►  send() ─► T2 ─────────►
-           │ fail                    │ fail                    │ fail
-           ▼                         ▼                         ▼
-          T2 ─────────►           T2 ─────────►            T3 ─────────►
-           │ fail                    │ fail                    │ fail
-           ▼                         ▼                         ▼
-          T3 ── ok ──►            T3 ── ok ──►             T1 ── ok ──►
-
-      always starts           advances start            random start
-       at T1                  index each call           index each call
-```
+| Strategy | First transport tried | What happens after a failure | Best fit |
+|----------|------------------------|------------------------------|----------|
+| `failover` | Always `transports[0]` | Walk forward through the remaining transports | Clear primary provider with explicit backups |
+| `round-robin` | Next index in the rotation | Continue forward from that starting point for the current send | Evenly distribute load across equivalent providers |
+| `random` | Random index per send | Continue forward from that starting point for the current send | Spread load across many app instances without shared counters |
 
 ### Failover
 
@@ -99,22 +89,13 @@ const transport = multiTransport({
 
 ## Parallel Strategies
 
-Parallel strategies fire all transports concurrently. They differ in what they wait for and how they handle failures:
+Parallel strategies fan work out instead of walking the list. The important differences are when each branch starts, what the caller waits for, and which failures propagate:
 
-```
-          race                    parallel                mirrored
-          ────                    ────────                ────────
-
-          ┌─► T1 ── ok ──►       ┌─► T1 ── ok ──┐       T1 (primary)
-          │                       │               │        │
-send() ───┼─► T2 ── ok           │               ├─► ok   │ await
-          │                 send()┼─► T2 ── ok ──┤         ▼
-          └─► T3 ── ok           │               │       result ──►
-                                  └─► T3 ── ok ──┘
-      first success                                    T2, T3 (mirrors)
-      wins                    all must                  fire-and-forget
-                              succeed                   failures logged
-```
+| Strategy | When transports start | When `send()` resolves | What causes `send()` to fail | Best fit |
+|----------|------------------------|------------------------|------------------------------|----------|
+| `race` | All transports start immediately | First successful transport wins | All transports fail | Lowest-latency delivery across interchangeable providers |
+| `parallel` | All transports start immediately | After every transport succeeds | Any transport fails | Redundant delivery where every copy must land |
+| `mirrored` | `transports[0]` starts first; mirrors start only after it succeeds | As soon as the primary succeeds | The primary fails | Primary delivery plus non-blocking audit or observability mirrors |
 
 ### Race
 
@@ -240,7 +221,12 @@ Delay between retries on the **same** transport follows `min(maxMs, initialMs ×
 
 ## Verify and Close
 
-The composite delegates `verify()` and `close()` to all inner transports in parallel.
+In BetterNotify, `verify()` and `close()` are optional lifecycle hooks on the `Transport` interface. Like any other `Transport`, a multi-transport exposes them too:
 
-- **`verify()`** returns `{ ok: true }` if at least one inner transport succeeds. Individual failures are captured per-transport in the `details` field.
-- **`close()`** runs every inner `close()` in parallel. Individual errors are logged and swallowed so one bad transport does not strand the others.
+- **`verify()`** checks whether a transport is ready to send. Providers typically use it for startup checks such as validating credentials, testing connectivity, or confirming required configuration.
+- **`close()`** releases transport-owned resources when your app shuts down, such as sockets, clients, or background handles.
+
+`multiTransport()` applies those hooks across the whole composite, so you can treat many transports as one transport during startup and shutdown.
+
+- **`verify()`** calls every inner `verify()` in parallel and returns `{ ok: true }` when at least one transport verifies successfully. The full per-transport outcomes are returned in `details.results`, which makes it useful for “is any provider alive?” checks during boot or health probes.
+- **`close()`** calls every inner `close()` in parallel and waits for all cleanup work to finish. If one transport throws during shutdown, the error is logged and swallowed so the remaining transports still get a chance to close.
