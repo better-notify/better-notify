@@ -11,7 +11,8 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 <RateLimitDemo max={3} windowMs={6000} />
 
 ```ts
-import { withRateLimit, inMemoryRateLimitStore } from '@betternotify/core/middlewares';
+import { withRateLimit } from '@betternotify/core/middlewares';
+import { inMemoryRateLimitStore } from '@betternotify/core';
 
 const welcome = rpc
   .email()

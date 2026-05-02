@@ -204,6 +204,16 @@ await mail.transactional.welcome.send({
   input: { name: 'Ada', verifyUrl: 'https://...' },
 });
 
+const preview = await mail.transactional.welcome.render(
+  { name: 'Ada', verifyUrl: 'https://...' },
+);
+```
+
+## Batch sends
+
+Every procedure exposes `.batch()` — it sends to multiple recipients sequentially and collects per-entry results. This works on any channel, not just email:
+
+```ts
 const batch = await mail.marketing.newsletter.batch(
   subscribers.map((s) => ({
     to: s.email,
@@ -212,10 +222,87 @@ const batch = await mail.marketing.newsletter.batch(
   { interval: 100 },
 );
 
-const preview = await mail.transactional.welcome.render(
-  { name: 'Ada', verifyUrl: 'https://...' },
-);
+console.log(batch.okCount);    // number of successful sends
+console.log(batch.errorCount); // number of failed sends
 ```
+
+Each entry runs through the full pipeline independently — validation, middleware, render, transport. A failure on one entry does not stop the rest. The result contains per-entry outcomes:
+
+```ts
+for (const entry of batch.results) {
+  if (entry.status === 'ok') {
+    console.log(`[${entry.index}] sent: ${entry.result.messageId}`);
+  } else {
+    console.log(`[${entry.index}] failed: ${entry.error.message}`);
+  }
+}
+```
+
+<TypeTable
+  type={{
+    interval: {
+      description: 'Milliseconds to wait between each send. Use to avoid bursting provider rate limits.',
+      type: 'number',
+      default: '0',
+    },
+    okCount: {
+      description: 'Number of entries that sent successfully.',
+      type: 'number',
+    },
+    errorCount: {
+      description: 'Number of entries that failed.',
+      type: 'number',
+    },
+    results: {
+      description: 'Per-entry results. Each is { status: "ok", index, result } or { status: "error", index, error }.',
+      type: 'ReadonlyArray<BatchEntryResult>',
+    },
+  }}
+/>
+
+### Handling failed entries
+
+Since batch results include the original index, you can collect failed entries and retry them, persist them for later, or push them into a queue:
+
+```ts
+const failed = batch.results.filter((r) => r.status === 'error');
+
+if (failed.length > 0) {
+  const originalEntries = subscribers.map((s) => ({
+    to: s.email,
+    input: { headline: 'This week', bodyUrl: 'https://...' },
+  }));
+
+  const failedEntries = failed.map((f) => ({
+    entry: originalEntries[f.index],
+    error: f.error.message,
+    code: f.error.code,
+  }));
+
+  await db.insert('failed_notifications', failedEntries);
+}
+```
+
+For automated retries, push failed entries into a job queue so they can be retried with backoff:
+
+```ts
+for (const failure of failed) {
+  await queue.add('retry-notification', {
+    procedure: 'marketing.newsletter',
+    args: originalEntries[failure.index],
+    error: failure.error.toJSON(),
+    attemptNumber: 1,
+  }, {
+    delay: 60_000,
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 60_000 },
+  });
+}
+```
+
+<Callout>
+Batch does not retry internally — each entry gets one attempt. If you need automatic retries with backoff, use a queue worker or wrap the batch call with your own retry logic.
+</Callout>
 
 ## Type inference
 

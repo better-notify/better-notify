@@ -21,6 +21,7 @@ Email is the right channel when the recipient needs a persistent, rich-content n
 Create the channel with optional defaults that apply to every email procedure:
 
 ```ts
+import { createNotify } from '@betternotify/core';
 import { emailChannel } from '@betternotify/email';
 
 const email = emailChannel({

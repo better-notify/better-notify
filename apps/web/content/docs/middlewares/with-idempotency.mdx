@@ -13,7 +13,8 @@ Failures are not cached — a thrown error leaves the slot empty so the next att
 <IdempotencyDemo ttlMs={8000} />
 
 ```ts
-import { withIdempotency, inMemoryIdempotencyStore } from '@betternotify/core/middlewares';
+import { withIdempotency } from '@betternotify/core/middlewares';
+import { inMemoryIdempotencyStore } from '@betternotify/core';
 
 const orderConfirmation = rpc
   .email()

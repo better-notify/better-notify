@@ -273,7 +273,7 @@ const welcome = await mail.transactional.welcome.send({
     verifyUrl: 'https://example.com/verify?token=abc123',
   },
 });
-console.log(`[${welcome.route}] messageId: ${welcome.messageId}`);
+console.log(`[transactional.welcome] messageId: ${welcome.messageId}`);
 
 const reset = await mail.transactional.passwordReset.send({
   to: process.env.GMAIL_USER!,
@@ -282,7 +282,7 @@ const reset = await mail.transactional.passwordReset.send({
     resetUrl: 'https://example.com/reset?token=xyz789',
   },
 });
-console.log(`[${reset.route}] messageId: ${reset.messageId}`);
+console.log(`[transactional.passwordReset] messageId: ${reset.messageId}`);
 
 const newsletter = await mail.marketing.newsletter.send({
   to: process.env.GMAIL_USER!,
@@ -291,7 +291,7 @@ const newsletter = await mail.marketing.newsletter.send({
     bodyUrl: 'https://example.com/blog/weekly',
   },
 });
-console.log(`[${newsletter.route}] messageId: ${newsletter.messageId}`);
+console.log(`[marketing.newsletter] messageId: ${newsletter.messageId}`);
 ```
 
 Three emails, three routes, two sub-catalogs — all type-checked and delivered through the same SMTP transport. Check your inbox to see all three.
@@ -358,6 +358,6 @@ Same catalog, same routes, same client shape. Only the transport changed. Read m
 You now have a working setup with typed procedures, merged catalogs, and real email delivery. From here:
 
 - Read [Channels](/docs/concepts/channels) to understand how email, SMS, push, and custom channels work.
-- Read [Catalog & Procedures](/docs/concepts/catalog-and-routes) for deeper coverage of procedure composition and dot-path route IDs.
+- Read [Catalog & Procedures](/docs/concepts/catalog-and-procedures) for deeper coverage of procedure composition and dot-path route IDs.
 - Read [Transports Overview](/docs/transports) to learn about multi-transport composition and failover.
 - Read [Middleware](/docs/concepts/middleware) when you want rate limits, tracing, or event logging across procedures.

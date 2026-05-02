@@ -9,7 +9,8 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 `withEventLogger` emits one structured `SendEvent` per send into the supplied event sink. Each event carries the route, message ID, duration, timestamps, and either the result (on success) or a serialized error. Errors are re-thrown after writing so the pipeline still surfaces the failure to the caller.
 
 ```ts
-import { withEventLogger, consoleEventSink } from '@betternotify/core/middlewares';
+import { withEventLogger } from '@betternotify/core/middlewares';
+import { consoleEventSink } from '@betternotify/core';
 
 const welcome = rpc
   .email()
@@ -63,7 +64,7 @@ type SendEvent = {
 Implement the `EventSink` interface to send events anywhere:
 
 ```ts
-import type { EventSink } from '@betternotify/core/middlewares';
+import type { EventSink } from '@betternotify/core';
 
 const datadogSink: EventSink = {
   write: async (event) => {
