@@ -3,14 +3,20 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/cn';
 
-type SignalFlowNode = {
+export type SignalFlowNode = {
   id: string;
   label: string;
 };
 
-type SignalFlowStrategy = 'failover' | 'round-robin' | 'random' | 'race' | 'parallel' | 'mirrored';
+export type SignalFlowStrategy =
+  | 'failover'
+  | 'round-robin'
+  | 'random'
+  | 'race'
+  | 'parallel'
+  | 'mirrored';
 
-type SignalFlowProps = {
+export type SignalFlowProps = {
   nodes: SignalFlowNode[];
   strategies?: SignalFlowStrategy[];
   defaultStrategy?: SignalFlowStrategy;
@@ -138,7 +144,7 @@ const palette = {
   },
 } as const;
 
-function SignalFlow({
+export function SignalFlow({
   nodes,
   strategies = ALL_STRATEGIES,
   defaultStrategy = 'failover',
@@ -839,6 +845,3 @@ function SignalFlow({
     </div>
   );
 }
-
-export { SignalFlow };
-export type { SignalFlowProps, SignalFlowNode, SignalFlowStrategy };

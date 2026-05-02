@@ -3,7 +3,6 @@ import type {
   Channel,
   ChannelDefinition,
   AnyChannel,
-  ChannelMap,
   TransportsFor,
   ArgsFor,
   RenderedFor,

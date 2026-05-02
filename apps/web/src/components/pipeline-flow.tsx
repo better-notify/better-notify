@@ -3,12 +3,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/cn';
 
-type PipelineFlowNode = {
+export type PipelineFlowNode = {
   id: string;
   label: string;
 };
 
-type PipelineFlowProps = {
+export type PipelineFlowProps = {
   nodes: PipelineFlowNode[];
   sourceLabel?: string;
 };
@@ -120,7 +120,7 @@ function getPositions(nodeCount: number) {
   };
 }
 
-function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
+export function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
   const dark = useTheme();
   const reducedMotion = useReducedMotion();
   const c = dark ? palette.dark : palette.light;
@@ -154,13 +154,15 @@ function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
       const pathEl = pathRefs.current.get(pathIdx);
       if (!pulseEl || !pathEl) return Promise.resolve(false);
 
-      const total = pathEl.getTotalLength();
+      const pulse = pulseEl;
+      const path = pathEl;
+      const total = path.getTotalLength();
 
       if (reducedMotion) {
-        const end = pathEl.getPointAtLength(total);
-        pulseEl.setAttribute('cx', String(end.x));
-        pulseEl.setAttribute('cy', String(end.y));
-        pulseEl.setAttribute('opacity', '1');
+        const end = path.getPointAtLength(total);
+        pulse.setAttribute('cx', String(end.x));
+        pulse.setAttribute('cy', String(end.y));
+        pulse.setAttribute('opacity', '1');
         return Promise.resolve(true);
       }
 
@@ -168,19 +170,19 @@ function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
       const abort = abortRef.current;
 
       return new Promise((resolve) => {
-        pulseEl.setAttribute('opacity', '1');
+        pulse.setAttribute('opacity', '1');
 
         function frame(now: number) {
           if (abort.aborted) {
-            pulseEl.setAttribute('opacity', '0');
+            pulse.setAttribute('opacity', '0');
             resolve(false);
             return;
           }
           const t = Math.min((now - start) / duration, 1);
           const eased = easeOutQuart(t);
-          const pt = pathEl.getPointAtLength(eased * total);
-          pulseEl.setAttribute('cx', String(pt.x));
-          pulseEl.setAttribute('cy', String(pt.y));
+          const pt = path.getPointAtLength(eased * total);
+          pulse.setAttribute('cx', String(pt.x));
+          pulse.setAttribute('cy', String(pt.y));
 
           if (t < 1) {
             requestAnimationFrame(frame);
@@ -304,7 +306,9 @@ function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
           return (
             <path
               key={i}
-              ref={(el) => { if (el) pathRefs.current.set(i, el); }}
+              ref={(el) => {
+                if (el) pathRefs.current.set(i, el);
+              }}
               d={wirePath(from, to)}
               fill="none"
               stroke={wireColor(i)}
@@ -383,7 +387,9 @@ function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
             r={16}
             fill={
               resultState === 'success'
-                ? dark ? 'oklch(25% 0.06 155)' : 'oklch(95% 0.04 155)'
+                ? dark
+                  ? 'oklch(25% 0.06 155)'
+                  : 'oklch(95% 0.04 155)'
                 : c.node
             }
             stroke={resultState === 'success' ? c.success : c.nodeBorder}
@@ -406,13 +412,7 @@ function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
           </text>
         </g>
 
-        <circle
-          ref={pulseRef}
-          r={5}
-          fill={c.pulse}
-          opacity={0}
-          filter="url(#pf-glow)"
-        />
+        <circle ref={pulseRef} r={5} fill={c.pulse} opacity={0} filter="url(#pf-glow)" />
       </svg>
 
       <div className="flex justify-end mt-2">
@@ -437,6 +437,3 @@ function PipelineFlow({ nodes, sourceLabel = 'send' }: PipelineFlowProps) {
     </div>
   );
 }
-
-export { PipelineFlow };
-export type { PipelineFlowProps, PipelineFlowNode };

@@ -68,7 +68,7 @@ describe('createEventSink', () => {
     });
     await expect(sink.write(baseEvent)).resolves.toBeUndefined();
     expect(errorLogger.calls).toHaveLength(1);
-    expect((errorLogger.calls[0]?.payload as { err: { message: string } }).err.message).toBe(
+    expect((errorLogger.calls[0]!.payload as { err: { message: string } }).err.message).toBe(
       'sink down',
     );
   });

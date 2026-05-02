@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/cn';
 
-type RateLimitDemoProps = {
+export type RateLimitDemoProps = {
   max?: number;
   windowMs?: number;
 };
@@ -61,7 +61,7 @@ const palette = {
   },
 } as const;
 
-function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
+export function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
   const dark = useTheme();
   const c = dark ? palette.dark : palette.light;
 
@@ -124,7 +124,10 @@ function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
     <div className="not-prose">
       <div
         className="rounded-xl border p-5"
-        style={{ borderColor: c.nodeBorder, background: dark ? 'oklch(16% 0.004 75)' : 'oklch(98% 0.003 75)' }}
+        style={{
+          borderColor: c.nodeBorder,
+          background: dark ? 'oklch(16% 0.004 75)' : 'oklch(98% 0.003 75)',
+        }}
       >
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -138,7 +141,11 @@ function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
           {isLimited && (
             <span
               className="rounded-md px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest"
-              style={{ background: c.failureBg, color: c.failure, border: `1px solid ${c.failure}40` }}
+              style={{
+                background: c.failureBg,
+                color: c.failure,
+                border: `1px solid ${c.failure}40`,
+              }}
             >
               rate limited
             </span>
@@ -146,10 +153,7 @@ function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
         </div>
 
         <div className="mb-4">
-          <div
-            className="h-2 w-full overflow-hidden rounded-full"
-            style={{ background: c.barBg }}
-          >
+          <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: c.barBg }}>
             <div
               className="h-full rounded-full"
               style={{
@@ -165,7 +169,7 @@ function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
             </span>
             {windowStart !== null && (
               <span style={{ color: c.textMuted }} className="font-mono text-[10px]">
-                {((1 - progress) * windowMs / 1000).toFixed(1)}s remaining
+                {(((1 - progress) * windowMs) / 1000).toFixed(1)}s remaining
               </span>
             )}
           </div>
@@ -201,7 +205,8 @@ function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
               'focus-visible:outline-2 focus-visible:outline-offset-2',
             )}
             style={{
-              background: flash === 'blocked' ? c.failure : flash === 'ok' ? c.success : c.controlActive,
+              background:
+                flash === 'blocked' ? c.failure : flash === 'ok' ? c.success : c.controlActive,
               color: dark ? 'oklch(15% 0.005 75)' : 'oklch(99% 0.005 75)',
               border: `1px solid ${flash === 'blocked' ? c.failure : flash === 'ok' ? c.success : c.controlActive}`,
               outlineColor: c.controlActive,
@@ -222,6 +227,3 @@ function RateLimitDemo({ max = 3, windowMs = 6000 }: RateLimitDemoProps) {
     </div>
   );
 }
-
-export { RateLimitDemo };
-export type { RateLimitDemoProps };

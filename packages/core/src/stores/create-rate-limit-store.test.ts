@@ -4,7 +4,7 @@ import { createRateLimitStore } from './create-rate-limit-store.js';
 describe('createRateLimitStore', () => {
   it('delegates to the provided record function', async () => {
     const store = createRateLimitStore({
-      record: async (key, windowMs, algorithm) => ({
+      record: async (key, windowMs, _algorithm) => ({
         count: 3,
         resetAtMs: Date.now() + windowMs,
       }),

@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/cn';
 
-type IdempotencyDemoProps = {
+export type IdempotencyDemoProps = {
   ttlMs?: number;
 };
 
@@ -65,7 +65,7 @@ const palette = {
 
 const KEYS = ['order:1001', 'order:1002', 'order:1003'];
 
-function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
+export function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
   const dark = useTheme();
   const c = dark ? palette.dark : palette.light;
 
@@ -118,7 +118,10 @@ function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
         style={{ borderColor: c.nodeBorder, background: c.bg }}
       >
         <div className="mb-4">
-          <span style={{ color: c.textMuted }} className="mb-2 block font-mono text-[10px] uppercase tracking-widest">
+          <span
+            style={{ color: c.textMuted }}
+            className="mb-2 block font-mono text-[10px] uppercase tracking-widest"
+          >
             idempotency key
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -135,9 +138,12 @@ function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
                   )}
                   style={{
                     background: selectedKey === k ? c.controlActive : c.controlBg,
-                    color: selectedKey === k
-                      ? dark ? 'oklch(15% 0.005 75)' : 'oklch(99% 0.005 75)'
-                      : c.controlText,
+                    color:
+                      selectedKey === k
+                        ? dark
+                          ? 'oklch(15% 0.005 75)'
+                          : 'oklch(99% 0.005 75)'
+                        : c.controlText,
                     border: `1px solid ${selectedKey === k ? c.controlActive : c.controlBorder}`,
                     outlineColor: c.controlActive,
                   }}
@@ -157,7 +163,10 @@ function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
 
         {activeKeys.length > 0 && (
           <div className="mb-4">
-            <span style={{ color: c.textMuted }} className="mb-2 block font-mono text-[10px] uppercase tracking-widest">
+            <span
+              style={{ color: c.textMuted }}
+              className="mb-2 block font-mono text-[10px] uppercase tracking-widest"
+            >
               cached keys
             </span>
             <div className="flex flex-col gap-1.5">
@@ -182,7 +191,10 @@ function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
                         }}
                       />
                     </div>
-                    <span style={{ color: c.textMuted }} className="w-10 shrink-0 text-right font-mono text-[10px]">
+                    <span
+                      style={{ color: c.textMuted }}
+                      className="w-10 shrink-0 text-right font-mono text-[10px]"
+                    >
                       {(remaining / 1000).toFixed(1)}s
                     </span>
                   </div>
@@ -223,7 +235,8 @@ function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
               'focus-visible:outline-2 focus-visible:outline-offset-2',
             )}
             style={{
-              background: flash === 'cached' ? c.cached : flash === 'sent' ? c.success : c.controlActive,
+              background:
+                flash === 'cached' ? c.cached : flash === 'sent' ? c.success : c.controlActive,
               color: dark ? 'oklch(15% 0.005 75)' : 'oklch(99% 0.005 75)',
               border: `1px solid ${flash === 'cached' ? c.cached : flash === 'sent' ? c.success : c.controlActive}`,
               outlineColor: c.controlActive,
@@ -244,6 +257,3 @@ function IdempotencyDemo({ ttlMs = 8000 }: IdempotencyDemoProps) {
     </div>
   );
 }
-
-export { IdempotencyDemo };
-export type { IdempotencyDemoProps };
