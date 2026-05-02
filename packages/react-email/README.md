@@ -1,6 +1,6 @@
 # @betternotify/react-email
 
-React Email render helper for [BetterNotify](../core).
+React Email render helper for [Better-Notify](../core).
 
 ## Install
 

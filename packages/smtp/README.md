@@ -1,6 +1,6 @@
 # @betternotify/smtp
 
-Nodemailer-backed SMTP transport for [BetterNotify](../core).
+Nodemailer-backed SMTP transport for [Better-Notify](../core).
 
 ## Install
 

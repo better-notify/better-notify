@@ -221,7 +221,7 @@ Delay between retries on the **same** transport follows `min(maxMs, initialMs ×
 
 ## Verify and Close
 
-In BetterNotify, `verify()` and `close()` are optional lifecycle hooks on the `Transport` interface. Like any other `Transport`, a multi-transport exposes them too:
+In Better-Notify, `verify()` and `close()` are optional lifecycle hooks on the `Transport` interface. Like any other `Transport`, a multi-transport exposes them too:
 
 - **`verify()`** checks whether a transport is ready to send. Providers typically use it for startup checks such as validating credentials, testing connectivity, or confirming required configuration.
 - **`close()`** releases transport-owned resources when your app shuts down, such as sockets, clients, or background handles.

@@ -4,4 +4,182 @@ icon: Globe
 description: How transports deliver your notifications
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Mermaid } from '@/components/mermaid';
+
+A transport is the wire-level adapter that takes a fully-rendered message and delivers it to a provider — SMTP relay, SES API, Resend HTTP endpoint, or anything else that can accept an outbound message.
+
+Transports sit at the bottom of the Better-Notify pipeline. By the time a transport's `send` is called, the input has been validated, the template rendered, and middleware has run. The transport's only job is delivery.
+
+## The Transport type
+
+Every transport — built-in or custom — satisfies this shape:
+
+```ts
+type Transport<TRendered = unknown, TData = unknown> = {
+  readonly name: string;
+  send(rendered: TRendered, ctx: SendContext): Promise<TransportResult<TData>>;
+  verify?(): Promise<{ ok: boolean; details?: unknown }>;
+  close?(): Promise<void>;
+};
+```
+
+`name` identifies the transport in logs, error messages, and multi-transport selection. `send` does the actual delivery. `verify` and `close` are optional lifecycle hooks for startup checks and graceful shutdown.
+
+### SendContext
+
+Each `send` call receives a context object alongside the rendered message:
+
+<TypeTable
+  type={{
+    route: {
+      description: 'Dot-path route ID from the catalog (e.g. "transactional.welcome").',
+      type: 'string',
+    },
+    messageId: {
+      description: 'Unique ID for this send attempt, useful for logging and correlation.',
+      type: 'string',
+    },
+    attempt: {
+      description: 'Current attempt number (starts at 1). Increments on retry within multi-transport.',
+      type: 'number',
+    },
+  }}
+/>
+
+### TransportResult
+
+`send` returns a discriminated union:
+
+```ts
+type TransportResult<TData = unknown> =
+  | { ok: true; data: TData }
+  | { ok: false; error: Error };
+```
+
+Return `{ ok: true, data }` on success with whatever provider-specific data you want to surface. Return `{ ok: false, error }` on controlled failure — this triggers failover in [multi-transport](./generic/multi-transport.mdx) strategies. Throwing works too; both paths are handled the same way.
+
+## Available transports
+
+Better-Notify ships several transports. They fall into two groups:
+
+### Provider packages
+
+Transports that pull a non-trivial peer dependency ship as separate packages:
+
+<Cards>
+  <Card href="/docs/transports/third-party/smtp" title="SMTP">
+    Deliver via any SMTP relay using Nodemailer. Works with Postfix, Mailgun SMTP, Amazon SES SMTP, and others.
+  </Card>
+  <Card href="/docs/transports/third-party/ses" title="Amazon SES">
+    Send through the SES v2 API using the AWS SDK.
+  </Card>
+  <Card href="/docs/transports/third-party/resend" title="Resend">
+    Send through the Resend HTTP API.
+  </Card>
+</Cards>
+
+### Core utilities
+
+These live in `@betternotify/core/transports` — no extra packages needed:
+
+<Cards>
+  <Card href="/docs/transports/generic/mock" title="Mock Transport">
+    Captures sent messages in memory for assertions. Use in tests and local development.
+  </Card>
+  <Card href="/docs/transports/generic/multi-transport" title="Multi-Transport">
+    Composes multiple transports behind a single interface with failover, round-robin, race, and other strategies.
+  </Card>
+  <Card href="/docs/transports/generic/custom-transports" title="Custom Transports">
+    Build your own transport for any provider using createTransport or a plain object.
+  </Card>
+</Cards>
+
+## Wiring a transport to a client
+
+Transports are passed to `createClient` via the `transportsByChannel` option. Each channel gets one transport:
+
+```ts
+import { createClient } from '@betternotify/core';
+import { smtpTransport } from '@betternotify/smtp';
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: smtpTransport({
+      host: 'smtp.example.com',
+      port: 587,
+      auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASS! },
+    }),
+  },
+});
+```
+
+That single transport slot accepts any `Transport` — a provider package, a [custom transport](./generic/custom-transports.mdx), or a [multi-transport](./generic/multi-transport.mdx) composite that wraps several providers together.
+
+## Swapping transports by environment
+
+Because the catalog and client are separate, you can swap transports without touching route definitions:
+
+```ts
+import { createMockTransport } from '@betternotify/core/transports';
+import { smtpTransport } from '@betternotify/smtp';
+
+const transport =
+  process.env.NODE_ENV === 'test'
+    ? createMockTransport()
+    : smtpTransport({
+        host: 'smtp.example.com',
+        port: 587,
+        auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASS! },
+      });
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+});
+```
+
+The same pattern works for local development (mock), staging (single provider), and production (multi-transport failover).
+
+## Lifecycle hooks
+
+Transports can optionally implement `verify` and `close`. Together with `send`, they form the full transport lifecycle:
+
+<Mermaid
+  code={`
+flowchart TD
+  Start([App starts]) --> Verify{verify}
+  Verify -->|ok: true| Ready[Transport ready]
+  Verify -->|ok: false| Degraded[Log warning, transport degraded]
+  Degraded -.-> Ready
+
+  Ready --> Send
+
+  subgraph Send [" send loop "]
+    direction TB
+    Receive[Receive rendered message] --> Deliver[send]
+    Deliver -->|ok: true| Success[Return data to pipeline]
+    Deliver -->|ok: false| Failure[Return error to pipeline]
+    Deliver -->|throws| Failure
+  end
+
+  Send --> Shutdown([App shuts down])
+  Shutdown --> Close[close]
+  Close --> Released[Sockets and clients released]
+  `}
+/>
+
+- **`verify()`** runs during startup to check credentials, test connectivity, or confirm configuration. Returns `{ ok: boolean; details?: unknown }`.
+- **`send()`** runs on every delivery. Receives a fully-rendered message and a `SendContext`. Returns a `TransportResult`.
+- **`close()`** runs during graceful shutdown to release sockets, flush buffers, or close SDK clients.
+
+Both `verify` and `close` propagate through [multi-transport](./generic/multi-transport.mdx) composites automatically. If you only need `send`, skip them — `createTransport` fills in no-op defaults.
+
+## Where to go next
+
+- Read [Custom Transports](./generic/custom-transports.mdx) to build your own provider adapter.
+- Read [Multi-Transport](./generic/multi-transport.mdx) to compose transports with failover, load balancing, or redundancy.
+- See the provider pages ([SMTP](./third-party/smtp.mdx), [SES](./third-party/ses.mdx), [Resend](./third-party/resend.mdx)) for provider-specific setup.

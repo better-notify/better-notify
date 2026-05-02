@@ -1,6 +1,6 @@
 # @betternotify/sms
 
-SMS channel for [BetterNotify](../../README.md). Provides `smsChannel()`, a `mockSmsTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedSms`.
+SMS channel for [Better-Notify](../../README.md). Provides `smsChannel()`, a `mockSmsTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedSms`.
 
 ## Install
 

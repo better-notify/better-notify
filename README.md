@@ -1,4 +1,4 @@
-# BetterNotify
+# Better-Notify
 
 End-to-end typed notification infrastructure for Node.js. Define a multi-channel `Catalog` once, get a typed client (`mail.<route>.send(...)` / `.batch(...)`) that dispatches to email, SMS, push, or any custom channel — all sharing the same validation, middleware, hooks, and transport contracts.
 
@@ -135,7 +135,7 @@ Each channel package re-exports these factories pre-parameterized for that chann
 
 ## Error handling
 
-Every error thrown by BetterNotify is a `NotifyRpcError` (or one of its subclasses). Catch the base
+Every error thrown by Better-Notify is a `NotifyRpcError` (or one of its subclasses). Catch the base
 class to handle all framework errors, or a subclass to handle a specific case:
 
 ```ts

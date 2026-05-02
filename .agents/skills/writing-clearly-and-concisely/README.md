@@ -132,6 +132,7 @@ The skill identifies and eliminates common LLM writing patterns:
 4. **State positively** - "He forgot" beats "He did not remember"
 5. **Use concrete language** - "The server crashed" beats "An issue occurred"
 6. **Load reference files sparingly** - Most tasks need only `03-elementary-principles-of-composition.md`
+7. **Make standalone snippets self-contained** - Include required imports in documentation code examples unless the snippet is explicitly part of a larger example
 
 ## Directory Structure
 

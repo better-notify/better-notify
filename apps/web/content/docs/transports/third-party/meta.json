@@ -1,0 +1,4 @@
+{
+  "title": "Provider Packages",
+  "pages": ["smtp", "ses", "resend"]
+}

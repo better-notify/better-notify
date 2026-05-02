@@ -1,0 +1,150 @@
+---
+title: Why Better-Notify
+icon: Scales
+description: What makes Better-Notify different from other notification tools
+---
+
+Most teams reach for one of three options when they need to send notifications: a cloud platform, a collection of standalone libraries, or a hand-rolled internal service. Each solves part of the problem and leaves the rest to you.
+
+Better-Notify takes a different approach. It is a typed library that runs in your codebase — not a platform, not a dashboard, not a service you deploy separately.
+
+## The landscape today
+
+### Cloud platforms
+
+Tools like Novu, Knock, and Courier provide multi-channel notification routing as a service. You define workflows in a dashboard, manage templates in their UI, and call their API to trigger sends.
+
+They solve the orchestration problem well. But they introduce trade-offs that compound over time:
+
+- **Your notification logic lives outside your codebase.** Templates, routing rules, and channel configuration sit in a dashboard. They cannot be reviewed in a pull request, tested in CI, or versioned alongside the code that triggers them.
+- **No compile-time guarantees.** When you rename a workflow or change its payload shape, nothing tells your application code until it breaks at runtime. The dashboard and the codebase drift independently.
+- **Vendor lock-in at the architecture level.** Switching platforms means migrating templates, rewriting integrations, and re-learning a new dashboard — not just swapping an import.
+- **Another moving part in production.** A cloud dependency means another service to monitor, another set of API keys to manage, and another failure mode when their infrastructure has issues.
+
+For teams that need a visual workflow builder or non-technical template editing, these platforms make sense. For teams that want their notification layer to be code — typed, tested, and reviewed like any other infrastructure — they add friction instead of removing it.
+
+### Standalone libraries
+
+On the other end, libraries like Nodemailer, AWS SDK, or provider-specific SDKs give you direct access to a single transport. They are excellent at what they do, but they solve only the delivery step.
+
+Everything above delivery — validation, templates, error handling, retry logic, observability — is left to you. And that is where the complexity lives. Teams end up building the same pipeline scaffolding in every project:
+
+- Input validation duplicated per route.
+- Template rendering tightly coupled to the transport.
+- Error handling scattered across send functions.
+- No shared middleware for rate limiting, tracing, or logging.
+- Provider-specific code wired directly into business logic.
+
+The result is a notification layer that works but resists change. Swapping a provider means rewriting every call site. Adding rate limiting means touching every send path. Testing requires mocking at the wrong level.
+
+### Hand-rolled internal services
+
+Some teams build a notification microservice: a queue, a worker, a template engine, and a set of provider integrations. This solves the coupling problem but creates a new one — you are now maintaining infrastructure.
+
+The service needs its own deployment, its own monitoring, its own error handling, and its own API contract. The contract between the application and the service is usually untyped, validated at runtime if at all. Schema changes propagate through documentation and hope.
+
+## What Better-Notify does differently
+
+Better-Notify is a library, not a platform. It runs inside your application, imports like any other package, and gives you typed infrastructure without external dependencies.
+
+### Contracts live in your code
+
+Every notification route is a typed contract defined in TypeScript. The input schema, the subject line, the template, the channel — all declared in one place, version-controlled, and reviewable in a pull request.
+
+```ts
+const welcome = rpc
+  .email()
+  .input(z.object({ name: z.string(), verifyUrl: z.string().url() }))
+  .subject(({ input }) => `Welcome, ${input.name}!`)
+  .template(welcomeTemplate);
+```
+
+There is no dashboard to keep in sync. The code is the source of truth.
+
+### Type safety from definition to send
+
+The catalog produces a typed client. If a route expects `{ name: string, verifyUrl: string }`, the `.send()` call will not compile with anything else. Rename a route, change a schema, remove a field — the compiler tells you everywhere that breaks.
+
+```ts
+// This compiles:
+await mail.transactional.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada', verifyUrl: 'https://example.com/verify' },
+});
+
+// This does not — 'verifyUrl' is missing:
+await mail.transactional.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada' },
+});
+```
+
+Runtime validation runs on top of compile-time checks. Better-Notify uses Standard Schema, so you can use Zod, Valibot, or ArkType — no hard dependency on any validator.
+
+### Transports are pluggable and composable
+
+Transports are a simple interface: take a rendered message, deliver it, return a result. Swap SMTP for SES by changing one line. Compose multiple transports with failover, round-robin, or race strategies through `multiTransport`. Test with `createMockTransport` and deploy with real providers — same catalog, same client, same routes.
+
+```ts
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: sesTransport },
+    { transport: smtpTransport },
+  ],
+});
+```
+
+No transport code leaks into your route definitions. No provider-specific types in your business logic.
+
+### Middleware and hooks without boilerplate
+
+Rate limiting, tracing, event logging, idempotency, dry runs — these are middleware you attach to routes or apply globally through plugins. They compose like Express middleware: before `next()` runs before the send, after `next()` runs after.
+
+```ts
+const rpc = createNotify({ channels: { email } })
+  .use(withTracing({ tracer }))
+  .use(withRateLimit({ store, key: ({ args }) => String(args.to), max: 5, window: 60_000 }));
+```
+
+Hooks (`onBeforeSend`, `onAfterSend`, `onError`) handle observability without affecting the send path. The rule is simple: if removing it would change whether the notification goes out, it is middleware. If it only observes, it is a hook.
+
+### Multi-channel from day one
+
+Email, SMS, push, and custom channels share the same pipeline. Same middleware, same hooks, same error handling, same typed client. Adding a channel does not mean building a parallel notification system — it means registering a channel and writing routes for it.
+
+```ts
+const channels = { email: emailChannel(), sms: smsChannel() };
+const rpc = createNotify({ channels });
+
+const catalog = rpc.catalog({
+  welcomeEmail: rpc.email().input(schema).subject('Welcome').template(emailTemplate),
+  welcomeSms: rpc.sms().input(schema).body(({ input }) => `Hi ${input.name}`),
+});
+```
+
+Custom channels work the same way through `defineChannel`. Slack, webhooks, in-app feeds — if you can describe the message shape, you can build a channel for it.
+
+## When to use Better-Notify
+
+Better-Notify is a good fit when:
+
+- You want your notification contracts in code, not a dashboard.
+- Type safety matters — you want the compiler to catch schema mismatches, not production errors.
+- You need to swap or compose providers without rewriting routes.
+- You want shared middleware (rate limiting, tracing, idempotency) across all notification paths.
+- You prefer libraries you import over services you deploy.
+
+## When to use something else
+
+Better-Notify is not the right tool for every situation:
+
+- **You need a visual workflow builder.** If non-technical team members need to edit notification templates or routing rules, a dashboard-driven platform like Novu or Knock is a better fit.
+- **You want zero operational overhead.** Better-Notify runs in your process and will support self-hosted queues, but you are responsible for running and monitoring that infrastructure. If you want someone else to handle uptime, scaling, and delivery guarantees, a fully managed cloud service is simpler.
+- **You only send one type of email.** If your notification needs are a single transactional email through one provider, Nodemailer or a provider SDK is simpler and has fewer moving parts.
+
+## Where to go next
+
+- Start with [Installation](./installation.mdx) and [Quick Start](./quick-start.mdx) to see Better-Notify in action.
+- Read [Transports Overview](/docs/transports) to understand how provider composition works.
+- Read [Middleware](/docs/concepts/middleware) to see how cross-cutting concerns plug in.

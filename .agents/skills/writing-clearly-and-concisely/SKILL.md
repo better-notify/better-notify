@@ -31,6 +31,16 @@ When context is tight:
 
 Loading a single section (~1,000-4,500 tokens) instead of everything saves significant context.
 
+## Code Snippets In Docs
+
+When documentation includes a standalone code snippet, include the required imports in that snippet. Do not assume the reader saw an earlier import block unless the example is explicitly split across consecutive snippets.
+
+Prefer small, runnable examples that show:
+
+- imports
+- the core setup or call
+- only the options needed for the point being explained
+
 ## Elements of Style
 
 William Strunk Jr.'s _The Elements of Style_ (1918) teaches you to write clearly and cut ruthlessly.

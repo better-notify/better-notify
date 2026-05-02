@@ -1,0 +1,136 @@
+---
+title: Failover and Middleware
+icon: Wrench
+description: Add transport failover and shared middleware to the email example
+---
+
+This page takes the small email + SMTP setup and makes it more production-shaped without changing the route contract.
+
+You still define the same `welcome` route. The difference is that delivery now has backups and shared behavior around it:
+
+- one primary SMTP transport
+- one backup SMTP transport
+- failover between them
+- tracing for each send
+- event logging for visibility
+- rate limiting per recipient
+
+## Full example
+
+```ts
+import {
+  consoleEventSink,
+  createClient,
+  createNotify,
+  inMemoryRateLimitStore,
+  inMemoryTracer,
+  withEventLogger,
+  withRateLimit,
+  withTracing,
+} from '@betternotify/core';
+import { emailChannel, multiTransport } from '@betternotify/email';
+import { smtpTransport } from '@betternotify/smtp';
+import { z } from 'zod';
+
+const email = emailChannel({
+  defaults: {
+    from: { name: 'My App', email: process.env.SMTP_USER! },
+  },
+});
+
+const tracer = inMemoryTracer();
+const rateLimitStore = inMemoryRateLimitStore();
+
+const rpc = createNotify({ channels: { email } })
+  .use(withTracing({ tracer }))
+  .use(withEventLogger({ sink: consoleEventSink() }))
+  .use(
+    withRateLimit({
+      store: rateLimitStore,
+      key: ({ args }) => String(args.to),
+      max: 3,
+      window: 60_000,
+    }),
+  );
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(
+      z.object({
+        name: z.string(),
+        verifyUrl: z.string().url(),
+      }),
+    )
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template({
+      render: async ({ input }) => ({
+        text: `Welcome, ${input.name}! Verify here: ${input.verifyUrl}`,
+        html: `<p>Welcome, ${input.name}! <a href="${input.verifyUrl}">Verify</a></p>`,
+      }),
+    }),
+});
+
+const emailTransport = multiTransport({
+  name: 'smtp-failover',
+  strategy: 'failover',
+  transports: [
+    {
+      transport: smtpTransport({
+        host: process.env.SMTP_HOST!,
+        port: Number(process.env.SMTP_PORT ?? 587),
+        auth: {
+          user: process.env.SMTP_USER!,
+          pass: process.env.SMTP_PASS!,
+        },
+      }),
+    },
+    {
+      transport: smtpTransport({
+        host: process.env.BACKUP_SMTP_HOST!,
+        port: Number(process.env.BACKUP_SMTP_PORT ?? 587),
+        auth: {
+          user: process.env.BACKUP_SMTP_USER!,
+          pass: process.env.BACKUP_SMTP_PASS!,
+        },
+      }),
+    },
+  ],
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: emailTransport },
+});
+
+await mail.welcome.send({
+  to: 'john@example.com',
+  input: {
+    name: 'John Doe',
+    verifyUrl: 'https://example.com/verify?token=abc123',
+  },
+});
+```
+
+## What changes here
+
+The route API stays the same. You still call:
+
+```ts
+await mail.welcome.send({ to, input });
+```
+
+What changes is the pipeline behind that call:
+
+- `multiTransport({ strategy: 'failover' })` tries the first SMTP transport, then advances to the backup if the first one fails.
+- `withTracing(...)` wraps the send in a span, so you can inspect notification work alongside the rest of your app.
+- `withEventLogger(...)` emits lifecycle events for each send.
+- `withRateLimit(...)` prevents a single recipient from being sent the same route too aggressively.
+
+`inMemoryTracer()` and `inMemoryRateLimitStore()` keep the example short. In production, replace them with your own tracer and a shared rate-limit store.
+
+## Where to go next
+
+- Read [Multi-Transport](../transports/generic/multi-transport.mdx) for other strategies such as `round-robin`, `race`, and `parallel`.
+- Read [Middleware](../concepts/middleware.mdx) for the middleware execution model and where plugin middleware fits.

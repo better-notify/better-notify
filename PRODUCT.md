@@ -10,7 +10,7 @@ Backend and fullstack engineers building notification infrastructure in Node.js 
 
 ## Product Purpose
 
-BetterNotify is an end-to-end typed notification infrastructure for Node.js. The documentation site teaches engineers how to configure and compose the library's primitives (transports, middleware, queues, webhooks) through interactive examples that show behavior, not just API signatures.
+Better-Notify is an end-to-end typed notification infrastructure for Node.js. The documentation site teaches engineers how to configure and compose the library's primitives (transports, middleware, queues, webhooks) through interactive examples that show behavior, not just API signatures.
 
 ## Brand Personality
 

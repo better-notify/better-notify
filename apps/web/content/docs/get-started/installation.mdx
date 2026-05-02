@@ -1,7 +1,158 @@
 ---
 title: Installation
 icon: Package
-description: Install BetterNotify and its dependencies
+description: Install Better-Notify and its dependencies
 ---
 
-Documentation coming soon.
+import {
+  CodeBlockTab,
+  CodeBlockTabs,
+  CodeBlockTabsList,
+  CodeBlockTabsTrigger,
+} from 'fumadocs-ui/components/codeblock';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+Use this page to install Better-Notify for the channel you want to start with.
+
+Better-Notify is ESM-only and requires Node `>= 22`.
+
+## Choose a channel
+
+<Tabs items={['Email', 'SMS', 'Push']} defaultIndex={0}>
+  <Tab value="email">
+
+<Steps>
+  <Step>
+
+### Confirm your runtime
+
+Make sure your app is running on Node `22` or newer.
+
+If you are starting from scratch, your `package.json` should also use ESM:
+
+```json
+{
+  "type": "module"
+}
+```
+
+  </Step>
+  <Step>
+
+### Install the packages
+
+If you are following the email + SMTP path from the intro and quick start, install these packages:
+
+<CodeBlockTabs groupId="package-manager" persist defaultValue="pnpm">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="pnpm">pnpm</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="npm">npm</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="yarn">yarn</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="pnpm">
+
+```sh
+pnpm add @betternotify/core @betternotify/email @betternotify/smtp zod
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="npm">
+
+```sh
+npm install @betternotify/core @betternotify/email @betternotify/smtp zod
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="yarn">
+
+```sh
+yarn add @betternotify/core @betternotify/email @betternotify/smtp zod
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+`@betternotify/core` gives you `createNotify()` and `createClient()`. `@betternotify/email` gives you the email channel. `@betternotify/smtp` gives you the SMTP transport. `zod` defines the route input schemas used throughout the docs examples.
+
+  </Step>
+  <Step>
+
+### Add SMTP credentials
+
+The examples assume you will provide SMTP credentials through environment variables:
+
+```sh
+SMTP_USER=mailer@example.com
+SMTP_PASS=your-password
+```
+
+You will usually also want provider-specific values such as host and port:
+
+```sh
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+```
+
+The exact variable names are up to your app. The important part is that your `smtpTransport(...)` call can read valid credentials at runtime.
+
+  </Step>
+  <Step>
+
+### Verify the install
+
+Before writing your first route, make sure the imports resolve cleanly:
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { smtpTransport } from '@betternotify/smtp';
+import { z } from 'zod';
+```
+
+If that typechecks, the installation step is done.
+
+  </Step>
+</Steps>
+
+  </Tab>
+  <Tab value="sms">
+
+SMS installation docs are `TBD`.
+
+For now, start with the email path unless you are writing the SMS docs in parallel.
+
+  </Tab>
+  <Tab value="push">
+
+Push installation docs are `TBD`.
+
+For now, start with the email path unless you are writing the push docs in parallel.
+
+  </Tab>
+</Tabs>
+
+## What you have now
+
+At this point, your project is ready for the first email route:
+
+- Node `>= 22` and ESM are in place.
+- Better-Notify core, email, SMTP, and `zod` are installed.
+- Your app knows where to read SMTP credentials.
+- The imports resolve cleanly, so you can start writing routes.
+
+The next docs build on that setup in two different ways:
+
+- [Quick Start](./quick-start.mdx) builds a working setup with routes, sub-catalogs, and sends a real email through Gmail SMTP.
+- [Advanced: Failover and Middleware](../advanced/failover-and-middleware.mdx) keeps the same email shape and adds provider failover, tracing, event logging, and rate limiting.
+
+## Other packages
+
+You do not need these for the first email + SMTP example, but they are the next common additions:
+
+- `@betternotify/sms` for SMS routes.
+- `@betternotify/push` for push notification routes.
+- `@betternotify/react-email` if you want React Email templates.
+- `@betternotify/ses` or `@betternotify/resend` if you prefer those providers over SMTP.
+
+Continue to [Quick Start](./quick-start.mdx) to wire the first route and send the first message.
