@@ -23,7 +23,7 @@ const buildMemoryLogger = (
         level,
         message,
         bindings: { ...bindings },
-        payload: { ...((payload as Record<string, unknown>) ?? {}) },
+        payload: { ...(payload as Record<string, unknown>) },
       });
     };
   return {

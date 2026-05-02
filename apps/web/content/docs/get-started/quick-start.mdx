@@ -4,4 +4,360 @@ icon: Lightning
 description: Send your first typed email in minutes
 ---
 
-Documentation coming soon.
+import { Mermaid } from '@/components/mermaid';
+import { File, Folder, Files } from 'fumadocs-ui/components/files';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+This guide walks you through building a working Better-Notify setup and sending a real email through Gmail SMTP. You will define an email channel, create three routes organized into sub-catalogs, and send a welcome email to your own inbox.
+
+By the end, you will have a typed client where `mail.transactional.welcome.send(...)` only compiles if the route exists and the input matches its schema.
+
+<Callout>
+This guide assumes you have already installed the packages. If not, start with [Installation](/docs/get-started/installation).
+</Callout>
+
+## What you will build
+
+<Mermaid
+  code={`
+flowchart LR
+  classDef route fill:#f0fdf4,stroke:#16a34a,color:#15803d
+  classDef catalog fill:#eff6ff,stroke:#2563eb,color:#1d4ed8
+  classDef client fill:#faf5ff,stroke:#9333ea,color:#7e22ce
+  classDef send fill:#fefce8,stroke:#ca8a04,color:#a16207
+
+  subgraph root [" rpc.catalog "]
+    direction TB
+    subgraph transactional [" transactional "]
+      direction LR
+      W([welcome]):::route
+      R([passwordReset]):::route
+    end
+    subgraph marketing [" marketing "]
+      N([newsletter]):::route
+    end
+  end
+
+  root --> CL{{"createClient()"}}:::client
+  CL --> S1(["mail.transactional.welcome.send()"]):::send
+  CL --> S2(["mail.transactional.passwordReset.send()"]):::send
+  CL --> S3(["mail.marketing.newsletter.send()"]):::send
+
+  SMTP(smtpTransport) -.-> CL
+  `}
+/>
+
+Three routes, two sub-catalogs, one typed client sending real emails through Gmail. The file structure will look like this:
+
+<Files>
+  <Folder name="src" defaultOpen>
+    <Folder name="notifications" defaultOpen>
+      <File name="channel.ts" />
+      <File name="routes.ts" />
+      <File name="client.ts" />
+    </Folder>
+    <File name="index.ts" />
+  </Folder>
+  <File name=".env" />
+</Files>
+
+## Set up Gmail SMTP
+
+Before writing any code, you need a Gmail app password. Gmail does not allow regular passwords for SMTP — you need to generate a dedicated app password.
+
+<Steps>
+<Step>
+
+### Enable 2-Step Verification
+
+App passwords require 2-Step Verification on your Google account. If you have not enabled it yet, go to your [Google Account security settings](https://myaccount.google.com/security) and turn it on.
+
+</Step>
+<Step>
+
+### Generate an app password
+
+Go to [App Passwords](https://myaccount.google.com/apppasswords) and create a new app password. Give it a name like "Better-Notify" and copy the generated 16-character password.
+
+</Step>
+<Step>
+
+### Add credentials to your environment
+
+Create a `.env` file at the root of your project:
+
+```sh title=".env"
+GMAIL_USER=you@gmail.com
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
+```
+
+Replace `you@gmail.com` with your Gmail address and paste the app password you just generated.
+
+<Callout type="warn">
+Never commit `.env` files to version control. Add `.env` to your `.gitignore`.
+</Callout>
+
+</Step>
+</Steps>
+
+## Define the email channel
+
+The channel sets shared defaults for every email route. Use your Gmail address as the `from`:
+
+```ts title="src/notifications/channel.ts"
+import { emailChannel } from '@betternotify/email';
+
+export const email = emailChannel({
+  defaults: {
+    from: { name: 'My App', email: process.env.GMAIL_USER! },
+  },
+});
+```
+
+Every route built with `rpc.email()` inherits this `from` address. Individual routes can override it.
+
+## Define routes and sub-catalogs
+
+Routes are contracts. Each one declares the input it accepts, the subject line, and how it renders. Group related routes into sub-catalogs, then compose them into a root catalog.
+
+```ts title="src/notifications/routes.ts"
+import { createNotify } from '@betternotify/core';
+import { z } from 'zod';
+import { email } from './channel';
+
+export const rpc = createNotify({ channels: { email } });
+
+const transactional = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(
+      z.object({
+        name: z.string(),
+        verifyUrl: z.string().url(),
+      }),
+    )
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template({
+      render: async ({ input }) => ({
+        text: `Welcome, ${input.name}! Verify here: ${input.verifyUrl}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #1a1a1a;">Welcome, ${input.name}!</h1>
+            <p>Thanks for signing up. Verify your account to get started:</p>
+            <a href="${input.verifyUrl}"
+               style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 6px;">
+              Verify your account
+            </a>
+          </div>
+        `,
+      }),
+    }),
+  passwordReset: rpc
+    .email()
+    .input(
+      z.object({
+        name: z.string(),
+        resetUrl: z.string().url(),
+      }),
+    )
+    .subject(() => 'Reset your password')
+    .template({
+      render: async ({ input }) => ({
+        text: `Hi ${input.name}, reset your password: ${input.resetUrl}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #1a1a1a;">Password reset</h1>
+            <p>Hi ${input.name}, someone requested a password reset for your account.</p>
+            <a href="${input.resetUrl}"
+               style="display: inline-block; padding: 12px 24px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 6px;">
+              Reset your password
+            </a>
+            <p style="color: #666; font-size: 14px; margin-top: 24px;">If you did not request this, ignore this email.</p>
+          </div>
+        `,
+      }),
+    }),
+});
+
+const marketing = rpc.catalog({
+  newsletter: rpc
+    .email()
+    .input(
+      z.object({
+        headline: z.string(),
+        bodyUrl: z.string().url(),
+      }),
+    )
+    .subject(({ input }) => input.headline)
+    .template({
+      render: async ({ input }) => ({
+        text: `${input.headline} — read more: ${input.bodyUrl}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #1a1a1a;">${input.headline}</h1>
+            <p><a href="${input.bodyUrl}" style="color: #2563eb;">Read more</a></p>
+          </div>
+        `,
+      }),
+    }),
+});
+
+export const catalog = rpc.catalog({ transactional, marketing });
+```
+
+`rpc.catalog()` accepts both email routes and other catalogs at the same level. Sub-catalogs flatten into dot-path IDs — `transactional.welcome`, `transactional.passwordReset`, `marketing.newsletter` — which the typed client exposes as nested properties.
+
+<Callout>
+This guide uses inline HTML templates to keep things simple. If you prefer writing templates as React components, see [React Email](/docs/templates/react-email).
+</Callout>
+
+## Create the client
+
+The client connects the catalog to a transport. Wire it to Gmail's SMTP server:
+
+```ts title="src/notifications/client.ts"
+import { createClient } from '@betternotify/core';
+import { smtpTransport } from '@betternotify/smtp';
+import { catalog } from './routes';
+import { email } from './channel';
+
+export const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: smtpTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      auth: {
+        user: process.env.GMAIL_USER!,
+        pass: process.env.GMAIL_APP_PASSWORD!,
+      },
+    }),
+  },
+});
+```
+
+`mail` is now a fully typed client. Autocomplete shows `mail.transactional.welcome`, `mail.transactional.passwordReset`, and `mail.marketing.newsletter` — nothing more, nothing less.
+
+## Send your first email
+
+Send a welcome email to yourself:
+
+```ts title="src/index.ts"
+import { mail } from './notifications/client';
+
+const result = await mail.transactional.welcome.send({
+  to: process.env.GMAIL_USER!,
+  input: {
+    name: 'Ada Lovelace',
+    verifyUrl: 'https://example.com/verify?token=abc123',
+  },
+});
+
+console.log('sent! messageId:', result.messageId);
+```
+
+Run it and check your inbox. You should see a styled welcome email from your own Gmail address.
+
+## Send across sub-catalogs
+
+Now send from both sub-catalogs to see the full typed surface in action:
+
+```ts title="src/index.ts"
+import { mail } from './notifications/client';
+
+const welcome = await mail.transactional.welcome.send({
+  to: process.env.GMAIL_USER!,
+  input: {
+    name: 'Ada Lovelace',
+    verifyUrl: 'https://example.com/verify?token=abc123',
+  },
+});
+console.log(`[transactional.welcome] messageId: ${welcome.messageId}`);
+
+const reset = await mail.transactional.passwordReset.send({
+  to: process.env.GMAIL_USER!,
+  input: {
+    name: 'Ada Lovelace',
+    resetUrl: 'https://example.com/reset?token=xyz789',
+  },
+});
+console.log(`[transactional.passwordReset] messageId: ${reset.messageId}`);
+
+const newsletter = await mail.marketing.newsletter.send({
+  to: process.env.GMAIL_USER!,
+  input: {
+    headline: 'This week in notifications',
+    bodyUrl: 'https://example.com/blog/weekly',
+  },
+});
+console.log(`[marketing.newsletter] messageId: ${newsletter.messageId}`);
+```
+
+Three emails, three routes, two sub-catalogs — all type-checked and delivered through the same SMTP transport. Check your inbox to see all three.
+
+## Type safety in action
+
+Try passing the wrong input to a route:
+
+```ts
+// Type error: Property 'verifyUrl' is missing
+await mail.transactional.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada' },
+});
+
+// Type error: 'signup' does not exist on 'transactional'
+await mail.transactional.signup.send({ to: 'ada@example.com', input: {} });
+
+// Runtime error: invalid input (Zod validation)
+await mail.transactional.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada', verifyUrl: 'not-a-url' },
+});
+```
+
+The first two are caught at compile time. The third is caught at runtime by the Zod schema. The catalog enforces both layers.
+
+## Use a mock transport for tests
+
+When you do not want to send real emails — in tests or CI — swap the transport without touching routes or the catalog:
+
+```ts title="src/notifications/client.test.ts"
+import { createClient } from '@betternotify/core';
+import { createMockTransport } from '@betternotify/core/transports';
+import { catalog } from './routes';
+import { email } from './channel';
+
+const transport = createMockTransport();
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+});
+
+await mail.transactional.welcome.send({
+  to: 'test@example.com',
+  input: {
+    name: 'Test User',
+    verifyUrl: 'https://example.com/verify?token=test',
+  },
+});
+
+console.log(transport.sent.length);
+// → 1
+console.log(transport.sent[0].ctx.route);
+// → 'transactional.welcome'
+```
+
+Same catalog, same routes, same client shape. Only the transport changed. Read more about the [mock transport](/docs/transports/generic/mock).
+
+## Where to go next
+
+You now have a working setup with typed procedures, merged catalogs, and real email delivery. From here:
+
+- Read [Channels](/docs/concepts/channels) to understand how email, SMS, push, and custom channels work.
+- Read [Catalog & Procedures](/docs/concepts/catalog-and-procedures) for deeper coverage of procedure composition and dot-path route IDs.
+- Read [Transports Overview](/docs/transports) to learn about multi-transport composition and failover.
+- Read [Middleware](/docs/concepts/middleware) when you want rate limits, tracing, or event logging across procedures.

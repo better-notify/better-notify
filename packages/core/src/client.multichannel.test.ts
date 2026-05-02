@@ -46,7 +46,7 @@ const testChannel = () => {
   const channel = {
     name: 'test',
     createBuilder: () => ({}),
-    finalize: (state: unknown, id: string) => state as ChannelDefinition<TestArgs, TestRendered>,
+    finalize: (state: unknown, _id: string) => state as ChannelDefinition<TestArgs, TestRendered>,
     validateArgs: (args: unknown): TestArgs => {
       const a = args as Record<string, unknown>;
       if (!a.to || typeof a.to !== 'string') throw new Error('to required');

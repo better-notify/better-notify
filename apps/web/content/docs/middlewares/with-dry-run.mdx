@@ -1,0 +1,53 @@
+---
+title: withDryRun
+icon: Eye
+description: Short-circuit sends without delivering
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`withDryRun` short-circuits every send with a synthetic result. The downstream pipeline — render, transport — never runs. Use it during development, in CI, or behind a feature flag to exercise the full caller-side flow without delivering real notifications.
+
+```ts
+import { withDryRun } from '@betternotify/core/middlewares';
+
+const welcome = rpc
+  .email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withDryRun());
+```
+
+The returned result always carries `messageId: 'dry-run'` so callers can detect dry-run sends programmatically.
+
+## Options
+
+`withDryRun` takes no options.
+
+## What the result looks like
+
+```ts
+const result = await mail.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada' },
+});
+
+console.log(result.messageId); // 'dry-run'
+console.log(result.timing);   // { renderMs: 0, sendMs: 0 }
+```
+
+## Conditional dry run
+
+Wrap it with a feature flag or environment check to toggle at runtime:
+
+```ts
+const maybeDryRun = process.env.NODE_ENV === 'production' ? [] : [withDryRun()];
+
+const welcome = rpc
+  .email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(...maybeDryRun);
+```

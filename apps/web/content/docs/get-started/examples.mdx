@@ -1,0 +1,71 @@
+---
+title: Examples
+icon: Code
+description: Working examples you can clone and run
+---
+
+The repository includes a set of runnable examples that cover common patterns — from a single email send to multi-provider failover, custom channels, middleware composition, and observability. Each example is self-contained and can be run with a single command.
+
+<Cards>
+  <Card href="https://github.com/better-notify/better-notify/tree/main/examples" title="Browse on GitHub">
+    Clone the repo and explore the examples directory.
+  </Card>
+</Cards>
+
+## What's included
+
+<Cards>
+  <Card title="Single send">
+    Send one email through a typed procedure with schema validation.
+  </Card>
+  <Card title="Batch send">
+    Send to multiple recipients with interval spacing.
+  </Card>
+  <Card title="SMTP">
+    Deliver through Gmail SMTP with a real transport.
+  </Card>
+  <Card title="React Email">
+    Use React components as email templates.
+  </Card>
+  <Card title="Multi-channel">
+    Email, SMS, and push through a single catalog.
+  </Card>
+  <Card title="Custom channel">
+    Build a Slack channel with defineChannel and a custom HTTP transport.
+  </Card>
+  <Card title="Failover">
+    Multi-transport with automatic failover between providers.
+  </Card>
+  <Card title="Round-robin / Race / Parallel / Mirrored">
+    All multi-transport strategies with working configurations.
+  </Card>
+  <Card title="Dry run">
+    Short-circuit sends in development without delivering.
+  </Card>
+  <Card title="Rate limiting">
+    Throttle sends per recipient with withRateLimit.
+  </Card>
+  <Card title="Hooks">
+    Observe the send lifecycle with onBeforeSend, onAfterSend, and onError.
+  </Card>
+  <Card title="Plugins">
+    Bundle middleware and hooks into reusable plugins.
+  </Card>
+  <Card title="Observability">
+    Combine tracing, event logging, and rate limiting in one setup.
+  </Card>
+  <Card title="Kitchen sink">
+    Everything together — multi-channel, middleware, hooks, plugins, and multi-transport.
+  </Card>
+</Cards>
+
+## Running an example
+
+```sh
+git clone https://github.com/better-notify/better-notify.git
+cd better-notify
+pnpm install
+pnpm dev
+```
+
+The `pnpm dev` command starts the canonical demo example. To run a specific example, check the `examples/` directory for instructions.

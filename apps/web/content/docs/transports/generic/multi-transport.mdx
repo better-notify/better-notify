@@ -1,0 +1,232 @@
+---
+title: Multi-Transport
+icon: GitFork
+description: Combine multiple transports with failover, load balancing, and redundancy
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`multiTransport()` composes multiple transports behind a single `Transport` interface. Pick a strategy that matches how you want delivery to behave.
+
+<SignalFlow
+  nodes={[
+    { id: 'ses', label: 'SES' },
+    { id: 'smtp', label: 'SMTP' },
+    { id: 'resend', label: 'Resend' },
+  ]}
+  defaultStrategy="failover"
+  maxRetries={2}
+/>
+
+Strategies split into two families:
+
+- **Sequential** — tries one transport at a time, advancing on failure. Honors `maxAttemptsPerTransport` and `backoff`.
+- **Parallel** — uses multi-transport execution instead of sequential failover. `race` and `parallel` start all transports immediately; `mirrored` awaits the primary first, then fires mirrors in the background. Ignores retry options.
+
+| Strategy | Family | Behavior |
+|----------|--------|----------|
+| `failover` | Sequential | Try in order, stop on first success |
+| `round-robin` | Sequential | Rotate start index across calls |
+| `random` | Sequential | Random start index per call |
+| `race` | Parallel | All fire, first success wins |
+| `parallel` | Parallel | All fire, all must succeed |
+| `mirrored` | Parallel | Primary awaited, mirrors fire-and-forget |
+
+## Sequential Strategies
+
+Sequential strategies try one transport at a time. They differ only in where each `send()` starts:
+
+| Strategy | First transport tried | What happens after a failure | Best fit |
+|----------|------------------------|------------------------------|----------|
+| `failover` | Always `transports[0]` | Walk forward through the remaining transports | Clear primary provider with explicit backups |
+| `round-robin` | Next index in the rotation | Continue forward from that starting point for the current send | Evenly distribute load across equivalent providers |
+| `random` | Random index per send | Continue forward from that starting point for the current send | Spread load across many app instances without shared counters |
+
+### Failover
+
+Every `send()` starts at `transports[0]` and walks forward on failure. Use when you have a clear primary provider and one or more backups.
+
+```ts
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: resendTransport },
+    { transport: sesTransport },
+  ],
+});
+```
+
+### Round-Robin
+
+An in-process counter advances the start index on each `send()`, distributing load evenly across equivalent providers. On failure within a single send, it still walks forward through the remaining transports.
+
+```ts
+const transport = multiTransport({
+  strategy: 'round-robin',
+  transports: [
+    { transport: sesAccountA },
+    { transport: sesAccountB },
+    { transport: sesAccountC },
+  ],
+});
+```
+
+### Random
+
+Each `send()` picks a uniformly random start index, then walks forward on failure. Spreads load without per-process counter coordination — useful across multiple server instances.
+
+```ts
+const transport = multiTransport({
+  strategy: 'random',
+  transports: [
+    { transport: providerA },
+    { transport: providerB },
+  ],
+});
+```
+
+## Parallel Strategies
+
+Parallel strategies fan work out instead of walking the list. The important differences are when each branch starts, what the caller waits for, and which failures propagate:
+
+| Strategy | When transports start | When `send()` resolves | What causes `send()` to fail | Best fit |
+|----------|------------------------|------------------------|------------------------------|----------|
+| `race` | All transports start immediately | First successful transport wins | All transports fail | Lowest-latency delivery across interchangeable providers |
+| `parallel` | All transports start immediately | After every transport succeeds | Any transport fails | Redundant delivery where every copy must land |
+| `mirrored` | `transports[0]` starts first; mirrors start only after it succeeds | As soon as the primary succeeds | The primary fails | Primary delivery plus non-blocking audit or observability mirrors |
+
+### Race
+
+Dispatches to all transports in parallel via `Promise.any()`. Returns the first successful result; throws when all fail. Use for latency-sensitive sends where any provider can deliver.
+
+```ts
+const transport = multiTransport({
+  strategy: 'race',
+  transports: [
+    { transport: regionUs },
+    { transport: regionEu },
+    { transport: regionApac },
+  ],
+});
+```
+
+### Parallel
+
+Dispatches to all transports in parallel via `Promise.allSettled()`. All must succeed — throws on any failure. Returns the first transport's data as the canonical result. Use for verified-redundancy delivery where every copy must land (e.g. primary + audit copy).
+
+```ts
+const transport = multiTransport({
+  strategy: 'parallel',
+  transports: [
+    { transport: primaryProvider },
+    { transport: auditCopy },
+  ],
+});
+```
+
+### Mirrored
+
+Awaits `transports[0]` (the primary) and returns its result. Remaining transports fire-and-forget in the background — failures log at `warn` level but never propagate. Use when secondary providers are observability mirrors whose failure should not affect the user-visible outcome.
+
+```ts
+const transport = multiTransport({
+  strategy: 'mirrored',
+  transports: [
+    { transport: primaryProvider },
+    { transport: analyticsProvider },
+    { transport: complianceArchive },
+  ],
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    name: {
+      description: 'Identifier surfaced as the composite Transport.name. Override when registering multiple composites in the same client.',
+      type: 'string',
+      default: "'multi'",
+    },
+    strategy: {
+      description: 'Dispatch strategy for inner transports.',
+      type: "MultiTransportStrategy",
+    },
+    transports: {
+      description: 'Inner transports in order. Must be non-empty. Order matters for failover (first = primary) and round-robin rotation.',
+      type: 'MultiTransportEntry[]',
+    },
+    maxAttemptsPerTransport: {
+      description: 'Retries per transport before advancing. Sequential strategies only.',
+      type: 'number',
+      default: '1',
+    },
+    backoff: {
+      description: 'Backoff policy for retries on the same transport. Only consulted when maxAttemptsPerTransport > 1.',
+      type: 'MultiTransportBackoff',
+    },
+    isRetriable: {
+      description: 'Predicate deciding whether an error should retry the same transport (true) or advance immediately (false). Non-retriable errors still attempt other transports.',
+      type: '(err: unknown) => boolean',
+      default: '() => true',
+    },
+    logger: {
+      description: 'Logger for orchestration events. Child-binds { component, name }.',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+## Retries and Backoff
+
+Sequential strategies support per-transport retries with exponential backoff. Parallel strategies ignore these options.
+
+```ts
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: primaryProvider },
+    { transport: fallbackProvider },
+  ],
+  maxAttemptsPerTransport: 3,
+  backoff: {
+    initialMs: 100,
+    factor: 2,
+    maxMs: 5_000,
+  },
+  isRetriable: (err) => !(err instanceof RateLimitError),
+});
+```
+
+Delay between retries on the **same** transport follows `min(maxMs, initialMs × factor^(attempt-1))`. The formula adds no jitter. Backoff resets when advancing to the next transport — advancing never sleeps.
+
+<TypeTable
+  type={{
+    initialMs: {
+      description: 'Delay before the second attempt in milliseconds. Must be > 0.',
+      type: 'number',
+    },
+    factor: {
+      description: 'Exponential growth factor. Use 1 for fixed delay. Must be >= 1.',
+      type: 'number',
+    },
+    maxMs: {
+      description: 'Upper cap on delay. Must be >= initialMs.',
+      type: 'number',
+    },
+  }}
+/>
+
+## Verify and Close
+
+In Better-Notify, `verify()` and `close()` are optional lifecycle hooks on the `Transport` interface. Like any other `Transport`, a multi-transport exposes them too:
+
+- **`verify()`** checks whether a transport is ready to send. Providers typically use it for startup checks such as validating credentials, testing connectivity, or confirming required configuration.
+- **`close()`** releases transport-owned resources when your app shuts down, such as sockets, clients, or background handles.
+
+`multiTransport()` applies those hooks across the whole composite, so you can treat many transports as one transport during startup and shutdown.
+
+- **`verify()`** calls every inner `verify()` in parallel and returns `{ ok: true }` when at least one transport verifies successfully. The full per-transport outcomes are returned in `details.results`, which makes it useful for “is any provider alive?” checks during boot or health probes.
+- **`close()`** calls every inner `close()` in parallel and waits for all cleanup work to finish. If one transport throws during shutdown, the error is logged and swallowed so the remaining transports still get a chance to close.

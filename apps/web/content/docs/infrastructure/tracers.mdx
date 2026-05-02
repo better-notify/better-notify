@@ -4,4 +4,79 @@ icon: Crosshair
 description: Distributed tracing adapters
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A tracer wraps each send in a tracing span. [withTracing](/docs/middlewares/with-tracing) accepts any object that implements the `TracerLike` interface — structurally compatible with OpenTelemetry's `Tracer`, so an OTel tracer can be passed directly with no adapter.
+
+## When to use a tracer
+
+Use a tracer when you need to understand how a notification send fits into a larger request. Tracers are the right tool when:
+
+- **Distributed tracing** — you already have OpenTelemetry or a similar tracing system and want notification sends to appear as spans alongside your API handlers, database calls, and queue processing.
+- **Latency debugging** — you need to see exactly how long each send took and where the time went (middleware, render, transport) in the context of the parent request.
+- **Correlation** — you want to link a notification send back to the HTTP request or background job that triggered it through trace and span IDs.
+
+If you only need a flat record of "this send happened" without parent-child context, a [sink](/docs/infrastructure/sinks) is simpler. Tracers add value when the notification is one step in a larger operation and you need to see the whole picture.
+
+## The TracerLike interface
+
+<TypeTable
+  type={{
+    startActiveSpan: {
+      description: 'Start a new active span with a name and run the provided function within it. The function receives a SpanLike to set attributes and status.',
+      type: '<T>(name: string, fn: (span: SpanLike) => Promise<T>) => Promise<T>',
+    },
+  }}
+/>
+
+## The SpanLike interface
+
+<TypeTable
+  type={{
+    setAttribute: {
+      description: 'Set a key-value attribute on the span.',
+      type: '(key: string, value: string | number | boolean) => void',
+    },
+    setStatus: {
+      description: 'Set the span status to "ok" or "error".',
+      type: '(status: { code: "ok" | "error"; message?: string }) => void',
+    },
+    recordException: {
+      description: 'Record an exception on the span.',
+      type: '(exception: unknown) => void',
+    },
+    end: {
+      description: 'End the span.',
+      type: '() => void',
+    },
+  }}
+/>
+
+## OpenTelemetry
+
+Pass an OTel tracer directly — no wrapper needed:
+
+```ts
+import { trace } from '@opentelemetry/api';
+import { withTracing } from '@betternotify/core';
+
+withTracing({ tracer: trace.getTracer('betternotify') });
+```
+
+## inMemoryTracer
+
+For tests, use `inMemoryTracer` to record spans and assert on them:
+
+```ts
+import { inMemoryTracer } from '@betternotify/core';
+
+const tracer = inMemoryTracer();
+
+// after sending:
+console.log(tracer.spans.length);
+console.log(tracer.spans[0].name);
+console.log(tracer.spans[0].attributes);
+console.log(tracer.spans[0].status);
+```
+
+Each recorded span has `name`, `attributes`, `status`, `exceptions`, and `ended`.

@@ -16,23 +16,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/prepare
-      - run: pnpm run ci
-
   preview-gate:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.fork == false
     steps:
       - run: echo "Preview gate passed"
 
+  ci:
+    runs-on: ubuntu-latest
+    needs: [preview-gate]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/prepare
+      - run: pnpm run ci
+
   bundle-projects:
     name: Bundle and analyze affected projects
     runs-on: ubuntu-latest
-    needs: [ci]
+    needs: [preview-gate, ci]
     outputs:
       projects: ${{ steps.projects.outputs.projects }}
       pattern: ${{ steps.projects.outputs.pattern }}

@@ -1,4 +1,4 @@
-import type { AnyStandardSchema, InferInput, InferOutput } from './schema.js';
+import type { InferInput, InferOutput } from './schema.js';
 import type { ChannelDefinition } from './channel/types.js';
 
 const CATALOG_BRAND = 'Catalog' as const;

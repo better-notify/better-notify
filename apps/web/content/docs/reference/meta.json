@@ -1,5 +1,5 @@
 {
   "title": "Reference",
   "icon": "FileText",
-  "pages": ["api-reference", "error-codes"]
+  "pages": ["error-handling", "testing"]
 }

@@ -4,4 +4,144 @@ icon: Export
 description: Route notification events to external systems
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A sink is a destination for structured send events. [withEventLogger](/docs/middlewares/with-event-logger) calls `sink.write(event)` once per send — the sink decides where the event goes.
+
+## When to use a sink
+
+Use a sink when you need a durable, structured record of every send — not just logs. Sinks are the right tool when:
+
+- **Audit trails** — you need to prove a notification was sent (or failed) for compliance, billing, or support investigations.
+- **Analytics** — you want to track delivery rates, latency distributions, or error patterns over time in a data warehouse or dashboard.
+- **Alerting** — you want to page on-call when a route starts failing, without coupling alert logic to the send pipeline.
+- **Event streaming** — you want to feed notification events into a Kafka topic, S3 bucket, or webhook for downstream systems to consume.
+
+If you only need console output for debugging, the [logger](/docs/infrastructure/logger) is simpler. If you need per-request spans with parent-child relationships, use a [tracer](/docs/infrastructure/tracers) instead. Sinks sit between the two — more structured than logs, less granular than traces.
+
+## The EventSink interface
+
+<TypeTable
+  type={{
+    write: {
+      description: 'Receive a single SendEvent. Called once per send — either on success or on error.',
+      type: '(event: SendEvent) => Promise<void>',
+    },
+  }}
+/>
+
+## The SendEvent shape
+
+Every event carries the same base fields:
+
+<TypeTable
+  type={{
+    route: {
+      description: 'Dot-path route ID for the procedure.',
+      type: 'string',
+    },
+    messageId: {
+      description: 'UUID for this send attempt.',
+      type: 'string',
+    },
+    status: {
+      description: '"success" or "error".',
+      type: 'SendEventStatus',
+    },
+    durationMs: {
+      description: 'Total time from middleware entry to result.',
+      type: 'number',
+    },
+    startedAt: {
+      description: 'When the send started.',
+      type: 'Date',
+    },
+    endedAt: {
+      description: 'When the send completed.',
+      type: 'Date',
+    },
+    result: {
+      description: 'The send result. Only present on success.',
+      type: 'unknown',
+    },
+    error: {
+      description: 'Serialized error with name, message, and optional code. Only present on error.',
+      type: 'SendEventError',
+    },
+  }}
+/>
+
+## Built-in sinks
+
+### consoleEventSink
+
+Logs events to the console. Use during local development.
+
+```ts
+import { consoleEventSink } from '@betternotify/core';
+
+withEventLogger({ sink: consoleEventSink() });
+```
+
+### inMemoryEventSink
+
+Collects events in an array. Use in tests to assert on what was sent.
+
+```ts
+import { inMemoryEventSink } from '@betternotify/core';
+
+const sink = inMemoryEventSink();
+// after sending:
+console.log(sink.events.length);
+console.log(sink.events[0].status);
+```
+
+## Custom sinks
+
+Use `createEventSink` to build a sink from a `write` function. It wraps your function with failure isolation (a sink crash never breaks the send pipeline) and optional event filtering:
+
+```ts
+import { createEventSink } from '@betternotify/core';
+
+const datadogSink = createEventSink({
+  write: async (event) => {
+    await fetch('https://api.datadoghq.com/api/v2/logs', {
+      method: 'POST',
+      headers: { 'DD-API-KEY': process.env.DD_API_KEY! },
+      body: JSON.stringify(event),
+    });
+  },
+});
+```
+
+<TypeTable
+  type={{
+    write: {
+      description: 'The function that receives each SendEvent. If it throws, the error is caught and logged — the send pipeline continues unaffected.',
+      type: '(event: SendEvent) => Promise<void>',
+    },
+    filter: {
+      description: 'Optional predicate to drop events before they reach write. Return false to skip.',
+      type: '(event: SendEvent) => boolean',
+    },
+    onError: {
+      description: 'Custom error handler. Called when write throws instead of the default logger.',
+      type: '(err: Error, event: SendEvent) => void',
+    },
+    errorLogger: {
+      description: 'Override the logger used for write failures. Defaults to consoleLogger({ level: "error" }).',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+### Filtering events
+
+Ship only errors to a paging pipeline, or only successes to an analytics sink:
+
+```ts
+const errorOnlySink = createEventSink({
+  write: async (event) => { await alertService.send(event); },
+  filter: (event) => event.status === 'error',
+});
+```

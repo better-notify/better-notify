@@ -1,7 +1,159 @@
 ---
 title: Plugins
 icon: Plug
-description: Extend BetterNotify with composable plugins
+description: Bundle middleware and hooks into reusable units
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A plugin bundles middleware, hooks, and lifecycle callbacks into a single reusable unit. Instead of wiring the same middleware and hooks across every client, you package them once and pass the plugin to `createClient`.
+
+```ts
+import { createPlugin, createClient, withTracing, withEventLogger } from '@betternotify/core';
+
+const observability = createPlugin({
+  name: 'observability',
+  middleware: [
+    withTracing({ tracer }),
+    withEventLogger({ sink }),
+  ],
+  hooks: {
+    onError: ({ route, error, phase }) => {
+      errorTracker.capture(error, { route, phase });
+    },
+  },
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+  plugins: [observability],
+});
+```
+
+## Plugin shape
+
+<TypeTable
+  type={{
+    name: {
+      description: 'A human-readable identifier for the plugin. Used in log messages when a plugin lifecycle callback fails.',
+      type: 'string',
+    },
+    middleware: {
+      description: 'Middleware to apply to every procedure. Plugin middleware wraps outermost — it runs before procedure-level middleware.',
+      type: 'Middleware[]',
+    },
+    hooks: {
+      description: 'Lifecycle hooks (onBeforeSend, onExecute, onAfterSend, onError). Plugin hooks merge with client hooks — they do not override them. Plugin hooks run first.',
+      type: 'ClientHooks',
+    },
+    onCreate: {
+      description: 'Called once when createClient initializes. Receives the catalog. Use for validation or setup that depends on the catalog shape.',
+      type: '(params: { catalog }) => void',
+    },
+    onClose: {
+      description: 'Called when client.close() is invoked. Use for cleanup — flushing buffers, closing connections. Plugins close in reverse registration order.',
+      type: '() => void | Promise<void>',
+    },
+  }}
+/>
+
+## How plugins compose
+
+Plugin middleware and hooks merge with anything defined directly on the client. The ordering is:
+
+- **Middleware**: plugin middleware wraps outermost → procedure `.use()` wraps innermost → core. Multiple plugins compose in registration order — the first plugin is the outermost layer.
+- **Hooks**: plugin hooks run before client hooks. Within each group, handlers run in registration order.
+- **Lifecycle**: `onCreate` fires in registration order during `createClient`. `onClose` fires in reverse order when `client.close()` is called.
+
+<div className="border-fd-border bg-fd-card/50 rounded-xl border p-4">
+  <span className="text-fd-muted-foreground mb-3 block font-mono text-[10px] uppercase tracking-widest">plugin middleware (outermost)</span>
+  <div className="border-fd-border bg-fd-background rounded-lg border p-4">
+    <span className="text-fd-muted-foreground mb-3 block font-mono text-[10px] uppercase tracking-widest">procedure middleware (.use)</span>
+    <div className="border-fd-border bg-fd-card rounded-lg border p-4">
+      <span className="text-fd-foreground block text-center font-mono text-xs font-semibold">render → transport → result</span>
+    </div>
+  </div>
+</div>
+
+## Building a plugin
+
+Use `createPlugin` to define a plugin. It gives you full autocomplete and type inference — start with what you need and add fields as the scope grows:
+
+```ts
+import { createPlugin, withRateLimit } from '@betternotify/core';
+import type { RateLimitStore } from '@betternotify/core';
+
+const rateLimitPlugin = (store: RateLimitStore) =>
+  createPlugin({
+    name: 'rate-limit',
+    middleware: [
+      withRateLimit({ store, key: ({ args }) => String(args.to), max: 10, window: 60_000 }),
+    ],
+  });
+```
+
+### Validation with onCreate
+
+Use `onCreate` to verify that the catalog meets the plugin's requirements at startup:
+
+```ts
+const auditPlugin = createPlugin({
+  name: 'audit',
+  middleware: [withEventLogger({ sink: auditSink })],
+  onCreate: ({ catalog }) => {
+    if (catalog.routes.length === 0) {
+      throw new Error('audit plugin requires at least one route');
+    }
+  },
+});
+```
+
+### Cleanup with onClose
+
+Use `onClose` to flush buffers or close connections when the client shuts down:
+
+```ts
+import { createPlugin, withEventLogger } from '@betternotify/core';
+import type { EventSink, SendEvent } from '@betternotify/core';
+
+const bufferPlugin = (sink: EventSink) => {
+  const buffer: SendEvent[] = [];
+  let timer: ReturnType<typeof setInterval>;
+
+  return createPlugin({
+    name: 'buffered-events',
+    middleware: [
+      withEventLogger({
+        sink: { write: async (event) => { buffer.push(event); } },
+      }),
+    ],
+    onCreate: () => {
+      timer = setInterval(async () => {
+        const batch = buffer.splice(0);
+        for (const event of batch) await sink.write(event);
+      }, 5000);
+    },
+    onClose: async () => {
+      clearInterval(timer);
+      for (const event of buffer.splice(0)) await sink.write(event);
+    },
+  });
+};
+```
+
+## Multiple plugins
+
+Pass multiple plugins as an array. They compose in order — first plugin wraps outermost:
+
+```ts
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+  plugins: [observability, rateLimitPlugin(store), auditPlugin],
+});
+```
+
+Plugin hooks and client hooks never override each other — they all run. If a plugin hook throws, the error is isolated and routed to `onError` just like any other hook failure. See [Hooks](/docs/concepts/hooks) for error isolation details.

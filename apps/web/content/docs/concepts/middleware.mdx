@@ -4,4 +4,208 @@ icon: Funnel
 description: Transform and control the notification pipeline
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Middleware wraps the send pipeline. It runs before and after the render-and-send core, and it can transform the context, block a send entirely, or observe the result. If removing a piece of logic would change whether a notification goes out, it belongs in middleware. If it only observes or logs, it belongs in a [hook](/docs/concepts/hooks).
+
+<PipelineFlow
+  nodes={[
+    { id: 'rate', label: 'withRateLimit' },
+    { id: 'logger', label: 'withEventLogger' },
+    { id: 'render', label: 'render' },
+    { id: 'transport', label: 'SMTP' },
+  ]}
+/>
+
+```ts
+const welcome = rpc
+  .email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withRateLimit({ max: 10, window: '1m', store, key: ({ args }) => args.to }))
+  .use(withEventLogger({ sink }));
+
+await mail.welcome.send({ to: 'ada@example.com', input: { name: 'Ada' } });
+```
+
+## Middleware vs hooks
+
+<TypeTable
+  type={{
+    middleware: {
+      description: 'Can short-circuit sends, mutate context, retry, or fail the pipeline. Use when the logic controls whether or how a notification is delivered.',
+      type: 'async (params) => result',
+    },
+    hooks: {
+      description: 'Observe the pipeline without affecting it. Failures are isolated — a broken hook never blocks a send. Use for logging, metrics, and side effects.',
+      type: 'async (params) => void',
+    },
+  }}
+/>
+
+## What middleware can do
+
+Every middleware receives the same parameters and decides how to proceed:
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated, schema-coerced input for this procedure.',
+      type: 'TInput',
+    },
+    ctx: {
+      description: 'Context object flowing through the middleware chain.',
+      type: 'TCtx',
+    },
+    route: {
+      description: 'Dot-path route ID for this procedure (e.g. "transactional.welcome").',
+      type: 'string',
+    },
+    messageId: {
+      description: 'UUID assigned to this individual send attempt.',
+      type: 'string',
+    },
+    args: {
+      description: 'Full send arguments including input plus any channel-specific fields.',
+      type: 'SendArgs',
+    },
+    next: {
+      description: 'Advance to the next middleware or the core pipeline. Pass an object to shallow-merge fields into the context.',
+      type: '(newCtx?) => Promise<TResult>',
+    },
+  }}
+/>
+
+There are four things a middleware can do with these parameters:
+
+### Pass through
+
+Call `next()` to continue the pipeline unchanged. The simplest middleware does nothing but forward:
+
+```ts
+const passthrough: Middleware = async ({ next }) => {
+  return next();
+};
+```
+
+### Mutate context
+
+Pass an object to `next()` to shallow-merge fields into the context. Downstream middleware and the render function see the updated context:
+
+```ts
+const withTenant: Middleware = async ({ next }) => {
+  const tenantId = await resolveTenant();
+  return next({ tenantId });
+};
+```
+
+### Short-circuit
+
+Don't call `next()`. Return a synthetic result instead. The render and transport never run:
+
+```ts
+const withDryRun = (): Middleware => {
+  return async () => ({
+    messageId: 'dry-run',
+    accepted: [],
+    rejected: [],
+    envelope: { from: '', to: [] },
+    timing: { renderMs: 0, sendMs: 0 },
+  });
+};
+```
+
+### Fail
+
+Throw to abort the pipeline. The error routes to `onError` hooks:
+
+```ts
+const withBlocklist: Middleware = async ({ args, next }) => {
+  if (blocked.has(args.to)) {
+    throw new NotifyRpcError({ message: 'Recipient blocked', code: 'BLOCKED' });
+  }
+  return next();
+};
+```
+
+## Composition order
+
+Middleware wraps in layers. Plugin middleware sits outermost, procedure-level middleware sits innermost, and the render-and-send core is at the center:
+
+<div className="border-fd-border bg-fd-card/50 rounded-xl border p-4">
+  <span className="text-fd-muted-foreground mb-3 block font-mono text-[10px] uppercase tracking-widest">plugin middleware</span>
+  <div className="border-fd-border bg-fd-background rounded-lg border p-4">
+    <span className="text-fd-muted-foreground mb-3 block font-mono text-[10px] uppercase tracking-widest">procedure middleware (.use)</span>
+    <div className="border-fd-border bg-fd-card rounded-lg border p-4">
+      <span className="text-fd-foreground block text-center font-mono text-xs font-semibold">render → transport → result</span>
+    </div>
+  </div>
+</div>
+
+A request enters from the outside and moves inward. The response bubbles back out. Each layer can act on both directions — run logic before `next()` (on the way in) and after `next()` (on the way out).
+
+## Where you attach middleware
+
+There are three levels, each with a different scope:
+
+**Root-level** — runs on every procedure in the catalog:
+
+```ts
+const rpc = createNotify({ channels: { email } })
+  .use(withEventLogger({ sink }));
+```
+
+**Procedure-level** — runs on a single procedure:
+
+```ts
+const passwordReset = rpc.email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withRateLimit({ max: 3, window: '1h', key: ({ args }) => args.to }));
+```
+
+**Plugins** — bundle middleware (and hooks) into reusable units that apply across catalogs. See [Plugins](/docs/concepts/plugins).
+
+## Built-in middleware
+
+<Cards>
+  <Card href="/docs/middlewares/with-dry-run" title="withDryRun">
+    Short-circuit sends with a synthetic result. Use in development, CI, or under a feature flag.
+  </Card>
+  <Card href="/docs/middlewares/with-rate-limit" title="withRateLimit">
+    Throttle sends per derived key with fixed or sliding window algorithms.
+  </Card>
+  <Card href="/docs/middlewares/with-idempotency" title="withIdempotency">
+    Deduplicate identical sends within a time window.
+  </Card>
+  <Card href="/docs/middlewares/with-event-logger" title="withEventLogger">
+    Emit one structured event per send to an event sink.
+  </Card>
+  <Card href="/docs/middlewares/with-tag-inject" title="withTagInject">
+    Inject tags into the rendered output before transport delivery.
+  </Card>
+  <Card href="/docs/middlewares/with-tracing" title="withTracing">
+    Integrate with distributed tracing systems.
+  </Card>
+</Cards>
+
+## Writing custom middleware
+
+A middleware is an async function that receives `MiddlewareParams` and returns the result. Wrap `next()` to run logic on both sides of the pipeline:
+
+```ts
+import type { Middleware } from '@betternotify/core';
+
+const withTiming = (): Middleware => {
+  return async ({ route, next }) => {
+    const start = performance.now();
+    const result = await next();
+    console.log(`${route}: ${(performance.now() - start).toFixed(1)}ms`);
+    return result;
+  };
+};
+```
+
+The `next()` call is what separates "before" from "after". Everything above it runs on the way in; everything below runs on the way out.

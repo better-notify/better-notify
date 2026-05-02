@@ -1,0 +1,154 @@
+---
+title: Testing
+icon: TestTube
+description: Test your notification pipeline
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Better-Notify ships test utilities that let you verify your notification pipeline without sending real messages. The core tools are `createMockTransport` for capturing sends, `inMemoryEventSink` for asserting on events, and `inMemoryTracer` for inspecting spans.
+
+## Mock transport
+
+`createMockTransport` captures every rendered message instead of delivering it. Use it to verify that the right content reaches the transport with the right data:
+
+```ts
+import { createClient, createMockTransport } from '@betternotify/core';
+
+const transport = createMockTransport();
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+});
+
+await mail.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada', verifyUrl: 'https://example.com/verify' },
+});
+
+expect(transport.sent).toHaveLength(1);
+expect(transport.sent[0].rendered.subject).toBe('Welcome, Ada!');
+expect(transport.sent[0].rendered.to).toEqual([{ email: 'ada@example.com' }]);
+expect(transport.sent[0].ctx.route).toBe('welcome');
+```
+
+### Custom reply data
+
+Simulate provider-specific response data with the `reply` option:
+
+```ts
+const transport = createMockTransport({
+  reply: (rendered) => ({ messageId: 'ses-123', requestId: 'req-456' }),
+});
+
+const result = await mail.welcome.send({ to: 'ada@example.com', input });
+expect(result.data.messageId).toBe('ses-123');
+```
+
+### Simulating failures
+
+Return `{ ok: false, error }` from `reply` to simulate transport failures:
+
+```ts
+const failingTransport = createMockTransport({
+  reply: () => ({ ok: false, error: new Error('SMTP connection refused') }),
+});
+```
+
+## Testing middleware
+
+Test middleware in isolation by calling it directly with mock params:
+
+```ts
+import { withRateLimit, inMemoryRateLimitStore } from '@betternotify/core';
+
+const store = inMemoryRateLimitStore();
+const mw = withRateLimit({ store, key: 'test', max: 2, window: 60_000 });
+
+const params = {
+  input: {},
+  ctx: {},
+  route: 'welcome',
+  messageId: 'test-1',
+  args: { to: 'ada@example.com', input: {} },
+  next: async () => ({ messageId: 'ok', timing: { renderMs: 0, sendMs: 0 } }),
+};
+
+await mw(params as any);
+await mw({ ...params, messageId: 'test-2' } as any);
+await expect(mw({ ...params, messageId: 'test-3' } as any)).rejects.toThrow('Rate limit exceeded');
+```
+
+## Testing hooks
+
+Use `inMemoryEventSink` to capture events and assert on them:
+
+```ts
+import { inMemoryEventSink, withEventLogger, createClient } from '@betternotify/core';
+
+const sink = inMemoryEventSink();
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: createMockTransport() },
+  plugins: [{ name: 'test-events', middleware: [withEventLogger({ sink })] }],
+});
+
+await mail.welcome.send({ to: 'ada@example.com', input });
+
+expect(sink.events).toHaveLength(1);
+expect(sink.events[0].status).toBe('success');
+expect(sink.events[0].route).toBe('welcome');
+```
+
+## Testing tracing
+
+Use `inMemoryTracer` to capture spans:
+
+```ts
+import { inMemoryTracer, withTracing, createClient } from '@betternotify/core';
+
+const tracer = inMemoryTracer();
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: createMockTransport() },
+  plugins: [{ name: 'test-tracing', middleware: [withTracing({ tracer })] }],
+});
+
+await mail.welcome.send({ to: 'ada@example.com', input });
+
+expect(tracer.spans).toHaveLength(1);
+expect(tracer.spans[0].name).toBe('betternotify.send.welcome');
+expect(tracer.spans[0].status.code).toBe('ok');
+```
+
+## Testing validation
+
+Verify that invalid input is rejected at the schema level:
+
+```ts
+import { NotifyRpcValidationError } from '@betternotify/core';
+
+await expect(
+  mail.welcome.send({ to: 'ada@example.com', input: { name: '' } }),
+).rejects.toThrow(NotifyRpcValidationError);
+```
+
+## Test organization
+
+Better-Notify's own tests are collocated next to the source files (`*.test.ts` alongside the implementation). For your application tests, we recommend the same pattern — keep notification tests close to the route definitions:
+
+```
+src/notifications/
+  routes.ts
+  routes.test.ts
+  client.ts
+  client.test.ts
+```
+
+Use a shared test helper that creates a client with mock transports and in-memory stores so every test file starts from the same baseline.

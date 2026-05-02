@@ -4,4 +4,17 @@ icon: Queue
 description: Process notifications asynchronously with BullMQ
 ---
 
-Documentation coming soon.
+<Callout type="warn">
+Queue and worker support is not yet implemented. The types and `createWorker` factory exist in `@betternotify/core` but throw `NotifyRpcNotImplementedError` at runtime. This feature ships in a future release.
+</Callout>
+
+## Planned design
+
+The queue and worker system will let you enqueue notification sends as background jobs and process them asynchronously with BullMQ. The planned architecture:
+
+- **Enqueue** via `mail.welcome.queue(args, opts)` on the client — serializes the route ID, input, and send arguments into a BullMQ job.
+- **Worker** via `createWorker({ catalog, transport, queue })` — picks up jobs, re-validates input against the procedure's schema, runs the full middleware and send pipeline, and routes failures to a dead-letter queue.
+- **Schema re-validation** on pickup — if the schema changed between enqueue and dequeue, mismatched jobs DLQ instead of sending with stale data.
+- **Concurrency** control and retry policies configured per worker.
+
+The `@betternotify/bullmq` package will provide the BullMQ integration. The core `createWorker` type is already defined and will be the stable API surface.

@@ -1,0 +1,5 @@
+{
+  "title": "Advanced",
+  "icon": "Wrench",
+  "pages": ["failover-and-middleware"]
+}

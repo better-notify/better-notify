@@ -1,0 +1,142 @@
+---
+title: Mock Transport
+icon: FlaskRound
+description: Test notifications without sending
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`createMockTransport()` builds a transport that captures every message in memory instead of delivering it. Use it in tests to assert what was sent, or in local development to inspect output without hitting a real provider.
+
+```ts
+import { createMockTransport } from '@betternotify/core/transports';
+
+const transport = createMockTransport();
+```
+
+Pass it anywhere a `Transport` is expected — `transportsByChannel`, `multiTransport`, or direct `send` calls.
+
+## Asserting sent messages
+
+Every call to `send` is recorded in the `sent` array. Each entry contains the rendered message and the `SendContext` the pipeline provided:
+
+```ts
+import { createMockTransport } from '@betternotify/core/transports';
+
+const transport = createMockTransport();
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+});
+
+await mail.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada', verifyUrl: 'https://example.com/verify' },
+});
+
+expect(transport.sent).toHaveLength(1);
+expect(transport.sent[0].rendered.to).toContainEqual(
+  expect.objectContaining({ email: 'ada@example.com' }),
+);
+expect(transport.sent[0].ctx.route).toBe('welcome');
+```
+
+`sent` is a read-only array — you cannot push to it directly. Use `reset()` to clear it between tests.
+
+## Resetting between tests
+
+Call `reset()` to empty the sent records. Useful in `beforeEach` or between test cases:
+
+```ts
+const transport = createMockTransport();
+
+afterEach(() => {
+  transport.reset();
+});
+```
+
+## Custom replies
+
+By default, every `send` returns `{ ok: true, data: {} }`. Pass a `reply` function to control the returned data — useful when downstream code inspects the transport result:
+
+```ts
+const transport = createMockTransport({
+  reply: (rendered, ctx) => ({
+    transportMessageId: `mock-${ctx.messageId}`,
+    accepted: rendered.to.map((a) => (typeof a === 'string' ? a : a.email)),
+    rejected: [],
+  }),
+});
+
+const result = await transport.send(message, ctx);
+// result.data.transportMessageId → 'mock-abc123'
+```
+
+`reply` can be async:
+
+```ts
+const transport = createMockTransport({
+  reply: async (rendered) => {
+    const record = await db.insert({ subject: rendered.subject });
+    return { id: record.id };
+  },
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    name: {
+      description: 'Transport identifier used in logs and multi-transport selection.',
+      type: 'string',
+      default: "'mock'",
+    },
+    reply: {
+      description: 'Callback that produces the data field of the TransportResult. Receives the rendered message and SendContext. Can be async.',
+      type: '(rendered: TRendered, ctx: SendContext) => TData | Promise<TData>',
+      default: '() => ({})',
+    },
+  }}
+/>
+
+## MockTransport type
+
+`createMockTransport` returns a `MockTransport`, which extends the base `Transport` with two extras:
+
+<TypeTable
+  type={{
+    sent: {
+      description: 'Read-only array of every message passed to send, paired with its SendContext.',
+      type: 'ReadonlyArray<{ rendered: TRendered; ctx: SendContext }>',
+    },
+    reset: {
+      description: 'Clears the sent array.',
+      type: '() => void',
+    },
+  }}
+/>
+
+## Multiple named mocks
+
+When testing [multi-transport](./multi-transport.mdx) setups, give each mock a distinct name so you can tell which transport received which message:
+
+```ts
+const primary = createMockTransport({ name: 'primary' });
+const fallback = createMockTransport({ name: 'fallback' });
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: primary },
+    { transport: fallback },
+  ],
+});
+
+await transport.send(message, ctx);
+
+expect(primary.sent).toHaveLength(1);
+expect(fallback.sent).toHaveLength(0);
+```

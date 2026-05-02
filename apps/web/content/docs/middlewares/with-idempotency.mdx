@@ -1,0 +1,64 @@
+---
+title: withIdempotency
+icon: Fingerprint
+description: Deduplicate sends within a time window
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`withIdempotency` caches the result of a send and replays it for matching keys instead of re-sending. On the first send for a given key, the pipeline runs normally and the result is stored. On subsequent sends with the same key within the TTL, the cached result is returned and the downstream pipeline never runs.
+
+Failures are not cached — a thrown error leaves the slot empty so the next attempt is treated as fresh.
+
+<IdempotencyDemo ttlMs={8000} />
+
+```ts
+import { withIdempotency } from '@betternotify/core/middlewares';
+import { inMemoryIdempotencyStore } from '@betternotify/core';
+
+const orderConfirmation = rpc
+  .email()
+  .input(z.object({ orderId: z.string(), email: z.string() }))
+  .subject(({ input }) => `Order ${input.orderId} confirmed`)
+  .template(adapter)
+  .use(withIdempotency({
+    store: inMemoryIdempotencyStore(),
+    key: ({ input }) => `order:${input.orderId}`,
+    ttl: 24 * 60 * 60_000,
+  }));
+```
+
+## Options
+
+<TypeTable
+  type={{
+    store: {
+      description: 'An IdempotencyStore implementation. Use inMemoryIdempotencyStore() for single-process apps or bring your own Redis-backed store for cross-worker deduplication.',
+      type: 'IdempotencyStore',
+    },
+    key: {
+      description: 'A static string or a function that derives the idempotency key from { input, ctx, route, args }. There is no automatic payload hash — you choose what constitutes a duplicate.',
+      type: 'string | (params) => string',
+    },
+    ttl: {
+      description: 'How long to keep the cached result in milliseconds. After expiry, the next send for the same key runs the full pipeline again.',
+      type: 'number',
+    },
+  }}
+/>
+
+## Key design
+
+The `key` is explicit by design — silently deduplicating payload-equal sends is rarely the intended behavior. Derive keys from business identifiers:
+
+```ts
+withIdempotency({
+  store,
+  key: ({ input }) => `invoice:${input.invoiceId}`,
+  ttl: 60 * 60_000,
+})
+```
+
+<Callout type="warn">
+Two concurrent first-time sends with the same key will both run the pipeline. A future `setIfAbsent` addition to the store interface can close this gap.
+</Callout>

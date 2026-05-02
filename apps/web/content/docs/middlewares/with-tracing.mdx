@@ -1,0 +1,56 @@
+---
+title: withTracing
+icon: Activity
+description: Wrap sends in distributed tracing spans
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`withTracing` wraps each send in a tracing span using the supplied tracer. The tracer interface is structurally compatible with OpenTelemetry's `Tracer.startActiveSpan`, so an OTel tracer can be passed directly with no adapter.
+
+```ts
+import { withTracing } from '@betternotify/core/middlewares';
+import { trace } from '@opentelemetry/api';
+
+const welcome = rpc
+  .email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withTracing({
+    tracer: trace.getTracer('betternotify'),
+  }));
+```
+
+## Options
+
+<TypeTable
+  type={{
+    tracer: {
+      description: 'A TracerLike implementation. Structurally compatible with @opentelemetry/api Tracer — pass it directly. For tests, use inMemoryTracer() to record spans for assertion.',
+      type: 'TracerLike',
+    },
+    name: {
+      description: 'Override the span name. Defaults to "betternotify.send.<route>". Pass a string or a function of { route, messageId }.',
+      type: 'string | (params) => string',
+    },
+  }}
+/>
+
+## Span attributes
+
+Every span gets two attributes:
+
+- `betternotify.route` — the dot-path route ID (e.g. `"transactional.welcome"`)
+- `betternotify.message_id` — the UUID for this send attempt
+
+On success, span status is set to `ok`. On failure, the exception is recorded and status is set to `error`.
+
+## Custom span names
+
+```ts
+withTracing({
+  tracer,
+  name: ({ route }) => `email.${route}`,
+})
+```

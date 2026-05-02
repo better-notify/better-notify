@@ -1,5 +1,5 @@
 {
   "title": "Transports",
   "icon": "Truck",
-  "pages": ["index", "smtp", "ses", "resend", "mock", "multi-transport", "custom-transports"]
+  "pages": ["index", "generic", "third-party"]
 }

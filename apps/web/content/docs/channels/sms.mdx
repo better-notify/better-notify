@@ -4,4 +4,116 @@ icon: ChatText
 description: Send SMS notifications
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The SMS channel is provided by `@betternotify/sms`. It defines a single `body` slot for text message content.
+
+## When to use SMS
+
+SMS is the right channel when the message needs to reach the recipient immediately on their phone, regardless of whether they have your app installed or an internet connection. Use it for OTP codes, two-factor authentication, appointment reminders, delivery updates, or urgent alerts where reliability and reach matter more than rich formatting.
+
+```package-install
+@betternotify/sms
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { smsChannel } from '@betternotify/sms';
+
+const sms = smsChannel();
+
+const rpc = createNotify({ channels: { sms } });
+```
+
+## Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The text message content. Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+## Send arguments
+
+<TypeTable
+  type={{
+    to: {
+      description: 'Phone number as a string (e.g. "+15555555555"). Must be non-empty.',
+      type: 'string',
+    },
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+## Full example
+
+```ts
+import { createNotify, createClient, createMockTransport } from '@betternotify/core';
+import { smsChannel } from '@betternotify/sms';
+import { z } from 'zod';
+
+const sms = smsChannel();
+const rpc = createNotify({ channels: { sms } });
+
+const catalog = rpc.catalog({
+  otpCode: rpc
+    .sms()
+    .input(z.object({ code: z.string().length(6) }))
+    .body(({ input }) => `Your verification code is ${input.code}. It expires in 10 minutes.`),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { sms },
+  transportsByChannel: { sms: createMockTransport() },
+});
+
+await notify.otpCode.send({
+  to: '+15555555555',
+  input: { code: '482910' },
+});
+```
+
+## Transport
+
+The SMS channel produces a `RenderedSms` with `body` and `to`. Any transport that accepts this shape works. Better-Notify does not ship a built-in SMS provider transport — use `createTransport` to build one for your provider (Twilio, AWS SNS, Vonage, etc.):
+
+```ts
+import { createTransport } from '@betternotify/core';
+import type { RenderedSms } from '@betternotify/sms';
+
+const twilioTransport = (accountSid: string, authToken: string, from: string) =>
+  createTransport<RenderedSms>({
+    name: 'twilio',
+    send: async (rendered) => {
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            To: rendered.to ?? '',
+            From: from,
+            Body: rendered.body,
+          }),
+        },
+      );
+      const json = (await response.json()) as { sid?: string; error_message?: string };
+      if (!response.ok) {
+        return { ok: false, error: new Error(json.error_message ?? 'Twilio error') };
+      }
+      return { ok: true, data: { sid: json.sid } };
+    },
+  });
+```

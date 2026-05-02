@@ -1,7 +1,69 @@
 ---
 title: Introduction
 icon: House
-description: Getting started with BetterNotify
+description: Typed notification infrastructure for Node.js
 ---
 
-Documentation coming soon.
+import { Mermaid } from '@/components/mermaid';
+
+Better-Notify is typed notification infrastructure for Node.js. You define a notification catalog once, then use the generated client to send email, SMS, push, or custom-channel messages through one consistent pipeline.
+
+Most notification setups start simple — a function that calls an API — then grow into a maze of duplicated validation, scattered templates, and provider-specific glue code. Better-Notify exists to prevent that drift. It keeps route definitions, input validation, rendering, middleware, hooks, and transports aligned so your notification layer stays type-safe as it grows.
+
+If you have used tools like tRPC or oRPC, the shape should feel familiar: define contracts once, then consume them through a typed runtime API.
+
+## The problem
+
+Notification code tends to evolve the same way across projects:
+
+1. You start with a helper function that sends one email through one provider.
+2. You add a second email type, duplicate half the logic, and tweak the template.
+3. You need SMS or push, so you add a second provider with its own validation and error handling.
+4. Someone asks for rate limiting, retry logic, or observability — and now every send path needs it.
+5. You swap providers and discover that templates, address handling, and error shapes are all coupled to the old one.
+
+Each step is reasonable on its own. The result is a notification layer where every change requires touching multiple files, every new route copies boilerplate from the last one, and swapping a provider means rewriting half the pipeline.
+
+Better-Notify solves this by separating concerns into layers that compose through types instead of coupling through implementation.
+
+## How it works
+
+Better-Notify has four core pieces:
+
+<Mermaid
+  code={`
+flowchart LR
+  A[Channels<br/>email, sms, push, custom] --> B[createNotify]
+  B --> C[rpc.catalog]
+  C --> D[createClient]
+  E[transportsByChannel<br/>SMTP, SES, Resend, custom] --> D
+  D --> F[Typed client<br/>mail.welcome.send()]
+  `}
+/>
+
+- **Channels** define how a message is shaped and rendered. Email has `to`, `subject`, `html`. SMS has `to` and `body`. Push has `title`, `body`, and `data`. You can define custom channels for Slack, webhooks, or anything else.
+- **Routes** are contracts for individual notifications. Each route declares which channel it uses, what input it accepts, and how it renders. Routes compose into catalogs, which flatten into dot-path IDs like `transactional.welcome`.
+- **Transports** deliver rendered messages to providers. SMTP, SES, Resend, or your own adapter. Transports never see raw input — they receive fully validated, fully rendered messages.
+- **The client** ties it all together. `createClient` takes a catalog and a transport per channel, then exposes typed `.send()` methods for every route in the catalog.
+
+The separation is the point. You can swap providers without touching routes. You can add middleware without changing templates. You can test with a mock transport and deploy with a multi-provider failover — same catalog, same client shape.
+
+## Where to go next
+
+<Cards>
+  <Card href="/docs/get-started/installation" title="Installation">
+    Install Better-Notify and set up your first channel.
+  </Card>
+  <Card href="/docs/get-started/quick-start" title="Quick Start">
+    Build a working notification setup with routes, sub-catalogs, and a mock transport.
+  </Card>
+  <Card href="/docs/concepts/channels" title="Channels">
+    Understand email, SMS, push, and custom channel definitions.
+  </Card>
+  <Card href="/docs/transports" title="Transports">
+    Learn how transports deliver messages and how to compose them.
+  </Card>
+  <Card href="https://github.com/better-notify/better-notify/tree/main/examples" title="Examples">
+    Browse working examples covering single sends, multi-transport, middleware, custom channels, and more.
+  </Card>
+</Cards>

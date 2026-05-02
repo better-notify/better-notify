@@ -17,6 +17,7 @@
     "dev": "turbo run dev --filter=@welcome-text/cli",
     "all:deploy": "turbo run deploy",
     "fmt": "turbo run //#oxfmt",
+    "format": "pnpm fmt",
     "gen": "turbo gen",
     "lint": "turbo run //#oxlint",
     "lint:fix": "turbo run //#oxlint:fix",

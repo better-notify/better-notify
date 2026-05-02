@@ -1,0 +1,164 @@
+---
+title: SMTP
+icon: At
+description: Send emails via SMTP with Nodemailer
+---
+
+import {
+  CodeBlockTab,
+  CodeBlockTabs,
+  CodeBlockTabsList,
+  CodeBlockTabsTrigger,
+} from 'fumadocs-ui/components/codeblock';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The SMTP transport is an official Better-Notify package backed by Nodemailer. Use it when your provider gives you SMTP credentials and you want a straightforward way to send Better-Notify email routes.
+
+It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `smtpTransport()` only turns the rendered email into a Nodemailer `sendMail()` call.
+
+## Install
+
+<CodeBlockTabs groupId="package-manager" persist defaultValue="pnpm">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="pnpm">pnpm</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="npm">npm</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="yarn">yarn</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="pnpm">
+
+```sh
+pnpm add @betternotify/smtp @betternotify/core @betternotify/email
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="npm">
+
+```sh
+npm install @betternotify/smtp @betternotify/core @betternotify/email
+```
+
+  </CodeBlockTab>
+  <CodeBlockTab value="yarn">
+
+```sh
+yarn add @betternotify/smtp @betternotify/core @betternotify/email
+```
+
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { smtpTransport } from '@betternotify/smtp';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: smtpTransport({
+      host: 'smtp.example.com',
+      port: 587,
+      auth: {
+        user: process.env.SMTP_USER!,
+        pass: process.env.SMTP_PASS!,
+      },
+    }),
+  },
+});
+```
+
+For implicit TLS on port `465`, set `secure: true`:
+
+```ts
+import { smtpTransport } from '@betternotify/smtp';
+
+const transport = smtpTransport({
+  host: 'smtp.example.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER!,
+    pass: process.env.SMTP_PASS!,
+  },
+});
+```
+
+## Common options
+
+<TypeTable
+  type={{
+    host: {
+      description: 'SMTP server hostname. Required.',
+      type: 'string',
+    },
+    port: {
+      description: 'SMTP port. Usually `587` for STARTTLS or `465` for implicit TLS. Required.',
+      type: 'number',
+    },
+    secure: {
+      description: 'Use implicit TLS from the start. Usually `true` for `465`, `false` for `587`.',
+      type: 'boolean',
+      default: 'false',
+    },
+    auth: {
+      description: 'SMTP credentials.',
+      type: '{ user: string; pass: string }',
+    },
+    pool: {
+      description: 'Reuse connections for higher throughput.',
+      type: 'boolean',
+      default: 'false',
+    },
+    maxConnections: {
+      description: 'Pool size limit when `pool: true`.',
+      type: 'number',
+    },
+    maxMessages: {
+      description: 'Messages per connection before recycling it.',
+      type: 'number',
+    },
+    dkim: {
+      description: 'Sign outgoing email with DKIM.',
+      type: '{ domainName: string; keySelector: string; privateKey: string }',
+    },
+    logger: {
+      description: 'Override the warning logger used for SMTP-specific warnings.',
+      type: 'LoggerLike',
+    },
+    nodemailer: {
+      description: 'Extra Nodemailer transport options passed through as-is.',
+      type: 'SMTPTransport.Options',
+    },
+  }}
+/>
+
+## From address behavior
+
+If `message.from` is missing, the transport falls back to `auth.user`. If neither is set, Better-Notify throws a `CONFIG` error.
+
+Some SMTP providers rewrite the `From` address to match the authenticated user. When that happens, Better-Notify logs a one-time warning for each mismatching address. If you want the visible sender to stay unchanged, align `defaults.from` with `auth.user` or switch to a provider that accepts your verified sender address as-is.
+
+## Sending limits
+
+SMTP is a thin transport. It does not rate-limit, retry, or fail over for you.
+
+Before using it in production, check your provider's limits for:
+
+- sends per second or minute
+- daily volume
+- concurrent connections
+- sandbox or trial restrictions
+
+If you need throttling or provider fallback, add middleware such as `withRateLimit` or wrap SMTP in `multiTransport({ strategy: 'failover' })`.

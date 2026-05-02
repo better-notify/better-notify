@@ -1,0 +1,44 @@
+---
+title: withTagInject
+icon: Tag
+description: Inject tags into the pipeline context
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`withTagInject` injects a static tags map into the context as `tagsToInject`, making it available to downstream middleware and anything that reads `ctx` in the chain.
+
+```ts
+import { withTagInject } from '@betternotify/core/middlewares';
+
+const welcome = rpc
+  .email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withTagInject({
+    tags: { environment: 'production', team: 'growth' },
+  }));
+```
+
+## Options
+
+<TypeTable
+  type={{
+    tags: {
+      description: 'A record of key-value pairs to inject into ctx.tagsToInject.',
+      type: 'Record<string, string>',
+    },
+  }}
+/>
+
+## Reading injected tags
+
+Downstream middleware or hooks can read the tags from context:
+
+```ts
+const withTagLogger: Middleware = async ({ ctx, next }) => {
+  console.log('tags:', (ctx as { tagsToInject?: Record<string, string> }).tagsToInject);
+  return next();
+};
+```

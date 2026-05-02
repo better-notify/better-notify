@@ -48,7 +48,7 @@ describe('consoleEventSink', () => {
       error: { name: 'NotifyRpcError', message: 'boom', code: 'PROVIDER' },
     });
     expect(logger.calls[0]?.level).toBe('error');
-    expect((logger.calls[0]?.payload as { err: unknown }).err).toMatchObject({
+    expect((logger.calls[0]!.payload as { err: unknown }).err).toMatchObject({
       message: 'boom',
     });
   });

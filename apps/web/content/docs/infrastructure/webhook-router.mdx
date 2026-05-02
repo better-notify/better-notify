@@ -4,4 +4,17 @@ icon: Webhooks
 description: Handle provider webhook events
 ---
 
-Documentation coming soon.
+<Callout type="warn">
+The webhook router is not yet implemented. The types and handler factories exist in `@betternotify/core` but throw `NotifyRpcNotImplementedError` at runtime. This feature ships in a future release.
+</Callout>
+
+## Planned design
+
+The webhook router will handle inbound webhook events from email providers (SES, Resend, SendGrid) with provider-specific signature verification and typed event routing.
+
+- **WebhookRouter** defined via `rpc.webhookRouter({...})` — maps provider event types to typed handlers.
+- **WebhookAdapter** per provider — parses raw payloads, verifies signatures, and normalizes events into a common shape.
+- **toNodeHandler** and **toFetchHandler** — convert the router into an HTTP handler for Node.js or Fetch-based runtimes (Cloudflare Workers, Deno, Bun).
+- **Event correlation** — webhook events are matched to sends via the dot-path route ID used as the correlation key.
+
+The provider adapters (`@betternotify/ses`, `@betternotify/resend`) will each export a `WebhookAdapter` for signature verification.

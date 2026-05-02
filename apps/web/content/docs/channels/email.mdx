@@ -4,4 +4,213 @@ icon: Envelope
 description: Configure and send typed emails
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The email channel is provided by `@betternotify/email`. It defines the slots, validation, and rendering logic for email notifications — subject, template, from address, reply-to, tags, and priority.
+
+## When to use email
+
+Email is the right channel when the recipient needs a persistent, rich-content notification they can read on their own time. Use it for transactional messages (welcome emails, password resets, order confirmations), marketing campaigns, invoices, reports, or anything where the content benefits from HTML formatting, attachments, or a paper trail the recipient can search later.
+
+```package-install
+@betternotify/email
+```
+
+## Setup
+
+Create the channel with optional defaults that apply to every email procedure:
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+
+const email = emailChannel({
+  defaults: {
+    from: { name: 'My App', email: 'hello@myapp.com' },
+    replyTo: 'support@myapp.com',
+    headers: { 'X-App': 'myapp' },
+  },
+});
+
+const rpc = createNotify({ channels: { email } });
+```
+
+## Channel defaults
+
+<TypeTable
+  type={{
+    'defaults.from': {
+      description: 'Default sender address. Individual procedures can override per-field — the merge is shallow (per-email from overrides defaults.from, but name from defaults fills in if the override only sets email).',
+      type: 'string | { name?: string; email?: string }',
+    },
+    'defaults.replyTo': {
+      description: 'Default reply-to address.',
+      type: 'string | { name?: string; email: string }',
+    },
+    'defaults.headers': {
+      description: 'Default headers merged into every email. Per-send headers override defaults with the same key.',
+      type: 'Record<string, string>',
+    },
+  }}
+/>
+
+## Slots
+
+These are the builder methods available on `rpc.email()`:
+
+<TypeTable
+  type={{
+    subject: {
+      description: 'The email subject line. Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    template: {
+      description: 'The template that renders HTML and optional text. Accepts a TemplateAdapter object or a plain function.',
+      type: 'TemplateAdapter | (args: { input, ctx }) => { html, text?, subject? }',
+    },
+    from: {
+      description: 'Per-procedure sender address. Overrides the channel default. Optional.',
+      type: 'string | { name?: string; email?: string } | (args: { input, ctx }) => FromInput',
+    },
+    replyTo: {
+      description: 'Per-procedure reply-to address. Overrides the channel default. Optional.',
+      type: 'string | { name?: string; email: string }',
+    },
+    tags: {
+      description: 'Key-value metadata attached to the rendered message. Optional.',
+      type: 'Record<string, string | number | boolean>',
+    },
+    priority: {
+      description: 'Email priority level. Optional.',
+      type: '"low" | "normal" | "high"',
+    },
+  }}
+/>
+
+## Send arguments
+
+When calling `.send()`, these are the arguments the caller provides:
+
+<TypeTable
+  type={{
+    to: {
+      description: 'Recipient address or array of addresses.',
+      type: 'string | { name?: string; email: string } | Address[]',
+    },
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+    cc: {
+      description: 'Carbon copy recipients. Optional.',
+      type: 'Address | Address[]',
+    },
+    bcc: {
+      description: 'Blind carbon copy recipients. Optional.',
+      type: 'Address | Address[]',
+    },
+    replyTo: {
+      description: 'Per-send reply-to override. Optional.',
+      type: 'Address',
+    },
+    from: {
+      description: 'Per-send sender override. Merges with procedure and channel defaults. Optional.',
+      type: 'string | { name?: string; email?: string }',
+    },
+    headers: {
+      description: 'Per-send custom headers. Merged with channel defaults. Optional.',
+      type: 'Record<string, string>',
+    },
+    attachments: {
+      description: 'File attachments. Optional.',
+      type: 'Attachment[]',
+    },
+  }}
+/>
+
+## Full example
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { smtpTransport } from '@betternotify/smtp';
+import { z } from 'zod';
+
+const email = emailChannel({
+  defaults: { from: { name: 'Acme', email: 'noreply@acme.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string(), verifyUrl: z.string().url() }))
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template({
+      render: async ({ input }) => ({
+        html: `<h1>Welcome, ${input.name}!</h1><a href="${input.verifyUrl}">Verify</a>`,
+        text: `Welcome, ${input.name}! Verify: ${input.verifyUrl}`,
+      }),
+    }),
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: smtpTransport({ host: 'smtp.gmail.com', port: 587, auth: { user: '...', pass: '...' } }),
+  },
+});
+
+await mail.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada', verifyUrl: 'https://acme.com/verify?token=abc' },
+});
+```
+
+## Templates
+
+The `template` slot accepts either a `TemplateAdapter` object or a plain function. For React Email, MJML, or Handlebars templates, see [Templates](/docs/templates).
+
+```ts
+// Plain function
+.template(async ({ input }) => ({
+  html: `<p>Hello ${input.name}</p>`,
+  text: `Hello ${input.name}`,
+}))
+
+// TemplateAdapter object
+.template({
+  render: async ({ input }) => ({
+    html: `<p>Hello ${input.name}</p>`,
+    text: `Hello ${input.name}`,
+  }),
+})
+```
+
+The template can also return a `subject` field to override the `.subject()` slot — useful when the template adapter controls the full email.
+
+## Address format
+
+Addresses accept a string or an object with `name` and `email`:
+
+```ts
+// String
+await mail.welcome.send({ to: 'ada@example.com', input });
+
+// Object with display name
+await mail.welcome.send({
+  to: { name: 'Ada Lovelace', email: 'ada@example.com' },
+  input,
+});
+
+// Array of recipients
+await mail.welcome.send({
+  to: [
+    'ada@example.com',
+    { name: 'Charles Babbage', email: 'charles@example.com' },
+  ],
+  input,
+});
+```

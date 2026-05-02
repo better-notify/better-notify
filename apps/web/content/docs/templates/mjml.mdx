@@ -4,4 +4,24 @@ icon: Code
 description: Build responsive email templates with MJML
 ---
 
-Documentation coming soon.
+<Callout type="warn">
+The MJML adapter is not yet implemented. The `@betternotify/mjml` package exists but throws `NotifyRpcNotImplementedError` at runtime. This adapter will ship in a future release.
+</Callout>
+
+## Planned design
+
+MJML is a markup language that compiles to responsive HTML email. The `@betternotify/mjml` adapter will take MJML source (as a string or file path) and compile it at render time, producing the HTML and optional plain text that the email channel needs.
+
+The planned API:
+
+```ts
+import { mjmlTemplate } from '@betternotify/mjml';
+
+const welcome = rpc
+  .email()
+  .input(z.object({ name: z.string() }))
+  .subject(({ input }) => `Welcome, ${input.name}!`)
+  .template(mjmlTemplate('./emails/welcome.mjml'));
+```
+
+MJML is a good fit when you want responsive email layouts without hand-writing the table-based HTML that email clients require, and your team prefers a markup language over React components.

@@ -1,6 +1,6 @@
 # @betternotify/email
 
-Email channel for [BetterNotify](../../README.md). Provides `emailChannel()`, a `mockTransport` for tests, address helpers, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedMessage`.
+Email channel for [Better-Notify](../../README.md). Provides `emailChannel()`, a `mockTransport` for tests, address helpers, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedMessage`.
 
 ## Install
 

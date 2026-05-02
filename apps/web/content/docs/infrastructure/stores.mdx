@@ -4,4 +4,151 @@ icon: Database
 description: Persistent state stores for middleware
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Stores are the persistence layer for stateful middleware. [withRateLimit](/docs/middlewares/with-rate-limit) needs a counter store, [withIdempotency](/docs/middlewares/with-idempotency) needs a cache store. Better-Notify defines structural interfaces for each — you can use the built-in in-memory implementations for single-process apps or bring your own Redis-backed store for cross-worker coordination.
+
+## When to use stores
+
+Middleware like `withRateLimit` and `withIdempotency` need to remember state across sends — how many sends happened in the current window, whether a key was already seen. Stores provide that memory through a clean interface that separates the middleware logic from the storage backend.
+
+The built-in `inMemory*` stores work out of the box for development, testing, and single-process deployments. You need a custom store when:
+
+- **Multiple workers or instances** — in-memory state is per-process. If you run two workers, each has its own counter and a recipient could receive double the intended rate limit. A Redis or database-backed store gives all instances a shared view.
+- **State that survives restarts** — in-memory stores lose everything on process restart. If your idempotency window is 24 hours, a restart in the middle means duplicates slip through.
+- **Suppression across services** — if bounces and complaints are handled by a different service, a shared suppression list lets the send pipeline check them without inter-service calls.
+
+If you're running a single process and can tolerate state loss on restart, the in-memory stores are the right choice — no infrastructure to manage.
+
+## RateLimitStore
+
+Used by `withRateLimit` to record and count sends per key within a time window.
+
+<TypeTable
+  type={{
+    record: {
+      description: 'Increment the counter for a key within a window and return the current count and reset time.',
+      type: '(key: string, windowMs: number, algorithm: "fixed" | "sliding") => Promise<RateLimitRecord>',
+    },
+  }}
+/>
+
+```ts
+import { inMemoryRateLimitStore } from '@betternotify/core';
+
+const store = inMemoryRateLimitStore();
+```
+
+### Custom implementation
+
+Use `createRateLimitStore` to build a store from any backend:
+
+```ts
+import { createRateLimitStore } from '@betternotify/core';
+
+const redisRateLimitStore = (redis: RedisClient) =>
+  createRateLimitStore({
+    record: async (key, windowMs, algorithm) => {
+      const redisKey = `rl:${key}`;
+      const count = await redis.incr(redisKey);
+      if (count === 1) await redis.pexpire(redisKey, windowMs);
+      const ttl = await redis.pttl(redisKey);
+      return { count, resetAtMs: Date.now() + Math.max(ttl, 0) };
+    },
+  });
+```
+
+## IdempotencyStore
+
+Used by `withIdempotency` to cache send results and replay them for duplicate keys.
+
+<TypeTable
+  type={{
+    get: {
+      description: 'Retrieve a cached result by key. Return null if expired or missing.',
+      type: '(key: string) => Promise<TResult | null>',
+    },
+    set: {
+      description: 'Store a result under a key with a TTL in milliseconds.',
+      type: '(key: string, result: TResult, ttlMs: number) => Promise<void>',
+    },
+  }}
+/>
+
+```ts
+import { inMemoryIdempotencyStore } from '@betternotify/core';
+
+const store = inMemoryIdempotencyStore();
+```
+
+### Custom implementation
+
+Use `createIdempotencyStore` to build a store from `get`/`set` functions:
+
+```ts
+import { createIdempotencyStore } from '@betternotify/core';
+
+const redisIdempotencyStore = (redis: RedisClient) =>
+  createIdempotencyStore({
+    get: async (key) => {
+      const json = await redis.get(`idem:${key}`);
+      return json ? JSON.parse(json) : null;
+    },
+    set: async (key, result, ttlMs) => {
+      await redis.set(`idem:${key}`, JSON.stringify(result), 'PX', ttlMs);
+    },
+  });
+```
+
+## SuppressionList
+
+Used to track suppressed email addresses — bounces, complaints, or manual blocks.
+
+<TypeTable
+  type={{
+    get: {
+      description: 'Look up a suppression entry by email. Return null if not suppressed.',
+      type: '(email: string) => Promise<SuppressionEntry | null>',
+    },
+    set: {
+      description: 'Add an email to the suppression list with a reason and timestamp.',
+      type: '(email: string, entry: SuppressionEntry) => Promise<void>',
+    },
+    del: {
+      description: 'Remove an email from the suppression list.',
+      type: '(email: string) => Promise<void>',
+    },
+  }}
+/>
+
+```ts
+import { inMemorySuppressionList } from '@betternotify/core';
+
+const list = inMemorySuppressionList();
+```
+
+### Custom implementation
+
+Use `createSuppressionList` to build a list from any backend. The factory normalizes emails (trim + lowercase) before passing them to your functions:
+
+```ts
+import { createSuppressionList } from '@betternotify/core';
+
+const redisSuppressionList = (redis: RedisClient) =>
+  createSuppressionList({
+    get: async (email) => {
+      const json = await redis.get(`suppress:${email}`);
+      return json ? JSON.parse(json) : null;
+    },
+    set: async (email, entry) => {
+      await redis.set(`suppress:${email}`, JSON.stringify(entry));
+    },
+    del: async (email) => {
+      await redis.del(`suppress:${email}`);
+    },
+  });
+```
+
+## In-memory vs production
+
+The `inMemory*` implementations are single-process and lose state on restart. They're ideal for development, testing, and single-instance deployments. For production with multiple workers, use the `create*` factories to wire up a shared backend (Redis, Postgres, DynamoDB) so all instances see the same state.

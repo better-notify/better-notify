@@ -1,0 +1,5 @@
+{
+  "title": "Middlewares",
+  "icon": "Layers",
+  "pages": ["with-dry-run", "with-rate-limit", "with-idempotency", "with-event-logger", "with-tag-inject", "with-tracing", "custom-middleware"]
+}

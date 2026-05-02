@@ -4,4 +4,89 @@ icon: Layout
 description: Render notification content with template adapters
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Templates control how a notification looks. In Better-Notify, a template is anything that takes the procedure's input and returns rendered content — HTML, plain text, or both. The core never renders content itself; adapters do.
+
+## Why HTML and plain text
+
+Most email clients expect both an HTML version and a plain text fallback in the same message. The HTML version is what the recipient sees — styled layouts, buttons, images. The plain text version serves as a fallback for clients that can't render HTML (older devices, screen readers, accessibility tools, some corporate mail filters) and is also used for email previews and smart watch notifications.
+
+Sending only HTML works technically, but many providers flag HTML-only emails as lower quality. Sending both improves deliverability, accessibility, and preview rendering. Better-Notify's template system supports returning both from a single render call.
+
+## The TemplateAdapter interface
+
+Every template adapter implements the same interface:
+
+<TypeTable
+  type={{
+    render: {
+      description: 'Takes the validated input and context, returns the rendered output.',
+      type: '(args: { input: TInput; ctx: TCtx }) => Promise<RenderedOutput>',
+    },
+  }}
+/>
+
+The `RenderedOutput` shape:
+
+<TypeTable
+  type={{
+    html: {
+      description: 'The rendered HTML content.',
+      type: 'string',
+    },
+    text: {
+      description: 'Plain text alternative. Optional but recommended for email deliverability.',
+      type: 'string',
+    },
+    subject: {
+      description: 'Override the subject set via .subject(). Useful when the template controls the full email.',
+      type: 'string',
+    },
+  }}
+/>
+
+## Using templates
+
+The `.template()` slot on the email channel accepts either a `TemplateAdapter` object or a plain function:
+
+```ts
+// TemplateAdapter object
+.template({
+  render: async ({ input }) => ({
+    html: `<h1>Welcome, ${input.name}!</h1>`,
+    text: `Welcome, ${input.name}!`,
+  }),
+})
+
+// Plain function (shorthand)
+.template(async ({ input }) => ({
+  html: `<h1>Welcome, ${input.name}!</h1>`,
+  text: `Welcome, ${input.name}!`,
+}))
+```
+
+Both forms are equivalent. The function shorthand is convenient for inline templates; the object form works better when templates are defined in separate files or come from adapter packages.
+
+## Available adapters
+
+<Cards>
+  <Card href="/docs/templates/react-email" title="React Email">
+    Build templates as React components with full TypeScript support. The recommended approach for teams already using React.
+  </Card>
+  <Card href="/docs/templates/mjml" title="MJML">
+    Write responsive email templates with MJML's markup language. Coming soon.
+  </Card>
+  <Card href="/docs/templates/handlebars" title="Handlebars">
+    Use Handlebars templates for logic-light email rendering. Coming soon.
+  </Card>
+  <Card href="/docs/templates/custom-adapters" title="Custom Adapters">
+    Build your own adapter for any template engine.
+  </Card>
+</Cards>
+
+## Templates and type safety
+
+The `.template()` builder slot type-constrains the adapter to the procedure's `TInput`. If the input schema declares `{ name: string, verifyUrl: string }`, the template's `input` parameter is typed as exactly that. A schema change that removes a field the template uses is a compile-time error, not a runtime surprise.
+
+This is the core guarantee: **the schema and the template cannot silently drift**.

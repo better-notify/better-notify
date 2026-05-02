@@ -1,6 +1,6 @@
 # @betternotify/push
 
-Push notification channel for [BetterNotify](../../README.md). Provides `pushChannel()`, a `mockPushTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedPush`.
+Push notification channel for [Better-Notify](../../README.md). Provides `pushChannel()`, a `mockPushTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedPush`.
 
 ## Install
 

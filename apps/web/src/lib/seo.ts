@@ -180,12 +180,12 @@ export const seo = ({
     { rel: 'dns-prefetch', href: 'https://www.googletagmanager.com' },
     {
       rel: 'alternate',
-      hreflang: appConfig.locale.bcp47,
+      hrefLang: appConfig.locale.bcp47,
       href: canonicalHref ?? appConfig.baseUrl,
     },
     {
       rel: 'alternate',
-      hreflang: 'x-default',
+      hrefLang: 'x-default',
       href: canonicalHref ?? appConfig.baseUrl,
     },
   ];

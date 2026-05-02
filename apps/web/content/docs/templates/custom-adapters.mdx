@@ -4,4 +4,115 @@ icon: Wrench
 description: Build your own template adapter
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A template adapter is any object with a `render` method that takes `{ input, ctx }` and returns `{ html, text?, subject? }`. If you use a template engine that Better-Notify doesn't have a package for — Pug, EJS, Nunjucks, Svelte Email, or your own HTML builder — you can wrap it as an adapter.
+
+## The TemplateAdapter interface
+
+<TypeTable
+  type={{
+    render: {
+      description: 'Receive the validated input and pipeline context, return rendered HTML and optional text/subject.',
+      type: '(args: { input: TInput; ctx: TCtx }) => Promise<RenderedOutput>',
+    },
+  }}
+/>
+
+Where `RenderedOutput` is:
+
+<TypeTable
+  type={{
+    html: {
+      description: 'The rendered HTML content.',
+      type: 'string',
+    },
+    text: {
+      description: 'Plain text alternative. Optional but recommended for email deliverability.',
+      type: 'string',
+    },
+    subject: {
+      description: 'Override the subject set via .subject(). Optional.',
+      type: 'string',
+    },
+  }}
+/>
+
+## Example: EJS adapter
+
+```ts
+import ejs from 'ejs';
+import type { TemplateAdapter } from '@betternotify/email';
+
+const ejsTemplate = <TInput>(
+  htmlSource: string,
+  textSource?: string,
+): TemplateAdapter<TInput> => ({
+  render: async ({ input }) => {
+    const html = await ejs.render(htmlSource, input, { async: true });
+    const text = textSource ? await ejs.render(textSource, input, { async: true }) : undefined;
+    return { html, text };
+  },
+});
+```
+
+Usage:
+
+```ts
+const welcome = rpc
+  .email()
+  .input(z.object({ name: z.string(), verifyUrl: z.string().url() }))
+  .subject(({ input }) => `Welcome, ${input.name}!`)
+  .template(ejsTemplate(
+    '<h1>Welcome, <%= name %>!</h1><a href="<%= verifyUrl %>">Verify</a>',
+    'Welcome, <%= name %>! Verify: <%= verifyUrl %>',
+  ));
+```
+
+## Example: file-based adapter
+
+Load templates from disk at startup and render at send time:
+
+```ts
+import { readFileSync } from 'node:fs';
+import type { TemplateAdapter } from '@betternotify/email';
+
+const fileTemplate = <TInput>(
+  htmlPath: string,
+  renderFn: (source: string, input: TInput) => string,
+): TemplateAdapter<TInput> => {
+  const source = readFileSync(htmlPath, 'utf-8');
+  return {
+    render: async ({ input }) => ({ html: renderFn(source, input) }),
+  };
+};
+```
+
+## Using context
+
+The `ctx` parameter gives the template access to the pipeline context — values added by middleware via `next({ ... })`. Use it for environment-specific data like base URLs or tenant branding:
+
+```ts
+const welcome: TemplateAdapter<{ name: string }> = {
+  render: async ({ input, ctx }) => {
+    const baseUrl = (ctx as { baseUrl: string }).baseUrl;
+    return {
+      html: `<a href="${baseUrl}/verify">Welcome, ${input.name}!</a>`,
+      text: `Welcome, ${input.name}! Verify: ${baseUrl}/verify`,
+    };
+  },
+};
+```
+
+## Plain function shorthand
+
+For simple templates, skip the adapter object and pass a function directly to `.template()`:
+
+```ts
+.template(async ({ input }) => ({
+  html: `<p>Hello ${input.name}</p>`,
+  text: `Hello ${input.name}`,
+}))
+```
+
+This is equivalent to `{ render: async ({ input }) => ... }`. Use the object form when templates live in separate files or when you need to share an adapter across procedures.

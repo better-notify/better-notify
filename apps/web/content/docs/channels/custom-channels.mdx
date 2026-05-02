@@ -4,4 +4,178 @@ icon: Wrench
 description: Build your own notification channel
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Any notification type you can model as "validate args → resolve slots → render output" fits as a channel. `defineChannel` and `slot` from `@betternotify/core` are the only imports you need. See [Channels concept](/docs/concepts/channels) for how channels fit into the architecture.
+
+## When to create a custom channel
+
+Create a custom channel when your notification doesn't fit the shape of email, SMS, or push. Slack messages, Discord webhooks, in-app notification feeds, Telegram bots, WhatsApp Business API, pager alerts, or internal audit logs — if it has a destination, a payload shape, and a delivery mechanism, it's a channel.
+
+The value is consistency: your custom channel gets the same typed procedures, middleware, hooks, plugins, and multi-transport composition as the built-in channels. A Slack notification goes through the same pipeline as an email — rate limiting, tracing, idempotency, and error handling all work without any custom wiring.
+
+## Building a Slack channel
+
+This walkthrough builds a complete Slack channel — from channel definition to transport to a working client.
+
+### Define the rendered output
+
+Start with the type that the transport will receive:
+
+```ts
+type RenderedSlack = {
+  channel: string;
+  text: string;
+  threadTs?: string;
+};
+```
+
+### Define the channel
+
+Use `defineChannel` with slots for the parts the procedure configures, and `validateArgs` for the parts the caller provides at send time:
+
+```ts
+import { defineChannel, slot } from '@betternotify/core';
+import { z } from 'zod';
+
+const slackChannel = defineChannel({
+  name: 'slack' as const,
+  slots: {
+    text: slot.resolver<string>(),
+  },
+  validateArgs: z.object({
+    channel: z.string(),
+    threadTs: z.string().optional(),
+  }),
+  render: ({ runtime, args }): RenderedSlack => {
+    const rendered: RenderedSlack = { channel: args.channel, text: runtime.text };
+    if (args.threadTs) rendered.threadTs = args.threadTs;
+    return rendered;
+  },
+});
+```
+
+Each slot becomes a method on the procedure builder. `text` is a resolver slot, so the procedure can set it as a static string or a function that receives `{ input, ctx }`.
+
+`validateArgs` accepts a Standard Schema (Zod, Valibot, etc.) or a plain validation function. Here it validates that `channel` is a string and `threadTs` is optional.
+
+### Define procedures
+
+Pass the channel to `createNotify` and use it like any built-in channel:
+
+```ts
+import { createNotify } from '@betternotify/core';
+
+const rpc = createNotify({ channels: { slack: slackChannel } });
+
+const catalog = rpc.catalog({
+  deployFinished: rpc
+    .slack()
+    .input(z.object({ service: z.string(), version: z.string() }))
+    .text(({ input }) => `:rocket: ${input.service} deployed: ${input.version}`),
+
+  incidentOpened: rpc
+    .slack()
+    .input(z.object({ summary: z.string(), severity: z.enum(['low', 'medium', 'high']) }))
+    .text(({ input }) => `:warning: [${input.severity.toUpperCase()}] ${input.summary}`),
+});
+```
+
+### Build the transport
+
+The transport receives the `RenderedSlack` and delivers it. Use `createTransport` for the typed factory:
+
+```ts
+import { createTransport, type Transport } from '@betternotify/core';
+
+type SlackTransportData = { ts: string; channel: string };
+
+const httpSlackTransport = (token: string): Transport<RenderedSlack, SlackTransportData> =>
+  createTransport<RenderedSlack, SlackTransportData>({
+    name: 'slack-http',
+    send: async (rendered) => {
+      const response = await fetch('https://slack.com/api/chat.postMessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          channel: rendered.channel,
+          text: rendered.text,
+          thread_ts: rendered.threadTs,
+        }),
+      });
+
+      const json = (await response.json()) as {
+        ok?: boolean;
+        ts?: string;
+        channel?: string;
+        error?: string;
+      };
+
+      if (!json.ok) {
+        return { ok: false, error: new Error(`Slack rejected: ${json.error ?? 'unknown'}`) };
+      }
+
+      return {
+        ok: true,
+        data: { ts: json.ts ?? '', channel: json.channel ?? rendered.channel },
+      };
+    },
+  });
+```
+
+### Wire it up
+
+```ts
+import { createClient } from '@betternotify/core';
+
+const notify = createClient({
+  catalog,
+  channels: { slack: slackChannel },
+  transportsByChannel: { slack: httpSlackTransport(process.env.SLACK_TOKEN!) },
+});
+
+await notify.deployFinished.send({
+  channel: '#deploys',
+  input: { service: 'api-gateway', version: 'v3.18.0' },
+});
+```
+
+### Test with a mock
+
+Swap the transport for a mock without changing the catalog or procedures:
+
+```ts
+import { createMockTransport } from '@betternotify/core';
+
+const mock = createMockTransport<RenderedSlack, SlackTransportData>({
+  name: 'mock-slack',
+  reply: (rendered) => ({ ts: `${Date.now()}.000`, channel: rendered.channel }),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { slack: slackChannel },
+  transportsByChannel: { slack: mock },
+});
+
+await notify.deployFinished.send({
+  channel: '#deploys',
+  input: { service: 'web', version: 'v0.42.0' },
+});
+
+console.log(mock.sent[0].rendered.text);
+// ':rocket: web deployed: v0.42.0'
+```
+
+## Channel design checklist
+
+When building a custom channel, decide:
+
+1. **What does the caller provide at send time?** → Those are `validateArgs` (e.g. `channel`, `threadTs` for Slack, `to` for email).
+2. **What does the procedure configure at definition time?** → Those are slots (e.g. `text` for Slack, `subject` and `template` for email).
+3. **Which slots need access to input/ctx?** → Those are `slot.resolver()`. Static config is `slot.value()`.
+4. **Which slots are optional?** → Call `.optional()` on them.
+5. **What shape does the transport receive?** → That's your rendered output type.
