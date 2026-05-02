@@ -1,0 +1,172 @@
+---
+title: Custom Middleware
+icon: Wrench
+description: Write your own middleware for the send pipeline
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A middleware is an async function that wraps the send pipeline. It receives a set of parameters and decides whether to continue, modify the context, short-circuit, or fail. Everything above `next()` runs on the way in; everything below runs on the way out.
+
+```ts
+import type { Middleware } from '@betternotify/core';
+
+const withTiming = (): Middleware => {
+  return async ({ route, next }) => {
+    const start = performance.now();
+    const result = await next();
+    console.log(`${route}: ${(performance.now() - start).toFixed(1)}ms`);
+    return result;
+  };
+};
+```
+
+## Parameters
+
+Every middleware receives the same set of parameters:
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated, schema-coerced input for this procedure.',
+      type: 'TInput',
+    },
+    ctx: {
+      description: 'Context object flowing through the middleware chain. Read-only — use next() to pass mutations downstream.',
+      type: 'TCtx',
+    },
+    route: {
+      description: 'Dot-path route ID for this procedure (e.g. "transactional.welcome").',
+      type: 'string',
+    },
+    messageId: {
+      description: 'UUID assigned to this individual send attempt.',
+      type: 'string',
+    },
+    args: {
+      description: 'Full send arguments including input plus channel-specific fields (to, cc, etc.).',
+      type: 'SendArgs',
+    },
+    next: {
+      description: 'Continue to the next middleware or the core pipeline. Pass an object to shallow-merge into context.',
+      type: '(newCtx?) => Promise<TResult>',
+    },
+  }}
+/>
+
+## Patterns
+
+### Pass through
+
+The simplest middleware — forward everything unchanged:
+
+```ts
+const noop: Middleware = async ({ next }) => next();
+```
+
+### Enrich context
+
+Pass an object to `next()` to add fields to the context. Downstream middleware and the render function see the updated context:
+
+```ts
+const withTenant = (): Middleware => {
+  return async ({ next }) => {
+    const tenantId = await resolveTenant();
+    return next({ tenantId });
+  };
+};
+```
+
+### Wrap and observe
+
+Call `next()` in the middle to run logic on both sides of the pipeline:
+
+```ts
+const withMetrics = (): Middleware => {
+  return async ({ route, next }) => {
+    metrics.increment(`${route}.attempts`);
+    const result = await next();
+    metrics.increment(`${route}.success`);
+    return result;
+  };
+};
+```
+
+### Short-circuit
+
+Don't call `next()` to skip the rest of the pipeline. Return a synthetic result:
+
+```ts
+const withCachedResult = (cache: Map<string, unknown>): Middleware => {
+  return async ({ route, args, next }) => {
+    const key = `${route}:${JSON.stringify(args.to)}`;
+    const cached = cache.get(key);
+    if (cached) return cached;
+    const result = await next();
+    cache.set(key, result);
+    return result;
+  };
+};
+```
+
+### Fail
+
+Throw to abort the pipeline. The error routes to `onError` hooks:
+
+```ts
+import { NotifyRpcError } from '@betternotify/core';
+
+const withBlocklist = (blocked: Set<string>): Middleware => {
+  return async ({ args, next }) => {
+    if (blocked.has(String(args.to))) {
+      throw new NotifyRpcError({ message: 'Recipient blocked', code: 'BLOCKED' });
+    }
+    return next();
+  };
+};
+```
+
+## Typed input
+
+Narrow the middleware's `input` type to match a specific schema. This is useful when the middleware depends on the shape of the procedure's input:
+
+```ts
+type OrderInput = { orderId: string; email: string };
+
+const withOrderDedup = (): Middleware<OrderInput> => {
+  const seen = new Set<string>();
+  return async ({ input, next }) => {
+    if (seen.has(input.orderId)) {
+      return { messageId: 'dedup', timing: { renderMs: 0, sendMs: 0 } };
+    }
+    seen.add(input.orderId);
+    return next();
+  };
+};
+```
+
+## Attaching middleware
+
+Middleware can be attached at three levels:
+
+```ts
+// Procedure-level — runs on this procedure only
+const welcome = rpc.email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withTiming());
+
+// Root-level — runs on every procedure in the catalog
+const rpc = createNotify({ channels: { email } })
+  .use(withTenant());
+
+// Plugin-level — bundled with hooks for reuse across catalogs
+const observability: Plugin = {
+  name: 'observability',
+  middleware: [withTiming(), withMetrics()],
+  hooks: { onError: ({ error }) => errorTracker.capture(error) },
+};
+```
+
+See [Middleware concepts](../concepts/middleware.mdx) for composition order and how middleware differs from hooks.

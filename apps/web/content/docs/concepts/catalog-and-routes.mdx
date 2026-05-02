@@ -1,7 +1,251 @@
 ---
-title: Catalog & Routes
+title: Catalog & Procedures
 icon: TreeStructure
-description: Define and organize your notification routes
+description: Define and organize your notification procedures
 ---
 
-Documentation coming soon.
+import { Mermaid } from '@/components/mermaid';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A **procedure** is a contract for one notification. It binds a channel, an input schema, and the configuration needed to render and deliver the message. A **catalog** is a typed map of procedures — the single object that every other layer in Better-Notify derives its types from.
+
+<div className="border-fd-border bg-fd-card/50 rounded-xl border p-5">
+  <span className="text-fd-muted-foreground mb-4 block font-mono text-[11px] font-semibold uppercase tracking-widest">catalog</span>
+  <div className="flex flex-wrap gap-3">
+    <div className="border-fd-border bg-fd-background flex-1 basis-48 rounded-lg border p-4">
+      <span className="text-fd-muted-foreground mb-2 block font-mono text-[10px] uppercase tracking-widest">procedure</span>
+      <span className="text-fd-foreground mb-3 block font-mono text-sm font-semibold">welcome</span>
+      <div className="flex flex-col gap-1.5 font-mono text-xs">
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">channel</span><span className="text-fd-foreground">email</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">input</span><span className="text-fd-foreground">schema</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">subject</span><span className="text-fd-foreground">resolver</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">template</span><span className="text-fd-foreground">adapter</span></div>
+      </div>
+    </div>
+    <div className="border-fd-border bg-fd-background flex-1 basis-48 rounded-lg border p-4">
+      <span className="text-fd-muted-foreground mb-2 block font-mono text-[10px] uppercase tracking-widest">procedure</span>
+      <span className="text-fd-foreground mb-3 block font-mono text-sm font-semibold">passwordReset</span>
+      <div className="flex flex-col gap-1.5 font-mono text-xs">
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">channel</span><span className="text-fd-foreground">email</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">input</span><span className="text-fd-foreground">schema</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">subject</span><span className="text-fd-foreground">resolver</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">template</span><span className="text-fd-foreground">adapter</span></div>
+      </div>
+    </div>
+    <div className="border-fd-border bg-fd-background flex-1 basis-48 rounded-lg border p-4">
+      <span className="text-fd-muted-foreground mb-2 block font-mono text-[10px] uppercase tracking-widest">procedure</span>
+      <span className="text-fd-foreground mb-3 block font-mono text-sm font-semibold">otpCode</span>
+      <div className="flex flex-col gap-1.5 font-mono text-xs">
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">channel</span><span className="text-fd-foreground">sms</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">input</span><span className="text-fd-foreground">schema</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">body</span><span className="text-fd-foreground">resolver</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+## Procedures
+
+A procedure is built through the fluent API exposed by `createNotify`. You pick a channel, declare the input schema, and configure the channel-specific slots:
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { z } from 'zod';
+
+const email = emailChannel();
+const rpc = createNotify({ channels: { email } });
+
+const welcome = rpc
+  .email()
+  .input(z.object({ name: z.string(), verifyUrl: z.string().url() }))
+  .subject(({ input }) => `Welcome, ${input.name}!`)
+  .template({
+    render: async ({ input }) => ({
+      html: `<h1>Welcome, ${input.name}!</h1>`,
+      text: `Welcome, ${input.name}!`,
+    }),
+  });
+```
+
+Each builder call returns a new builder with the accumulated state — nothing is mutated. The procedure does not exist as a finalized definition until you pass it into `.catalog()`.
+
+The slots available on the builder (`.subject()`, `.template()`, `.from()`, `.tags()`, etc.) are defined by the channel. Email has its set, SMS has `.body()`, push has `.title()` and `.body()`. See [Channels](./channels.mdx) for the full slot API per channel.
+
+### Middleware on procedures
+
+Procedures can carry their own middleware via `.use()`. Procedure-level middleware wraps the render-and-send core, inside any plugin middleware:
+
+```ts
+const passwordReset = rpc
+  .email()
+  .input(z.object({ name: z.string(), resetUrl: z.string().url() }))
+  .subject(() => 'Reset your password')
+  .template({ render: async ({ input }) => ({ html: `...`, text: `...` }) })
+  .use(withRateLimit({ max: 3, window: '1h', key: ({ args }) => args.to }));
+```
+
+## Catalogs
+
+`rpc.catalog()` takes a map of procedures and returns a typed catalog:
+
+```ts
+const catalog = rpc.catalog({
+  welcome,
+  passwordReset,
+});
+```
+
+The keys become the route IDs — the canonical identifiers used throughout the system. `createClient` uses them to build the typed client surface — `mail.welcome.send(...)`, `mail.passwordReset.send(...)`.
+
+## Merging catalogs
+
+`.catalog()` accepts both procedures and other catalogs at the same level. Each catalog is a standalone unit — you merge them into a bigger catalog to build the full notification surface:
+
+```ts
+const transactional = rpc.catalog({
+  welcome,
+  passwordReset,
+});
+
+const marketing = rpc.catalog({
+  newsletter,
+});
+
+const catalog = rpc.catalog({
+  transactional,
+  marketing,
+  systemAlert,
+});
+```
+
+When catalogs merge, the nesting flattens into dot-path route IDs — a flat map of canonical identifiers:
+
+<Mermaid
+  code={`
+flowchart LR
+  classDef nested fill:#eff6ff,stroke:#2563eb,color:#1d4ed8
+  classDef flat fill:#f0fdf4,stroke:#16a34a,color:#15803d
+  classDef client fill:#faf5ff,stroke:#9333ea,color:#7e22ce
+
+  subgraph input [" rpc.catalog "]
+    direction TB
+    T["transactional"]:::nested --> W["welcome"]:::nested
+    T --> P["passwordReset"]:::nested
+    M["marketing"]:::nested --> N["newsletter"]:::nested
+    S["systemAlert"]:::nested
+  end
+
+  subgraph flat [" Route IDs "]
+    direction TB
+    F1["transactional.welcome"]:::flat
+    F2["transactional.passwordReset"]:::flat
+    F3["marketing.newsletter"]:::flat
+    F4["systemAlert"]:::flat
+  end
+
+  subgraph client [" Client surface "]
+    direction TB
+    C1["mail.transactional.welcome.send()"]:::client
+    C2["mail.transactional.passwordReset.send()"]:::client
+    C3["mail.marketing.newsletter.send()"]:::client
+    C4["mail.systemAlert.send()"]:::client
+  end
+
+  input --> flat --> client
+  `}
+/>
+
+The route ID is the canonical identifier for a procedure across the entire system. It appears as:
+
+- The `route` field in logger output
+- The job name in BullMQ queues
+- The correlation key in webhook events
+- The `route` parameter in middleware and hooks
+
+This means you can filter logs, query jobs, or match webhooks by route ID without mapping between different naming schemes.
+
+## The typed client surface
+
+`createClient` takes a catalog and a transport per channel, then builds a client object that mirrors the catalog structure:
+
+```ts
+import { createClient } from '@betternotify/core';
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: smtpTransport({ host: '...' }) },
+});
+```
+
+Each procedure exposes three methods:
+
+<TypeTable
+  type={{
+    send: {
+      description: 'Validate input, run middleware, render, and deliver through the transport. Returns the message ID and timing data.',
+      type: '(args: TArgs) => Promise<ChannelSendResult>',
+    },
+    batch: {
+      description: 'Send to multiple recipients sequentially with an optional interval between sends. Returns per-entry success/error results.',
+      type: '(entries: TArgs[], opts?) => Promise<BatchResult>',
+    },
+    render: {
+      description: 'Run the template without sending. Useful for previews and tests.',
+      type: '(input: TInput, opts?) => Promise<TRendered>',
+    },
+  }}
+/>
+
+```ts
+await mail.transactional.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada', verifyUrl: 'https://...' },
+});
+
+const batch = await mail.marketing.newsletter.batch(
+  subscribers.map((s) => ({
+    to: s.email,
+    input: { headline: 'This week', bodyUrl: 'https://...' },
+  })),
+  { interval: 100 },
+);
+
+const preview = await mail.transactional.welcome.render(
+  { name: 'Ada', verifyUrl: 'https://...' },
+);
+```
+
+## Type inference
+
+Better-Notify exports utility types that extract procedure information from a catalog. These are useful when you need to type function parameters or return values against your catalog:
+
+```ts
+import type { InputOf, OutputOf, CtxOf } from '@betternotify/core';
+
+type WelcomeInput = InputOf<typeof catalog, 'transactional.welcome'>;
+// { name: string; verifyUrl: string }
+
+type CatalogCtx = CtxOf<typeof catalog>;
+```
+
+`InputOf<R, K>` extracts the validated input type for a procedure by its route ID. `OutputOf<R, K>` extracts the output type. `CtxOf<R>` extracts the context type that the catalog's middleware chain produces.
+
+## Root-level middleware and context
+
+`createNotify` returns a builder that can carry root-level middleware via `.use()`. Root middleware runs on every procedure in the catalog and can narrow the context type:
+
+```ts
+const rpc = createNotify({ channels: { email } })
+  .use<{ tenantId: string }>(async ({ next }) => {
+    const tenantId = await resolveTenant();
+    return next({ tenantId });
+  });
+```
+
+After `.use()`, the `Ctx` type parameter narrows. Every procedure in the catalog can access `ctx.tenantId`, and the type system enforces that the middleware provides it. Multiple `.use()` calls chain — each one merges its additions into the context type.
+
+<Callout>
+For a full walkthrough of building procedures, merging catalogs, and a working client from scratch, see the [Quick Start](../get-started/quick-start.mdx).
+</Callout>

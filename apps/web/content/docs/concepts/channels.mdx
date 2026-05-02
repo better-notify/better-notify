@@ -4,4 +4,158 @@ icon: Path
 description: Email, SMS, push, and custom notification channels
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A channel defines the shape of one notification type. Email has `to`, `subject`, and `html`. SMS has `to` and `body`. Push has `title`, `body`, and device tokens. Each channel declares the arguments a send expects, the slots a procedure must configure, and the render function that produces the output a transport delivers.
+
+## Built-in channels
+
+Better-Notify ships three channels as separate packages:
+
+<Cards>
+  <Card href="/docs/channels/email" title="Email">
+    Rich HTML and plain text messages delivered through SMTP, SES, Resend, or any email transport.
+  </Card>
+  <Card href="/docs/channels/sms" title="SMS">
+    Text messages delivered to phone numbers through your SMS provider.
+  </Card>
+  <Card href="/docs/channels/push" title="Push">
+    Push notifications delivered to device tokens with title, body, and optional data payload.
+  </Card>
+</Cards>
+
+Each package exports a channel factory (e.g. `emailChannel()`) that you pass to `createNotify`. The factory can accept channel-level defaults — for example, a shared `from` address for all email procedures.
+
+```ts
+import { emailChannel } from '@betternotify/email';
+
+const email = emailChannel({
+  defaults: {
+    from: { name: 'My App', email: 'hello@myapp.com' },
+  },
+});
+
+const rpc = createNotify({ channels: { email } });
+```
+
+Every procedure built with `rpc.email()` inherits the defaults. Individual procedures can override them.
+
+## Channels and transports
+
+A channel's `render` function produces a typed output — `RenderedMessage` for email, `RenderedSms` for SMS, your own type for custom channels. A transport receives that output and delivers it. The channel never knows which transport is running, and the transport never sees raw input or slot configuration.
+
+This separation is what makes transports swappable. The same email channel works with SMTP, SES, Resend, or a mock — because they all accept `RenderedMessage`. See [Transports](/docs/transports) for how delivery works.
+
+## Custom channels
+
+Any notification type you can model as "validate args → resolve slots → render output" fits as a channel. `defineChannel` and `slot` are the only imports you need:
+
+```ts
+import { defineChannel, slot } from '@betternotify/core';
+import { z } from 'zod';
+
+const slackChannel = defineChannel({
+  name: 'slack' as const,
+  slots: { text: slot.resolver<string>() },
+  validateArgs: z.object({
+    channel: z.string(),
+    threadTs: z.string().optional(),
+  }),
+  render: ({ runtime, args }) => ({
+    channel: args.channel,
+    text: runtime.text,
+    threadTs: args.threadTs,
+  }),
+});
+```
+
+Pass the custom channel to `createNotify` and the builder exposes `rpc.slack()` with a typed `.text()` slot — same pattern as the built-in channels.
+
+<Callout>
+For a full walkthrough with transport implementation, batch sends, and testing, see [Custom Channels](/docs/channels/custom-channels).
+</Callout>
+
+## Anatomy of a channel
+
+Under the hood, every channel — built-in or custom — is built with `defineChannel` and has four parts:
+
+<div className="border-fd-border bg-fd-card/50 rounded-xl border p-5">
+  <span className="text-fd-muted-foreground mb-4 block font-mono text-[11px] font-semibold uppercase tracking-widest">channel</span>
+  <div className="flex flex-wrap gap-3">
+    <div className="border-fd-border bg-fd-background flex-1 basis-36 rounded-lg border p-4">
+      <span className="text-fd-muted-foreground mb-1 block font-mono text-[10px] uppercase tracking-widest">name</span>
+      <span className="text-fd-foreground block font-mono text-sm">"email"</span>
+    </div>
+    <div className="border-fd-border bg-fd-background flex-1 basis-36 rounded-lg border p-4">
+      <span className="text-fd-muted-foreground mb-2 block font-mono text-[10px] uppercase tracking-widest">slots</span>
+      <div className="flex flex-col gap-1.5 font-mono text-xs">
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">subject</span><span className="text-fd-foreground">resolver</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">template</span><span className="text-fd-foreground">value</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">from</span><span className="text-fd-foreground">resolver?</span></div>
+        <div className="flex gap-3"><span className="text-fd-muted-foreground w-16 shrink-0">tags</span><span className="text-fd-foreground">value?</span></div>
+      </div>
+    </div>
+    <div className="border-fd-border bg-fd-background flex-1 basis-36 rounded-lg border p-4">
+      <span className="text-fd-muted-foreground mb-1 block font-mono text-[10px] uppercase tracking-widest">validateArgs</span>
+      <span className="text-fd-foreground block font-mono text-xs">schema or function</span>
+    </div>
+    <div className="border-fd-border bg-fd-background flex-1 basis-36 rounded-lg border p-4">
+      <span className="text-fd-muted-foreground mb-1 block font-mono text-[10px] uppercase tracking-widest">render</span>
+      <span className="text-fd-foreground block font-mono text-xs">slots + args → output</span>
+    </div>
+  </div>
+</div>
+
+<TypeTable
+  type={{
+    name: {
+      description: 'Identifies the channel ("email", "sms", "push", or your own). Becomes the method name on the procedure builder — rpc.email(), rpc.sms(), etc.',
+      type: 'string',
+    },
+    slots: {
+      description: 'Named configuration points that each procedure must (or may) fill in. Every slot becomes a method on the procedure builder.',
+      type: 'Record<string, SlotConfig>',
+    },
+    validateArgs: {
+      description: 'A Standard Schema or function that validates the send-time arguments (to, cc, etc.) before the pipeline runs.',
+      type: 'StandardSchema | (args: unknown) => TArgs',
+    },
+    render: {
+      description: 'Receives the resolved slot values together with the validated arguments and produces the rendered output that gets handed to the transport.',
+      type: '(params: { runtime, args, ctx }) => TRendered',
+    },
+  }}
+/>
+
+## Slots
+
+Slots define what a procedure must configure and how the values are resolved at send time. There are two kinds:
+
+**Resolver slots** accept a static value or a function that receives `{ input, ctx }` and runs at send time. Use resolvers when the value depends on the procedure's input or context:
+
+```ts
+import { slot } from '@betternotify/core';
+
+const subject = slot.resolver<string>();
+
+// Procedure can set it as static or dynamic:
+rpc.email().subject('Welcome!')
+rpc.email().subject(({ input }) => `Welcome, ${input.name}!`)
+```
+
+**Value slots** accept a static value only. Use values when the configuration is fixed at definition time:
+
+```ts
+const template = slot.value<TemplateAdapter>();
+
+rpc.email().template({ render: async ({ input }) => ({ html: '...', text: '...' }) })
+```
+
+Both kinds are **required by default**. Call `.optional()` to make a slot optional — the procedure can omit it, and render receives `undefined`:
+
+```ts
+const tags = slot.value<Tags>().optional();
+const priority = slot.value<Priority>().optional();
+```
+
+When the catalog finalizes, Better-Notify checks that every required slot has been set. A missing required slot throws at startup, not at send time.

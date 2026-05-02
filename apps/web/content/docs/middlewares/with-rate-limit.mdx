@@ -1,7 +1,123 @@
 ---
 title: withRateLimit
 icon: Gauge
-description: Rate-limit outgoing notifications
+description: Throttle sends per key with configurable windows
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`withRateLimit` throttles sends per derived key against a store. If the count exceeds `max` within the window, it throws a `NotifyRpcRateLimitedError` with `retryAfterMs` so queue workers can back off precisely.
+
+<RateLimitDemo max={3} windowMs={6000} />
+
+```ts
+import { withRateLimit, inMemoryRateLimitStore } from '@betternotify/core/middlewares';
+
+const welcome = rpc
+  .email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withRateLimit({
+    store: inMemoryRateLimitStore(),
+    key: ({ args }) => String(args.to),
+    max: 5,
+    window: 60_000,
+  }));
+```
+
+## Options
+
+<TypeTable
+  type={{
+    store: {
+      description: 'A RateLimitStore implementation. Use inMemoryRateLimitStore() for single-process apps or bring your own Redis-backed store for cross-worker coordination.',
+      type: 'RateLimitStore',
+    },
+    key: {
+      description: 'A static string or a function that derives the rate-limit key from { input, ctx, route, args }. Each unique key gets its own counter.',
+      type: 'string | (params) => string',
+    },
+    max: {
+      description: 'Maximum number of sends allowed per key within the window.',
+      type: 'number',
+    },
+    window: {
+      description: 'Window duration in milliseconds (e.g. 60_000 for one minute).',
+      type: 'number',
+    },
+    algorithm: {
+      description: 'Counter algorithm. "fixed" (default) resets per fixed window — cheap but mildly bursty at boundaries. "sliding" uses a sliding window log for more accuracy.',
+      type: '"fixed" | "sliding"',
+      default: '"fixed"',
+    },
+  }}
+/>
+
+## Dynamic keys
+
+The `key` function receives the full send context, so you can rate-limit by recipient, route, tenant, or any combination:
+
+```ts
+withRateLimit({
+  store,
+  key: ({ args, route }) => `${route}:${args.to}`,
+  max: 3,
+  window: 60_000,
+})
+```
+
+## Error handling
+
+When the limit is exceeded, `withRateLimit` throws `NotifyRpcRateLimitedError`:
+
+```ts
+import { NotifyRpcRateLimitedError } from '@betternotify/core';
+
+try {
+  await mail.welcome.send({ to: 'ada@example.com', input });
+} catch (err) {
+  if (err instanceof NotifyRpcRateLimitedError) {
+    console.log(err.key);          // the rate-limit key
+    console.log(err.retryAfterMs); // ms until the window resets
+  }
+}
+```
+
+## Retrying rate-limited sends
+
+`NotifyRpcRateLimitedError` carries `retryAfterMs` — the number of milliseconds until the current window resets. This makes it straightforward to delay and retry instead of dropping the send.
+
+### Manual retry
+
+```ts
+import { NotifyRpcRateLimitedError } from '@betternotify/core';
+
+const sendWithRetry = async (args: Parameters<typeof mail.welcome.send>[0]) => {
+  const [err, result] = await handlePromise(mail.welcome.send(args));
+  if (err instanceof NotifyRpcRateLimitedError) {
+    await new Promise((r) => setTimeout(r, err.retryAfterMs));
+    return mail.welcome.send(args);
+  }
+  if (err) throw err;
+  return result;
+};
+```
+
+### With a queue worker
+
+When using BullMQ (or any job queue), catch the error in the worker and schedule the job to retry after the window resets. The queue handles the delay — your code just provides the timing:
+
+```ts
+import { NotifyRpcRateLimitedError } from '@betternotify/core';
+
+worker.on('failed', (job, err) => {
+  if (err instanceof NotifyRpcRateLimitedError && job) {
+    job.moveToDelayed(Date.now() + err.retryAfterMs);
+  }
+});
+```
+
+<Callout>
+`retryAfterMs` is a precise value derived from the store, not a guess. Fixed-window counters reset at the window boundary; sliding-window counters compute the exact gap until the oldest entry expires.
+</Callout>

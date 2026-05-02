@@ -4,4 +4,160 @@ icon: Anchor
 description: Observe lifecycle events without side effects
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Hooks observe the send pipeline without affecting it. They fire at specific points in the lifecycle — after validation, after render, after delivery, or on error — and let you log, record metrics, or trigger side effects without changing whether or how a notification is delivered. A failing hook never blocks a send or stops other hooks from running.
+
+If removing a piece of logic would change whether a notification goes out, it belongs in [middleware](./middleware.mdx), not a hook.
+
+## Lifecycle
+
+Four hooks fire in a fixed order during each send. `onError` fires on any failure regardless of where it originated.
+
+<div className="border-fd-border bg-fd-card/50 rounded-xl border p-5">
+  <div className="flex items-center gap-2 overflow-x-auto pb-2">
+    <div className="bg-fd-background border-fd-border shrink-0 rounded-lg border px-3 py-2 text-center">
+      <span className="text-fd-foreground block font-mono text-[11px] font-semibold">validate</span>
+    </div>
+    <span className="text-fd-muted-foreground shrink-0 font-mono text-xs">→</span>
+    <div className="shrink-0 rounded-lg border border-green-600/40 bg-green-50/50 px-3 py-2 text-center dark:bg-green-950/20">
+      <span className="block font-mono text-[10px] font-semibold text-green-700 dark:text-green-400">onBeforeSend</span>
+    </div>
+    <span className="text-fd-muted-foreground shrink-0 font-mono text-xs">→</span>
+    <div className="bg-fd-background border-fd-border shrink-0 rounded-lg border px-3 py-2 text-center">
+      <span className="text-fd-foreground block font-mono text-[11px] font-semibold">middleware</span>
+    </div>
+    <span className="text-fd-muted-foreground shrink-0 font-mono text-xs">→</span>
+    <div className="bg-fd-background border-fd-border shrink-0 rounded-lg border px-3 py-2 text-center">
+      <span className="text-fd-foreground block font-mono text-[11px] font-semibold">render</span>
+    </div>
+    <span className="text-fd-muted-foreground shrink-0 font-mono text-xs">→</span>
+    <div className="shrink-0 rounded-lg border border-green-600/40 bg-green-50/50 px-3 py-2 text-center dark:bg-green-950/20">
+      <span className="block font-mono text-[10px] font-semibold text-green-700 dark:text-green-400">onExecute</span>
+    </div>
+    <span className="text-fd-muted-foreground shrink-0 font-mono text-xs">→</span>
+    <div className="bg-fd-background border-fd-border shrink-0 rounded-lg border px-3 py-2 text-center">
+      <span className="text-fd-foreground block font-mono text-[11px] font-semibold">transport</span>
+    </div>
+    <span className="text-fd-muted-foreground shrink-0 font-mono text-xs">→</span>
+    <div className="shrink-0 rounded-lg border border-green-600/40 bg-green-50/50 px-3 py-2 text-center dark:bg-green-950/20">
+      <span className="block font-mono text-[10px] font-semibold text-green-700 dark:text-green-400">onAfterSend</span>
+    </div>
+  </div>
+  <div className="mt-3 flex items-center gap-2 border-t border-dashed border-red-300/50 pt-3 dark:border-red-800/40">
+    <span className="text-fd-muted-foreground font-mono text-[10px]">any failure →</span>
+    <div className="shrink-0 rounded-lg border border-red-600/40 bg-red-50/50 px-3 py-2 text-center dark:bg-red-950/20">
+      <span className="block font-mono text-[10px] font-semibold text-red-700 dark:text-red-400">onError</span>
+    </div>
+  </div>
+</div>
+
+<TypeTable
+  type={{
+    onBeforeSend: {
+      description: 'Fires after input validation passes, before the middleware chain runs. Use for audit logging, pre-send checks, or recording send attempts.',
+      type: 'HookFn<BeforeSendCtx>',
+    },
+    onExecute: {
+      description: 'Fires after the template renders successfully, before the transport sends. Use for inspecting rendered output or pre-delivery side effects.',
+      type: 'HookFn<ExecuteCtx>',
+    },
+    onAfterSend: {
+      description: 'Fires after a successful transport delivery. Not called on error. Use for success metrics, delivery confirmation, or post-send workflows.',
+      type: 'HookFn<AfterSendCtx>',
+    },
+    onError: {
+      description: 'Fires on any pipeline error regardless of phase. Also fires when another hook throws. Use for error tracking, alerting, or dead-letter logging.',
+      type: 'HookFn<ErrorCtx>',
+    },
+  }}
+/>
+
+## Attaching hooks
+
+Pass hooks to `createClient`. Each hook accepts a single handler or an array of handlers executed in order:
+
+```ts
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: smtpTransport({ host: '...' }) },
+  hooks: {
+    onBeforeSend: ({ route, messageId }) => {
+      console.log(`sending ${route} [${messageId}]`);
+    },
+    onAfterSend: ({ route, result, durationMs }) => {
+      metrics.recordSend(route, durationMs);
+    },
+    onError: [
+      ({ route, error, phase }) => {
+        errorTracker.capture(error, { route, phase });
+      },
+      ({ route, error }) => {
+        console.error(`[${route}] ${error.message}`);
+      },
+    ],
+  },
+});
+```
+
+Plugins can also carry hooks. Plugin hooks and client hooks merge — they don't override each other. See [Plugins](./plugins.mdx).
+
+## Hook context
+
+Each hook receives a context object that builds on the previous one. Later hooks get more information:
+
+<TypeTable
+  type={{
+    route: {
+      description: 'Dot-path route ID for the procedure (e.g. "transactional.welcome").',
+      type: 'string',
+    },
+    input: {
+      description: 'Validated, schema-coerced input.',
+      type: 'TInput',
+    },
+    args: {
+      description: 'Full send arguments including input plus channel-specific fields (to, cc, etc.).',
+      type: 'SendArgs',
+    },
+    ctx: {
+      description: 'Context object at the time the hook fires.',
+      type: 'unknown',
+    },
+    messageId: {
+      description: 'UUID assigned to this individual send attempt.',
+      type: 'string',
+    },
+    rendered: {
+      description: 'The rendered output from the template. Only available in onExecute.',
+      type: 'TRendered',
+    },
+    result: {
+      description: 'The transport result including messageId and timing data. Only available in onAfterSend.',
+      type: 'ChannelSendResult',
+    },
+    durationMs: {
+      description: 'Combined render + send duration in milliseconds. Only available in onAfterSend.',
+      type: 'number',
+    },
+    error: {
+      description: 'The error that triggered the hook. Only available in onError.',
+      type: 'NotifyRpcError',
+    },
+    phase: {
+      description: 'The pipeline stage where the error originated: validate, middleware, render, send, or hook. Only available in onError.',
+      type: 'ErrorPhase',
+    },
+  }}
+/>
+
+## Error isolation
+
+Hook failures are isolated from the send pipeline and from each other:
+
+- A failing hook does not prevent the notification from being delivered.
+- If one handler in an array throws, the remaining handlers still run.
+- Hook errors are routed to `onError` with `phase: 'hook'`. If `onError` itself throws, the error is logged but never propagated to the caller.
+
+This means you can safely add observability hooks without risking delivery failures.

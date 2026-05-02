@@ -1,7 +1,77 @@
 ---
 title: withEventLogger
 icon: Notebook
-description: Log notification lifecycle events
+description: Emit structured events per send
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+`withEventLogger` emits one structured `SendEvent` per send into the supplied event sink. Each event carries the route, message ID, duration, timestamps, and either the result (on success) or a serialized error. Errors are re-thrown after writing so the pipeline still surfaces the failure to the caller.
+
+```ts
+import { withEventLogger, consoleEventSink } from '@betternotify/core/middlewares';
+
+const welcome = rpc
+  .email()
+  .input(schema)
+  .subject(fn)
+  .template(adapter)
+  .use(withEventLogger({ sink: consoleEventSink() }));
+```
+
+## What is a sink?
+
+A sink is a destination for events — an object with a single `write(event)` method. The middleware calls `write` once per send and moves on. The sink decides where the event goes: the console, an in-memory array, a database, an HTTP endpoint, a message queue.
+
+This keeps `withEventLogger` decoupled from any specific observability stack. Better-Notify ships two sinks out of the box:
+
+- `consoleEventSink()` — logs events to the console. Use during local development.
+- `inMemoryEventSink()` — collects events in an array. Use in tests to assert on what was sent.
+
+For production, implement the `EventSink` interface to route events to your stack (Datadog, S3, Kafka, an audit database, etc.).
+
+## Options
+
+<TypeTable
+  type={{
+    sink: {
+      description: 'An EventSink implementation that receives one SendEvent per send.',
+      type: 'EventSink',
+    },
+  }}
+/>
+
+## The SendEvent shape
+
+Every send produces exactly one event:
+
+```ts
+type SendEvent = {
+  route: string;
+  messageId: string;
+  status: 'success' | 'error';
+  durationMs: number;
+  startedAt: Date;
+  endedAt: Date;
+  result?: unknown;
+  error?: { name: string; message: string; code?: string };
+};
+```
+
+## Custom sinks
+
+Implement the `EventSink` interface to send events anywhere:
+
+```ts
+import type { EventSink } from '@betternotify/core/middlewares';
+
+const datadogSink: EventSink = {
+  write: async (event) => {
+    await fetch('https://api.datadoghq.com/api/v2/logs', {
+      method: 'POST',
+      headers: { 'DD-API-KEY': process.env.DD_API_KEY! },
+      body: JSON.stringify(event),
+    });
+  },
+};
+```
