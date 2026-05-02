@@ -13,7 +13,7 @@ This guide walks you through building a working Better-Notify setup and sending 
 By the end, you will have a typed client where `mail.transactional.welcome.send(...)` only compiles if the route exists and the input matches its schema.
 
 <Callout>
-This guide assumes you have already installed the packages. If not, start with [Installation](./installation.mdx).
+This guide assumes you have already installed the packages. If not, start with [Installation](/docs/get-started/installation).
 </Callout>
 
 ## What you will build
@@ -351,13 +351,13 @@ console.log(transport.sent[0].ctx.route);
 // → 'transactional.welcome'
 ```
 
-Same catalog, same routes, same client shape. Only the transport changed. Read more about the [mock transport](../transports/generic/mock.mdx).
+Same catalog, same routes, same client shape. Only the transport changed. Read more about the [mock transport](/docs/transports/generic/mock).
 
 ## Where to go next
 
 You now have a working setup with typed procedures, merged catalogs, and real email delivery. From here:
 
-- Read [Channels](../concepts/channels.mdx) to understand how email, SMS, push, and custom channels work.
-- Read [Catalog & Procedures](../concepts/catalog-and-routes.mdx) for deeper coverage of procedure composition and dot-path route IDs.
-- Read [Transports Overview](../transports/index.mdx) to learn about multi-transport composition and failover.
-- Read [Middleware](../concepts/middleware.mdx) when you want rate limits, tracing, or event logging across procedures.
+- Read [Channels](/docs/concepts/channels) to understand how email, SMS, push, and custom channels work.
+- Read [Catalog & Procedures](/docs/concepts/catalog-and-routes) for deeper coverage of procedure composition and dot-path route IDs.
+- Read [Transports Overview](/docs/transports) to learn about multi-transport composition and failover.
+- Read [Middleware](/docs/concepts/middleware) when you want rate limits, tracing, or event logging across procedures.

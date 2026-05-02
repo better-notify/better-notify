@@ -6,7 +6,7 @@ description: Transform and control the notification pipeline
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-Middleware wraps the send pipeline. It runs before and after the render-and-send core, and it can transform the context, block a send entirely, or observe the result. If removing a piece of logic would change whether a notification goes out, it belongs in middleware. If it only observes or logs, it belongs in a [hook](./hooks.mdx).
+Middleware wraps the send pipeline. It runs before and after the render-and-send core, and it can transform the context, block a send entirely, or observe the result. If removing a piece of logic would change whether a notification goes out, it belongs in middleware. If it only observes or logs, it belongs in a [hook](/docs/concepts/hooks).
 
 <PipelineFlow
   nodes={[
@@ -166,7 +166,7 @@ const passwordReset = rpc.email()
   .use(withRateLimit({ max: 3, window: '1h', key: ({ args }) => args.to }));
 ```
 
-**Plugins** — bundle middleware (and hooks) into reusable units that apply across catalogs. See [Plugins](./plugins.mdx).
+**Plugins** — bundle middleware (and hooks) into reusable units that apply across catalogs. See [Plugins](/docs/concepts/plugins).
 
 ## Built-in middleware
 

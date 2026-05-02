@@ -16,3 +16,4 @@ plan/
 .tanstack
 .agents/skills/impeccable/scripts/
 .superpowers/
+.playwright-mcp/

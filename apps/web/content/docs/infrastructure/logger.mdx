@@ -4,4 +4,106 @@ icon: Terminal
 description: Structured logging configuration
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Better-Notify logs internally through a structural `LoggerLike` interface. Every `createClient` instance accepts an optional `logger` — if omitted, it defaults to `consoleLogger({ level: 'warn' })`, which stays silent on success and surfaces errors.
+
+```ts
+import { createClient, consoleLogger } from '@betternotify/core';
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+  logger: consoleLogger({ level: 'debug' }),
+});
+```
+
+## The LoggerLike interface
+
+Any object that implements these methods works as a logger — no base class or dependency required:
+
+<TypeTable
+  type={{
+    debug: {
+      description: 'Verbose diagnostic output. Off by default.',
+      type: '(message: string, payload?: object) => void',
+    },
+    info: {
+      description: 'Normal operational events (send ok, timing).',
+      type: '(message: string, payload?: object) => void',
+    },
+    warn: {
+      description: 'Recoverable issues (validation failures, retries).',
+      type: '(message: string, payload?: object) => void',
+    },
+    error: {
+      description: 'Failures that affect delivery (transport errors, hook crashes).',
+      type: '(message: string, payload?: object) => void',
+    },
+    child: {
+      description: 'Create a child logger with bound fields. The pipeline binds { component, route, messageId } per send.',
+      type: '(bindings: object) => LoggerLike',
+    },
+  }}
+/>
+
+## consoleLogger
+
+The built-in logger. Outputs colored, human-readable lines with timestamps, level tags, and structured payload formatting. Errors under the `err` key get special treatment — stack traces are indented and cause chains are rendered recursively.
+
+```ts
+import { consoleLogger } from '@betternotify/core';
+
+const logger = consoleLogger({ level: 'info' });
+```
+
+<TypeTable
+  type={{
+    level: {
+      description: 'Minimum log level to emit. Messages below this level are silently dropped.',
+      type: '"debug" | "info" | "warn" | "error"',
+      default: '"warn"',
+    },
+  }}
+/>
+
+## Pino integration
+
+If you use pino, wrap it with `fromPino` — it adapts pino's `(obj, msg)` signature to Better-Notify's `(msg, obj)` convention:
+
+```ts
+import pino from 'pino';
+import { fromPino } from '@betternotify/core';
+
+const logger = fromPino(pino({ level: 'info' }));
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+  logger,
+});
+```
+
+`fromPino` also forwards `child()` calls, so per-send bindings (`route`, `messageId`, `component`) flow through to pino child loggers.
+
+## Bring your own logger
+
+Any object matching `LoggerLike` works — Winston, Bunyan, or a custom wrapper:
+
+```ts
+import type { LoggerLike } from '@betternotify/core';
+
+const customLogger: LoggerLike = {
+  debug: (msg, payload) => myLogger.log('debug', msg, payload),
+  info: (msg, payload) => myLogger.log('info', msg, payload),
+  warn: (msg, payload) => myLogger.log('warn', msg, payload),
+  error: (msg, payload) => myLogger.log('error', msg, payload),
+  child: (bindings) => customLogger,
+};
+```
+
+## Error key convention
+
+Errors are always passed under the `err` key in payloads — this matches pino's `stdSerializers.err` convention. The console logger serializes `err` values with type, message, code, stack, and nested causes. If you're building a custom logger, handle the `err` key to get structured error output.

@@ -1,0 +1,198 @@
+---
+title: Error Handling
+icon: Bug
+description: Handle and recover from notification failures
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Every error thrown by Better-Notify is a `NotifyRpcError` (or a subclass). Each error carries a machine-readable `code` so you can branch without string matching on `message`, plus optional `route` and `messageId` for context.
+
+```ts
+import { NotifyRpcError } from '@betternotify/core';
+
+const [err, result] = await handlePromise(
+  mail.welcome.send({ to: 'ada@example.com', input: { name: 'Ada' } }),
+);
+
+if (err instanceof NotifyRpcError) {
+  console.log(err.code);      // 'VALIDATION', 'PROVIDER', 'RENDER', etc.
+  console.log(err.route);     // 'transactional.welcome'
+  console.log(err.messageId); // UUID for this send attempt
+}
+```
+
+## Error codes
+
+<TypeTable
+  type={{
+    VALIDATION: {
+      description: 'Input fails the schema declared with .input().',
+      type: 'NotifyRpcValidationError',
+    },
+    PROVIDER: {
+      description: 'Transport throws or returns { ok: false }.',
+      type: 'NotifyRpcError',
+    },
+    RENDER: {
+      description: 'Template adapter throws during render().',
+      type: 'NotifyRpcError',
+    },
+    RATE_LIMITED: {
+      description: 'withRateLimit detected the threshold was exceeded.',
+      type: 'NotifyRpcRateLimitedError',
+    },
+    SUPPRESSED: {
+      description: 'Recipient is on a suppression list.',
+      type: 'NotifyRpcError',
+    },
+    CONFIG: {
+      description: 'No channel or transport is registered for the requested channel.',
+      type: 'NotifyRpcError',
+    },
+    BATCH_EMPTY: {
+      description: '.batch() was called with an empty array.',
+      type: 'NotifyRpcError',
+    },
+    UNKNOWN: {
+      description: 'A middleware or hook threw a non-NotifyRpcError. Re-wrapped at the boundary.',
+      type: 'NotifyRpcError',
+    },
+  }}
+/>
+
+## Handling specific errors
+
+### Validation errors
+
+`NotifyRpcValidationError` carries structured issues from your schema validator:
+
+```ts
+import { NotifyRpcValidationError } from '@betternotify/core';
+
+const [err] = await handlePromise(
+  mail.welcome.send({
+    to: 'ada@example.com',
+    input: { name: '', verifyUrl: 'not-a-url' },
+  }),
+);
+
+if (err instanceof NotifyRpcValidationError) {
+  console.log(err.code);   // 'VALIDATION'
+  console.log(err.route);  // 'transactional.welcome'
+
+  for (const issue of err.issues) {
+    console.log(issue.path, issue.message);
+    // ['name'] 'String must contain at least 1 character(s)'
+    // ['verifyUrl'] 'Invalid url'
+  }
+}
+```
+
+### Rate limit errors
+
+`NotifyRpcRateLimitedError` carries `retryAfterMs` for precise retry scheduling:
+
+```ts
+import { NotifyRpcRateLimitedError } from '@betternotify/core';
+
+const [err] = await handlePromise(
+  mail.welcome.send({
+    to: 'ada@example.com',
+    input: { name: 'Ada', verifyUrl: 'https://example.com/verify' },
+  }),
+);
+
+if (err instanceof NotifyRpcRateLimitedError) {
+  console.log(err.code);         // 'RATE_LIMITED'
+  console.log(err.key);          // the rate-limit key that was exceeded
+  console.log(err.retryAfterMs); // ms until the window resets
+
+  await new Promise((r) => setTimeout(r, err.retryAfterMs));
+  await mail.welcome.send({
+    to: 'ada@example.com',
+    input: { name: 'Ada', verifyUrl: 'https://example.com/verify' },
+  });
+}
+```
+
+## Error phases
+
+Errors originate from different stages of the pipeline. The `onError` hook receives a `phase` field that tells you where:
+
+<TypeTable
+  type={{
+    validate: {
+      description: 'Input failed schema validation. No middleware or hooks ran.',
+      type: 'string',
+    },
+    middleware: {
+      description: 'A middleware threw or its next() call threw outside render/send.',
+      type: 'string',
+    },
+    render: {
+      description: 'The template adapter threw during render().',
+      type: 'string',
+    },
+    send: {
+      description: 'The transport threw or returned { ok: false }.',
+      type: 'string',
+    },
+    hook: {
+      description: 'A lifecycle hook threw. Does not stop other hooks from running.',
+      type: 'string',
+    },
+  }}
+/>
+
+## Global error handling with onError
+
+Use the `onError` hook on `createClient` to catch all errors in one place:
+
+```ts
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: transport },
+  hooks: {
+    onError: ({ route, error, phase, messageId }) => {
+      console.error(`[${phase}] ${route} failed:`, error.message);
+
+      errorTracker.capture(error, {
+        route,
+        phase,
+        messageId,
+        code: error.code,
+      });
+    },
+  },
+});
+```
+
+Hook failures are isolated — a broken `onError` handler never prevents other error handlers from running and never blocks delivery. See [Hooks](/docs/concepts/hooks) for the full isolation model.
+
+## JSON serialization
+
+All errors are JSON-serializable via `error.toJSON()`. This is used internally for queue persistence and structured logging:
+
+```ts
+const [err] = await handlePromise(
+  mail.welcome.send({
+    to: 'ada@example.com',
+    input: { name: 'Ada', verifyUrl: 'https://example.com/verify' },
+  }),
+);
+
+if (err instanceof NotifyRpcError) {
+  const serialized = err.toJSON();
+  // {
+  //   name: 'NotifyRpcError',
+  //   message: 'Transport send failed for route "welcome": connection refused',
+  //   code: 'PROVIDER',
+  //   route: 'welcome',
+  //   messageId: '550e8400-e29b-41d4-a716-446655440000'
+  // }
+
+  await deadLetterQueue.add(serialized);
+}
+```

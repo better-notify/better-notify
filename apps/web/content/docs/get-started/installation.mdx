@@ -4,14 +4,7 @@ icon: Package
 description: Install Better-Notify and its dependencies
 ---
 
-import {
-  CodeBlockTab,
-  CodeBlockTabs,
-  CodeBlockTabsList,
-  CodeBlockTabsTrigger,
-} from 'fumadocs-ui/components/codeblock';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 Use this page to install Better-Notify for the channel you want to start with.
 
@@ -44,34 +37,9 @@ If you are starting from scratch, your `package.json` should also use ESM:
 
 If you are following the email + SMTP path from the intro and quick start, install these packages:
 
-<CodeBlockTabs groupId="package-manager" persist defaultValue="pnpm">
-  <CodeBlockTabsList>
-    <CodeBlockTabsTrigger value="pnpm">pnpm</CodeBlockTabsTrigger>
-    <CodeBlockTabsTrigger value="npm">npm</CodeBlockTabsTrigger>
-    <CodeBlockTabsTrigger value="yarn">yarn</CodeBlockTabsTrigger>
-  </CodeBlockTabsList>
-  <CodeBlockTab value="pnpm">
-
-```sh
-pnpm add @betternotify/core @betternotify/email @betternotify/smtp zod
+```package-install
+@betternotify/core @betternotify/email @betternotify/smtp zod
 ```
-
-  </CodeBlockTab>
-  <CodeBlockTab value="npm">
-
-```sh
-npm install @betternotify/core @betternotify/email @betternotify/smtp zod
-```
-
-  </CodeBlockTab>
-  <CodeBlockTab value="yarn">
-
-```sh
-yarn add @betternotify/core @betternotify/email @betternotify/smtp zod
-```
-
-  </CodeBlockTab>
-</CodeBlockTabs>
 
 `@betternotify/core` gives you `createNotify()` and `createClient()`. `@betternotify/email` gives you the email channel. `@betternotify/smtp` gives you the SMTP transport. `zod` defines the route input schemas used throughout the docs examples.
 
@@ -143,8 +111,8 @@ At this point, your project is ready for the first email route:
 
 The next docs build on that setup in two different ways:
 
-- [Quick Start](./quick-start.mdx) builds a working setup with routes, sub-catalogs, and sends a real email through Gmail SMTP.
-- [Advanced: Failover and Middleware](../advanced/failover-and-middleware.mdx) keeps the same email shape and adds provider failover, tracing, event logging, and rate limiting.
+- [Quick Start](/docs/get-started/quick-start) builds a working setup with routes, sub-catalogs, and sends a real email through Gmail SMTP.
+- [Advanced: Failover and Middleware](/docs/advanced/failover-and-middleware) keeps the same email shape and adds provider failover, tracing, event logging, and rate limiting.
 
 ## Other packages
 
@@ -155,4 +123,4 @@ You do not need these for the first email + SMTP example, but they are the next 
 - `@betternotify/react-email` if you want React Email templates.
 - `@betternotify/ses` or `@betternotify/resend` if you prefer those providers over SMTP.
 
-Continue to [Quick Start](./quick-start.mdx) to wire the first route and send the first message.
+Continue to [Quick Start](/docs/get-started/quick-start) to wire the first route and send the first message.

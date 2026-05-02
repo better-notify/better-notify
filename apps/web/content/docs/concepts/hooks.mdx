@@ -8,7 +8,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 Hooks observe the send pipeline without affecting it. They fire at specific points in the lifecycle — after validation, after render, after delivery, or on error — and let you log, record metrics, or trigger side effects without changing whether or how a notification is delivered. A failing hook never blocks a send or stops other hooks from running.
 
-If removing a piece of logic would change whether a notification goes out, it belongs in [middleware](./middleware.mdx), not a hook.
+If removing a piece of logic would change whether a notification goes out, it belongs in [middleware](/docs/concepts/middleware), not a hook.
 
 ## Lifecycle
 
@@ -101,7 +101,7 @@ const mail = createClient({
 });
 ```
 
-Plugins can also carry hooks. Plugin hooks and client hooks merge — they don't override each other. See [Plugins](./plugins.mdx).
+Plugins can also carry hooks. Plugin hooks and client hooks merge — they don't override each other. See [Plugins](/docs/concepts/plugins).
 
 ## Hook context
 

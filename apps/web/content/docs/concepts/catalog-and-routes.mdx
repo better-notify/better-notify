@@ -70,7 +70,7 @@ const welcome = rpc
 
 Each builder call returns a new builder with the accumulated state — nothing is mutated. The procedure does not exist as a finalized definition until you pass it into `.catalog()`.
 
-The slots available on the builder (`.subject()`, `.template()`, `.from()`, `.tags()`, etc.) are defined by the channel. Email has its set, SMS has `.body()`, push has `.title()` and `.body()`. See [Channels](./channels.mdx) for the full slot API per channel.
+The slots available on the builder (`.subject()`, `.template()`, `.from()`, `.tags()`, etc.) are defined by the channel. Email has its set, SMS has `.body()`, push has `.title()` and `.body()`. See [Channels](/docs/concepts/channels) for the full slot API per channel.
 
 ### Middleware on procedures
 
@@ -247,5 +247,5 @@ const rpc = createNotify({ channels: { email } })
 After `.use()`, the `Ctx` type parameter narrows. Every procedure in the catalog can access `ctx.tenantId`, and the type system enforces that the middleware provides it. Multiple `.use()` calls chain — each one merges its additions into the context type.
 
 <Callout>
-For a full walkthrough of building procedures, merging catalogs, and a working client from scratch, see the [Quick Start](../get-started/quick-start.mdx).
+For a full walkthrough of building procedures, merging catalogs, and a working client from scratch, see the [Quick Start](/docs/get-started/quick-start).
 </Callout>

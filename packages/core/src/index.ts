@@ -32,6 +32,7 @@ export type {
 } from './client.js';
 
 export type { Plugin } from './plugins/index.js';
+export { createPlugin } from './plugins/index.js';
 
 export type { Transport, TransportResult, AnyTransport, SendContext } from './transport.js';
 
@@ -54,6 +55,7 @@ export type {
 } from './transports/index.js';
 
 export {
+  createMiddleware,
   withDryRun,
   withTagInject,
   withEventLogger,
@@ -109,6 +111,7 @@ export type {
 export {
   createSuppressionList,
   createIdempotencyStore,
+  createRateLimitStore,
   inMemorySuppressionList,
   inMemoryRateLimitStore,
   inMemoryIdempotencyStore,
@@ -116,6 +119,7 @@ export {
 export type {
   CreateSuppressionListOptions,
   CreateIdempotencyStoreOptions,
+  CreateRateLimitStoreOptions,
   InMemorySuppressionListOptions,
 } from './stores/index.js';
 

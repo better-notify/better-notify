@@ -4,4 +4,24 @@ icon: CurlyBraces
 description: Build email templates with Handlebars
 ---
 
-Documentation coming soon.
+<Callout type="warn">
+The Handlebars adapter is not yet implemented. The `@betternotify/handlebars` package exists but throws `NotifyRpcNotImplementedError` at runtime. This adapter will ship in a future release.
+</Callout>
+
+## Planned design
+
+The `@betternotify/handlebars` adapter will compile Handlebars templates (as strings or file paths) and render them with the procedure's input at send time.
+
+The planned API:
+
+```ts
+import { handlebarsTemplate } from '@betternotify/handlebars';
+
+const welcome = rpc
+  .email()
+  .input(z.object({ name: z.string() }))
+  .subject(({ input }) => `Welcome, ${input.name}!`)
+  .template(handlebarsTemplate('./emails/welcome.hbs'));
+```
+
+Handlebars is a good fit when you have existing `.hbs` templates from another system, when non-developers need to edit templates without touching TypeScript, or when you want logic-light templates with simple `{{variable}}` interpolation.

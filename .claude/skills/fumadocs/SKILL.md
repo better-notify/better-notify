@@ -277,12 +277,26 @@ When adding a new page, update the parent directory's `meta.json` to include it 
 
 ## Links
 
-Use relative file paths between doc pages:
+Use absolute paths for cross-section links and relative paths within the same section:
 
 ```mdx
+See [Middleware](/docs/concepts/middleware) for composition order.
 See [Multi-Transport](./generic/multi-transport.mdx) for composed delivery.
-Check the [SES setup](../third-party/ses.mdx) for AWS configuration.
 ```
+
+## Third-party integrations
+
+When documenting a page that integrates with an external library (React Email, Zod, OpenTelemetry, etc.), add a Card near the top linking to the library's official website or documentation. This gives readers quick access to the upstream reference without leaving the docs:
+
+```mdx
+<Cards>
+  <Card href="https://react.email" title="React Email">
+    Official documentation, component reference, and examples.
+  </Card>
+</Cards>
+```
+
+Follow this pattern for every third-party integration page — template adapters, transport providers, validator libraries, tracing tools, etc.
 
 ## Page Categories
 

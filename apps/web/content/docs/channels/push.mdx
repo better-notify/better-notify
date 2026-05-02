@@ -4,4 +4,134 @@ icon: Bell
 description: Send push notifications
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The push channel is provided by `@betternotify/push`. It defines slots for title, body, optional data payload, and badge count.
+
+## When to use push
+
+Push is the right channel when the notification should appear instantly on the user's device as a system-level alert. Use it for real-time events — new messages, live score updates, price alerts, or activity from other users — where the value is in the immediate interruption. Push also carries a data payload, so the app can navigate to the right screen when the user taps.
+
+```package-install
+@betternotify/push
+```
+
+## Setup
+
+```ts
+import { pushChannel } from '@betternotify/push';
+
+const push = pushChannel();
+
+const rpc = createNotify({ channels: { push } });
+```
+
+## Slots
+
+<TypeTable
+  type={{
+    title: {
+      description: 'The notification title. Accepts a static string or a resolver function.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    body: {
+      description: 'The notification body text. Accepts a static string or a resolver function.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    data: {
+      description: 'Arbitrary key-value data payload delivered with the notification. Optional.',
+      type: 'Record<string, unknown> | (args: { input, ctx }) => Record<string, unknown>',
+    },
+    badge: {
+      description: 'Badge count to display on the app icon. Optional.',
+      type: 'number | (args: { input, ctx }) => number',
+    },
+  }}
+/>
+
+## Send arguments
+
+<TypeTable
+  type={{
+    to: {
+      description: 'Device token or array of device tokens. Must be non-empty.',
+      type: 'string | string[]',
+    },
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+## Full example
+
+```ts
+import { createNotify, createClient, createMockTransport } from '@betternotify/core';
+import { pushChannel } from '@betternotify/push';
+import { z } from 'zod';
+
+const push = pushChannel();
+const rpc = createNotify({ channels: { push } });
+
+const catalog = rpc.catalog({
+  newMessage: rpc
+    .push()
+    .input(z.object({ sender: z.string(), preview: z.string() }))
+    .title(({ input }) => `New message from ${input.sender}`)
+    .body(({ input }) => input.preview)
+    .data(({ input }) => ({ sender: input.sender }))
+    .badge(() => 1),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { push },
+  transportsByChannel: { push: createMockTransport() },
+});
+
+await notify.newMessage.send({
+  to: 'device-token-abc123',
+  input: { sender: 'Ada', preview: 'Hey, are you coming to the meeting?' },
+});
+
+// Send to multiple devices
+await notify.newMessage.send({
+  to: ['device-token-abc123', 'device-token-def456'],
+  input: { sender: 'Ada', preview: 'Hey, are you coming to the meeting?' },
+});
+```
+
+## Transport
+
+The push channel produces a `RenderedPush` with `title`, `body`, `to`, and optional `data`/`badge`. Better-Notify does not ship a built-in push provider transport — use `createTransport` to build one for your provider (FCM, APNs, Expo, etc.):
+
+```ts
+import { createTransport } from '@betternotify/core';
+import type { RenderedPush } from '@betternotify/push';
+
+const fcmTransport = (serverKey: string) =>
+  createTransport<RenderedPush>({
+    name: 'fcm',
+    send: async (rendered) => {
+      const tokens = Array.isArray(rendered.to) ? rendered.to : [rendered.to];
+      const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+          Authorization: `key=${serverKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          registration_ids: tokens,
+          notification: { title: rendered.title, body: rendered.body, badge: rendered.badge },
+          data: rendered.data,
+        }),
+      });
+      const json = (await response.json()) as { success?: number; failure?: number };
+      if (json.failure) {
+        return { ok: false, error: new Error(`FCM: ${json.failure} failures`) };
+      }
+      return { ok: true, data: json };
+    },
+  });
+```

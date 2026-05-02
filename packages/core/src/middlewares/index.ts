@@ -1,4 +1,5 @@
 export type { Middleware, AnyMiddleware, MiddlewareParams } from './types.js';
+export { createMiddleware } from './create-middleware.js';
 export { withDryRun } from './with-dry-run.js';
 export { withTagInject } from './with-tag-inject.js';
 export type { WithTagInjectOptions } from './with-tag-inject.types.js';

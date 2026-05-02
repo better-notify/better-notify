@@ -4,4 +4,145 @@ icon: Shield
 description: Type-safe validation with Zod, Valibot, or ArkType
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+Better-Notify validates procedure input through [Standard Schema](https://standardschema.dev) — a shared interface that Zod, Valibot, ArkType, and other validators implement. This means `@betternotify/core` has zero hard dependency on any specific validation library. You bring the validator you already use.
+
+## How it works
+
+When you call `.input(schema)` on a procedure builder, the schema is stored as-is. At send time, Better-Notify calls the Standard Schema `~standard.validate()` method on the input. If validation passes, the coerced output flows into the middleware chain and render function. If it fails, a `NotifyRpcValidationError` is thrown before any middleware runs.
+
+```ts
+const welcome = rpc
+  .email()
+  .input(z.object({ name: z.string(), email: z.string().email() }))
+  .subject(({ input }) => `Welcome, ${input.name}!`)
+  .template(adapter);
+```
+
+The `input` type is inferred from the schema — `{ name: string; email: string }` in this case. The builder, middleware, template, and client all see the same narrowed type.
+
+## Supported validators
+
+Any library that implements the Standard Schema interface works. The three most common:
+
+<Cards>
+  <Card title="Zod">
+    The most popular choice. Zod 3.24+ implements Standard Schema natively.
+  </Card>
+  <Card title="Valibot">
+    Lightweight alternative with tree-shakeable design. Standard Schema support built in.
+  </Card>
+  <Card title="ArkType">
+    Type-first validator with runtime performance focus. Standard Schema compatible.
+  </Card>
+  <Card title="TypeBox">
+    JSON Schema based validator with high runtime performance. Standard Schema via @typebox/standard.
+  </Card>
+</Cards>
+
+### Zod
+
+```ts
+import { z } from 'zod';
+
+rpc.email().input(z.object({
+  name: z.string().min(1),
+  verifyUrl: z.string().url(),
+}));
+```
+
+### Valibot
+
+```ts
+import * as v from 'valibot';
+
+rpc.email().input(v.object({
+  name: v.pipe(v.string(), v.minLength(1)),
+  verifyUrl: v.pipe(v.string(), v.url()),
+}));
+```
+
+### ArkType
+
+```ts
+import { type } from 'arktype';
+
+rpc.email().input(type({
+  name: 'string > 0',
+  verifyUrl: 'string.url',
+}));
+```
+
+### TypeBox
+
+```ts
+import { Type } from '@sinclair/typebox';
+
+rpc.email().input(Type.Object({
+  name: Type.String({ minLength: 1 }),
+  verifyUrl: Type.String({ format: 'uri' }),
+}));
+```
+
+## Validation errors
+
+When input fails validation, Better-Notify throws `NotifyRpcValidationError` with structured issues from the validator:
+
+```ts
+import { NotifyRpcValidationError } from '@betternotify/core';
+
+try {
+  await mail.welcome.send({
+    to: 'ada@example.com',
+    input: { name: '', verifyUrl: 'not-a-url' },
+  });
+} catch (err) {
+  if (err instanceof NotifyRpcValidationError) {
+    console.log(err.issues);
+    // [{ message: '...', path: ['name'] }, { message: '...', path: ['verifyUrl'] }]
+  }
+}
+```
+
+<TypeTable
+  type={{
+    issues: {
+      description: 'Structured list of validation failures as returned by the schema validator. Each issue has a message and an optional path array.',
+      type: 'ReadonlyArray<StandardSchemaV1.Issue>',
+    },
+    code: {
+      description: 'Always "VALIDATION" for schema failures.',
+      type: '"VALIDATION"',
+    },
+    route: {
+      description: 'The dot-path route ID where validation failed.',
+      type: 'string',
+    },
+  }}
+/>
+
+Validation runs before hooks or middleware — a failed input never reaches `onBeforeSend` or any middleware in the chain. The error routes directly to `onError` hooks with `phase: 'validate'`.
+
+## Channel-level validation
+
+Channels also validate send arguments (like `to`, `cc`, `bcc`) independently from the input schema. Channel validation uses either a Standard Schema or a plain function, depending on the channel implementation:
+
+- **Email**: validates that `to` is present via a function
+- **SMS**: validates that `to` is a non-empty string via a function
+- **Push**: validates that `to` is a non-empty string or array via a function
+- **Custom channels**: can use either a Standard Schema or a function via `validateArgs`
+
+```ts
+const slackChannel = defineChannel({
+  name: 'slack',
+  slots: { text: slot.resolver<string>() },
+  validateArgs: z.object({
+    channel: z.string(),
+    threadTs: z.string().optional(),
+  }),
+  render: ({ runtime, args }) => ({ channel: args.channel, text: runtime.text }),
+});
+```
+
+When `validateArgs` is a Standard Schema, the same `~standard.validate()` flow applies — structured issues, type inference, and `NotifyRpcValidationError` on failure.

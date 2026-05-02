@@ -4,4 +4,143 @@ icon: Atom
 description: Build email templates with React Email
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The React Email adapter lets you use React components as email templates. It renders components to HTML and optionally generates a plain text alternative — all with full TypeScript support for the template props.
+
+<Cards>
+  <Card href="https://react.email" title="React Email">
+    Official documentation, component reference, and examples.
+  </Card>
+</Cards>
+
+```package-install
+@betternotify/react-email
+```
+
+## Setup
+
+The `reactEmail` helper renders a React Email component inside the `.template()` slot:
+
+```ts
+import { reactEmail } from '@betternotify/react-email';
+import { WelcomeEmail } from './emails/welcome';
+
+const welcome = rpc
+  .email()
+  .input(z.object({ name: z.string(), verifyUrl: z.string().url() }))
+  .subject(({ input }) => `Welcome, ${input.name}!`)
+  .template(({ input, ctx }) =>
+    reactEmail(WelcomeEmail, {
+      name: input.name,
+      verifyUrl: input.verifyUrl,
+    })
+  );
+```
+
+The component receives the props you pass — map them from `input` and `ctx` in the template function.
+
+## Options
+
+<TypeTable
+  type={{
+    plainText: {
+      description: 'Generate a plain text alternative from the HTML. Recommended for deliverability.',
+      type: 'boolean',
+      default: 'false',
+    },
+    pretty: {
+      description: 'Format the HTML output with indentation and newlines. Useful for debugging.',
+      type: 'boolean',
+      default: 'false',
+    },
+  }}
+/>
+
+```ts
+.template(({ input }) =>
+  reactEmail(WelcomeEmail, { name: input.name }, { plainText: true, pretty: true })
+)
+```
+
+## Writing a React Email component
+
+React Email components are standard React components that use React Email's primitives (`Html`, `Head`, `Body`, `Container`, `Text`, `Button`, etc.). Wrap your template in `<Tailwind>` to use Tailwind CSS classes instead of inline styles — use `pixelBasedPreset` for compatibility with email clients that don't support `rem` units:
+
+```tsx
+import {
+  Html,
+  Head,
+  Body,
+  Container,
+  Text,
+  Button,
+  Tailwind,
+  pixelBasedPreset,
+} from 'react-email';
+
+type WelcomeEmailProps = {
+  name: string;
+  verifyUrl: string;
+};
+
+export const WelcomeEmail = ({ name, verifyUrl }: WelcomeEmailProps) => (
+  <Tailwind config={{ presets: [pixelBasedPreset] }}>
+    <Html>
+      <Head />
+      <Body className="bg-gray-50 font-sans">
+        <Container className="mx-auto max-w-[600px] p-6">
+          <Text className="text-2xl font-bold text-gray-900">
+            Welcome, {name}!
+          </Text>
+          <Text className="text-gray-700">
+            Thanks for signing up. Verify your account to get started:
+          </Text>
+          <Button
+            href={verifyUrl}
+            className="inline-block rounded-md bg-blue-600 px-6 py-3 text-sm font-medium text-white no-underline"
+          >
+            Verify your account
+          </Button>
+        </Container>
+      </Body>
+    </Html>
+  </Tailwind>
+);
+```
+
+You can extend the Tailwind config with custom theme colors, just like in a regular Tailwind project:
+
+```tsx
+<Tailwind
+  config={{
+    presets: [pixelBasedPreset],
+    theme: {
+      extend: {
+        colors: {
+          brand: '#2563eb',
+        },
+      },
+    },
+  }}
+>
+  <Button className="bg-brand px-6 py-3 text-white">Click me</Button>
+</Tailwind>
+```
+
+## Plain text generation
+
+When `plainText: true` is set, `reactEmail` converts the rendered HTML to plain text using React Email's `toPlainText`. Headings are rendered without uppercase transformation, and links are preserved inline.
+
+This is the easiest way to provide both HTML and text versions from a single component — no separate text template needed.
+
+## Subject from template
+
+The template can return a `subject` field to override the `.subject()` slot. This is useful when the template component controls the full email including the subject line:
+
+```ts
+.template(async ({ input }) => {
+  const { html, text } = await reactEmail(WelcomeEmail, { name: input.name }, { plainText: true });
+  return { html, text, subject: `Welcome, ${input.name}!` };
+})
+```
