@@ -56,7 +56,8 @@ const rpc = createNotify({ channels: { sms } });
 ## Full example
 
 ```ts
-import { createNotify, createClient, createMockTransport } from '@betternotify/core';
+import { createNotify, createClient } from '@betternotify/core';
+import { createMockTransport } from '@betternotify/core/transports';
 import { smsChannel } from '@betternotify/sms';
 import { z } from 'zod';
 
@@ -87,7 +88,7 @@ await notify.otpCode.send({
 The SMS channel produces a `RenderedSms` with `body` and `to`. Any transport that accepts this shape works. Better-Notify does not ship a built-in SMS provider transport — use `createTransport` to build one for your provider (Twilio, AWS SNS, Vonage, etc.):
 
 ```ts
-import { createTransport } from '@betternotify/core';
+import { createTransport } from '@betternotify/core/transports';
 import type { RenderedSms } from '@betternotify/sms';
 
 const twilioTransport = (accountSid: string, authToken: string, from: string) =>

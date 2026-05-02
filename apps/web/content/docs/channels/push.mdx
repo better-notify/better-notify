@@ -68,7 +68,8 @@ const rpc = createNotify({ channels: { push } });
 ## Full example
 
 ```ts
-import { createNotify, createClient, createMockTransport } from '@betternotify/core';
+import { createNotify, createClient } from '@betternotify/core';
+import { createMockTransport } from '@betternotify/core/transports';
 import { pushChannel } from '@betternotify/push';
 import { z } from 'zod';
 
@@ -108,7 +109,7 @@ await notify.newMessage.send({
 The push channel produces a `RenderedPush` with `title`, `body`, `to`, and optional `data`/`badge`. Better-Notify does not ship a built-in push provider transport — use `createTransport` to build one for your provider (FCM, APNs, Expo, etc.):
 
 ```ts
-import { createTransport } from '@betternotify/core';
+import { createTransport } from '@betternotify/core/transports';
 import type { RenderedPush } from '@betternotify/push';
 
 const fcmTransport = (serverKey: string) =>

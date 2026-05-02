@@ -58,7 +58,7 @@ Pass an OTel tracer directly — no wrapper needed:
 
 ```ts
 import { trace } from '@opentelemetry/api';
-import { withTracing } from '@betternotify/core';
+import { withTracing } from '@betternotify/core/middlewares';
 
 withTracing({ tracer: trace.getTracer('betternotify') });
 ```
@@ -68,7 +68,7 @@ withTracing({ tracer: trace.getTracer('betternotify') });
 For tests, use `inMemoryTracer` to record spans and assert on them:
 
 ```ts
-import { inMemoryTracer } from '@betternotify/core';
+import { inMemoryTracer } from '@betternotify/core/tracers';
 
 const tracer = inMemoryTracer();
 
