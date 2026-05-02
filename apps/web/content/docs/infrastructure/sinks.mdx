@@ -78,7 +78,7 @@ Every event carries the same base fields:
 Logs events to the console. Use during local development.
 
 ```ts
-import { consoleEventSink } from '@betternotify/core';
+import { consoleEventSink } from '@betternotify/core/sinks';
 
 withEventLogger({ sink: consoleEventSink() });
 ```
@@ -88,7 +88,7 @@ withEventLogger({ sink: consoleEventSink() });
 Collects events in an array. Use in tests to assert on what was sent.
 
 ```ts
-import { inMemoryEventSink } from '@betternotify/core';
+import { inMemoryEventSink } from '@betternotify/core/sinks';
 
 const sink = inMemoryEventSink();
 // after sending:
@@ -101,7 +101,7 @@ console.log(sink.events[0].status);
 Use `createEventSink` to build a sink from a `write` function. It wraps your function with failure isolation (a sink crash never breaks the send pipeline) and optional event filtering:
 
 ```ts
-import { createEventSink } from '@betternotify/core';
+import { createEventSink } from '@betternotify/core/sinks';
 
 const datadogSink = createEventSink({
   write: async (event) => {

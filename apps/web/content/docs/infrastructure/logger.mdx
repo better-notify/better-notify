@@ -74,7 +74,7 @@ If you use pino, wrap it with `fromPino` — it adapts pino's `(obj, msg)` signa
 
 ```ts
 import pino from 'pino';
-import { fromPino } from '@betternotify/core';
+import { fromPino } from '@betternotify/core/logger';
 
 const logger = fromPino(pino({ level: 'info' }));
 

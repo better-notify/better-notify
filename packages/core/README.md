@@ -234,7 +234,7 @@ const transport = multiTransport({
 Generic builders for the `Transport<TRendered, TData>` contract:
 
 ```ts
-import { createTransport, createMockTransport } from '@betternotify/core';
+import { createTransport, createMockTransport } from '@betternotify/core/transports';
 
 const real = createTransport<MyRendered, MyData>({
   name: 'my-api',

@@ -13,7 +13,8 @@ Better-Notify ships test utilities that let you verify your notification pipelin
 `createMockTransport` captures every rendered message instead of delivering it. Use it to verify that the right content reaches the transport with the right data:
 
 ```ts
-import { createClient, createMockTransport } from '@betternotify/core';
+import { createClient } from '@betternotify/core';
+import { createMockTransport } from '@betternotify/core/transports';
 
 const transport = createMockTransport();
 
@@ -62,7 +63,8 @@ const failingTransport = createMockTransport({
 Test middleware in isolation by calling it directly with mock params:
 
 ```ts
-import { withRateLimit, inMemoryRateLimitStore } from '@betternotify/core';
+import { withRateLimit } from '@betternotify/core/middlewares';
+import { inMemoryRateLimitStore } from '@betternotify/core/stores';
 
 const store = inMemoryRateLimitStore();
 const mw = withRateLimit({ store, key: 'test', max: 2, window: 60_000 });
@@ -86,7 +88,9 @@ await expect(mw({ ...params, messageId: 'test-3' } as any)).rejects.toThrow('Rat
 Use `inMemoryEventSink` to capture events and assert on them:
 
 ```ts
-import { inMemoryEventSink, withEventLogger, createClient } from '@betternotify/core';
+import { createClient } from '@betternotify/core';
+import { withEventLogger } from '@betternotify/core/middlewares';
+import { inMemoryEventSink } from '@betternotify/core/sinks';
 
 const sink = inMemoryEventSink();
 
@@ -109,7 +113,9 @@ expect(sink.events[0].route).toBe('welcome');
 Use `inMemoryTracer` to capture spans:
 
 ```ts
-import { inMemoryTracer, withTracing, createClient } from '@betternotify/core';
+import { createClient } from '@betternotify/core';
+import { withTracing } from '@betternotify/core/middlewares';
+import { inMemoryTracer } from '@betternotify/core/tracers';
 
 const tracer = inMemoryTracer();
 

@@ -9,7 +9,8 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 A plugin bundles middleware, hooks, and lifecycle callbacks into a single reusable unit. Instead of wiring the same middleware and hooks across every client, you package them once and pass the plugin to `createClient`.
 
 ```ts
-import { createPlugin, createClient, withTracing, withEventLogger } from '@betternotify/core';
+import { createPlugin, createClient } from '@betternotify/core';
+import { withTracing, withEventLogger } from '@betternotify/core/middlewares';
 
 const observability = createPlugin({
   name: 'observability',
@@ -82,7 +83,8 @@ Plugin middleware and hooks merge with anything defined directly on the client. 
 Use `createPlugin` to define a plugin. It gives you full autocomplete and type inference — start with what you need and add fields as the scope grows:
 
 ```ts
-import { createPlugin, withRateLimit } from '@betternotify/core';
+import { createPlugin } from '@betternotify/core';
+import { withRateLimit } from '@betternotify/core/middlewares';
 import type { RateLimitStore } from '@betternotify/core';
 
 const rateLimitPlugin = (store: RateLimitStore) =>
@@ -115,7 +117,8 @@ const auditPlugin = createPlugin({
 Use `onClose` to flush buffers or close connections when the client shuts down:
 
 ```ts
-import { createPlugin, withEventLogger } from '@betternotify/core';
+import { createPlugin } from '@betternotify/core';
+import { withEventLogger } from '@betternotify/core/middlewares';
 import type { EventSink, SendEvent } from '@betternotify/core';
 
 const bufferPlugin = (sink: EventSink) => {

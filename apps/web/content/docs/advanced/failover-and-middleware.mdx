@@ -18,16 +18,11 @@ You still define the same `welcome` route. The difference is that delivery now h
 ## Full example
 
 ```ts
-import {
-  consoleEventSink,
-  createClient,
-  createNotify,
-  inMemoryRateLimitStore,
-  inMemoryTracer,
-  withEventLogger,
-  withRateLimit,
-  withTracing,
-} from '@betternotify/core';
+import { createClient, createNotify } from '@betternotify/core';
+import { withEventLogger, withRateLimit, withTracing } from '@betternotify/core/middlewares';
+import { consoleEventSink } from '@betternotify/core/sinks';
+import { inMemoryRateLimitStore } from '@betternotify/core/stores';
+import { inMemoryTracer } from '@betternotify/core/tracers';
 import { emailChannel, multiTransport } from '@betternotify/email';
 import { smtpTransport } from '@betternotify/smtp';
 import { z } from 'zod';

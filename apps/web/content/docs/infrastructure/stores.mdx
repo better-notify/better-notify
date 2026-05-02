@@ -34,7 +34,7 @@ Used by `withRateLimit` to record and count sends per key within a time window.
 />
 
 ```ts
-import { inMemoryRateLimitStore } from '@betternotify/core';
+import { inMemoryRateLimitStore } from '@betternotify/core/stores';
 
 const store = inMemoryRateLimitStore();
 ```
@@ -44,7 +44,7 @@ const store = inMemoryRateLimitStore();
 Use `createRateLimitStore` to build a store from any backend:
 
 ```ts
-import { createRateLimitStore } from '@betternotify/core';
+import { createRateLimitStore } from '@betternotify/core/stores';
 
 const redisRateLimitStore = (redis: RedisClient) =>
   createRateLimitStore({
@@ -76,7 +76,7 @@ Used by `withIdempotency` to cache send results and replay them for duplicate ke
 />
 
 ```ts
-import { inMemoryIdempotencyStore } from '@betternotify/core';
+import { inMemoryIdempotencyStore } from '@betternotify/core/stores';
 
 const store = inMemoryIdempotencyStore();
 ```
@@ -86,7 +86,7 @@ const store = inMemoryIdempotencyStore();
 Use `createIdempotencyStore` to build a store from `get`/`set` functions:
 
 ```ts
-import { createIdempotencyStore } from '@betternotify/core';
+import { createIdempotencyStore } from '@betternotify/core/stores';
 
 const redisIdempotencyStore = (redis: RedisClient) =>
   createIdempotencyStore({
@@ -122,7 +122,7 @@ Used to track suppressed email addresses — bounces, complaints, or manual bloc
 />
 
 ```ts
-import { inMemorySuppressionList } from '@betternotify/core';
+import { inMemorySuppressionList } from '@betternotify/core/stores';
 
 const list = inMemorySuppressionList();
 ```
@@ -132,7 +132,7 @@ const list = inMemorySuppressionList();
 Use `createSuppressionList` to build a list from any backend. The factory normalizes emails (trim + lowercase) before passing them to your functions:
 
 ```ts
-import { createSuppressionList } from '@betternotify/core';
+import { createSuppressionList } from '@betternotify/core/stores';
 
 const redisSuppressionList = (redis: RedisClient) =>
   createSuppressionList({

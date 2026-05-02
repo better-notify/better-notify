@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { inMemorySuppressionList } from '@betternotify/core';
+import { inMemorySuppressionList } from '@betternotify/core/stores';
 import type { Middleware, LoggerLike } from '@betternotify/core';
 import { withSuppressionList } from './with-suppression-list.js';
 import type { RawSendArgs } from '../types.js';

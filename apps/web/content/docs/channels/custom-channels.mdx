@@ -86,7 +86,8 @@ const catalog = rpc.catalog({
 The transport receives the `RenderedSlack` and delivers it. Use `createTransport` for the typed factory:
 
 ```ts
-import { createTransport, type Transport } from '@betternotify/core';
+import { createTransport } from '@betternotify/core/transports';
+import type { Transport } from '@betternotify/core';
 
 type SlackTransportData = { ts: string; channel: string };
 
@@ -148,7 +149,7 @@ await notify.deployFinished.send({
 Swap the transport for a mock without changing the catalog or procedures:
 
 ```ts
-import { createMockTransport } from '@betternotify/core';
+import { createMockTransport } from '@betternotify/core/transports';
 
 const mock = createMockTransport<RenderedSlack, SlackTransportData>({
   name: 'mock-slack',
