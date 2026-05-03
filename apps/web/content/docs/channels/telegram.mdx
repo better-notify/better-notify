@@ -1,0 +1,197 @@
+---
+title: Telegram
+icon: TelegramLogo
+description: Send Telegram messages via Bot API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Telegram channel is provided by `@betternotify/telegram`. It sends messages through the [Telegram Bot API](https://core.telegram.org/bots/api) with support for text, photos, documents, videos, and audio.
+
+## When to use Telegram
+
+Telegram is the right channel when you need to deliver notifications to users or groups inside Telegram. Use it for bot alerts, monitoring dashboards, deployment notifications, or any scenario where your audience already lives in Telegram. Messages support rich formatting (HTML / Markdown) and optional media attachments.
+
+```package-install
+@betternotify/telegram
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { telegramChannel } from '@betternotify/telegram';
+
+const telegram = telegramChannel();
+
+const rpc = createNotify({ channels: { telegram } });
+```
+
+## Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The message text. Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    parseMode: {
+      description: 'Telegram parse mode for formatting. Set per route. Optional. See [MarkdownV2 spec](https://core.telegram.org/bots/api#markdownv2-style).',
+      type: '"HTML" | "Markdown" | "MarkdownV2"',
+    },
+    attachment: {
+      description: 'Optional media attachment. Accepts a static value or a resolver function. The url field can be a public URL or a Telegram file_id.',
+      type: '{ type, url, caption? } | (args: { input, ctx }) => { type, url, caption? }',
+    },
+  }}
+/>
+
+## Send arguments
+
+<TypeTable
+  type={{
+    to: {
+      description: 'Telegram chat ID. Accepts a string or number. Must be non-empty.',
+      type: 'string | number',
+    },
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+## Full example
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { telegramChannel, telegramTransport } from '@betternotify/telegram';
+import { z } from 'zod';
+
+const telegram = telegramChannel();
+const rpc = createNotify({ channels: { telegram } });
+
+const catalog = rpc.catalog({
+  deployAlert: rpc
+    .telegram()
+    .input(z.object({ service: z.string(), version: z.string(), status: z.string() }))
+    .body(({ input }) => `<b>${input.service}</b> deployed v${input.version}\nStatus: ${input.status}`)
+    .parseMode('HTML'),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { telegram },
+  transportsByChannel: {
+    telegram: telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! }),
+  },
+});
+
+await notify.deployAlert.send({
+  to: -1001234567890,
+  input: { service: 'api', version: '2.4.0', status: 'healthy' },
+});
+```
+
+## MarkdownV2 escaping
+
+When using `parseMode: 'MarkdownV2'`, [Telegram requires](https://core.telegram.org/bots/api#markdownv2-style) escaping reserved characters in text content. Use the `md` tagged template to write formatting naturally while auto-escaping interpolated values:
+
+```ts
+import { md } from '@betternotify/telegram';
+
+.body(({ input }) => md`*${input.service}* deployed v${input.version}`)
+// → "*api* deployed v2\.4\.0"
+```
+
+The template structure (`*bold*`, `_italic_`, `~strike~`, `` `code` ``, `[link](url)`) stays intact. Dynamic values get all reserved characters escaped automatically.
+
+For escaping a single value directly, use `escapeMarkdownV2`:
+
+```ts
+import { escapeMarkdownV2 } from '@betternotify/telegram';
+
+escapeMarkdownV2('v2.4.0') // → "v2\\.4\\.0"
+```
+
+## Media attachments
+
+Attach photos, documents, videos, or audio using the `attachment` slot:
+
+```ts
+const catalog = rpc.catalog({
+  chartAlert: rpc
+    .telegram()
+    .input(z.object({ chartUrl: z.string(), summary: z.string() }))
+    .body(({ input }) => input.summary)
+    .attachment(({ input }) => ({ type: 'photo', url: input.chartUrl })),
+});
+```
+
+When an attachment is present, `body` becomes the caption. You can override the caption per-attachment:
+
+```ts
+.attachment(({ input }) => ({
+  type: 'document',
+  url: input.reportUrl,
+  caption: 'Weekly report attached',
+}))
+```
+
+## Transport
+
+### Built-in: `telegramTransport`
+
+The package includes a ready-to-use transport that calls the Telegram Bot API via `fetch`:
+
+```ts
+import { telegramTransport } from '@betternotify/telegram';
+
+const transport = telegramTransport({
+  token: process.env.TELEGRAM_BOT_TOKEN!,
+  // apiUrl: 'https://custom-bot-api.example.com', // optional, for self-hosted Bot API
+});
+```
+
+The transport picks the correct Bot API method based on the attachment type:
+
+| Attachment | API method |
+|-----------|-----------|
+| none | `sendMessage` |
+| `photo` | `sendPhoto` |
+| `document` | `sendDocument` |
+| `video` | `sendVideo` |
+| `audio` | `sendAudio` |
+
+Call `transport.verify()` to validate your bot token at startup.
+
+### Mock transport
+
+Use `mockTelegramTransport()` in tests:
+
+```ts
+import { mockTelegramTransport } from '@betternotify/telegram';
+
+const transport = mockTelegramTransport();
+
+// after sending...
+console.log(transport.messages); // [{ body, to, parseMode?, attachment?, id }]
+transport.reset();
+```
+
+### Multi-transport
+
+Use `multiTransport` from core for failover or load balancing across multiple Telegram bots:
+
+```ts
+import { telegramTransport } from '@betternotify/telegram';
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: telegramTransport({ token: process.env.BOT_PRIMARY! }) },
+    { transport: telegramTransport({ token: process.env.BOT_FALLBACK! }) },
+  ],
+});
+```

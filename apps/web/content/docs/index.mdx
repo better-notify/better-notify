@@ -6,7 +6,7 @@ description: Typed notification infrastructure for Node.js
 
 import { Mermaid } from '@/components/mermaid';
 
-Better-Notify is typed notification infrastructure for Node.js. You define a notification catalog once, then use the generated client to send email, SMS, push, or custom-channel messages through one consistent pipeline.
+Better-Notify is typed notification infrastructure for Node.js. You define a notification catalog once, then use the generated client to send email, SMS, push, Telegram, or custom-channel messages through one consistent pipeline.
 
 Most notification setups start simple — a function that calls an API — then grow into a maze of duplicated validation, scattered templates, and provider-specific glue code. Better-Notify exists to prevent that drift. It keeps route definitions, input validation, rendering, middleware, hooks, and transports aligned so your notification layer stays type-safe as it grows.
 
@@ -33,7 +33,7 @@ Better-Notify has four core pieces:
 <Mermaid
   code={`
 flowchart LR
-  A[Channels<br/>email, sms, push, custom] --> B[createNotify]
+  A[Channels<br/>email, sms, push, telegram, custom] --> B[createNotify]
   B --> C[rpc.catalog]
   C --> D[createClient]
   E[transportsByChannel<br/>SMTP, SES, Resend, custom] --> D
@@ -41,7 +41,7 @@ flowchart LR
   `}
 />
 
-- **Channels** define how a message is shaped and rendered. Email has `to`, `subject`, `html`. SMS has `to` and `body`. Push has `title`, `body`, and `data`. You can define custom channels for Slack, webhooks, or anything else.
+- **Channels** define how a message is shaped and rendered. Email has `to`, `subject`, `html`. SMS has `to` and `body`. Push has `title`, `body`, and `data`. Telegram has `to`, `body`, and optional `attachment`. You can define custom channels for Slack, webhooks, or anything else.
 - **Routes** are contracts for individual notifications. Each route declares which channel it uses, what input it accepts, and how it renders. Routes compose into catalogs, which flatten into dot-path IDs like `transactional.welcome`.
 - **Transports** deliver rendered messages to providers. SMTP, SES, Resend, or your own adapter. Transports never see raw input — they receive fully validated, fully rendered messages.
 - **The client** ties it all together. `createClient` takes a catalog and a transport per channel, then exposes typed `.send()` methods for every route in the catalog.
