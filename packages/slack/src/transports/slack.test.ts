@@ -503,34 +503,39 @@ describe('slackTransport', () => {
     const result = await t.verify!();
     expect(result).toEqual({ ok: false, details: 'unknown_error' });
   });
-  it('file upload handles missing upload_url and file_id in response', async () => {
+  it('throws when getUploadURLExternal returns incomplete metadata', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    await expect(
+      t.send({ text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER',
+      message: expect.stringContaining('incomplete upload metadata'),
+    });
+  });
+
+  it('throws when file binary upload HTTP response is not ok', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ ok: true }),
+        json: async () => ({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
       })
-      .mockResolvedValueOnce({ ok: true })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ ok: true, files: [{ id: '' }] }),
-      });
+      .mockResolvedValueOnce({ ok: false, status: 403 });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    const result = await t.send(
-      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
-      ctx,
-    );
-
-    const uploadCall = fetchMock.mock.calls[1] as [string, RequestInit];
-    expect(uploadCall[0]).toBe('');
-
-    const completeCall = fetchMock.mock.calls[2] as [string, RequestInit];
-    const completeBody = JSON.parse(completeCall[1].body as string);
-    expect(completeBody.files[0].id).toBe('');
-
-    expect(result).toEqual({ ok: true, data: { ts: '', channel: '#ch' } });
+    await expect(
+      t.send({ text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
+    ).rejects.toMatchObject({
+      code: 'PROVIDER',
+      message: expect.stringContaining('HTTP 403'),
+    });
   });
 });
 

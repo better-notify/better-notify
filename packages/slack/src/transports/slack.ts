@@ -113,14 +113,32 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
           );
         }
 
-        const uploadUrl = uploadUrlResponse.upload_url ?? '';
-        const fileId = uploadUrlResponse.file_id ?? '';
+        const uploadUrl = uploadUrlResponse.upload_url;
+        const fileId = uploadUrlResponse.file_id;
 
-        await fetch(uploadUrl, {
+        if (!uploadUrl || !fileId) {
+          throw new NotifyRpcError({
+            message: 'Slack files.getUploadURLExternal returned incomplete upload metadata',
+            code: 'PROVIDER',
+            route: ctx.route,
+            messageId: ctx.messageId,
+          });
+        }
+
+        const uploadResponse = await fetch(uploadUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/octet-stream' },
           body: rendered.file.data,
         });
+
+        if (!uploadResponse.ok) {
+          throw new NotifyRpcError({
+            message: `Slack file upload failed with HTTP ${uploadResponse.status}`,
+            code: 'PROVIDER',
+            route: ctx.route,
+            messageId: ctx.messageId,
+          });
+        }
 
         const completeBody: Record<string, unknown> = {
           files: [{ id: fileId, title: rendered.file.title ?? rendered.file.filename }],

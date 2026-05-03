@@ -139,7 +139,7 @@ Slack API errors throw `NotifyRpcError` with a mapped error code:
 
 | Slack error | Code | Meaning |
 |-------------|------|---------|
-| `invalid_auth`, `token_revoked`, `not_authed`, `account_inactive` | `CONFIG` | Token/auth issue |
+| `invalid_auth`, `token_revoked`, `not_authed`, `account_inactive`, `missing_scope` | `CONFIG` | Token/auth issue |
 | `channel_not_found`, `no_text`, `invalid_blocks`, `invalid_arguments`, `msg_too_long` | `VALIDATION` | Bad request data |
 | `ratelimited`, others | `PROVIDER` | Server/rate limit issue |
 
