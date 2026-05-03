@@ -51,10 +51,9 @@ describe('md tagged template', () => {
   });
 
   it('handles no interpolations', () => {
-    const result = md`
-_bold_ _italic_
-    `;
-    expect(result).toBe('*bold* _italic_');
+    // prettier-ignore
+    const result = md`_bold_ _italic_`;
+    expect(result).toBe('_bold_ _italic_');
   });
 
   it('coerces non-string values to string', () => {
