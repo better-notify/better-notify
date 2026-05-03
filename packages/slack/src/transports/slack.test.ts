@@ -74,104 +74,112 @@ describe('slackTransport', () => {
     expect(body.channel).toBe('#fallback');
   });
 
-  it('throws VALIDATION when no channel is resolved', async () => {
+  it('returns VALIDATION error when no channel is resolved', async () => {
     const t = slackTransport({ token: 'xoxb-test' });
+    const result = await t.send({ text: 'hi' }, ctx);
 
-    await expect(t.send({ text: 'hi' }, ctx)).rejects.toMatchObject({
-      code: 'VALIDATION',
-      message: expect.stringContaining('channel'),
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('channel');
+      expect((result.error as any).code).toBe('VALIDATION');
+    }
   });
 
-  it('throws CONFIG for invalid_auth error', async () => {
+  it('returns CONFIG error for invalid_auth', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'invalid_auth' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-bad' });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
-    await expect(t.send({ text: 'hi', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'CONFIG',
-      message: expect.stringContaining('invalid_auth'),
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('invalid_auth');
+      expect((result.error as any).code).toBe('CONFIG');
+    }
   });
 
-  it('throws CONFIG for token_revoked error', async () => {
+  it('returns CONFIG error for token_revoked', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'token_revoked' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-bad' });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
-    await expect(t.send({ text: 'hi', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'CONFIG',
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect((result.error as any).code).toBe('CONFIG');
   });
 
-  it('throws CONFIG for not_authed error', async () => {
+  it('returns CONFIG error for not_authed', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'not_authed' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-bad' });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
-    await expect(t.send({ text: 'hi', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'CONFIG',
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect((result.error as any).code).toBe('CONFIG');
   });
 
-  it('throws CONFIG for account_inactive error', async () => {
+  it('returns CONFIG error for account_inactive', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'account_inactive' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-bad' });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
-    await expect(t.send({ text: 'hi', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'CONFIG',
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect((result.error as any).code).toBe('CONFIG');
   });
 
-  it('throws VALIDATION for channel_not_found error', async () => {
+  it('returns VALIDATION error for channel_not_found', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'channel_not_found' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
+    const result = await t.send({ text: 'hi', to: '#bad' }, ctx);
 
-    await expect(t.send({ text: 'hi', to: '#bad' }, ctx)).rejects.toMatchObject({
-      code: 'VALIDATION',
-      message: expect.stringContaining('channel_not_found'),
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('channel_not_found');
+      expect((result.error as any).code).toBe('VALIDATION');
+    }
   });
 
-  it('throws VALIDATION for no_text error', async () => {
+  it('returns VALIDATION error for no_text', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'no_text' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
+    const result = await t.send({ text: '', to: '#x' }, ctx);
 
-    await expect(t.send({ text: '', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'VALIDATION',
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect((result.error as any).code).toBe('VALIDATION');
   });
 
-  it('throws PROVIDER for ratelimited error', async () => {
+  it('returns PROVIDER error for ratelimited', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'ratelimited' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
-    await expect(t.send({ text: 'hi', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'PROVIDER',
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect((result.error as any).code).toBe('PROVIDER');
   });
 
-  it('throws PROVIDER for unknown errors', async () => {
+  it('returns PROVIDER error for unknown errors', async () => {
     const fetchMock = mockFetch({ ok: false, error: 'some_unknown_error' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
-    await expect(t.send({ text: 'hi', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'PROVIDER',
-      message: expect.stringContaining('some_unknown_error'),
-    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('some_unknown_error');
+      expect((result.error as any).code).toBe('PROVIDER');
+    }
   });
 
   it('uses custom baseUrl when provided', async () => {
@@ -262,7 +270,11 @@ describe('slackTransport', () => {
 
     const t = slackTransport({ token: 'xoxb-test' });
     const result = await t.send(
-      { text: 'Here is the report', to: '#docs', file: { data: fileData, filename: 'report.pdf' } },
+      {
+        text: 'Here is the report',
+        to: '#docs',
+        file: { data: fileData, filename: 'report.pdf' },
+      },
       ctx,
     );
 
@@ -349,7 +361,7 @@ describe('slackTransport', () => {
     expect(completeBody.thread_ts).toBe('111.222');
   });
 
-  it('throws when getUploadURLExternal fails', async () => {
+  it('returns error when getUploadURLExternal fails', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ ok: false, error: 'invalid_auth' }),
@@ -357,15 +369,19 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-bad' });
-    await expect(
-      t.send({ text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
-    ).rejects.toMatchObject({
-      code: 'CONFIG',
-      message: expect.stringContaining('files.getUploadURLExternal'),
-    });
+    const result = await t.send(
+      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('files.getUploadURLExternal');
+      expect((result.error as any).code).toBe('CONFIG');
+    }
   });
 
-  it('throws when completeUploadExternal fails', async () => {
+  it('returns error when completeUploadExternal fails', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -380,12 +396,16 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await expect(
-      t.send({ text: 'x', to: '#bad', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
-    ).rejects.toMatchObject({
-      code: 'VALIDATION',
-      message: expect.stringContaining('files.completeUploadExternal'),
-    });
+    const result = await t.send(
+      { text: 'x', to: '#bad', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('files.completeUploadExternal');
+      expect((result.error as any).code).toBe('VALIDATION');
+    }
   });
 
   it('file upload sends alt_txt when altText is provided', async () => {
@@ -432,14 +452,17 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await t.send({ text: '', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx);
+    await t.send(
+      { text: '', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
 
     const completeCall = fetchMock.mock.calls[2] as [string, RequestInit];
     const completeBody = JSON.parse(completeCall[1].body as string);
     expect(completeBody.initial_comment).toBeUndefined();
   });
 
-  it('throws PROVIDER with unknown_error when getUploadURLExternal has no error field', async () => {
+  it('returns PROVIDER error when getUploadURLExternal has no error field', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ ok: false }),
@@ -447,15 +470,19 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await expect(
-      t.send({ text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
-    ).rejects.toMatchObject({
-      code: 'PROVIDER',
-      message: expect.stringContaining('unknown_error'),
-    });
+    const result = await t.send(
+      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('unknown_error');
+      expect((result.error as any).code).toBe('PROVIDER');
+    }
   });
 
-  it('throws PROVIDER with unknown_error when completeUploadExternal has no error field', async () => {
+  it('returns PROVIDER error when completeUploadExternal has no error field', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -470,15 +497,19 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await expect(
-      t.send({ text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
-    ).rejects.toMatchObject({
-      code: 'PROVIDER',
-      message: expect.stringContaining('unknown_error'),
-    });
+    const result = await t.send(
+      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('unknown_error');
+      expect((result.error as any).code).toBe('PROVIDER');
+    }
   });
 
-  it('throws PROVIDER with unknown_error when chat.postMessage has no error field', async () => {
+  it('returns PROVIDER error when chat.postMessage has no error field', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: false }),
@@ -486,10 +517,13 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await expect(t.send({ text: 'hi', to: '#x' }, ctx)).rejects.toMatchObject({
-      code: 'PROVIDER',
-      message: expect.stringContaining('unknown_error'),
-    });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('unknown_error');
+      expect((result.error as any).code).toBe('PROVIDER');
+    }
   });
 
   it('verify() falls back to unknown_error when error field is missing', async () => {
@@ -503,7 +537,8 @@ describe('slackTransport', () => {
     const result = await t.verify!();
     expect(result).toEqual({ ok: false, details: 'unknown_error' });
   });
-  it('throws when getUploadURLExternal returns incomplete metadata', async () => {
+
+  it('returns error when getUploadURLExternal returns incomplete metadata', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ ok: true }),
@@ -511,15 +546,19 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await expect(
-      t.send({ text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
-    ).rejects.toMatchObject({
-      code: 'PROVIDER',
-      message: expect.stringContaining('incomplete upload metadata'),
-    });
+    const result = await t.send(
+      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('incomplete upload metadata');
+      expect((result.error as any).code).toBe('PROVIDER');
+    }
   });
 
-  it('throws when file binary upload HTTP response is not ok', async () => {
+  it('returns error when file binary upload HTTP response is not ok', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -530,12 +569,16 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await expect(
-      t.send({ text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx),
-    ).rejects.toMatchObject({
-      code: 'PROVIDER',
-      message: expect.stringContaining('HTTP 403'),
-    });
+    const result = await t.send(
+      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('HTTP 403');
+      expect((result.error as any).code).toBe('PROVIDER');
+    }
   });
 });
 

@@ -88,14 +88,14 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
     return json;
   };
 
-  const throwApiError = (
+  const buildError = (
     method: string,
     error: string,
     ctx: { route: string; messageId: string },
-  ): never => {
+  ): NotifyRpcError => {
     const code = mapErrorCode(error);
     log.error('Slack API error', { err: new Error(error), route: ctx.route });
-    throw new NotifyRpcError({
+    return new NotifyRpcError({
       message: `Slack ${method} failed: ${error}`,
       code,
       route: ctx.route,
@@ -110,13 +110,16 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
       const channel = rendered.to ?? opts.defaultChannel;
 
       if (!channel) {
-        throw new NotifyRpcError({
-          message:
-            'No channel resolved: set "to" in send args or "defaultChannel" in transport options',
-          code: 'VALIDATION',
-          route: ctx.route,
-          messageId: ctx.messageId,
-        });
+        return {
+          ok: false,
+          error: new NotifyRpcError({
+            message:
+              'No channel resolved: set "to" in send args or "defaultChannel" in transport options',
+            code: 'VALIDATION',
+            route: ctx.route,
+            messageId: ctx.messageId,
+          }),
+        };
       }
 
       if (rendered.file) {
@@ -133,23 +136,29 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
         );
 
         if (!uploadUrlResponse.ok) {
-          throwApiError(
-            'files.getUploadURLExternal',
-            uploadUrlResponse.error ?? 'unknown_error',
-            ctx,
-          );
+          return {
+            ok: false,
+            error: buildError(
+              'files.getUploadURLExternal',
+              uploadUrlResponse.error ?? 'unknown_error',
+              ctx,
+            ),
+          };
         }
 
         const uploadUrl = uploadUrlResponse.upload_url;
         const fileId = uploadUrlResponse.file_id;
 
         if (!uploadUrl || !fileId) {
-          throw new NotifyRpcError({
-            message: 'Slack files.getUploadURLExternal returned incomplete upload metadata',
-            code: 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-          });
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: 'Slack files.getUploadURLExternal returned incomplete upload metadata',
+              code: 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+            }),
+          };
         }
 
         const [uploadErr, uploadResponse] = await handlePromise(
@@ -163,22 +172,28 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
 
         if (uploadErr) {
           const isTimeout = uploadErr.name === 'TimeoutError' || uploadErr.name === 'AbortError';
-          throw new NotifyRpcError({
-            message: `Slack file upload: ${isTimeout ? 'request timed out' : `network error: ${uploadErr.message}`}`,
-            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: uploadErr,
-          });
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: `Slack file upload: ${isTimeout ? 'request timed out' : `network error: ${uploadErr.message}`}`,
+              code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+              cause: uploadErr,
+            }),
+          };
         }
 
         if (!uploadResponse.ok) {
-          throw new NotifyRpcError({
-            message: `Slack file upload failed with HTTP ${uploadResponse.status}`,
-            code: 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-          });
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: `Slack file upload failed with HTTP ${uploadResponse.status}`,
+              code: 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+            }),
+          };
         }
 
         const completeBody: Record<string, unknown> = {
@@ -197,11 +212,14 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
         const completeResponse = await callApi('files.completeUploadExternal', completeBody);
 
         if (!completeResponse.ok) {
-          throwApiError(
-            'files.completeUploadExternal',
-            completeResponse.error ?? 'unknown_error',
-            ctx,
-          );
+          return {
+            ok: false,
+            error: buildError(
+              'files.completeUploadExternal',
+              completeResponse.error ?? 'unknown_error',
+              ctx,
+            ),
+          };
         }
 
         return {
@@ -231,7 +249,10 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
       const json = await callApi('chat.postMessage', body);
 
       if (!json.ok) {
-        throwApiError('chat.postMessage', json.error ?? 'unknown_error', ctx);
+        return {
+          ok: false,
+          error: buildError('chat.postMessage', json.error ?? 'unknown_error', ctx),
+        };
       }
 
       return {
