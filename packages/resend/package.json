@@ -37,9 +37,6 @@
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
-  "peerDependencies": {
-    "resend": "catalog:"
-  },
   "engines": {
     "node": ">=22"
   }

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Better-Notify is an end-to-end typed email infrastructure for Node.js (ESM-only, Node ≥ 22). A single `EmailCatalog` type drives the typed sender, queue worker, and webhook router — analogous to tRPC/oRPC, but for email. The canonical design spec lives at `plan/betternotify-spec.md` (gitignored, kept locally); the active per-feature design and execution docs live under `docs/superpowers/{specs,plans}/` (also gitignored). Treat the spec as the source of truth when behavior is ambiguous.
 
-Status: v0.1.0-alpha. Layer 1 (typed contracts in `@betternotify/core`) plus build/release tooling are real. Adapter packages (`react-email`, `mjml`, `handlebars`, `ses`, `resend`, `bullmq`) and Layers 5–6 are stubs filled in over the v0.2+ roadmap.
+Status: v0.1.0-alpha. Layer 1 (typed contracts in `@betternotify/core`) plus build/release tooling are real. Adapter packages (`react-email`, `mjml`, `handlebars`, `ses`, `bullmq`) and Layers 5–6 are stubs filled in over the v0.2+ roadmap.
 
 ## Commands
 

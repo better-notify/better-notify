@@ -1,6 +1,6 @@
 import { createNotify, createClient, consoleLogger } from '@betternotify/core';
 import { emailChannel } from '@betternotify/email';
-import { cloudflareEmailTransport } from '@betternotify/cloudflare-email';
+import { resendTransport } from '@betternotify/resend';
 import { z } from 'zod';
 import { env } from '../env';
 import { readFile } from 'node:fs/promises';
@@ -9,7 +9,7 @@ import path from 'node:path';
 const pdfBuffer = await readFile(path.join(import.meta.dirname, '../test-utils/example-pdf.pdf'));
 
 const ch = emailChannel({
-  defaults: { from: { name: 'Better-Notify', email: env.CF_FROM_EMAIL } },
+  defaults: { from: { name: 'Better-Notify', email: env.RESEND_FROM_EMAIL } },
 });
 
 const rpc = createNotify({ channels: { email: ch } });
@@ -27,21 +27,20 @@ const catalog = rpc.catalog({
     }),
 });
 
-export const runCloudflareEmailAttachment = async (): Promise<void> => {
+export const runResendAttachment = async (): Promise<void> => {
   const mail = createClient({
     catalog,
     channels: { email: ch },
     transportsByChannel: {
-      email: cloudflareEmailTransport({
-        accountId: env.CF_ACCOUNT_ID,
-        apiToken: env.CF_API_TOKEN,
+      email: resendTransport({
+        apiKey: env.RESEND_API_KEY,
       }),
     },
     logger: consoleLogger({ level: 'debug' }),
   });
 
   const result = await mail.invoice.send({
-    to: env.CF_DESTINATION_EMAIL,
+    to: env.RESEND_DESTINATION_EMAIL,
     input: { orderId: '12345', customerName: 'John Doe' },
     attachments: [
       {

@@ -30,6 +30,18 @@ export const env = createEnv({
       .optional()
       .default('example@email.com')
       .describe('Cloudflare destination email'),
+
+    RESEND_API_KEY: z.string().optional().default('re_test_123').describe('Resend API key'),
+    RESEND_FROM_EMAIL: z
+      .string()
+      .optional()
+      .default('noreply@example.com')
+      .describe('Resend from email'),
+    RESEND_DESTINATION_EMAIL: z
+      .string()
+      .optional()
+      .default('example@email.com')
+      .describe('Resend destination email'),
   },
   runtimeEnv: process.env,
 });

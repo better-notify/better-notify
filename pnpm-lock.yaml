@@ -254,6 +254,9 @@ importers:
       '@betternotify/react-email':
         specifier: workspace:*
         version: link:../../../../packages/react-email
+      '@betternotify/resend':
+        specifier: workspace:*
+        version: link:../../../../packages/resend
       '@betternotify/sms':
         specifier: workspace:*
         version: link:../../../../packages/sms
