@@ -356,3 +356,96 @@ describe('cloudflareEmailTransport — network errors', () => {
     expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
   });
 });
+
+describe('cloudflareEmailTransport — attachments', () => {
+  it('base64-encodes Buffer attachment content', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    mockFetchOk();
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [
+          {
+            filename: 'invoice.pdf',
+            content: Buffer.from('pdf-bytes'),
+            contentType: 'application/pdf',
+          },
+        ],
+      },
+      baseCtx,
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.attachments).toEqual([
+      {
+        content: Buffer.from('pdf-bytes').toString('base64'),
+        filename: 'invoice.pdf',
+        type: 'application/pdf',
+        disposition: 'attachment',
+      },
+    ]);
+  });
+
+  it('base64-encodes string attachment content', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    mockFetchOk();
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [
+          {
+            filename: 'note.txt',
+            content: 'hello world',
+            contentType: 'text/plain',
+          },
+        ],
+      },
+      baseCtx,
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.attachments[0].content).toBe(Buffer.from('hello world').toString('base64'));
+  });
+
+  it('sets disposition to "inline" and maps cid to contentId when cid is present', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    mockFetchOk();
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [
+          {
+            filename: 'logo.png',
+            content: Buffer.from('png-bytes'),
+            contentType: 'image/png',
+            cid: 'logo@inline',
+          },
+        ],
+      },
+      baseCtx,
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.attachments[0].disposition).toBe('inline');
+    expect(body.attachments[0].contentId).toBe('logo@inline');
+  });
+
+  it('defaults contentType to application/octet-stream when not provided', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    mockFetchOk();
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [{ filename: 'data.bin', content: Buffer.from('bytes') }],
+      },
+      baseCtx,
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.attachments[0].type).toBe('application/octet-stream');
+  });
+});
