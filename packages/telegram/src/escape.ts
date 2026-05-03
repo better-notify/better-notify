@@ -9,14 +9,9 @@ const NON_FORMATTING_RESERVED = /([#+={}.,!\\-])/g;
 /** Tagged template that escapes interpolated values for MarkdownV2 while preserving formatting syntax. @see https://core.telegram.org/bots/api#markdownv2-style */
 export const md = (strings: TemplateStringsArray, ...values: unknown[]): string => {
   let result = '';
-
-  if (strings.length === 0) return '';
-
   for (let i = 0; i < strings.length; i++) {
-    if (strings[i] === undefined) continue;
-
-    result += strings?.[i]?.replace(NON_FORMATTING_RESERVED, '\\$1') ?? '';
-
+    const raw = strings[i] ?? '';
+    result += raw.replace(NON_FORMATTING_RESERVED, '\\$1');
     if (i < values.length) {
       result += escapeMarkdownV2(String(values[i]));
     }

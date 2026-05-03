@@ -35,7 +35,8 @@ export function CrossTransportSnippet() {
       {'\n'}
       {'  '}send<P>:</P> <K>async</K> <P>(</P>rendered<P>,</P> ctx<P>) =&gt; {'{'}</P>
       {'\n'}
-      {'    '}<K>await</K> smtp.<F>send</F>
+      {'    '}
+      <K>await</K> smtp.<F>send</F>
       <P>({'{'}</P>
       {'\n'}
       {'      '}from<P>:</P> <S>'bot@example.com'</S>
@@ -52,7 +53,9 @@ export function CrossTransportSnippet() {
       {'    '}
       <P>{'}'}, </P>ctx<P>)</P>
       {'\n'}
-      {'    '}<K>return</K> <P>{'{ '}</P>messageId<P>:</P> 0<P>,</P> chatId<P>:</P> rendered.to ?? 0<P>{' }'}</P>
+      {'    '}
+      <K>return</K> <P>{'{ '}</P>messageId<P>:</P> 0<P>,</P> chatId<P>:</P> rendered.to ?? 0
+      <P>{' }'}</P>
       {'\n'}
       {'  '}
       <P>{'}'}</P>
@@ -72,7 +75,9 @@ export function CrossTransportSnippet() {
       {'    '}
       <P>{'{ '}</P>transport<P>:</P> <F>telegramTransport</F>
       <P>({'{ '}</P>token<P>:</P> <S>'...'</S>
-      <P>{' }'}){' }'},</P>
+      <P>
+        {' }'}){' }'},
+      </P>
       {'\n'}
       {'    '}
       <P>{'{ '}</P>transport<P>:</P> smtpMirror<P>{' }'}</P>

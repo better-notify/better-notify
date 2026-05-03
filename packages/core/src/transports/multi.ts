@@ -212,7 +212,6 @@ export const multiTransport = <TRendered = unknown, TData = unknown>(
       throw failures[0];
     }
     const first = successes[0];
-    /* v8 ignore next 4 */
     if (!first)
       throw new NotifyRpcError({
         code: 'CONFIG',
@@ -226,7 +225,6 @@ export const multiTransport = <TRendered = unknown, TData = unknown>(
     ctx: SendContext,
   ): Promise<TransportResult<TData>> => {
     const primary = entries[0];
-    /* v8 ignore next 4 */
     if (!primary)
       throw new NotifyRpcError({
         code: 'CONFIG',

@@ -38,7 +38,8 @@ export function Install() {
             Install. Define. Send.
           </h2>
           <p className="text-muted-foreground max-w-[620px] text-[17px] leading-relaxed text-pretty">
-            Three packages, three minutes. Email, SMS, push, and Telegram channels are shipping today.
+            Three packages, three minutes. Email, SMS, push, and Telegram channels are shipping
+            today.
           </p>
         </div>
 

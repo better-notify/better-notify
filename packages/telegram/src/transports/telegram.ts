@@ -30,7 +30,7 @@ export const telegramTransport = (opts: TelegramTransportOptions): Transport => 
     body: Record<string, unknown>,
   ): Promise<TelegramApiResponse> => {
     const url = buildUrl(method);
-    log.debug('calling Telegram API', { method, url });
+    log.debug('calling Telegram API', { method });
 
     const response = await fetch(url, {
       method: 'POST',

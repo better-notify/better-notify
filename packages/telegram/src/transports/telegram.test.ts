@@ -127,8 +127,9 @@ describe('telegramTransport', () => {
 
     const t = telegramTransport({ token: 'T' });
 
-    await expect(t.send({ body: 'hi', to: 999 }, ctx)).rejects.toThrow(NotifyRpcError);
-    await expect(t.send({ body: 'hi', to: 999 }, ctx)).rejects.toMatchObject({
+    const promise = t.send({ body: 'hi', to: 999 }, ctx);
+    await expect(promise).rejects.toThrow(NotifyRpcError);
+    await expect(promise).rejects.toMatchObject({
       code: 'PROVIDER',
       message: expect.stringContaining('Chat not found'),
     });

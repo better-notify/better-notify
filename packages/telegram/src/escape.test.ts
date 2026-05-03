@@ -62,6 +62,14 @@ describe('md tagged template', () => {
     expect(result).toBe('count: 42');
   });
 
+  it('falls back to empty string when a template segment is undefined', () => {
+    const strings = Object.assign([undefined, ''] as unknown as TemplateStringsArray, {
+      raw: [undefined, ''],
+    });
+    const result = md(strings, 'value');
+    expect(result).toBe('value');
+  });
+
   it('preserves link syntax in template', () => {
     const url = 'https://example.com/path?a=1&b=2';
     const result = md`[click here](${url})`;
