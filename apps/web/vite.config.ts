@@ -9,6 +9,11 @@ export default defineConfig({
   server: {
     port: 4265,
   },
+  ssr: {
+    optimizeDeps: {
+      exclude: ['beautiful-mermaid'],
+    },
+  },
   resolve: {
     tsconfigPaths: true,
     dedupe: ['react', 'react-dom'],
@@ -20,7 +25,7 @@ export default defineConfig({
     mdx(await import('./source.config')),
     tailwindcss(),
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
-    tanstackStart(),
+    tanstackStart({ prerender: { enabled: true } }),
     react(),
   ],
 });

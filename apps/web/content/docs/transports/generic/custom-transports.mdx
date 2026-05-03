@@ -6,7 +6,7 @@ description: Build your own transport adapter
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-A transport is the wire-level adapter that delivers a fully-rendered message to a provider. Better-Notify ships transports for [SMTP](../third-party/smtp.mdx), [SES](../third-party/ses.mdx), and [Resend](../third-party/resend.mdx), but you can write your own for any provider that accepts an HTTP call, SDK method, or socket write.
+A transport is the wire-level adapter that delivers a fully-rendered message to a provider. Better-Notify ships transports for [SMTP](/docs/transports/third-party/smtp), [SES](/docs/transports/third-party/ses), and [Resend](/docs/transports/third-party/resend), but you can write your own for any provider that accepts an HTTP call, SDK method, or socket write.
 
 Transports receive a `RenderedMessage` — addresses, subject, HTML, text, attachments — and return a result. They never re-validate input or re-render templates; the pipeline handles that upstream.
 
@@ -110,7 +110,7 @@ return { ok: true, data: { transportMessageId, accepted, rejected } };
 return { ok: false, error: new Error('rate limited') };
 ```
 
-Throwing also works. Both `{ ok: false, error }` and thrown errors are handled the same way by [multi-transport](./multi-transport.mdx) strategies: the error is logged and the next transport is tried.
+Throwing also works. Both `{ ok: false, error }` and thrown errors are handled the same way by [multi-transport](/docs/transports/generic/multi-transport) strategies: the error is logged and the next transport is tried.
 
 <TypeTable
   type={{
@@ -157,7 +157,7 @@ const transport = createTransport({
 });
 ```
 
-`verify()` runs during startup checks. `close()` runs during graceful shutdown. Both propagate through [multi-transport](./multi-transport.mdx) composites — `verify` requires at least one inner transport to pass; `close` waits for all inner transports to finish.
+`verify()` runs during startup checks. `close()` runs during graceful shutdown. Both propagate through [multi-transport](/docs/transports/generic/multi-transport) composites — `verify` requires at least one inner transport to pass; `close` waits for all inner transports to finish.
 
 ## Address helpers
 
