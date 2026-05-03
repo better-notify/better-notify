@@ -1,4 +1,5 @@
 import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
+import { createTransport } from '@betternotify/core/transports';
 import type { RenderedDiscord } from '../types.js';
 import type { DiscordTransportData, Transport } from './types.js';
 import type { DiscordTransportOptions } from './discord.types.js';
@@ -22,7 +23,7 @@ const mapErrorCode = (status: number): 'VALIDATION' | 'CONFIG' | 'PROVIDER' => {
   return 'PROVIDER';
 };
 
-const buildRequestBody = (
+const buildJsonPayload = (
   rendered: RenderedDiscord,
   opts: DiscordTransportOptions,
 ): Record<string, unknown> => {
@@ -36,26 +37,62 @@ const buildRequestBody = (
   const avatarUrl = rendered.avatarUrl ?? opts.avatarUrl;
   if (avatarUrl) body.avatar_url = avatarUrl;
 
+  if (rendered.attachments?.length) {
+    body.attachments = rendered.attachments.map((att, i) => ({
+      id: i,
+      filename: att.filename,
+      ...(att.description ? { description: att.description } : {}),
+    }));
+  }
+
   return body;
+};
+
+const buildFetchInit = (
+  rendered: RenderedDiscord,
+  opts: DiscordTransportOptions,
+  timeoutMs: number,
+): RequestInit => {
+  const payload = buildJsonPayload(rendered, opts);
+
+  if (!rendered.attachments?.length) {
+    return {
+      method: 'POST',
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    };
+  }
+
+  const form = new FormData();
+  form.append('payload_json', JSON.stringify(payload));
+
+  for (let i = 0; i < rendered.attachments.length; i++) {
+    const att = rendered.attachments[i];
+    if (!att) continue;
+    const raw = typeof att.content === 'string' ? Buffer.from(att.content) : att.content;
+    const file = new File([raw], att.filename, { type: att.contentType ?? 'application/octet-stream' });
+    form.append(`files[${i}]`, file);
+  }
+
+  return {
+    method: 'POST',
+    signal: AbortSignal.timeout(timeoutMs),
+    body: form,
+  };
 };
 
 export const discordTransport = (opts: DiscordTransportOptions): Transport => {
   const url = opts.wait ? `${opts.webhookUrl}?wait=true` : opts.webhookUrl;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'discord' });
 
-  return {
+  return createTransport<RenderedDiscord, DiscordTransportData>({
     name: 'discord',
-
-    async send(rendered: RenderedDiscord, ctx) {
-      const body = buildRequestBody(rendered, opts);
+    async send(rendered, ctx) {
+      const init = buildFetchInit(rendered, opts, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
       const [fetchErr, response] = await handlePromise(
-        fetch(url, {
-          method: 'POST',
-          signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }),
+        fetch(url, init),
       );
 
       if (fetchErr) {
@@ -130,5 +167,5 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
         } satisfies DiscordTransportData,
       };
     },
-  };
+  });
 };

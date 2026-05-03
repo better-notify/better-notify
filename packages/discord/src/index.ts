@@ -1,4 +1,5 @@
 export type {
+  DiscordAttachment,
   DiscordEmbed,
   DiscordEmbedField,
   DiscordEmbedFooter,

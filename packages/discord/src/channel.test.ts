@@ -77,6 +77,15 @@ describe('discordChannel', () => {
     expect(out).not.toHaveProperty('avatarUrl');
   });
 
+  it('render includes attachments when set', async () => {
+    const ch = discordChannel();
+    const attachments = [{ filename: 'test.pdf', content: Buffer.from('pdf'), contentType: 'application/pdf' }];
+    const builder = buildBuilder(ch).body('check this').attachments(() => attachments);
+    const def = ch.finalize(builder, 'upload');
+    const out = await ch.render(def, { input: { name: 'Lucas' } }, {});
+    expect(out).toEqual({ body: 'check this', attachments });
+  });
+
   it('finalize throws when body is missing', () => {
     const ch = discordChannel();
     const partial = buildBuilder(ch);

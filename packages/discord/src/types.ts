@@ -36,9 +36,17 @@ export type DiscordSendArgs<TInput = unknown> = {
   input: TInput;
 };
 
+export type DiscordAttachment = {
+  filename: string;
+  content: Buffer | string;
+  contentType?: string;
+  description?: string;
+};
+
 export type RenderedDiscord = {
   body: string;
   embeds?: DiscordEmbed[];
   username?: string;
   avatarUrl?: string;
+  attachments?: DiscordAttachment[];
 };

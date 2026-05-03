@@ -28,6 +28,7 @@ export const runDiscord = async (): Promise<void> => {
             { name: 'Status', value: input.status, inline: true },
           ],
           timestamp: new Date().toISOString(),
+          footer: { text: 'BetterNotify', icon_url: 'https://placehold.co/100x100.png' },
         },
       ])
       .username(({ input }) => (input.status === 'healthy' ? 'Deploy Bot' : 'Alert Bot')),

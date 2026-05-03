@@ -221,6 +221,128 @@ describe('discordTransport — error mapping', () => {
     if (result.ok) throw new Error('expected not ok');
     expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
   });
+
+  it('falls back to HTTP status when error response has no message', async () => {
+    const { discordTransport } = await import('./discord.js');
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ code: 0 }), { status: 502 }),
+    );
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    const result = await t.send(baseMessage, ctx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error.message).toContain('HTTP 502');
+  });
+});
+
+describe('discordTransport — attachments', () => {
+  it('sends multipart/form-data when attachments are present', async () => {
+    const { discordTransport } = await import('./discord.js');
+    mockFetchNoContent();
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [{ filename: 'test.pdf', content: Buffer.from('pdf-bytes'), contentType: 'application/pdf' }],
+      },
+      ctx,
+    );
+
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(init.body).toBeInstanceOf(FormData);
+    const form = init.body as FormData;
+    const payloadJson = JSON.parse(form.get('payload_json') as string);
+    expect(payloadJson.content).toBe('Hello Discord!');
+    expect(payloadJson.attachments).toEqual([{ id: 0, filename: 'test.pdf' }]);
+    expect(form.get('files[0]')).toBeInstanceOf(Blob);
+  });
+
+  it('includes attachment description when provided', async () => {
+    const { discordTransport } = await import('./discord.js');
+    mockFetchNoContent();
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [
+          { filename: 'report.pdf', content: Buffer.from('data'), description: 'Monthly report' },
+        ],
+      },
+      ctx,
+    );
+
+    const form = fetchMock.mock.calls[0]![1].body as FormData;
+    const payloadJson = JSON.parse(form.get('payload_json') as string);
+    expect(payloadJson.attachments[0].description).toBe('Monthly report');
+  });
+
+  it('sends multiple files with indexed form fields', async () => {
+    const { discordTransport } = await import('./discord.js');
+    mockFetchNoContent();
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [
+          { filename: 'a.txt', content: 'hello' },
+          { filename: 'b.txt', content: 'world' },
+        ],
+      },
+      ctx,
+    );
+
+    const form = fetchMock.mock.calls[0]![1].body as FormData;
+    expect(form.get('files[0]')).toBeInstanceOf(Blob);
+    expect(form.get('files[1]')).toBeInstanceOf(Blob);
+    const payloadJson = JSON.parse(form.get('payload_json') as string);
+    expect(payloadJson.attachments).toHaveLength(2);
+  });
+
+  it('does not set Content-Type header for multipart (let fetch set boundary)', async () => {
+    const { discordTransport } = await import('./discord.js');
+    mockFetchNoContent();
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [{ filename: 'f.txt', content: 'x' }],
+      },
+      ctx,
+    );
+
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(init.headers).toBeUndefined();
+  });
+
+  it('uses JSON when attachments array is empty', async () => {
+    const { discordTransport } = await import('./discord.js');
+    mockFetchNoContent();
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send({ ...baseMessage, attachments: [] }, ctx);
+
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(init.headers['Content-Type']).toBe('application/json');
+    expect(typeof init.body).toBe('string');
+  });
+
+  it('converts string content to Buffer', async () => {
+    const { discordTransport } = await import('./discord.js');
+    mockFetchNoContent();
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [{ filename: 'note.txt', content: 'hello world', contentType: 'text/plain' }],
+      },
+      ctx,
+    );
+
+    const form = fetchMock.mock.calls[0]![1].body as FormData;
+    const file = form.get('files[0]') as Blob;
+    expect(file.type).toBe('text/plain');
+    expect(file.size).toBe(Buffer.from('hello world').length);
+  });
 });
 
 describe('discordTransport — network errors', () => {
