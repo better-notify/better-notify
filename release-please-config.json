@@ -70,6 +70,12 @@
       "release-type": "node",
       "component": "@betternotify/cloudflare-email",
       "prerelease-type": "alpha"
+    },
+    "apps/web": {
+      "release-type": "node",
+      "component": "@betternotify/web",
+      "prerelease-type": "alpha",
+      "bootstrap-sha": "4edb9f254f0a3987a2a3026e1a9e03ed14485ed3"
     }
   }
 }
