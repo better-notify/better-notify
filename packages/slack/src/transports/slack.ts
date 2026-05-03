@@ -1,4 +1,5 @@
 import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { createTransport } from '@betternotify/core/transports';
 import type { RenderedSlack } from '../types.js';
 import type { SlackTransportData, Transport } from './types.js';
 import type { SlackTransportOptions } from './slack.types.js';
@@ -76,10 +77,10 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
     });
   };
 
-  return {
+  return createTransport<RenderedSlack, SlackTransportData>({
     name: 'slack',
 
-    async send(rendered: RenderedSlack, ctx) {
+    async send(rendered, ctx) {
       const channel = rendered.to ?? opts.defaultChannel;
 
       if (!channel) {
@@ -212,5 +213,5 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
       const { ok: _ok, ...details } = json;
       return { ok: true, details };
     },
-  };
+  });
 };
