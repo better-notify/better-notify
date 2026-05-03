@@ -17,6 +17,19 @@ export const env = createEnv({
       .optional()
       .default('example@email.com')
       .describe('SMTP destination email'),
+
+    CF_ACCOUNT_ID: z.string().optional().default('account-id').describe('Cloudflare account ID'),
+    CF_API_TOKEN: z.string().optional().default('api-token').describe('Cloudflare API token'),
+    CF_FROM_EMAIL: z
+      .string()
+      .optional()
+      .default('noreply@example.com')
+      .describe('Cloudflare from email'),
+    CF_DESTINATION_EMAIL: z
+      .string()
+      .optional()
+      .default('example@email.com')
+      .describe('Cloudflare destination email'),
   },
   runtimeEnv: process.env,
 });

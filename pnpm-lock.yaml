@@ -239,6 +239,9 @@ importers:
 
   examples/welcome-text/apps/cli:
     dependencies:
+      '@betternotify/cloudflare-email':
+        specifier: workspace:*
+        version: link:../../../../packages/cloudflare-email
       '@betternotify/core':
         specifier: workspace:*
         version: link:../../../../packages/core
