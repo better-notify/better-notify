@@ -1,0 +1,182 @@
+---
+title: Discord
+icon: DiscordLogo
+description: Send messages via Discord Webhook API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Discord transport is included in `@betternotify/discord`. It calls the [Discord Webhook API](https://discord.com/developers/docs/resources/webhook#execute-webhook) via `fetch` — no external HTTP dependencies required (Node 22+ built-in).
+
+It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `discordTransport()` POSTs the rendered message to the configured webhook URL.
+
+## Install
+
+```package-install
+@betternotify/discord
+```
+
+## Getting your Webhook URL
+
+1. Open **Server Settings → Integrations → Webhooks** in your Discord server
+2. Click **New Webhook** and configure its name and channel
+3. Click **Copy Webhook URL**
+
+The URL looks like: `https://discord.com/api/webhooks/{id}/{token}`
+
+<Callout type="info">
+  The webhook URL contains the authentication token. Keep it secret — anyone with this URL can post to your channel.
+</Callout>
+
+## Usage
+
+```ts
+import { discordTransport } from '@betternotify/discord';
+
+const transport = discordTransport({
+  webhookUrl: process.env.DISCORD_WEBHOOK_URL!,
+});
+```
+
+Pass it to `createClient` via `transportsByChannel`:
+
+```ts
+import { createClient } from '@betternotify/core';
+import { discordChannel, discordTransport } from '@betternotify/discord';
+
+const notify = createClient({
+  catalog,
+  channels: { discord: discordChannel() },
+  transportsByChannel: {
+    discord: discordTransport({ webhookUrl: process.env.DISCORD_WEBHOOK_URL! }),
+  },
+});
+```
+
+## Standalone usage
+
+The transport can be used directly without the full pipeline:
+
+```ts
+import { discordTransport } from '@betternotify/discord';
+
+const transport = discordTransport({
+  webhookUrl: process.env.DISCORD_WEBHOOK_URL!,
+  wait: true,
+});
+
+const result = await transport.send(
+  { body: 'Deployment complete!' },
+  { route: 'manual', messageId: 'msg-1', attempt: 1 },
+);
+
+if (result.ok) {
+  console.log(result.data.transportMessageId);
+}
+```
+
+## Options
+
+<TypeTable
+  type={{
+    webhookUrl: {
+      description: 'Full Discord webhook URL (includes authentication token).',
+      type: 'string',
+    },
+    username: {
+      description: 'Default display name override for the webhook. Can be overridden per-message via the channel username slot.',
+      type: 'string',
+    },
+    avatarUrl: {
+      description: 'Default avatar URL override. Can be overridden per-message via the channel avatarUrl slot.',
+      type: 'string',
+    },
+    wait: {
+      description: 'Append ?wait=true to the webhook URL. When true, Discord returns the full message object including the message ID. When false (default), Discord returns 204 No Content.',
+      type: 'boolean',
+      default: 'false',
+    },
+    timeoutMs: {
+      description: 'Request timeout in milliseconds.',
+      type: 'number',
+      default: '30000',
+    },
+    logger: {
+      description: 'Optional logger instance. Defaults to consoleLogger().',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+## Embeds
+
+Discord embeds let you send rich structured content — cards with titles, descriptions, colors, fields, images, and footers:
+
+```ts
+const catalog = rpc.catalog({
+  deploy: rpc
+    .discord()
+    .input(z.object({ service: z.string(), version: z.string(), url: z.string() }))
+    .body(({ input }) => `Deployed **${input.service}** v${input.version}`)
+    .embeds(({ input }) => [
+      {
+        title: `${input.service} v${input.version}`,
+        description: 'Deployment successful',
+        url: input.url,
+        color: 0x00ff00,
+        fields: [
+          { name: 'Service', value: input.service, inline: true },
+          { name: 'Version', value: input.version, inline: true },
+        ],
+        timestamp: new Date().toISOString(),
+      },
+    ]),
+});
+```
+
+## Username and avatar overrides
+
+Discord webhooks let you override the display name and avatar per-message. Set defaults at the transport level and override them per-route via channel slots:
+
+```ts
+const transport = discordTransport({
+  webhookUrl: process.env.DISCORD_WEBHOOK_URL!,
+  username: 'BetterNotify',
+  avatarUrl: 'https://example.com/bot-avatar.png',
+});
+
+const catalog = rpc.catalog({
+  alert: rpc
+    .discord()
+    .input(z.object({ level: z.enum(['info', 'error']) }))
+    .body(({ input }) => `Alert: ${input.level}`)
+    .username(({ input }) => (input.level === 'error' ? 'Error Bot' : 'Info Bot')),
+});
+```
+
+## Error handling
+
+| HTTP Status | Error Code | Meaning |
+|-------------|------------|---------|
+| 400 | `VALIDATION` | Bad request body |
+| 401 / 403 | `CONFIG` | Invalid webhook token |
+| 404 | `CONFIG` | Webhook deleted or URL wrong |
+| 429 | `PROVIDER` | Rate limited |
+| 5xx | `PROVIDER` | Discord server error |
+
+```ts
+import { NotifyRpcError } from '@betternotify/core';
+
+const result = await transport.send(rendered, ctx);
+
+if (!result.ok && result.error instanceof NotifyRpcError) {
+  switch (result.error.code) {
+    case 'CONFIG':
+      console.error('Check your webhook URL:', result.error.message);
+      break;
+    case 'PROVIDER':
+      console.error('Discord issue, retry later:', result.error.message);
+      break;
+  }
+}
+```
