@@ -44,7 +44,9 @@ describe('discordChannel', () => {
   it('render includes embeds when set', async () => {
     const ch = discordChannel();
     const embeds = [{ title: 'Deploy', description: 'v2.0', color: 0x00ff00 }];
-    const builder = buildBuilder(ch).body('deployed').embeds(() => embeds);
+    const builder = buildBuilder(ch)
+      .body('deployed')
+      .embeds(() => embeds);
     const def = ch.finalize(builder, 'deploy');
     const out = await ch.render(def, { input: { name: 'Lucas' } }, {});
     expect(out).toEqual({ body: 'deployed', embeds });
@@ -52,7 +54,9 @@ describe('discordChannel', () => {
 
   it('render includes username when set', async () => {
     const ch = discordChannel();
-    const builder = buildBuilder(ch).body('hi').username(() => 'Bot');
+    const builder = buildBuilder(ch)
+      .body('hi')
+      .username(() => 'Bot');
     const def = ch.finalize(builder, 'greet');
     const out = await ch.render(def, { input: { name: 'Lucas' } }, {});
     expect(out).toEqual({ body: 'hi', username: 'Bot' });
@@ -60,7 +64,9 @@ describe('discordChannel', () => {
 
   it('render includes avatarUrl when set', async () => {
     const ch = discordChannel();
-    const builder = buildBuilder(ch).body('hi').avatarUrl(() => 'https://img.png');
+    const builder = buildBuilder(ch)
+      .body('hi')
+      .avatarUrl(() => 'https://img.png');
     const def = ch.finalize(builder, 'greet');
     const out = await ch.render(def, { input: { name: 'Lucas' } }, {});
     expect(out).toEqual({ body: 'hi', avatarUrl: 'https://img.png' });
@@ -79,8 +85,12 @@ describe('discordChannel', () => {
 
   it('render includes attachments when set', async () => {
     const ch = discordChannel();
-    const attachments = [{ filename: 'test.pdf', content: Buffer.from('pdf'), contentType: 'application/pdf' }];
-    const builder = buildBuilder(ch).body('check this').attachments(() => attachments);
+    const attachments = [
+      { filename: 'test.pdf', content: Buffer.from('pdf'), contentType: 'application/pdf' },
+    ];
+    const builder = buildBuilder(ch)
+      .body('check this')
+      .attachments(() => attachments);
     const def = ch.finalize(builder, 'upload');
     const out = await ch.render(def, { input: { name: 'Lucas' } }, {});
     expect(out).toEqual({ body: 'check this', attachments });

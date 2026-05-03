@@ -45,10 +45,7 @@ describe('discord channel end-to-end', () => {
       transportsByChannel: { discord: transport },
     });
 
-    const result = await notify.alert.batch([
-      { input: { msg: 'A' } },
-      { input: { msg: 'B' } },
-    ]);
+    const result = await notify.alert.batch([{ input: { msg: 'A' } }, { input: { msg: 'B' } }]);
     expect(result.okCount).toBe(2);
     expect(transport.messages.map((m) => m.body)).toEqual(['A', 'B']);
   });

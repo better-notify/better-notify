@@ -8,7 +8,11 @@
     "url": "https://github.com/better-notify/better-notify",
     "directory": "packages/discord"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

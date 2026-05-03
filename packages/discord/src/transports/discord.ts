@@ -71,7 +71,9 @@ const buildFetchInit = (
     const att = rendered.attachments[i];
     if (!att) continue;
     const raw = typeof att.content === 'string' ? Buffer.from(att.content) : att.content;
-    const file = new File([raw], att.filename, { type: att.contentType ?? 'application/octet-stream' });
+    const file = new File([raw], att.filename, {
+      type: att.contentType ?? 'application/octet-stream',
+    });
     form.append(`files[${i}]`, file);
   }
 
@@ -91,9 +93,7 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
     async send(rendered, ctx) {
       const init = buildFetchInit(rendered, opts, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
-      const [fetchErr, response] = await handlePromise(
-        fetch(url, init),
-      );
+      const [fetchErr, response] = await handlePromise(fetch(url, init));
 
       if (fetchErr) {
         const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';

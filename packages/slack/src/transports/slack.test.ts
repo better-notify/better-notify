@@ -452,10 +452,7 @@ describe('slackTransport', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
-    await t.send(
-      { text: '', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
-      ctx,
-    );
+    await t.send({ text: '', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } }, ctx);
 
     const completeCall = fetchMock.mock.calls[2] as [string, RequestInit];
     const completeBody = JSON.parse(completeCall[1].body as string);

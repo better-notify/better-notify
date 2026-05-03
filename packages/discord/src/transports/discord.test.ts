@@ -22,8 +22,7 @@ const baseMessage: RenderedDiscord = {
 
 const ctx: SendContext = { route: 'alerts.deploy', messageId: 'msg-1', attempt: 1 };
 
-const mockFetchNoContent = () =>
-  fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+const mockFetchNoContent = () => fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
 
 const mockFetchWithMessage = (id = '1234567890') =>
   fetchMock.mockResolvedValue(new Response(JSON.stringify({ id }), { status: 200 }));
@@ -195,10 +194,10 @@ describe('discordTransport — error mapping', () => {
   it('returns PROVIDER for 429 rate limit with retry-after', async () => {
     const { discordTransport } = await import('./discord.js');
     fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({ message: 'You are being rate limited.', retry_after: 1.5 }),
-        { status: 429, headers: { 'Retry-After': '2' } },
-      ),
+      new Response(JSON.stringify({ message: 'You are being rate limited.', retry_after: 1.5 }), {
+        status: 429,
+        headers: { 'Retry-After': '2' },
+      }),
     );
     const t = discordTransport({ webhookUrl: WEBHOOK_URL });
     const result = await t.send(baseMessage, ctx);
@@ -224,9 +223,7 @@ describe('discordTransport — error mapping', () => {
 
   it('falls back to HTTP status when error response has no message', async () => {
     const { discordTransport } = await import('./discord.js');
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ code: 0 }), { status: 502 }),
-    );
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ code: 0 }), { status: 502 }));
     const t = discordTransport({ webhookUrl: WEBHOOK_URL });
     const result = await t.send(baseMessage, ctx);
 
@@ -244,7 +241,13 @@ describe('discordTransport — attachments', () => {
     await t.send(
       {
         ...baseMessage,
-        attachments: [{ filename: 'test.pdf', content: Buffer.from('pdf-bytes'), contentType: 'application/pdf' }],
+        attachments: [
+          {
+            filename: 'test.pdf',
+            content: Buffer.from('pdf-bytes'),
+            contentType: 'application/pdf',
+          },
+        ],
       },
       ctx,
     );
