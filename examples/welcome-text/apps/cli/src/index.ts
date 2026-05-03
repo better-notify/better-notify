@@ -22,6 +22,8 @@ import { runTelegram } from './examples/telegram';
 import { runTelegramCrossTransport } from './examples/telegram-cross-transport';
 import { runCloudflareEmail } from './examples/cloudflare-email';
 import { runCloudflareEmailAttachment } from './examples/cloudflare-email-attachment';
+import { runResend } from './examples/resend';
+import { runResendAttachment } from './examples/resend-attachment';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -48,6 +50,8 @@ const examples: Record<string, () => Promise<void>> = {
   'telegram-cross-transport': runTelegramCrossTransport,
   'cloudflare-email': runCloudflareEmail,
   'cloudflare-email-attachment': runCloudflareEmailAttachment,
+  resend: runResend,
+  'resend-attachment': runResendAttachment,
 };
 
 const main = async (): Promise<void> => {

@@ -10,12 +10,13 @@
     "dotenvx": "dotenvx"
   },
   "dependencies": {
+    "@betternotify/cloudflare-email": "workspace:*",
     "@betternotify/core": "workspace:*",
     "@betternotify/email": "workspace:*",
     "@betternotify/push": "workspace:*",
     "@betternotify/react-email": "workspace:*",
+    "@betternotify/resend": "workspace:*",
     "@betternotify/sms": "workspace:*",
-    "@betternotify/cloudflare-email": "workspace:*",
     "@betternotify/smtp": "workspace:*",
     "@betternotify/telegram": "workspace:*",
     "@t3-oss/env-core": "0.13.11",

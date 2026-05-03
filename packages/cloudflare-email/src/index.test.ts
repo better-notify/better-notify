@@ -43,9 +43,7 @@ describe('cloudflareEmailTransport', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(
-      'https://api.cloudflare.com/client/v4/accounts/acc123/email/sending/send',
-    );
+    expect(url).toBe('https://api.cloudflare.com/client/v4/accounts/acc123/email/sending/send');
     expect(init.method).toBe('POST');
     expect(init.headers['Authorization']).toBe('Bearer tok456');
     expect(init.headers['Content-Type']).toBe('application/json');
@@ -379,9 +377,7 @@ describe('cloudflareEmailTransport — network errors', () => {
 
   it('returns PROVIDER when response is valid JSON but missing errors/result fields', async () => {
     const { cloudflareEmailTransport } = await import('./index.js');
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ success: false }), { status: 400 }),
-    );
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: false }), { status: 400 }));
     const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
     const result = await t.send(baseMessage, baseCtx);
 

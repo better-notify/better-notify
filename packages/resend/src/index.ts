@@ -1,24 +1,182 @@
-import { NotifyRpcNotImplementedError } from '@betternotify/core';
-import type { Transport } from '@betternotify/email/transports';
+import type { RenderedMessage } from '@betternotify/email';
+import { createTransport, formatAddress, normalizeAddress } from '@betternotify/email/transports';
+import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
 import type { WebhookAdapter } from '@betternotify/core/webhook';
+import { NotifyRpcNotImplementedError } from '@betternotify/core';
+import type {
+  ResendTransportOptions,
+  ResendAttachment,
+  ResendRequest,
+  ResendSuccessResponse,
+  ResendErrorResponse,
+} from './types.js';
 
-/** @experimental Resend transport — not yet implemented; ships in v0.3. */
-export type ResendTransportOptions = {
-  apiKey: string;
-  baseUrl?: string;
+export type {
+  ResendTransportOptions,
+  ResendAttachment,
+  ResendRequest,
+  ResendSuccessResponse,
+  ResendErrorResponse,
+  ResendTag,
+} from './types.js';
+
+const DEFAULT_BASE_URL = 'https://api.resend.com';
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+const toBase64 = (content: Buffer | string): string => {
+  if (Buffer.isBuffer(content)) return content.toString('base64');
+  return Buffer.from(content).toString('base64');
 };
 
-/** @experimental Resend transport — not yet implemented; ships in v0.3. */
-export const resendTransport = (_opts: ResendTransportOptions): Transport => {
-  throw new NotifyRpcNotImplementedError('@betternotify/resend transport (v0.3)');
+const toAttachments = (
+  attachments: NonNullable<RenderedMessage['attachments']>,
+): ResendAttachment[] =>
+  attachments.map((att) => ({
+    content: toBase64(att.content),
+    filename: att.filename,
+    ...(att.contentType ? { content_type: att.contentType } : {}),
+    ...(att.cid ? { content_id: att.cid } : {}),
+  }));
+
+const buildRequestBody = (message: RenderedMessage, from: string): ResendRequest => {
+  const body: ResendRequest = {
+    from,
+    to: message.to.map(formatAddress),
+    subject: message.subject,
+  };
+
+  if (message.html) body.html = message.html;
+  if (message.text) body.text = message.text;
+  if (message.cc?.length) body.cc = message.cc.map(formatAddress);
+  if (message.bcc?.length) body.bcc = message.bcc.map(formatAddress);
+  if (message.replyTo) body.reply_to = [formatAddress(message.replyTo)];
+  if (message.headers && Object.keys(message.headers).length > 0) body.headers = message.headers;
+  if (message.attachments?.length) body.attachments = toAttachments(message.attachments);
+  if (message.tags && Object.keys(message.tags).length > 0) {
+    body.tags = Object.entries(message.tags).map(([name, value]) => ({
+      name,
+      value: String(value),
+    }));
+  }
+
+  return body;
 };
 
-/** @experimental Resend webhook adapter — not yet implemented; ships in v0.3. */
+const mapErrorCode = (status: number): 'VALIDATION' | 'CONFIG' | 'PROVIDER' => {
+  if (status === 422) return 'VALIDATION';
+  if (status === 401 || status === 403) return 'CONFIG';
+  return 'PROVIDER';
+};
+
+/** @experimental Resend transport using the Resend HTTP API. */
+export const resendTransport = (opts: ResendTransportOptions) => {
+  const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
+  const url = `${baseUrl}/emails`;
+  const log = (opts.logger ?? consoleLogger()).child({ component: 'resend' });
+
+  return createTransport({
+    name: 'resend',
+    async send(message, ctx) {
+      if (!message.from) {
+        throw new NotifyRpcError({
+          message:
+            'Resend transport: no "from" address. Set it on the channel default, route `.from()` resolver, or per-call args.',
+          code: 'CONFIG',
+          route: ctx.route,
+          messageId: ctx.messageId,
+        });
+      }
+
+      const body = buildRequestBody(message, formatAddress(message.from));
+
+      const [fetchErr, response] = await handlePromise(
+        fetch(url, {
+          method: 'POST',
+          signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+          headers: {
+            Authorization: `Bearer ${opts.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        }),
+      );
+
+      if (fetchErr) {
+        const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
+        log.error('Resend fetch failed', { err: fetchErr, route: ctx.route });
+        return {
+          ok: false,
+          error: new NotifyRpcError({
+            message: `Resend transport: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
+            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+            route: ctx.route,
+            messageId: ctx.messageId,
+            cause: fetchErr,
+          }),
+        };
+      }
+
+      const [parseErr, data] = await handlePromise(
+        response.json() as Promise<ResendSuccessResponse | ResendErrorResponse>,
+      );
+
+      if (parseErr) {
+        log.error('Resend response parse failed', { err: parseErr, route: ctx.route });
+        return {
+          ok: false,
+          error: new NotifyRpcError({
+            message: 'Resend transport: failed to parse response',
+            code: 'PROVIDER',
+            route: ctx.route,
+            messageId: ctx.messageId,
+            cause: parseErr,
+          }),
+        };
+      }
+
+      if (!response.ok) {
+        const errData = data as ResendErrorResponse;
+        const code = mapErrorCode(response.status);
+        const retryAfter = response.headers.get('retry-after');
+        const suffix = retryAfter ? ` (retry after ${retryAfter}s)` : '';
+
+        const errorMessage = `Resend transport: [${errData.name}] ${errData.message}${suffix}`;
+        log.error(errorMessage, {
+          err: { status: response.status, name: errData.name, message: errData.message },
+          route: ctx.route,
+        });
+
+        return {
+          ok: false,
+          error: new NotifyRpcError({
+            message: errorMessage,
+            code,
+            route: ctx.route,
+            messageId: ctx.messageId,
+          }),
+        };
+      }
+
+      const successData = data as ResendSuccessResponse;
+      return {
+        ok: true,
+        data: {
+          transportMessageId: successData.id,
+          accepted: message.to.map(normalizeAddress),
+          rejected: [],
+          raw: successData,
+        },
+      };
+    },
+  });
+};
+
+/** @experimental Resend webhook adapter — not yet implemented; ships in a later release. */
 export type ResendAdapterOptions = {
   webhookSecret?: string;
 };
 
-/** @experimental Resend webhook adapter — not yet implemented; ships in v0.3. */
+/** @experimental Resend webhook adapter — not yet implemented; ships in a later release. */
 export const resendAdapter = (_opts: ResendAdapterOptions = {}): WebhookAdapter => {
-  throw new NotifyRpcNotImplementedError('@betternotify/resend webhook adapter (v0.3)');
+  throw new NotifyRpcNotImplementedError('@betternotify/resend webhook adapter');
 };

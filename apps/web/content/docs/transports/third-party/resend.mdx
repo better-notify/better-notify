@@ -1,7 +1,143 @@
 ---
 title: Resend
 icon: PaperPlane
-description: Send emails via Resend
+description: Send emails via the Resend HTTP API
 ---
 
-Documentation coming soon.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Resend transport is an official Better-Notify package that sends email through the [Resend](https://resend.com) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+
+## Install
+
+```package-install
+@betternotify/resend @betternotify/core @betternotify/email
+```
+
+## Getting your API key
+
+1. Sign up or log in at [resend.com](https://resend.com).
+2. Go to **API Keys** in the sidebar.
+3. Click **Create API Key**, give it a name, and select **Sending access** with the domain(s) you want to send from.
+4. Copy the key — it starts with `re_` and is only shown once.
+
+Store it as an environment variable:
+
+```sh
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Callout type="info">
+  You must [verify your domain](https://resend.com/docs/dashboard/domains/introduction) before sending to addresses outside of `delivered@resend.dev`.
+</Callout>
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { resendTransport } from '@betternotify/resend';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: resendTransport({
+      apiKey: process.env.RESEND_API_KEY!,
+    }),
+  },
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    apiKey: {
+      description: 'Resend API key (starts with re_). Required.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Override the Resend API base URL. Useful for testing.',
+      type: 'string',
+      default: '"https://api.resend.com"',
+    },
+    timeoutMs: {
+      description: 'Request timeout in milliseconds.',
+      type: 'number',
+      default: '30000',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+## Error handling
+
+The transport maps Resend HTTP status codes to Better-Notify error codes:
+
+| HTTP status | Resend error | Better-Notify code |
+| --- | --- | --- |
+| 422 | `missing_required_field`, `invalid_from_address`, `invalid_attachment` | `VALIDATION` |
+| 401 | `missing_api_key` | `CONFIG` |
+| 403 | `invalid_api_key`, `restricted_api_key` | `CONFIG` |
+| 429 | `rate_limit_exceeded`, `daily_quota_exceeded` | `PROVIDER` |
+| 500 | `internal_server_error` | `PROVIDER` |
+
+When a 429 response includes a `Retry-After` header, the value is included in the error message.
+
+Network failures and unparseable responses are wrapped as `PROVIDER` errors. Timeouts are wrapped as `TIMEOUT` errors.
+
+## Tags
+
+Resend supports email tags for tracking and analytics. Better-Notify's `tags` field (a `Record<string, string | number | boolean>`) is converted to Resend's `Array<{ name, value }>` format automatically:
+
+```ts
+await mail.welcome.send({
+  to: 'user@example.com',
+  input: { name: 'Alice' },
+  tags: { campaign: 'onboarding', version: 2 },
+});
+// Sent as: [{ name: "campaign", value: "onboarding" }, { name: "version", value: "2" }]
+```
+
+Tag names and values must be ASCII alphanumeric, underscores, or dashes (max 256 characters each). Invalid tags are rejected by Resend with a 422 error.
+
+## Attachments
+
+The transport base64-encodes attachment content before sending:
+
+- `contentType` maps to Resend's `content_type` field (optional — Resend infers it when omitted).
+- `cid` maps to `content_id` for inline images.
+
+```ts
+await mail.invoice.send({
+  to: 'user@example.com',
+  input: { orderId: '12345' },
+  attachments: [
+    { filename: 'invoice.pdf', content: pdfBuffer, contentType: 'application/pdf' },
+  ],
+});
+```
+
+## Limits
+
+These limits are enforced by Resend, not by the transport:
+
+- **50 recipients** per email (to + cc + bcc combined)
+- **40 MB** total attachment size per email
+- Daily and monthly sending limits depend on your [Resend plan](https://resend.com/pricing)
+- Tag names and values: ASCII alphanumeric, underscores, dashes, max 256 characters
+
+If you need throttling or provider fallback, add `withRateLimit` middleware or wrap the transport in `multiTransport({ strategy: 'failover' })`.
