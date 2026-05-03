@@ -1,10 +1,6 @@
-import {
-  NotifyRpcRateLimitedError,
-  createNotify,
-  createClient,
-  inMemoryRateLimitStore,
-  withRateLimit,
-} from '@betternotify/core';
+import { NotifyRpcRateLimitedError, createNotify, createClient } from '@betternotify/core';
+import { withRateLimit } from '@betternotify/core/middlewares';
+import { inMemoryRateLimitStore } from '@betternotify/core/stores';
 import { emailChannel } from '@betternotify/email';
 import { z } from 'zod';
 import { mockTransport } from '../test-utils';

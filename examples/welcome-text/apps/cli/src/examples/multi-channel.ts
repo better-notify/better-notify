@@ -1,4 +1,6 @@
-import { createNotify, createClient, withEventLogger, inMemoryEventSink } from '@betternotify/core';
+import { createNotify, createClient } from '@betternotify/core';
+import { withEventLogger } from '@betternotify/core/middlewares';
+import { inMemoryEventSink } from '@betternotify/core/sinks';
 import { emailChannel, mockTransport } from '@betternotify/email';
 import { smsChannel, mockSmsTransport } from '@betternotify/sms';
 import { pushChannel, mockPushTransport } from '@betternotify/push';

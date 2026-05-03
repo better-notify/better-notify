@@ -14,7 +14,7 @@ Failures are not cached — a thrown error leaves the slot empty so the next att
 
 ```ts
 import { withIdempotency } from '@betternotify/core/middlewares';
-import { inMemoryIdempotencyStore } from '@betternotify/core';
+import { inMemoryIdempotencyStore } from '@betternotify/core/stores';
 
 const orderConfirmation = rpc
   .email()

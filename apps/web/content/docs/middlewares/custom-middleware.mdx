@@ -11,7 +11,7 @@ A middleware is an async function that wraps the send pipeline. It receives a se
 Use `createMiddleware` to define one — it gives you full autocomplete on the parameters without needing to import and annotate the `Middleware` type:
 
 ```ts
-import { createMiddleware } from '@betternotify/core';
+import { createMiddleware } from '@betternotify/core/middlewares';
 
 const withTiming = () =>
   createMiddleware(async ({ route, next }) => {
@@ -117,7 +117,8 @@ const withCachedResult = (cache: Map<string, unknown>) =>
 Throw to abort the pipeline. The error routes to `onError` hooks:
 
 ```ts
-import { createMiddleware, NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcError } from '@betternotify/core';
+import { createMiddleware } from '@betternotify/core/middlewares';
 
 const withBlocklist = (blocked: Set<string>) =>
   createMiddleware(async ({ args, next }) => {

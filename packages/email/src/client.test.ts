@@ -1372,13 +1372,9 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   };
 
   it('chains all three: rate limit OK, not suppressed, fresh — provider sends and idempotency caches', async () => {
-    const {
-      withRateLimit,
-      withIdempotency,
-      inMemoryRateLimitStore,
-      inMemorySuppressionList,
-      inMemoryIdempotencyStore,
-    } = await import('@betternotify/core');
+    const { withRateLimit, withIdempotency } = await import('@betternotify/core/middlewares');
+    const { inMemoryRateLimitStore, inMemorySuppressionList, inMemoryIdempotencyStore } =
+      await import('@betternotify/core/stores');
     const { withSuppressionList } = await import('./index.js');
 
     const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
@@ -1405,8 +1401,9 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   });
 
   it('suppression short-circuit does NOT write to idempotency store', async () => {
-    const { withIdempotency, inMemorySuppressionList, inMemoryIdempotencyStore } =
-      await import('@betternotify/core');
+    const { withIdempotency } = await import('@betternotify/core/middlewares');
+    const { inMemorySuppressionList, inMemoryIdempotencyStore } =
+      await import('@betternotify/core/stores');
     const { withSuppressionList } = await import('./index.js');
 
     const list = inMemorySuppressionList();
@@ -1439,13 +1436,10 @@ describe('kitchen-sink: rate-limit + suppression + idempotency', () => {
   });
 
   it('rate-limit throw does NOT write to idempotency store', async () => {
-    const {
-      withRateLimit,
-      withIdempotency,
-      inMemoryRateLimitStore,
-      inMemoryIdempotencyStore,
-      NotifyRpcRateLimitedError,
-    } = await import('@betternotify/core');
+    const { withRateLimit, withIdempotency } = await import('@betternotify/core/middlewares');
+    const { inMemoryRateLimitStore, inMemoryIdempotencyStore } =
+      await import('@betternotify/core/stores');
+    const { NotifyRpcRateLimitedError } = await import('@betternotify/core');
 
     const idemStore = inMemoryIdempotencyStore<{ messageId: string }>();
     const { ch, catalog } = buildKitchenCatalog([
