@@ -1,4 +1,4 @@
-import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
 import { createTransport } from '@betternotify/core/transports';
 import type { RenderedSlack } from '../types.js';
 import type { SlackTransportData, Transport } from './types.js';
@@ -14,6 +14,8 @@ type SlackApiResponse = {
   files?: { id: string; title?: string }[];
   [key: string]: unknown;
 };
+
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 const CONFIG_ERRORS = new Set([
   'invalid_auth',
@@ -39,6 +41,7 @@ const mapErrorCode = (error: string): 'CONFIG' | 'VALIDATION' | 'PROVIDER' => {
 
 export const slackTransport = (opts: SlackTransportOptions): Transport => {
   const baseUrl = opts.baseUrl ?? 'https://slack.com/api';
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'slack' });
 
   const callApi = async (
@@ -47,19 +50,42 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
     contentType: 'json' | 'form' = 'json',
   ): Promise<SlackApiResponse> => {
     const isForm = contentType === 'form';
-    const response = await fetch(`${baseUrl}/${method}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${opts.token}`,
-        'Content-Type': isForm ? 'application/x-www-form-urlencoded' : 'application/json',
-      },
-      body: isForm
-        ? new URLSearchParams(
-            Object.entries(body).map(([k, v]): [string, string] => [k, String(v)]),
-          ).toString()
-        : JSON.stringify(body),
-    });
-    return (await response.json()) as SlackApiResponse;
+    const [fetchErr, response] = await handlePromise(
+      fetch(`${baseUrl}/${method}`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: {
+          Authorization: `Bearer ${opts.token}`,
+          'Content-Type': isForm ? 'application/x-www-form-urlencoded' : 'application/json',
+        },
+        body: isForm
+          ? new URLSearchParams(
+              Object.entries(body).map(([k, v]): [string, string] => [k, String(v)]),
+            ).toString()
+          : JSON.stringify(body),
+      }),
+    );
+
+    if (fetchErr) {
+      const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
+      throw new NotifyRpcError({
+        message: `Slack ${method}: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
+        code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+        cause: fetchErr,
+      });
+    }
+
+    const [parseErr, json] = await handlePromise(response.json() as Promise<SlackApiResponse>);
+
+    if (parseErr) {
+      throw new NotifyRpcError({
+        message: `Slack ${method}: failed to parse response`,
+        code: 'PROVIDER',
+        cause: parseErr,
+      });
+    }
+
+    return json;
   };
 
   const throwApiError = (
@@ -126,11 +152,25 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
           });
         }
 
-        const uploadResponse = await fetch(uploadUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/octet-stream' },
-          body: rendered.file.data,
-        });
+        const [uploadErr, uploadResponse] = await handlePromise(
+          fetch(uploadUrl, {
+            method: 'POST',
+            signal: AbortSignal.timeout(timeoutMs),
+            headers: { 'Content-Type': 'application/octet-stream' },
+            body: rendered.file.data,
+          }),
+        );
+
+        if (uploadErr) {
+          const isTimeout = uploadErr.name === 'TimeoutError' || uploadErr.name === 'AbortError';
+          throw new NotifyRpcError({
+            message: `Slack file upload: ${isTimeout ? 'request timed out' : `network error: ${uploadErr.message}`}`,
+            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+            route: ctx.route,
+            messageId: ctx.messageId,
+            cause: uploadErr,
+          });
+        }
 
         if (!uploadResponse.ok) {
           throw new NotifyRpcError({

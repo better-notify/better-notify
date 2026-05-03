@@ -4,5 +4,6 @@ export type SlackTransportOptions = {
   token: string;
   defaultChannel?: string;
   baseUrl?: string;
+  timeoutMs?: number;
   logger?: LoggerLike;
 };
