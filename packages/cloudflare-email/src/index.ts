@@ -100,12 +100,13 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
       );
 
       if (fetchErr) {
+        const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
         log.error('Cloudflare Email fetch failed', { err: fetchErr, route: ctx.route });
         return {
           ok: false,
           error: new NotifyRpcError({
-            message: `Cloudflare Email transport: network error: ${fetchErr.message}`,
-            code: 'PROVIDER',
+            message: `Cloudflare Email transport: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
+            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
             route: ctx.route,
             messageId: ctx.messageId,
             cause: fetchErr,
