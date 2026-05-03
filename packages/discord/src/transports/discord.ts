@@ -67,9 +67,7 @@ const buildFetchInit = (
   const form = new FormData();
   form.append('payload_json', JSON.stringify(payload));
 
-  for (let i = 0; i < rendered.attachments.length; i++) {
-    const att = rendered.attachments[i];
-    if (!att) continue;
+  for (const [i, att] of rendered.attachments.entries()) {
     const raw = typeof att.content === 'string' ? Buffer.from(att.content) : att.content;
     const file = new File([raw], att.filename, {
       type: att.contentType ?? 'application/octet-stream',
@@ -85,7 +83,9 @@ const buildFetchInit = (
 };
 
 export const discordTransport = (opts: DiscordTransportOptions): Transport => {
-  const url = opts.wait ? `${opts.webhookUrl}?wait=true` : opts.webhookUrl;
+  const parsed = new URL(opts.webhookUrl);
+  if (opts.wait && opts.wait === true) parsed.searchParams.set('wait', 'true');
+  const url = parsed.toString();
   const log = (opts.logger ?? consoleLogger()).child({ component: 'discord' });
 
   return createTransport<RenderedDiscord, DiscordTransportData>({

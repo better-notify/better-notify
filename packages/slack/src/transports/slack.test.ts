@@ -577,6 +577,99 @@ describe('slackTransport', () => {
       expect((result.error as any).code).toBe('PROVIDER');
     }
   });
+
+  it('throws PROVIDER when callApi fetch fails with network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    const promise = t.send({ text: 'hi', to: '#x' }, ctx);
+
+    await expect(promise).rejects.toMatchObject({
+      message: expect.stringContaining('network error'),
+      code: 'PROVIDER',
+    });
+  });
+
+  it('throws TIMEOUT when callApi fetch throws TimeoutError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new DOMException('signal timed out', 'TimeoutError')),
+    );
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    const promise = t.send({ text: 'hi', to: '#x' }, ctx);
+
+    await expect(promise).rejects.toMatchObject({
+      message: expect.stringContaining('request timed out'),
+      code: 'TIMEOUT',
+    });
+  });
+
+  it('throws PROVIDER when callApi response is not valid JSON', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => {
+          throw new SyntaxError('Unexpected token');
+        },
+      }),
+    );
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    const promise = t.send({ text: 'hi', to: '#x' }, ctx);
+
+    await expect(promise).rejects.toMatchObject({
+      message: expect.stringContaining('failed to parse response'),
+      code: 'PROVIDER',
+    });
+  });
+
+  it('returns PROVIDER when file upload fetch throws network error', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      })
+      .mockRejectedValueOnce(new TypeError('fetch failed'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    const result = await t.send(
+      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('network error');
+      expect((result.error as any).code).toBe('PROVIDER');
+    }
+  });
+
+  it('returns TIMEOUT when file upload fetch throws TimeoutError', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      })
+      .mockRejectedValueOnce(new DOMException('signal timed out', 'TimeoutError'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    const result = await t.send(
+      { text: 'x', to: '#ch', file: { data: Buffer.from('x'), filename: 'f.txt' } },
+      ctx,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain('request timed out');
+      expect((result.error as any).code).toBe('TIMEOUT');
+    }
+  });
 });
 
 describe('mockSlackTransport', () => {
