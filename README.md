@@ -103,7 +103,11 @@ const slackChannel = defineChannel({
 ## Custom transports
 
 ```ts
-import { createTransport, multiTransport, createMockTransport } from '@betternotify/core/transports';
+import {
+  createTransport,
+  multiTransport,
+  createMockTransport,
+} from '@betternotify/core/transports';
 
 const myTransport = createTransport<MyRendered, MyData>({
   name: 'my-api',

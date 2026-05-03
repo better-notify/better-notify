@@ -257,6 +257,9 @@ importers:
       '@betternotify/smtp':
         specifier: workspace:*
         version: link:../../../../packages/smtp
+      '@betternotify/telegram':
+        specifier: workspace:*
+        version: link:../../../../packages/telegram
       '@t3-oss/env-core':
         specifier: 0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
@@ -614,6 +617,34 @@ importers:
       '@types/nodemailer':
         specifier: 'catalog:'
         version: 8.0.0
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.0.0-rc.17
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@22.19.17)(lightningcss@1.32.0)(msw@2.14.2(@types/node@22.19.17)(typescript@6.0.3))
+
+  packages/telegram:
+    dependencies:
+      '@betternotify/core':
+        specifier: workspace:*
+        version: link:../core
+      '@standard-schema/spec':
+        specifier: 'catalog:'
+        version: 1.1.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
       rolldown:
         specifier: 'catalog:'
         version: 1.0.0-rc.17

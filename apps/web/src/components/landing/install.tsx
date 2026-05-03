@@ -38,7 +38,7 @@ export function Install() {
             Install. Define. Send.
           </h2>
           <p className="text-muted-foreground max-w-[620px] text-[17px] leading-relaxed text-pretty">
-            Three packages, three minutes. Email channel is shipping today; SMS and push are next.
+            Three packages, three minutes. Email, SMS, push, and Telegram channels are shipping today.
           </p>
         </div>
 
@@ -105,7 +105,7 @@ function InstallStep({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-border bg-card rounded-lg border p-5">
+    <div className="border-border bg-card min-w-0 overflow-hidden rounded-lg border p-5">
       <div className="mb-3 flex items-center gap-2.5">
         <span className="bg-primary text-primary-foreground flex size-[22px] items-center justify-center rounded-md font-mono text-[11px] font-semibold">
           {n}

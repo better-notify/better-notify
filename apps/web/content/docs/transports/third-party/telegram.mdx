@@ -1,0 +1,177 @@
+---
+title: Telegram
+icon: TelegramLogo
+description: Send messages via Telegram Bot API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Telegram transport is included in `@betternotify/telegram`. It calls the [Telegram Bot API](https://core.telegram.org/bots/api) via `fetch` — no external HTTP dependencies required (Node 22+ built-in).
+
+It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `telegramTransport()` picks the correct Bot API method based on the rendered message shape and sends it.
+
+## Install
+
+```package-install
+@betternotify/telegram
+```
+
+## Usage
+
+```ts
+import { telegramTransport } from '@betternotify/telegram';
+
+const transport = telegramTransport({
+  token: process.env.TELEGRAM_BOT_TOKEN!,
+});
+```
+
+Pass it to `createClient` via `transportsByChannel`:
+
+```ts
+import { createClient } from '@betternotify/core';
+import { telegramChannel, telegramTransport } from '@betternotify/telegram';
+
+const notify = createClient({
+  catalog,
+  channels: { telegram: telegramChannel() },
+  transportsByChannel: {
+    telegram: telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! }),
+  },
+});
+```
+
+## Standalone usage
+
+The transport can be used directly without the full pipeline:
+
+```ts
+import { telegramTransport } from '@betternotify/telegram';
+
+const transport = telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! });
+
+const result = await transport.send(
+  { body: '<b>Alert!</b>', to: 123456, parseMode: 'HTML' },
+  { route: 'manual', messageId: 'msg-1', attempt: 1 },
+);
+
+console.log(result.data.messageId);
+```
+
+## Options
+
+<TypeTable
+  type={{
+    token: {
+      description: 'Telegram Bot API token from @BotFather.',
+      type: 'string',
+    },
+    apiUrl: {
+      description: 'Base URL for the Bot API. Defaults to https://api.telegram.org. Set this for self-hosted Bot API servers.',
+      type: 'string',
+      default: '"https://api.telegram.org"',
+    },
+    logger: {
+      description: 'Optional logger instance. Defaults to consoleLogger().',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+## API method selection
+
+The transport inspects `rendered.attachment` to pick the correct Bot API method:
+
+| Attachment | API method | Body maps to |
+|-----------|-----------|------------|
+| none | `sendMessage` | `text` |
+| `photo` | `sendPhoto` | `caption` |
+| `document` | `sendDocument` | `caption` |
+| `video` | `sendVideo` | `caption` |
+| `audio` | `sendAudio` | `caption` |
+
+All methods send `chat_id` from `rendered.to` and `parse_mode` from `rendered.parseMode` (when set). For media methods, `caption` uses `attachment.caption` if provided, otherwise falls back to `rendered.body`.
+
+## Verifying the bot token
+
+Call `verify()` at startup to confirm the token is valid:
+
+```ts
+const transport = telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! });
+const { ok, details } = await transport.verify!();
+
+if (!ok) {
+  throw new Error('Invalid Telegram bot token');
+}
+
+console.log('Bot:', details); // { id, is_bot, first_name, ... }
+```
+
+## MarkdownV2 formatting
+
+When using `parseMode: 'MarkdownV2'`, Telegram requires escaping [reserved characters](https://core.telegram.org/bots/api#markdownv2-style). Use the `md` tagged template to write formatting naturally:
+
+```ts
+import { md } from '@betternotify/telegram';
+
+// Template formatting preserved, interpolated values auto-escaped
+md`*${service}* deployed v${version}`
+// → "*api* deployed v2\.4\.0"
+```
+
+## Cross-transport delivery
+
+A transport receives the rendered message and can deliver it to any provider — not just the one it was designed for. This means you can combine transports from different providers in a single `multiTransport`, routing the same rendered content to multiple destinations.
+
+For example, deliver via Telegram as the primary and mirror a copy to SMTP:
+
+```ts
+import { multiTransport, createTransport } from '@betternotify/core/transports';
+import { telegramTransport } from '@betternotify/telegram';
+import { smtpTransport } from '@betternotify/smtp';
+
+const smtp = smtpTransport({ host: 'smtp.example.com', port: 587 });
+
+const smtpMirror = createTransport({
+  name: 'smtp-mirror',
+  send: async (rendered, ctx) => {
+    const emailResult = await smtp.send(
+      {
+        from: 'alerts@example.com',
+        to: [{ email: 'team@example.com' }],
+        subject: `[${ctx.route}] Telegram notification`,
+        html: `<p>${rendered.body}</p>`,
+      },
+      ctx,
+    );
+    if (!emailResult.ok) return { messageId: 0, chatId: rendered.to ?? 0 };
+    return { messageId: 0, chatId: rendered.to ?? 0 };
+  },
+});
+
+const transport = multiTransport({
+  strategy: 'mirrored',
+  transports: [
+    { transport: telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! }) },
+    { transport: smtpMirror },
+  ],
+});
+```
+
+Both transports receive the same `RenderedTelegram`. The primary delivers to Telegram; the mirror transforms the fields and forwards via SMTP. This works with any `multiTransport` strategy — `mirrored`, `parallel`, `failover`, or `race`.
+
+## Error handling
+
+Non-ok Telegram API responses throw `NotifyRpcError` with `code: 'PROVIDER'`:
+
+```ts
+import { NotifyRpcError } from '@betternotify/core';
+
+try {
+  await notify.alert.send({ to: chatId, input });
+} catch (err) {
+  if (err instanceof NotifyRpcError && err.code === 'PROVIDER') {
+    console.error('Telegram rejected:', err.message);
+  }
+}
+```

@@ -1,4 +1,4 @@
 {
   "title": "Provider Packages",
-  "pages": ["smtp", "ses", "resend"]
+  "pages": ["smtp", "ses", "resend", "telegram"]
 }

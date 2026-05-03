@@ -18,6 +18,8 @@ import { runHttpTransport } from './examples/http-transport';
 import { runMultiChannel } from './examples/multi-channel';
 import { runCustomChannel } from './examples/custom-channel';
 import { runPerTransportFrom } from './examples/per-transport-from';
+import { runTelegram } from './examples/telegram';
+import { runTelegramCrossTransport } from './examples/telegram-cross-transport';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -40,6 +42,8 @@ const examples: Record<string, () => Promise<void>> = {
   'multi-channel': runMultiChannel,
   'custom-channel': runCustomChannel,
   'per-transport-from': runPerTransportFrom,
+  telegram: runTelegram,
+  'telegram-cross-transport': runTelegramCrossTransport,
 };
 
 const main = async (): Promise<void> => {
