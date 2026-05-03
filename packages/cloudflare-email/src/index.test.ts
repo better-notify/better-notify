@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import type { RenderedMessage } from '@betternotify/email';
-import type { SendContext } from '@betternotify/email/transports';
+import type { SendContext } from '@betternotify/core';
 
 let fetchMock: Mock;
 
