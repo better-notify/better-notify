@@ -68,7 +68,7 @@ export function Footer() {
                       </a>
                     ) : link.href.startsWith('/') ? (
                       <Link
-                        to={link.href as '/docs'}
+                        to={link.href as '/docs/$'}
                         className="text-muted-foreground hover:text-foreground text-[13px] no-underline transition-colors"
                       >
                         {link.label}
