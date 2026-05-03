@@ -226,6 +226,27 @@ describe('cloudflareEmailTransport — CF API errors', () => {
     expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
   });
 
+  it('returns VALIDATION for CF error code 10201 (no content length)', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 10201, message: 'email.sending.error.email.no_content_length' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 400 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+  });
+
   it('returns VALIDATION for CF error code 10202 (too big)', async () => {
     const { cloudflareEmailTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(

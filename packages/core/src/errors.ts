@@ -1,7 +1,7 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 /**
- * Discriminant for every error thrown by BetterNotify.
+ * Discriminant for every error thrown by Better-Notify.
  *
  * | Code                    | Thrown when                                                                      |
  * | ----------------------- | -------------------------------------------------------------------------------- |
@@ -43,7 +43,7 @@ export type NotifyRpcErrorOptions = {
 };
 
 /**
- * Base class for all errors thrown by BetterNotify.
+ * Base class for all errors thrown by Better-Notify.
  *
  * Every error carries a {@link ErrorCode | `code`} discriminant so callers
  * can branch without fragile string matching on `message`. The class is

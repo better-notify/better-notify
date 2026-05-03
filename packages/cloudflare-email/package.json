@@ -1,14 +1,18 @@
 {
   "name": "@betternotify/cloudflare-email",
   "version": "0.1.0",
-  "description": "Cloudflare Email Service transport for BetterNotify.",
+  "description": "Cloudflare Email Service transport for Better-Notify.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/better-notify/better-notify",
     "directory": "packages/cloudflare-email"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
