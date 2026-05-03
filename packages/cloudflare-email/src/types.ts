@@ -4,6 +4,7 @@ export type CloudflareEmailTransportOptions = {
   accountId: string;
   apiToken: string;
   baseUrl?: string;
+  timeoutMs?: number;
   logger?: LoggerLike;
 };
 

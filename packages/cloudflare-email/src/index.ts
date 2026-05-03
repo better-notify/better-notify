@@ -20,6 +20,13 @@ export type {
 } from './types.js';
 
 const DEFAULT_BASE_URL = 'https://api.cloudflare.com';
+/**
+ * CF error codes mapped to VALIDATION:
+ * 10001 — invalid request schema, 10200 — invalid email content,
+ * 10201 — missing content length, 10202 — message too large.
+ */
+const VALIDATION_CODES = [10001, 10200, 10201, 10202];
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 const toFrom = (addr: Address): CloudflareEmailFrom => {
   if (typeof addr === 'string') return { address: addr };
@@ -83,6 +90,7 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
       const [fetchErr, response] = await handlePromise(
         fetch(url, {
           method: 'POST',
+          signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
           headers: {
             Authorization: `Bearer ${opts.apiToken}`,
             'Content-Type': 'application/json',
@@ -123,18 +131,17 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
         };
       }
 
-      if (!data.success || !data.result) {
-        const cfError = data.errors[0];
+      const errors = Array.isArray(data.errors) ? data.errors : [];
+      const result = data.result;
+
+      if (!data.success || !result) {
+        const cfError = errors[0];
         const errorCode = cfError?.code;
-        const code =
-          errorCode === 10001 ||
-          errorCode === 10200 ||
-          errorCode === 10201 ||
-          errorCode === 10202
-            ? 'VALIDATION'
-            : errorCode === 10203
-              ? 'CONFIG'
-              : 'PROVIDER';
+        const code = VALIDATION_CODES.includes(errorCode as number)
+          ? 'VALIDATION'
+          : errorCode === 10203
+            ? 'CONFIG'
+            : 'PROVIDER';
 
         const errorMessage = cfError
           ? `Cloudflare Email transport: [${cfError.code}] ${cfError.message}`
@@ -160,8 +167,11 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
         ok: true,
         data: {
           transportMessageId: undefined,
-          accepted: [...data.result.delivered, ...data.result.queued],
-          rejected: data.result.permanent_bounces,
+          accepted: [
+            ...(Array.isArray(result.delivered) ? result.delivered : []),
+            ...(Array.isArray(result.queued) ? result.queued : []),
+          ],
+          rejected: Array.isArray(result.permanent_bounces) ? result.permanent_bounces : [],
           raw: data,
         },
       };
