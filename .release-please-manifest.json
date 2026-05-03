@@ -9,5 +9,7 @@
   "packages/smtp": "0.0.3-alpha.0",
   "packages/ses": "0.0.3-alpha.0",
   "packages/resend": "0.0.3-alpha.0",
-  "packages/bullmq": "0.0.3-alpha.0"
+  "packages/bullmq": "0.0.3-alpha.0",
+  "packages/telegram": "0.0.1-alpha.0",
+  "packages/cloudflare-email": "0.0.1-alpha.0"
 }

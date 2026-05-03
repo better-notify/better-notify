@@ -4,12 +4,6 @@ icon: At
 description: Send emails via SMTP with Nodemailer
 ---
 
-import {
-  CodeBlockTab,
-  CodeBlockTabs,
-  CodeBlockTabsList,
-  CodeBlockTabsTrigger,
-} from 'fumadocs-ui/components/codeblock';
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 The SMTP transport is an official Better-Notify package backed by Nodemailer. Use it when your provider gives you SMTP credentials and you want a straightforward way to send Better-Notify email routes.
@@ -18,34 +12,9 @@ It is a thin delivery adapter. Better-Notify handles rendering and validation up
 
 ## Install
 
-<CodeBlockTabs groupId="package-manager" persist defaultValue="pnpm">
-  <CodeBlockTabsList>
-    <CodeBlockTabsTrigger value="pnpm">pnpm</CodeBlockTabsTrigger>
-    <CodeBlockTabsTrigger value="npm">npm</CodeBlockTabsTrigger>
-    <CodeBlockTabsTrigger value="yarn">yarn</CodeBlockTabsTrigger>
-  </CodeBlockTabsList>
-  <CodeBlockTab value="pnpm">
-
-```sh
-pnpm add @betternotify/smtp @betternotify/core @betternotify/email
+```package-install
+@betternotify/smtp @betternotify/core @betternotify/email
 ```
-
-  </CodeBlockTab>
-  <CodeBlockTab value="npm">
-
-```sh
-npm install @betternotify/smtp @betternotify/core @betternotify/email
-```
-
-  </CodeBlockTab>
-  <CodeBlockTab value="yarn">
-
-```sh
-yarn add @betternotify/smtp @betternotify/core @betternotify/email
-```
-
-  </CodeBlockTab>
-</CodeBlockTabs>
 
 ## Usage
 
