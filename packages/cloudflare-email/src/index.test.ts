@@ -67,7 +67,7 @@ describe('cloudflareEmailTransport', () => {
     );
 
     const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
-    expect(body.from).toEqual({ email: 'noreply@example.com', name: 'App' });
+    expect(body.from).toEqual({ address: 'noreply@example.com', name: 'App' });
     expect(body.to).toEqual(['user@example.com']);
     expect(body.cc).toEqual(['cc@example.com']);
     expect(body.bcc).toEqual(['bcc@example.com']);
@@ -168,7 +168,7 @@ describe('cloudflareEmailTransport', () => {
     await t.send({ ...baseMessage, from: 'plain@example.com' }, baseCtx);
 
     const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
-    expect(body.from).toEqual({ email: 'plain@example.com' });
+    expect(body.from).toEqual({ address: 'plain@example.com' });
   });
 });
 

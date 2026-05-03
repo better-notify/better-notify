@@ -22,8 +22,8 @@ export type {
 const DEFAULT_BASE_URL = 'https://api.cloudflare.com';
 
 const toFrom = (addr: Address): CloudflareEmailFrom => {
-  if (typeof addr === 'string') return { email: addr };
-  return addr.name ? { email: addr.email, name: addr.name } : { email: addr.email };
+  if (typeof addr === 'string') return { address: addr };
+  return addr.name ? { address: addr.email, name: addr.name } : { address: addr.email };
 };
 
 const toBase64 = (content: Buffer | string): string => {

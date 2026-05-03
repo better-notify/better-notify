@@ -8,7 +8,7 @@ export type CloudflareEmailTransportOptions = {
 };
 
 export type CloudflareEmailFrom = {
-  email: string;
+  address: string;
   name?: string;
 };
 
