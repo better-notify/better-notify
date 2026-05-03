@@ -20,6 +20,37 @@ It uses plain `fetch()` with zero external dependencies, so it works in Node.js,
 @betternotify/cloudflare-email @betternotify/core @betternotify/email
 ```
 
+## Getting your credentials
+
+You need two values: an **API token** and your **account ID**.
+
+### API token
+
+1. Go to [API Tokens](https://dash.cloudflare.com/profile/api-tokens) in your Cloudflare dashboard.
+2. Click **Create Token**.
+3. Select **Create Custom Token**.
+4. Under **Permissions**, set **Account** > **Email Sending** > **Edit**.
+
+![Cloudflare token permissions — Account, Email Sending, Edit](./img/cf-token-permissions.png)
+
+5. Click **Continue to summary**, then **Create Token**.
+6. Copy the token — you will not see it again.
+
+### Account ID
+
+1. Go to your [Cloudflare dashboard](https://dash.cloudflare.com) home page.
+2. Click the **three-dot menu** (⋮) next to your account name.
+3. Select **Copy account ID**.
+
+![Cloudflare account menu — Copy account ID](./img/cf-account-id.png)
+
+Store both values as environment variables:
+
+```sh
+CF_ACCOUNT_ID=your-account-id
+CF_API_TOKEN=your-api-token
+```
+
 ## Usage
 
 ```ts
