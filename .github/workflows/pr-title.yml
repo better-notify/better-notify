@@ -33,6 +33,7 @@ jobs:
             sms
             push
             telegram
+            discord
             slack
             bullmq
             smtp

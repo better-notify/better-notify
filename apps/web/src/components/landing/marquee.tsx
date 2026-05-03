@@ -4,6 +4,7 @@ import {
   BellIcon,
   TelegramLogoIcon,
   SlackLogoIcon,
+  DiscordLogoIcon,
 } from '@phosphor-icons/react';
 
 import type { ReactNode } from 'react';
@@ -28,6 +29,10 @@ const providers: { name: string; icon: ReactNode }[] = [
   {
     name: 'Telegram',
     icon: <TelegramLogoIcon size={20} weight="fill" className="text-[#26A5E4]" />,
+  },
+  {
+    name: 'Discord',
+    icon: <DiscordLogoIcon size={20} weight="fill" className="text-[#5865F2]" />,
   },
   {
     name: 'Slack',

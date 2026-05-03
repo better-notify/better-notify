@@ -26,6 +26,8 @@ import { runResend } from './examples/resend';
 import { runResendAttachment } from './examples/resend-attachment';
 import { runSlack } from './examples/slack';
 import { runSlackAttachment } from './examples/slack-attachment';
+import { runDiscord } from './examples/discord';
+import { runDiscordAttachment } from './examples/discord-attachment';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -56,6 +58,8 @@ const examples: Record<string, () => Promise<void>> = {
   'resend-attachment': runResendAttachment,
   slack: runSlack,
   'slack-attachment': runSlackAttachment,
+  discord: runDiscord,
+  'discord-attachment': runDiscordAttachment,
 };
 
 const main = async (): Promise<void> => {

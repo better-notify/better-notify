@@ -12,5 +12,6 @@
   "packages/bullmq": "0.0.3-alpha.0",
   "packages/telegram": "0.0.1-alpha.0",
   "packages/cloudflare-email": "0.0.1-alpha.0",
+  "packages/discord": "0.0.1-alpha.0",
   "apps/web": "1.0.0"
 }

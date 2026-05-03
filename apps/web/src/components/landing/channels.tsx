@@ -3,6 +3,7 @@ import {
   ChatText,
   Bell,
   TelegramLogo,
+  DiscordLogo,
   SlackLogo,
   WebhooksLogo,
 } from '@phosphor-icons/react';
@@ -39,6 +40,13 @@ const channels = [
     detail: 'Bot API · Text · Photos · Documents',
   },
   {
+    icon: DiscordLogo,
+    name: 'Discord',
+    pkg: '@betternotify/discord',
+    status: 'ready',
+    detail: 'Webhook API · Embeds · Username override',
+  },
+  {
     icon: SlackLogo,
     name: 'Slack',
     pkg: '@betternotify/slack',
@@ -50,7 +58,7 @@ const channels = [
     name: 'Custom',
     pkg: 'defineChannel()',
     status: 'always',
-    detail: 'Discord · Webhooks · in-app',
+    detail: 'Webhooks · in-app',
   },
 ] as const;
 

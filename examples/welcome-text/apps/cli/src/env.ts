@@ -10,6 +10,15 @@ export const env = createEnv({
     TELEGRAM_BOT_TOKEN: z.string().optional().default('token').describe('Telegram bot token'),
 
     /**
+     * Discord cluster
+     */
+    DISCORD_WEBHOOK_URL: z
+      .string()
+      .optional()
+      .default('https://discord.com/api/webhooks/0/token')
+      .describe('Discord webhook URL'),
+
+    /**
      * SMTP cluster
      */
     SMTP_HOST: z.string().optional().default('localhost').describe('SMTP host'),

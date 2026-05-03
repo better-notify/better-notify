@@ -1,0 +1,199 @@
+---
+title: Discord
+icon: DiscordLogo
+description: Send Discord messages via Webhook API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Discord channel is provided by `@betternotify/discord`. It sends messages through the [Discord Webhook API](https://discord.com/developers/docs/resources/webhook#execute-webhook) with support for text content, rich embeds, and per-message username/avatar overrides.
+
+## When to use Discord
+
+Discord is the right channel when you need to deliver notifications to a Discord server channel. Use it for deployment alerts, monitoring dashboards, CI/CD status updates, or any scenario where your team uses Discord for coordination. Messages support Markdown formatting and rich embed cards with structured fields, colors, images, and timestamps.
+
+```package-install
+@betternotify/discord
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { discordChannel } from '@betternotify/discord';
+
+const discord = discordChannel();
+
+const rpc = createNotify({ channels: { discord } });
+```
+
+## Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The message text content. Accepts a static string or a resolver function that receives { input, ctx }. Maps to Discord\'s `content` field. Supports Markdown.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    embeds: {
+      description: 'Optional array of rich embed cards. Accepts a static value or a resolver function. Each embed can have title, description, color, fields, images, footer, and more.',
+      type: 'DiscordEmbed[] | (args: { input, ctx }) => DiscordEmbed[]',
+    },
+    username: {
+      description: 'Optional display name override for the webhook. Accepts a static string or a resolver function. Overrides the transport-level default.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    avatarUrl: {
+      description: 'Optional avatar URL override for the webhook. Accepts a static string or a resolver function. Overrides the transport-level default.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+## Send arguments
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+Discord channels have no `to` field — the destination is determined by the webhook URL configured on the transport.
+
+## Full example
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { discordChannel, discordTransport } from '@betternotify/discord';
+import { z } from 'zod';
+
+const discord = discordChannel();
+const rpc = createNotify({ channels: { discord } });
+
+const catalog = rpc.catalog({
+  deployAlert: rpc
+    .discord()
+    .input(z.object({ service: z.string(), version: z.string(), status: z.string() }))
+    .body(({ input }) => `Deployed **${input.service}** v${input.version}`)
+    .embeds(({ input }) => [
+      {
+        title: `${input.service} v${input.version}`,
+        description: `Status: ${input.status}`,
+        color: input.status === 'healthy' ? 0x57f287 : 0xed4245,
+        timestamp: new Date().toISOString(),
+      },
+    ]),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { discord },
+  transportsByChannel: {
+    discord: discordTransport({ webhookUrl: process.env.DISCORD_WEBHOOK_URL! }),
+  },
+});
+
+await notify.deployAlert.send({
+  input: { service: 'api', version: '2.4.0', status: 'healthy' },
+});
+```
+
+## Embeds
+
+Embeds are Discord's rich content cards. Each embed can include:
+
+```ts
+{
+  title: 'Deployment Report',
+  description: 'All services deployed successfully',
+  url: 'https://dashboard.example.com/deploys/123',
+  color: 0x57f287,
+  timestamp: new Date().toISOString(),
+  footer: { text: 'BetterNotify', icon_url: 'https://example.com/icon.png' },
+  thumbnail: { url: 'https://example.com/thumb.png' },
+  image: { url: 'https://example.com/chart.png' },
+  author: { name: 'Deploy Bot', url: 'https://example.com', icon_url: 'https://example.com/bot.png' },
+  fields: [
+    { name: 'Service', value: 'api', inline: true },
+    { name: 'Version', value: '2.4.0', inline: true },
+    { name: 'Region', value: 'us-east-1', inline: true },
+  ],
+}
+```
+
+Discord allows up to 10 embeds per message.
+
+## Username and avatar overrides
+
+Set defaults at the transport level and override per-route via channel slots:
+
+```ts
+const transport = discordTransport({
+  webhookUrl: process.env.DISCORD_WEBHOOK_URL!,
+  username: 'BetterNotify',
+  avatarUrl: 'https://example.com/default-avatar.png',
+});
+
+const catalog = rpc.catalog({
+  error: rpc
+    .discord()
+    .input(z.object({ message: z.string() }))
+    .body(({ input }) => input.message)
+    .username(() => 'Error Bot')
+    .avatarUrl(() => 'https://example.com/error-avatar.png'),
+});
+```
+
+Channel-level values take precedence over transport defaults.
+
+## Transport
+
+### Built-in: `discordTransport`
+
+The package includes a ready-to-use transport that calls the Discord Webhook API via `fetch`:
+
+```ts
+import { discordTransport } from '@betternotify/discord';
+
+const transport = discordTransport({
+  webhookUrl: process.env.DISCORD_WEBHOOK_URL!,
+  wait: true,       // get message ID back from Discord
+  username: 'Bot',  // default display name
+});
+```
+
+Set `wait: true` to receive the message ID in the response. When `false` (default), Discord returns 204 No Content for faster delivery.
+
+### Mock transport
+
+Use `mockDiscordTransport()` in tests:
+
+```ts
+import { mockDiscordTransport } from '@betternotify/discord';
+
+const transport = mockDiscordTransport();
+
+// after sending...
+console.log(transport.messages); // [{ body, embeds?, username?, avatarUrl?, id }]
+transport.reset();
+```
+
+### Multi-transport
+
+Use `multiTransport` from core for failover across multiple webhooks:
+
+```ts
+import { discordTransport } from '@betternotify/discord';
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: discordTransport({ webhookUrl: process.env.DISCORD_WEBHOOK_PRIMARY! }) },
+    { transport: discordTransport({ webhookUrl: process.env.DISCORD_WEBHOOK_FALLBACK! }) },
+  ],
+});
+```

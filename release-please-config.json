@@ -71,6 +71,11 @@
       "component": "@betternotify/cloudflare-email",
       "prerelease-type": "alpha"
     },
+    "packages/discord": {
+      "release-type": "node",
+      "component": "@betternotify/discord",
+      "prerelease-type": "alpha"
+    },
     "packages/slack": {
       "release-type": "node",
       "component": "@betternotify/slack",

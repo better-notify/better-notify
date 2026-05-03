@@ -12,6 +12,7 @@
   "dependencies": {
     "@betternotify/cloudflare-email": "workspace:*",
     "@betternotify/core": "workspace:*",
+    "@betternotify/discord": "workspace:*",
     "@betternotify/email": "workspace:*",
     "@betternotify/push": "workspace:*",
     "@betternotify/react-email": "workspace:*",
