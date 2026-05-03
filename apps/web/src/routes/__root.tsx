@@ -38,7 +38,7 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body className="flex min-h-screen flex-col">
-        <RootProvider>
+        <RootProvider theme={{ disableTransitionOnChange: false }}>
           <Outlet />
         </RootProvider>
         <Scripts />

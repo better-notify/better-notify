@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/CHANGELOG.md", "**/routeTree.gen.ts", "**/skills/**"],
+  "ignorePatterns": ["**/CHANGELOG.md", "**/routeTree.gen.ts", "**/skills/**", ".context/**"],
   "plugins": ["import", "typescript", "unicorn"],
   "env": {
     "node": true
