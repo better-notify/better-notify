@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import type { RenderedMessage } from '@betternotify/email';
 import type { SendContext } from '@betternotify/core';
+import { NotifyRpcError } from '@betternotify/core';
 
 let fetchMock: Mock;
 
@@ -168,5 +169,190 @@ describe('cloudflareEmailTransport', () => {
 
     const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
     expect(body.from).toEqual({ email: 'plain@example.com' });
+  });
+});
+
+describe('cloudflareEmailTransport — from validation', () => {
+  it('throws CONFIG error when from is missing', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const msg = { ...baseMessage } as Record<string, unknown>;
+    delete msg.from;
+    await expect(t.send(msg as never, baseCtx)).rejects.toThrow(/no "from"/);
+  });
+});
+
+describe('cloudflareEmailTransport — CF API errors', () => {
+  it('returns VALIDATION for CF error code 10001', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 10001, message: 'email.sending.error.invalid_request_schema' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 400 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcError);
+    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+  });
+
+  it('returns VALIDATION for CF error code 10200', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 10200, message: 'email.sending.error.email.invalid' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 400 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+  });
+
+  it('returns VALIDATION for CF error code 10202 (too big)', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 10202, message: 'email.sending.error.email.too_big' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 400 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+  });
+
+  it('returns CONFIG for CF error code 10203 (sending disabled)', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 10203, message: 'email.sending.error.email.sending_disabled' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 403 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+  });
+
+  it('returns PROVIDER for CF error code 10004 (rate limited)', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 10004, message: 'email.sending.error.throttled' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 429 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+  });
+
+  it('returns PROVIDER for CF error code 10002 (internal server error)', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 10002, message: 'email.sending.error.internal_server' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 500 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+  });
+
+  it('returns PROVIDER for unknown CF error codes', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          errors: [{ code: 99999, message: 'something unexpected' }],
+          messages: [],
+          result: null,
+        }),
+        { status: 500 },
+      ),
+    );
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+  });
+});
+
+describe('cloudflareEmailTransport — network errors', () => {
+  it('returns PROVIDER when fetch throws (network failure)', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error.message).toContain('network error');
+  });
+
+  it('returns PROVIDER when response body is not valid JSON', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(new Response('not json', { status: 200 }));
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
   });
 });
