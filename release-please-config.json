@@ -60,6 +60,16 @@
       "release-type": "node",
       "component": "@betternotify/bullmq",
       "prerelease-type": "alpha"
+    },
+    "packages/telegram": {
+      "release-type": "node",
+      "component": "@betternotify/telegram",
+      "prerelease-type": "alpha"
+    },
+    "packages/cloudflare-email": {
+      "release-type": "node",
+      "component": "@betternotify/cloudflare-email",
+      "prerelease-type": "alpha"
     }
   }
 }

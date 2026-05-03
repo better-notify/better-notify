@@ -1,4 +1,4 @@
 {
   "title": "Provider Packages",
-  "pages": ["smtp", "ses", "resend", "telegram"]
+  "pages": ["ses", "cloudflare-email", "resend", "smtp", "telegram"]
 }

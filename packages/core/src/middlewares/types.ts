@@ -33,7 +33,7 @@ export type MiddlewareParams<TInput, TCtxIn, TCtxOut = TCtxIn, TResult = unknown
 };
 
 /**
- * A middleware function in the BetterNotify send pipeline.
+ * A middleware function in the Better-Notify send pipeline.
  *
  * Middleware wraps the downstream pipeline — it runs before and/or after the
  * render+send core. The composition order is **first-registered wraps

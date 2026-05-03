@@ -20,6 +20,8 @@ import { runCustomChannel } from './examples/custom-channel';
 import { runPerTransportFrom } from './examples/per-transport-from';
 import { runTelegram } from './examples/telegram';
 import { runTelegramCrossTransport } from './examples/telegram-cross-transport';
+import { runCloudflareEmail } from './examples/cloudflare-email';
+import { runCloudflareEmailAttachment } from './examples/cloudflare-email-attachment';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -44,6 +46,8 @@ const examples: Record<string, () => Promise<void>> = {
   'per-transport-from': runPerTransportFrom,
   telegram: runTelegram,
   'telegram-cross-transport': runTelegramCrossTransport,
+  'cloudflare-email': runCloudflareEmail,
+  'cloudflare-email-attachment': runCloudflareEmailAttachment,
 };
 
 const main = async (): Promise<void> => {

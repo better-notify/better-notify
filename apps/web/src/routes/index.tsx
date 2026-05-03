@@ -10,6 +10,7 @@ import { Comparison } from '@/components/landing/comparison';
 import { Install } from '@/components/landing/install';
 import { Cta } from '@/components/landing/faq-cta';
 import { Footer } from '@/components/landing/footer';
+import { Marquee } from '@/components/landing/marquee';
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -21,6 +22,7 @@ function LandingPage() {
       <LandingHeader />
       <main>
         <Hero />
+        <Marquee />
         <Features />
         <Channels />
         <Pipeline />

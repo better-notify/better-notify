@@ -1,12 +1,12 @@
 {
-  "name": "@betternotify/handlebars",
-  "version": "0.0.3-alpha.0",
-  "description": "Handlebars adapter for Better-Notify.",
+  "name": "@betternotify/cloudflare-email",
+  "version": "0.0.1-alpha.0",
+  "description": "Cloudflare Email Service transport for Better-Notify.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/better-notify/better-notify",
-    "directory": "packages/handlebars"
+    "directory": "packages/cloudflare-email"
   },
   "files": [
     "dist",
@@ -24,7 +24,8 @@
   "scripts": {
     "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@betternotify/core": "workspace:*",
@@ -36,9 +37,6 @@
     "rolldown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "peerDependencies": {
-    "handlebars": "catalog:"
   },
   "engines": {
     "node": ">=22"
