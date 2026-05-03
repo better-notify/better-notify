@@ -32,6 +32,7 @@ jobs:
             email
             sms
             push
+            telegram
             bullmq
             smtp
             ses
