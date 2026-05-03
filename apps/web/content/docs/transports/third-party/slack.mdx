@@ -1,0 +1,156 @@
+---
+title: Slack
+icon: SlackLogo
+description: Send messages via Slack Web API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Slack transport is included in `@betternotify/slack`. It calls the [Slack Web API](https://api.slack.com/methods/chat.postMessage) via `fetch` — no external HTTP dependencies required (Node 22+ built-in).
+
+It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `slackTransport()` posts the rendered message to `chat.postMessage`.
+
+## Install
+
+```package-install
+@betternotify/slack
+```
+
+## Usage
+
+```ts
+import { slackTransport } from '@betternotify/slack';
+
+const transport = slackTransport({
+  token: process.env.SLACK_BOT_TOKEN!,
+  defaultChannel: '#notifications',
+});
+```
+
+Pass it to `createClient` via `transportsByChannel`:
+
+```ts
+import { createClient } from '@betternotify/core';
+import { slackChannel, slackTransport } from '@betternotify/slack';
+
+const notify = createClient({
+  catalog,
+  channels: { slack: slackChannel() },
+  transportsByChannel: {
+    slack: slackTransport({ token: process.env.SLACK_BOT_TOKEN! }),
+  },
+});
+```
+
+## Standalone usage
+
+The transport can be used directly without the full pipeline:
+
+```ts
+import { slackTransport } from '@betternotify/slack';
+
+const transport = slackTransport({ token: process.env.SLACK_BOT_TOKEN! });
+
+const result = await transport.send(
+  { text: 'Deploy complete!', to: '#releases' },
+  { route: 'manual', messageId: 'msg-1', attempt: 1 },
+);
+
+console.log(result.data.ts); // Slack message timestamp
+```
+
+## Options
+
+<TypeTable
+  type={{
+    token: {
+      description: 'Slack Bot token (xoxb-...).',
+      type: 'string',
+    },
+    defaultChannel: {
+      description: 'Fallback channel when no "to" is specified in send args. Channel name or ID.',
+      type: 'string',
+      default: 'undefined',
+    },
+    baseUrl: {
+      description: 'Base URL for the Slack Web API. Defaults to https://slack.com/api.',
+      type: 'string',
+      default: '"https://slack.com/api"',
+    },
+    logger: {
+      description: 'Optional logger instance. Defaults to consoleLogger().',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+## Block Kit
+
+Use the `blocks` slot to send rich messages with [Block Kit](https://api.slack.com/block-kit):
+
+```ts
+const catalog = rpc.catalog({
+  deploy: rpc
+    .slack()
+    .input(z.object({ service: z.string(), version: z.string() }))
+    .text(({ input }) => `${input.service} deployed ${input.version}`)
+    .blocks(({ input }) => [
+      { type: 'header', text: { type: 'plain_text', text: `Deploy: ${input.service}` } },
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: `Version *${input.version}* is now live.` },
+      },
+    ]),
+});
+```
+
+The `text` field is always required — Slack uses it as the notification preview and fallback for clients that don't render blocks.
+
+## Threading
+
+Reply in a thread by passing `threadTs`:
+
+```ts
+await notify.deploy.send({
+  to: '#releases',
+  threadTs: '1234567890.123456',
+  input: { service: 'api', version: 'v2.1.0' },
+});
+```
+
+## Verifying the bot token
+
+Call `verify()` at startup to confirm the token is valid:
+
+```ts
+const transport = slackTransport({ token: process.env.SLACK_BOT_TOKEN! });
+const { ok, details } = await transport.verify!();
+
+if (!ok) {
+  throw new Error('Invalid Slack bot token');
+}
+
+console.log('Bot:', details); // { url, team, user, ... }
+```
+
+## Error handling
+
+Slack API errors throw `NotifyRpcError` with a mapped error code:
+
+| Slack error | Code | Meaning |
+|-------------|------|---------|
+| `invalid_auth`, `token_revoked`, `not_authed`, `account_inactive`, `missing_scope` | `CONFIG` | Token/auth issue |
+| `channel_not_found`, `no_text`, `invalid_blocks`, `invalid_arguments`, `msg_too_long` | `VALIDATION` | Bad request data |
+| `ratelimited`, others | `PROVIDER` | Server/rate limit issue |
+
+```ts
+import { NotifyRpcError } from '@betternotify/core';
+
+try {
+  await notify.alert.send({ to: '#ops', input });
+} catch (err) {
+  if (err instanceof NotifyRpcError && err.code === 'CONFIG') {
+    console.error('Check your SLACK_BOT_TOKEN');
+  }
+}
+```

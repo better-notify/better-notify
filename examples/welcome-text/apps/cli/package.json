@@ -16,6 +16,7 @@
     "@betternotify/push": "workspace:*",
     "@betternotify/react-email": "workspace:*",
     "@betternotify/resend": "workspace:*",
+    "@betternotify/slack": "workspace:*",
     "@betternotify/sms": "workspace:*",
     "@betternotify/smtp": "workspace:*",
     "@betternotify/telegram": "workspace:*",

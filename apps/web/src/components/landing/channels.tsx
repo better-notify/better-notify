@@ -1,4 +1,11 @@
-import { Envelope, ChatText, Bell, TelegramLogo, WebhooksLogo } from '@phosphor-icons/react';
+import {
+  Envelope,
+  ChatText,
+  Bell,
+  TelegramLogo,
+  SlackLogo,
+  WebhooksLogo,
+} from '@phosphor-icons/react';
 
 import { useInView } from '@/hooks/use-in-view';
 
@@ -32,11 +39,18 @@ const channels = [
     detail: 'Bot API · Text · Photos · Documents',
   },
   {
+    icon: SlackLogo,
+    name: 'Slack',
+    pkg: '@betternotify/slack',
+    status: 'ready',
+    detail: 'Bot API · Block Kit · Threads',
+  },
+  {
     icon: WebhooksLogo,
     name: 'Custom',
     pkg: 'defineChannel()',
     status: 'always',
-    detail: 'Slack · Discord · Webhooks · in-app',
+    detail: 'Discord · Webhooks · in-app',
   },
 ] as const;
 

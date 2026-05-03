@@ -24,6 +24,8 @@ import { runCloudflareEmail } from './examples/cloudflare-email';
 import { runCloudflareEmailAttachment } from './examples/cloudflare-email-attachment';
 import { runResend } from './examples/resend';
 import { runResendAttachment } from './examples/resend-attachment';
+import { runSlack } from './examples/slack';
+import { runSlackAttachment } from './examples/slack-attachment';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -52,6 +54,8 @@ const examples: Record<string, () => Promise<void>> = {
   'cloudflare-email-attachment': runCloudflareEmailAttachment,
   resend: runResend,
   'resend-attachment': runResendAttachment,
+  slack: runSlack,
+  'slack-attachment': runSlackAttachment,
 };
 
 const main = async (): Promise<void> => {
