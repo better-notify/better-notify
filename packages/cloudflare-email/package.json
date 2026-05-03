@@ -1,0 +1,40 @@
+{
+  "name": "@betternotify/cloudflare-email",
+  "version": "0.1.0",
+  "description": "Cloudflare Email Service transport for BetterNotify.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/better-notify/better-notify",
+    "directory": "packages/cloudflare-email"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@betternotify/core": "workspace:*",
+    "@betternotify/email": "workspace:*"
+  },
+  "devDependencies": {
+    "@internal/rolldown-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "rolldown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
