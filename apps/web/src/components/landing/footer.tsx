@@ -1,5 +1,4 @@
-import { Link } from '@tanstack/react-router';
-import { GithubLogo } from '@phosphor-icons/react';
+import { GithubLogoIcon } from '@phosphor-icons/react';
 
 import { appConfig } from '@/lib/shared';
 
@@ -46,7 +45,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground mt-4 inline-flex items-center gap-1.5 text-[13px] no-underline transition-colors"
             >
-              <GithubLogo size={14} />
+              <GithubLogoIcon size={14} />
               Star on GitHub
             </a>
           </div>
@@ -67,12 +66,12 @@ export function Footer() {
                         {link.label}
                       </a>
                     ) : link.href.startsWith('/') ? (
-                      <Link
-                        to={link.href}
+                      <a
+                        href={link.href}
                         className="text-muted-foreground hover:text-foreground text-[13px] no-underline transition-colors"
                       >
                         {link.label}
-                      </Link>
+                      </a>
                     ) : (
                       <a
                         href={link.href}

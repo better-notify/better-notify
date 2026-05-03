@@ -44,13 +44,13 @@ export function LandingHeader() {
         <nav className="hidden items-center gap-5 md:flex">
           {navLinks.map((link) =>
             link.href.startsWith('/') ? (
-              <Link
+              <a
                 key={link.label}
-                to={link.href}
+                href={link.href}
                 className="text-muted-foreground hover:text-foreground text-[13px] font-medium no-underline transition-colors"
               >
                 {link.label}
-              </Link>
+              </a>
             ) : (
               <a
                 key={link.label}
@@ -124,7 +124,7 @@ export function LandingHeader() {
             link.href.startsWith('/') ? (
               <Link
                 key={link.label}
-                to={link.href}
+                to={link.href as '/docs/$'}
                 className="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium no-underline transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
