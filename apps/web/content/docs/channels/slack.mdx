@@ -1,0 +1,196 @@
+---
+title: Slack
+icon: SlackLogo
+description: Send Slack messages via Web API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Slack channel is provided by `@betternotify/slack`. It sends messages through the [Slack Web API](https://api.slack.com/methods/chat.postMessage) with support for text, Block Kit, threading, and file uploads.
+
+## When to use Slack
+
+Slack is the right channel when you need to deliver notifications to teams or channels inside Slack. Use it for deploy alerts, incident notifications, automated reports, or any scenario where your audience lives in Slack workspaces. Messages support rich formatting via Block Kit and optional file attachments.
+
+```package-install
+@betternotify/slack
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { slackChannel } from '@betternotify/slack';
+
+const slack = slackChannel();
+
+const rpc = createNotify({ channels: { slack } });
+```
+
+## Slots
+
+<TypeTable
+  type={{
+    text: {
+      description: 'The message text. Used as notification fallback and for clients that don\'t render blocks. Accepts a static string or a resolver function.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    blocks: {
+      description: 'Optional Block Kit JSON array for rich formatting. Accepts a static array or a resolver function.',
+      type: 'SlackBlock[] | (args: { input, ctx }) => SlackBlock[]',
+    },
+    file: {
+      description: 'Optional file to upload via the 3-step Slack file upload API. Accepts a static value or a resolver function.',
+      type: '{ data, filename, title?, altText? } | (args: { input, ctx }) => { data, filename, title?, altText? }',
+    },
+  }}
+/>
+
+## Send arguments
+
+<TypeTable
+  type={{
+    to: {
+      description: 'Slack channel name or ID. Optional if defaultChannel is set on the transport.',
+      type: 'string',
+    },
+    threadTs: {
+      description: 'Parent message timestamp for threaded replies. Optional.',
+      type: 'string',
+    },
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+## Full example
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { slackChannel, slackTransport } from '@betternotify/slack';
+import { z } from 'zod';
+
+const slack = slackChannel();
+const rpc = createNotify({ channels: { slack } });
+
+const catalog = rpc.catalog({
+  deployAlert: rpc
+    .slack()
+    .input(z.object({ service: z.string(), version: z.string() }))
+    .text(({ input }) => `${input.service} deployed ${input.version}`)
+    .blocks(({ input }) => [
+      { type: 'header', text: { type: 'plain_text', text: `Deploy: ${input.service}` } },
+      { type: 'section', text: { type: 'mrkdwn', text: `Version *${input.version}* is now live.` } },
+    ]),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { slack },
+  transportsByChannel: {
+    slack: slackTransport({ token: process.env.SLACK_BOT_TOKEN! }),
+  },
+});
+
+await notify.deployAlert.send({
+  to: '#releases',
+  input: { service: 'api', version: 'v2.4.0' },
+});
+```
+
+## Block Kit
+
+Use the `blocks` slot to build rich messages with [Block Kit](https://api.slack.com/block-kit). The `text` field is always required as the notification fallback:
+
+```ts
+.text(({ input }) => input.title)
+.blocks(({ input }) => [
+  { type: 'header', text: { type: 'plain_text', text: input.title } },
+  { type: 'section', text: { type: 'mrkdwn', text: input.body } },
+  { type: 'divider' },
+])
+```
+
+All block types are fully typed — you get autocomplete for `header`, `section`, `image`, `divider`, `actions`, `context`, `input`, `video`, `file`, and `rich_text` blocks.
+
+## Threading
+
+Reply in a thread by passing `threadTs`:
+
+```ts
+await notify.deployAlert.send({
+  to: '#releases',
+  threadTs: '1234567890.123456',
+  input: { service: 'api', version: 'v2.4.0' },
+});
+```
+
+## File uploads
+
+Attach files using the `file` slot. The transport handles the 3-step Slack upload flow automatically:
+
+```ts
+const catalog = rpc.catalog({
+  report: rpc
+    .slack()
+    .input(z.object({ title: z.string(), pdf: z.instanceof(Buffer) }))
+    .text(({ input }) => `Report: ${input.title}`)
+    .file(({ input }) => ({
+      data: input.pdf,
+      filename: `${input.title}.pdf`,
+      title: input.title,
+    })),
+});
+```
+
+File uploads require the `files:write` scope on your Slack app.
+
+## Transport
+
+### Built-in: `slackTransport`
+
+The package includes a ready-to-use transport that calls the Slack Web API via `fetch`:
+
+```ts
+import { slackTransport } from '@betternotify/slack';
+
+const transport = slackTransport({
+  token: process.env.SLACK_BOT_TOKEN!,
+  defaultChannel: '#notifications', // optional fallback
+});
+```
+
+Call `transport.verify()` to validate your bot token at startup via `auth.test`.
+
+### Mock transport
+
+Use `mockSlackTransport()` in tests:
+
+```ts
+import { mockSlackTransport } from '@betternotify/slack';
+
+const transport = mockSlackTransport();
+
+// after sending...
+console.log(transport.messages); // [{ text, to, blocks?, threadTs?, file?, id }]
+transport.reset();
+```
+
+### Multi-transport
+
+Use `multiTransport` from core for failover across multiple Slack workspaces:
+
+```ts
+import { slackTransport } from '@betternotify/slack';
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: slackTransport({ token: process.env.SLACK_PRIMARY! }) },
+    { transport: slackTransport({ token: process.env.SLACK_FALLBACK! }) },
+  ],
+});
+```
