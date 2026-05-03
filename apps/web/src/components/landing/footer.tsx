@@ -15,8 +15,8 @@ const navColumns = [
   {
     title: 'Developers',
     links: [
-      { label: 'Documentation', href: '/docs/$' },
-      { label: 'Quick start', href: '/docs/$' },
+      { label: 'Documentation', href: '/docs' },
+      { label: 'Quick start', href: '/docs' },
       {
         label: 'GitHub',
         href: `https://github.com/${appConfig.git.user}/${appConfig.git.repo}`,

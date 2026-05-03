@@ -14,7 +14,7 @@ import { useState } from 'react';
 import { appConfig } from '@/lib/shared';
 
 const navLinks = [
-  { label: 'Docs', href: '/docs/$' },
+  { label: 'Docs', href: '/docs' },
   { label: 'Channels', href: '#channels' },
   { label: 'Pipeline', href: '#pipeline' },
   { label: 'Compare', href: '#compare' },
@@ -120,27 +120,16 @@ export function LandingHeader() {
 
       {mobileOpen && (
         <nav className="border-border flex flex-col gap-1 border-t px-5 py-3 md:hidden">
-          {navLinks.map((link) =>
-            link.href.startsWith('/') ? (
-              <Link
-                key={link.label}
-                to={link.href as '/docs/$'}
-                className="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium no-underline transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ) : (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium no-underline transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </a>
-            ),
-          )}
+          {navLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium no-underline transition-colors"
+              onClick={() => setMobileOpen(false)}
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
       )}
     </header>

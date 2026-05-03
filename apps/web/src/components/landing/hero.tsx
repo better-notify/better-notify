@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
-import { ArrowRight, GithubLogo } from '@phosphor-icons/react';
+import { ArrowRightIcon, GithubLogoIcon } from '@phosphor-icons/react';
 
 import { appConfig } from '@/lib/shared';
 import { K, F, S, P } from '@/components/landing/syntax';
@@ -330,25 +329,24 @@ export function Hero() {
               className="hero-anim mb-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
               style={{ animationDelay: '160ms' }}
             >
-              <Link
-                to="/docs/$"
-                params={{ _splat: '' }}
+              <a
+                href="/docs"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 group inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold no-underline transition-colors"
               >
                 Get started
-                <ArrowRight
+                <ArrowRightIcon
                   size={14}
                   weight="bold"
                   className="transition-transform group-hover:translate-x-0.5"
                 />
-              </Link>
+              </a>
               <a
                 href={`https://github.com/${appConfig.git.user}/${appConfig.git.repo}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border-border bg-card hover:bg-accent hover:text-foreground text-muted-foreground inline-flex items-center gap-2 rounded-lg border px-5 py-3 text-sm font-medium no-underline transition-colors"
               >
-                <GithubLogo size={16} weight="fill" />
+                <GithubLogoIcon size={16} weight="fill" />
                 View on GitHub
               </a>
             </div>
