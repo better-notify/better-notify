@@ -5,10 +5,10 @@ import { appConfig } from '@/lib/shared';
 import { useInView } from '@/hooks/use-in-view';
 
 export function Cta() {
-  const [ref, inView] = useInView();
+  const [ref, inView, hydrated] = useInView();
   return (
-    <section id="cta" className="px-5 pb-20 md:px-8">
-      <div ref={ref} className={`reveal mx-auto max-w-[920px]${inView ? ' in-view' : ''}`}>
+    <section id="cta" className="py-24 md:py-28">
+      <div ref={ref} className={`${hydrated ? 'reveal' : ''} mx-auto max-w-[1200px] px-5 md:px-8${inView ? ' in-view' : ''}`}>
         <div className="border-border relative overflow-hidden rounded-2xl border bg-gradient-to-b from-white to-bn-slate-100 p-10 dark:from-bn-slate-950 dark:to-bn-slate-900 md:p-12">
           <p className="bn-eyebrow mb-3.5">Open Source</p>
           <h2

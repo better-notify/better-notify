@@ -3,6 +3,11 @@ import { useRef, useState, useEffect } from 'react';
 export const useInView = <T extends HTMLElement = HTMLDivElement>(threshold = 0.1) => {
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
@@ -20,5 +25,5 @@ export const useInView = <T extends HTMLElement = HTMLDivElement>(threshold = 0.
     return () => observer.disconnect();
   }, [threshold]);
 
-  return [ref, inView] as const;
+  return [ref, inView, hydrated] as const;
 };

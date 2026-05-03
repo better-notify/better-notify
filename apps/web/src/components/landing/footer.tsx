@@ -16,8 +16,8 @@ const navColumns = [
   {
     title: 'Developers',
     links: [
-      { label: 'Documentation', href: '/docs' },
-      { label: 'Quick start', href: '/docs' },
+      { label: 'Documentation', href: '/docs/$' },
+      { label: 'Quick start', href: '/docs/$' },
       {
         label: 'GitHub',
         href: `https://github.com/${appConfig.git.user}/${appConfig.git.repo}`,
@@ -68,7 +68,7 @@ export function Footer() {
                       </a>
                     ) : link.href.startsWith('/') ? (
                       <Link
-                        to={link.href as '/docs/$'}
+                        to={link.href}
                         className="text-muted-foreground hover:text-foreground text-[13px] no-underline transition-colors"
                       >
                         {link.label}

@@ -51,12 +51,12 @@ function StatusBadge({ status }: { status: string }) {
 export function Channels() {
   const [primary, ...rest] = channels;
 
-  const [ref, inView] = useInView();
+  const [ref, inView, hydrated] = useInView();
   return (
     <section id="channels" className="py-24 md:py-28">
       <div
         ref={ref}
-        className={`reveal mx-auto max-w-[1200px] px-5 md:px-8${inView ? ' in-view' : ''}`}
+        className={`${hydrated ? 'reveal' : ''} mx-auto max-w-[1200px] px-5 md:px-8${inView ? ' in-view' : ''}`}
       >
         <div className="mb-12">
           <p className="bn-eyebrow mb-3">Channels</p>

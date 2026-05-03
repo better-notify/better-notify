@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 
+const getInitial = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 export const useReducedMotion = () => {
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState(getInitial);
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReduced(mq.matches);
