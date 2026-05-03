@@ -507,6 +507,23 @@ html > body[data-scroll-locked] {
   animation: hero-enter 500ms var(--ease-out) both;
 }
 
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee-scroll 40s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
 .reveal {
   opacity: 0;
   transform: translateY(8px);
