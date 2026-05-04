@@ -257,6 +257,12 @@ importers:
       '@betternotify/email':
         specifier: workspace:*
         version: link:../../../../packages/email
+      '@betternotify/handlebars':
+        specifier: workspace:*
+        version: link:../../../../packages/handlebars
+      '@betternotify/mjml':
+        specifier: workspace:*
+        version: link:../../../../packages/mjml
       '@betternotify/push':
         specifier: workspace:*
         version: link:../../../../packages/push
@@ -281,6 +287,12 @@ importers:
       '@t3-oss/env-core':
         specifier: 0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      handlebars:
+        specifier: 'catalog:'
+        version: 4.7.0
+      mjml:
+        specifier: 'catalog:'
+        version: 4.15.0
       react:
         specifier: 19.2.5
         version: 19.2.5
