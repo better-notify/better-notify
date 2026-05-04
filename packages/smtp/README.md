@@ -87,6 +87,10 @@ defaults: { from: { name: 'My App', email: process.env.SMTP_USER! } }
 Pass attachments through the `attachments` field on send args. Each entry needs `filename` and `content` (Buffer or string); `contentType` defaults to `application/octet-stream`. Use `cid` for inline images referenced via `<img src="cid:logo@inline">` in your HTML.
 
 ```ts
+import { readFile } from 'node:fs/promises';
+
+const logoPngBuffer = await readFile('./logo.png');
+
 await mail.welcome.send({
   to: 'user@example.com',
   input: { name: 'Alice' },
