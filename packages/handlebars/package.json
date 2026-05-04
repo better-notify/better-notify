@@ -33,6 +33,7 @@
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
+    "handlebars": "catalog:",
     "rolldown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

@@ -4,24 +4,130 @@ icon: Code
 description: Build responsive email templates with MJML
 ---
 
-<Callout type="warn">
-The MJML adapter is not yet implemented. The `@betternotify/mjml` package exists but throws `NotifyRpcNotImplementedError` at runtime. This adapter will ship in a future release.
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The `@betternotify/mjml` adapter combines [MJML](https://mjml.io) with [Handlebars](https://handlebarsjs.com) in a two-phase rendering pipeline: MJML compiles to responsive HTML tables at creation time (once), then Handlebars resolves `{{variable}}` placeholders on each render call.
+
+## Install
+
+```sh
+pnpm add @betternotify/mjml mjml handlebars
+```
+
+<Callout type="info">
+MJML requires a Node.js runtime. For Cloudflare Workers or edge runtimes, use [React Email](/docs/templates/react-email) or [Handlebars](/docs/templates/handlebars) instead.
 </Callout>
 
-## Planned design
-
-MJML is a markup language that compiles to responsive HTML email. The `@betternotify/mjml` adapter will take MJML source (as a string or file path) and compile it at render time, producing the HTML and optional plain text that the email channel needs.
-
-The planned API:
+## Basic usage
 
 ```ts
+import { z } from 'zod';
 import { mjmlTemplate } from '@betternotify/mjml';
 
 const welcome = rpc
   .email()
-  .input(z.object({ name: z.string() }))
+  .input(z.object({ name: z.string(), code: z.string() }))
   .subject(({ input }) => `Welcome, ${input.name}!`)
-  .template(mjmlTemplate('./emails/welcome.mjml'));
+  .template(mjmlTemplate(`
+    <mjml>
+      <mj-body>
+        <mj-section>
+          <mj-column>
+            <mj-text font-size="20px">Hello {{name}}</mj-text>
+            <mj-text>Your verification code: {{code}}</mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-body>
+    </mjml>
+  `));
 ```
 
-MJML is a good fit when you want responsive email layouts without hand-writing the table-based HTML that email clients require, and your team prefers a markup language over React components.
+The `{{name}}` and `{{code}}` placeholders survive MJML compilation as literal text in the responsive HTML output, then Handlebars resolves them against `input` at render time.
+
+## How the two-phase rendering works
+
+1. **Creation time** — MJML source compiles to responsive HTML tables. This is the expensive step (parsing MJML, generating table-based layouts, inlining styles). It happens once when the adapter is created.
+2. **Render time** — Handlebars resolves `{{}}` placeholders in the already-compiled HTML using `input` as the data context. This is fast since MJML compilation already happened.
+
+This design means MJML compilation cost is paid at startup, not on every send.
+
+## Text and subject templates
+
+MJML produces HTML only. To include a plain-text alternative and subject, pass Handlebars template strings:
+
+```ts
+.template(mjmlTemplate(mjmlSource, {
+  text: 'Hello {{name}}. Your code: {{code}}',
+  subject: 'Welcome, {{name}}!',
+}))
+```
+
+## Helpers and partials
+
+Full Handlebars syntax works inside MJML markup — conditionals, loops, helpers, and partials:
+
+```ts
+.template(mjmlTemplate(`
+  <mjml>
+    <mj-body>
+      <mj-section>
+        <mj-column>
+          <mj-text>Hello {{upper name}}</mj-text>
+          {{#each items}}
+          <mj-text>• {{this}}</mj-text>
+          {{/each}}
+        </mj-column>
+      </mj-section>
+    </mj-body>
+  </mjml>
+`, {
+  helpers: { upper: (str: string) => str.toUpperCase() },
+}))
+```
+
+## Validation
+
+By default, the adapter throws on MJML validation errors (unregistered elements, structural issues) at creation time — you find problems at startup, not at send time. To opt out:
+
+```ts
+mjmlTemplate(source, { mjml: { validationLevel: 'skip' } })
+```
+
+## API
+
+### `mjmlTemplate(source, opts?)`
+
+<TypeTable
+  type={{
+    source: {
+      description: 'MJML markup string with optional {{}} placeholders. Compiled eagerly.',
+      type: 'string',
+    },
+    'opts.text': {
+      description: 'Handlebars template for the plain text alternative.',
+      type: 'string',
+    },
+    'opts.subject': {
+      description: 'Handlebars template for the subject line (overrides .subject()).',
+      type: 'string',
+    },
+    'opts.helpers': {
+      description: 'Custom Handlebars helpers available in all templates.',
+      type: 'Record<string, Handlebars.HelperDelegate>',
+    },
+    'opts.partials': {
+      description: 'Named partials available via {{> partialName}}.',
+      type: 'Record<string, string>',
+    },
+    'opts.mjml': {
+      description: 'Options passed to mjml2html (validationLevel, beautify, minify, fonts, etc.).',
+      type: 'MjmlOptions',
+    },
+  }}
+/>
+
+Returns a `TemplateAdapter<TInput>`.
+
+## When to use MJML
+
+MJML is a good fit when you want responsive email layouts without hand-writing the table-based HTML that email clients require, and your team prefers a markup language over React components. The Handlebars interpolation layer makes it easy for non-developers to edit template content without understanding the MJML structure.

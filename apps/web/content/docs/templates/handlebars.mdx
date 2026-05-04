@@ -4,24 +4,96 @@ icon: CurlyBraces
 description: Build email templates with Handlebars
 ---
 
-<Callout type="warn">
-The Handlebars adapter is not yet implemented. The `@betternotify/handlebars` package exists but throws `NotifyRpcNotImplementedError` at runtime. This adapter will ship in a future release.
-</Callout>
+import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-## Planned design
+The `@betternotify/handlebars` adapter compiles [Handlebars](https://handlebarsjs.com) templates and renders them with the procedure's validated input at send time. Templates are pre-compiled at creation time for fast renders.
 
-The `@betternotify/handlebars` adapter will compile Handlebars templates (as strings or file paths) and render them with the procedure's input at send time.
+## Install
 
-The planned API:
+```sh
+pnpm add @betternotify/handlebars handlebars
+```
+
+## Basic usage
 
 ```ts
+import { z } from 'zod';
 import { handlebarsTemplate } from '@betternotify/handlebars';
 
 const welcome = rpc
   .email()
   .input(z.object({ name: z.string() }))
   .subject(({ input }) => `Welcome, ${input.name}!`)
-  .template(handlebarsTemplate('./emails/welcome.hbs'));
+  .template(handlebarsTemplate('<h1>Hello {{name}}</h1>'));
 ```
 
-Handlebars is a good fit when you have existing `.hbs` templates from another system, when non-developers need to edit templates without touching TypeScript, or when you want logic-light templates with simple `{{variable}}` interpolation.
+The template receives the procedure's `input` as the Handlebars data context. All standard Handlebars syntax works: `{{#each}}`, `{{#if}}`, `{{#unless}}`, `{{> partial}}`, and custom helpers.
+
+## Text and subject templates
+
+Pass `text` and `subject` options to render all three from a single adapter:
+
+```ts
+.template(handlebarsTemplate(
+  '<h1>Hello {{name}}</h1><ul>{{#each items}}<li>{{this}}</li>{{/each}}</ul>',
+  {
+    text: 'Hello {{name}}. Items: {{#each items}}{{this}} {{/each}}',
+    subject: 'Welcome, {{name}}!',
+  },
+))
+```
+
+All templates share the same Handlebars instance, so helpers and partials registered on the adapter are available in all three.
+
+## Helpers and partials
+
+```ts
+.template(handlebarsTemplate(
+  '<p>{{upper name}}</p><div>{{> footer}}</div>',
+  {
+    helpers: {
+      upper: (str: string) => str.toUpperCase(),
+    },
+    partials: {
+      footer: '<p style="color: gray">Sent by Acme Corp</p>',
+    },
+  },
+))
+```
+
+Each adapter gets its own isolated Handlebars instance — helpers and partials don't leak between templates.
+
+## API
+
+### `handlebarsTemplate(source, opts?)`
+
+<TypeTable
+  type={{
+    source: {
+      description: 'Handlebars HTML template string. Pre-compiled at creation time.',
+      type: 'string',
+    },
+    'opts.text': {
+      description: 'Handlebars template for the plain text alternative.',
+      type: 'string',
+    },
+    'opts.subject': {
+      description: 'Handlebars template for the subject line (overrides .subject()).',
+      type: 'string',
+    },
+    'opts.helpers': {
+      description: 'Custom Handlebars helpers available in all templates.',
+      type: 'Record<string, Handlebars.HelperDelegate>',
+    },
+    'opts.partials': {
+      description: 'Named partials available via {{> partialName}}.',
+      type: 'Record<string, string>',
+    },
+  }}
+/>
+
+Returns a `TemplateAdapter<TInput>`.
+
+## When to use Handlebars
+
+Handlebars is a good fit when you have existing `.hbs` templates from another system, when non-developers need to edit templates without touching TypeScript, or when you want logic-light templates with simple `{{variable}}` interpolation. For responsive email layouts, consider combining Handlebars with [MJML](/docs/templates/mjml) — the MJML adapter uses Handlebars under the hood.

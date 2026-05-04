@@ -33,11 +33,15 @@
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
+    "@types/mjml": "4.7.4",
+    "handlebars": "catalog:",
+    "mjml": "catalog:",
     "rolldown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "handlebars": "catalog:",
     "mjml": "catalog:"
   },
   "engines": {
