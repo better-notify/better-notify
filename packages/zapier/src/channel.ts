@@ -2,8 +2,10 @@ import { defineChannel, slot } from '@betternotify/core';
 import { z } from 'zod';
 import type { RenderedZapier } from './types.js';
 
-/** Static string or resolver returning the Zapier event name. */
-export type EventResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
+/** Static event name or resolver. Constrained to `TEvent` when the channel is generic. */
+export type EventResolver<TInput, TEvent extends string = string> =
+  | TEvent
+  | ((args: { input: TInput; ctx: unknown }) => TEvent);
 
 /** Static object or resolver returning the webhook data payload. */
 export type DataResolver<TInput> =
@@ -21,12 +23,19 @@ const zapierArgsSchema = z.object({
 
 const validateZapierArgs = (args: unknown) => zapierArgsSchema.parse(args);
 
-/** Zapier notification channel with event, data, meta, and webhookUrl slots. */
-export const zapierChannel = () =>
+/**
+ * Zapier notification channel with event, data, meta, and webhookUrl slots.
+ *
+ * Pass a string union generic to constrain allowed event names:
+ * ```ts
+ * const zapier = zapierChannel<'order.created' | 'payment.failed'>();
+ * ```
+ */
+export const zapierChannel = <TEvent extends string = string>() =>
   defineChannel({
     name: 'zapier' as const,
     slots: {
-      event: slot.resolver<string>(),
+      event: slot.resolver<TEvent>(),
       data: slot.resolver<Record<string, unknown>>(),
       meta: slot.resolver<Record<string, string>>().optional(),
       webhookUrl: slot.resolver<string>().optional(),

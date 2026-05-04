@@ -89,4 +89,30 @@ describe('zapierChannel', () => {
     const partial = buildBuilder(ch).event('test');
     expect(() => ch.finalize(partial, 'r')).toThrow(/missing required slot: data/);
   });
+
+  it('accepts constrained event names with generic', async () => {
+    type Events = 'order.created' | 'order.cancelled';
+    const ch = zapierChannel<Events>();
+    const builder = ch
+      .createBuilder({ ctx: undefined, rootMiddleware: [] })
+      .input(z.object({ orderId: z.string() }))
+      .event('order.created')
+      .data(({ input }) => ({ orderId: input.orderId }));
+    const def = ch.finalize(builder, 'order');
+    const out = await ch.render(def, { input: { orderId: '1' } }, {});
+    expect(out.event).toBe('order.created');
+  });
+
+  it('accepts resolver returning constrained event', async () => {
+    type Events = 'user.signup' | 'user.deleted';
+    const ch = zapierChannel<Events>();
+    const builder = ch
+      .createBuilder({ ctx: undefined, rootMiddleware: [] })
+      .input(z.object({ action: z.string() }))
+      .event(() => 'user.signup' as const)
+      .data(() => ({}));
+    const def = ch.finalize(builder, 'user');
+    const out = await ch.render(def, { input: { action: 'create' } }, {});
+    expect(out.event).toBe('user.signup');
+  });
 });
