@@ -35,6 +35,7 @@ import { runSmtpMjml } from './examples/smtp-mjml';
 import { runResendHandlebars } from './examples/resend-handlebars';
 import { runResendMjml } from './examples/resend-mjml';
 import { runEmailCustomHandlebars } from './examples/email-custom-handlebars';
+import { runZapier } from './examples/zapier';
 import { runEmailZapier } from './examples/email-zapier';
 import { runDiscordZapier } from './examples/discord-zapier';
 
@@ -76,6 +77,7 @@ const examples: Record<string, () => Promise<void>> = {
   'resend-handlebars': runResendHandlebars,
   'resend-mjml': runResendMjml,
   'email-custom-handlebars': runEmailCustomHandlebars,
+  zapier: runZapier,
   'email-zapier': runEmailZapier,
   'discord-zapier': runDiscordZapier,
 };
