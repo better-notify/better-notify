@@ -1,0 +1,205 @@
+---
+title: Twilio
+icon: TwilioLogo
+description: Send SMS via Twilio Messages API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Twilio transport is provided by `@betternotify/twilio`. It calls the [Twilio Messages API](https://www.twilio.com/docs/messaging/api/message-resource) via `fetch` with HTTP Basic Auth — no Twilio SDK required (Node 22+ built-in).
+
+It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `twilioSmsTransport()` posts the rendered SMS to Twilio's Messages endpoint.
+
+## Install
+
+```package-install
+@betternotify/twilio
+```
+
+## Getting credentials
+
+1. Sign up at [twilio.com](https://www.twilio.com)
+2. Copy your **Account SID** and **Auth Token** from the [Twilio Console](https://console.twilio.com)
+3. Buy a phone number or create a [Messaging Service](https://console.twilio.com/us1/develop/sms/services)
+
+## Usage
+
+```ts
+import { twilioSmsTransport } from '@betternotify/twilio';
+
+const transport = twilioSmsTransport({
+  accountSid: process.env.TWILIO_ACCOUNT_SID!,
+  authToken: process.env.TWILIO_AUTH_TOKEN!,
+  fromNumber: process.env.TWILIO_FROM_NUMBER!,
+});
+```
+
+Pass it to `createClient` via `transportsByChannel`:
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { smsChannel } from '@betternotify/sms';
+import { twilioSmsTransport } from '@betternotify/twilio';
+import { z } from 'zod';
+
+const sms = smsChannel();
+const rpc = createNotify({ channels: { sms } });
+
+const catalog = rpc.catalog({
+  otpCode: rpc
+    .sms()
+    .input(z.object({ code: z.string().length(6) }))
+    .body(({ input }) => `Your code is ${input.code}. Expires in 10 minutes.`),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { sms },
+  transportsByChannel: {
+    sms: twilioSmsTransport({
+      accountSid: process.env.TWILIO_ACCOUNT_SID!,
+      authToken: process.env.TWILIO_AUTH_TOKEN!,
+      fromNumber: process.env.TWILIO_FROM_NUMBER!,
+    }),
+  },
+});
+
+await notify.otpCode.send({
+  to: '+15555555555',
+  input: { code: '482910' },
+});
+```
+
+## Standalone usage
+
+The transport can be used directly without the full pipeline:
+
+```ts
+import { twilioSmsTransport } from '@betternotify/twilio';
+
+const transport = twilioSmsTransport({
+  accountSid: process.env.TWILIO_ACCOUNT_SID!,
+  authToken: process.env.TWILIO_AUTH_TOKEN!,
+  fromNumber: '+15551234567',
+});
+
+const result = await transport.send(
+  { body: 'Your order has shipped!', to: '+15559876543' },
+  { route: 'manual', messageId: 'msg-1', attempt: 1 },
+);
+
+if (!result.ok) {
+  throw result.error;
+}
+console.log(result.data.messageId); // Twilio Message SID
+```
+
+## Options
+
+<TypeTable
+  type={{
+    accountSid: {
+      description: 'Twilio Account SID.',
+      type: 'string',
+    },
+    authToken: {
+      description: 'Twilio Auth Token.',
+      type: 'string',
+    },
+    fromNumber: {
+      description: 'Default sender phone number (E.164 format). Required if messagingServiceSid is not set.',
+      type: 'string',
+    },
+    messagingServiceSid: {
+      description: 'Twilio Messaging Service SID for number pooling. Takes priority over fromNumber when both are set.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Base URL for the Twilio API.',
+      type: 'string',
+      default: '"https://api.twilio.com"',
+    },
+    timeoutMs: {
+      description: 'Request timeout in milliseconds.',
+      type: 'number',
+      default: '30000',
+    },
+    logger: {
+      description: 'Optional logger instance. Defaults to consoleLogger().',
+      type: 'LoggerLike',
+    },
+  }}
+/>
+
+## Messaging Service
+
+For number pooling, local number selection, or compliance use cases, pass a Messaging Service SID instead of a phone number:
+
+```ts
+const transport = twilioSmsTransport({
+  accountSid: process.env.TWILIO_ACCOUNT_SID!,
+  authToken: process.env.TWILIO_AUTH_TOKEN!,
+  messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID!,
+});
+```
+
+When both `fromNumber` and `messagingServiceSid` are provided, `messagingServiceSid` takes priority (matching Twilio's own behavior).
+
+## WhatsApp
+
+Twilio uses the same Messages API for WhatsApp. Prefix the `fromNumber` and the `to` address with `whatsapp:`:
+
+```ts
+const transport = twilioSmsTransport({
+  accountSid: process.env.TWILIO_ACCOUNT_SID!,
+  authToken: process.env.TWILIO_AUTH_TOKEN!,
+  fromNumber: 'whatsapp:+15551234567',
+});
+
+await notify.orderShipped.send({
+  to: 'whatsapp:+15559876543',
+  input: { orderId: 'ORD-9281' },
+});
+```
+
+No code changes are needed — the transport sends whatever `To` and `From` values it receives, and Twilio routes to WhatsApp when it sees the prefix. You will need a [WhatsApp-enabled sender](https://www.twilio.com/docs/whatsapp) configured in your Twilio account.
+
+## Verifying credentials
+
+Call `verify()` at startup to confirm the Account SID and Auth Token are valid:
+
+```ts
+const transport = twilioSmsTransport({ ... });
+const { ok, details } = await transport.verify!();
+
+if (!ok) {
+  throw new Error('Invalid Twilio credentials');
+}
+
+console.log(details); // { friendlyName, status }
+```
+
+## Error handling
+
+Twilio API errors are normalized to `NotifyRpcError` with mapped error codes:
+
+| Twilio error code | Code | Meaning |
+|-------------------|------|---------|
+| 20003, 20005, 20006, 20008 | `CONFIG` | Authentication or account issue |
+| 21211, 21612, 21610, 21614, 21217, 21219 | `VALIDATION` | Invalid number, unsubscribed, or bad input |
+| 14107, 20429, 63018 (or HTTP 429) | `RATE_LIMITED` | Rate limit exceeded |
+| HTTP 401, 403 | `CONFIG` | Credentials rejected |
+| Others | `PROVIDER` | Server or delivery issue |
+
+```ts
+import { NotifyRpcError } from '@betternotify/core';
+
+const result = await notify.otpCode.send({ to: '+15555555555', input: { code: '123456' } });
+
+if (!result.ok) {
+  const err = result.error as NotifyRpcError;
+  if (err.code === 'VALIDATION') {
+    console.error('Invalid phone number:', err.message);
+  }
+}
+```
