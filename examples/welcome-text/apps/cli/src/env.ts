@@ -69,6 +69,12 @@ export const env = createEnv({
      */
     SLACK_BOT_TOKEN: z.string().optional().default('xoxb-test').describe('Slack bot token'),
     SLACK_CHANNEL: z.string().optional().default('#general').describe('Slack channel'),
+
+    ZAPIER_WEBHOOK_URL: z
+      .string()
+      .optional()
+      .default('https://hooks.zapier.com/hooks/catch/123/abc')
+      .describe('Zapier webhook URL'),
   },
   runtimeEnv: process.env,
 });

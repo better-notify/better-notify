@@ -287,6 +287,9 @@ importers:
       '@betternotify/telegram':
         specifier: workspace:*
         version: link:../../../../packages/telegram
+      '@betternotify/zapier':
+        specifier: workspace:*
+        version: link:../../../../packages/zapier
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
