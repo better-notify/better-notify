@@ -63,6 +63,28 @@ Returns `Promise<RenderedOutput>` (`{ html, text? }`) ready to return from your 
 
 `.template()` itself is the inference site — it gives the lambda fully-typed `{ input, ctx }`. Inside the lambda you compute props however you want (rename, format dates, build URLs) and hand them to `reactEmail`. No factory, no schema duplication, no explicit generics.
 
+## Plain-text alternatives
+
+Setting `plainText: true` generates a text version alongside HTML using `react-email`'s `toPlainText()`. Many email providers factor plain-text presence into spam scoring — messages with both HTML and text alternatives score better than HTML-only. Recommended for transactional email.
+
+Heading elements (`h1`–`h6`) are rendered without uppercase coercion in the plain-text output. By default, `toPlainText()` uppercases headings for emphasis; this adapter disables that to preserve the original casing from your component.
+
 ## JSX setup
 
 Templates are `.tsx` files. Add `/** @jsxImportSource react */` at the top of each, or set `"jsx": "react-jsx"` in your tsconfig. With the new automatic JSX runtime, you don't need `import React`.
+
+## Tests & development
+
+```sh
+pnpm --filter @betternotify/react-email test
+pnpm --filter @betternotify/react-email build
+```
+
+## Manual verification checklist
+
+These scenarios go beyond unit tests and need visual inspection:
+
+- **Email client rendering**: send a React Email template through a real transport and open in Gmail, Outlook, and Apple Mail. Check layout, images, and button styling.
+- **Dark mode**: verify the template renders correctly in dark-mode email clients (Outlook dark, Gmail dark).
+- **Mobile responsiveness**: check the rendered email on a mobile viewport — React Email components should be responsive by default, but custom styles may break.
+- **Plain-text quality**: enable `plainText: true` and review the generated text for readability — check that links are visible, headings are clear, and no HTML artifacts leak through.

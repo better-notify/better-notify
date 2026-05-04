@@ -28,6 +28,14 @@ import { runSlack } from './examples/slack';
 import { runSlackAttachment } from './examples/slack-attachment';
 import { runDiscord } from './examples/discord';
 import { runDiscordAttachment } from './examples/discord-attachment';
+import { runDiscordHandlebars } from './examples/discord-handlebars';
+import { runSlackHandlebars } from './examples/slack-handlebars';
+import { runSmtpHandlebars } from './examples/smtp-handlebars';
+import { runSmtpMjml } from './examples/smtp-mjml';
+import { runResendHandlebars } from './examples/resend-handlebars';
+import { runResendMjml } from './examples/resend-mjml';
+import { runEmailCustomHandlebars } from './examples/email-custom-handlebars';
+import { runTwilio } from './examples/sms-twilio';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -60,6 +68,14 @@ const examples: Record<string, () => Promise<void>> = {
   'slack-attachment': runSlackAttachment,
   discord: runDiscord,
   'discord-attachment': runDiscordAttachment,
+  'discord-handlebars': runDiscordHandlebars,
+  'slack-handlebars': runSlackHandlebars,
+  'smtp-handlebars': runSmtpHandlebars,
+  'smtp-mjml': runSmtpMjml,
+  'resend-handlebars': runResendHandlebars,
+  'resend-mjml': runResendMjml,
+  'email-custom-handlebars': runEmailCustomHandlebars,
+  'sms-twilio': runTwilio,
 };
 
 const main = async (): Promise<void> => {
