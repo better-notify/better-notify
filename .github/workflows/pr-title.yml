@@ -5,12 +5,33 @@ on:
     types: [opened, edited, synchronize, reopened]
 
 permissions:
+  contents: read
   pull-requests: read
 
 jobs:
   semantic-title:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: packages
+          sparse-checkout-cone-mode: false
+
+      - name: Derive scopes from packages/
+        id: scopes
+        run: |
+          pkg_scopes=$(ls -d packages/*/ | xargs -I{} basename {} | sort | tr '\n' '\n')
+          all_scopes=$(printf '%s\n%s' "$pkg_scopes" "release
+          deps
+          repo
+          ci
+          web")
+          {
+            echo "list<<EOF"
+            echo "$all_scopes"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - uses: amannn/action-semantic-pull-request@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -27,28 +48,7 @@ jobs:
             ci
             chore
             revert
-          scopes: |
-            core
-            email
-            sms
-            push
-            telegram
-            discord
-            slack
-            zapier
-            bullmq
-            smtp
-            ses
-            resend
-            mjml
-            handlebars
-            react-email
-            cloudflare-email
-            release
-            deps
-            repo
-            ci
-            web
+          scopes: ${{ steps.scopes.outputs.list }}
           requireScope: false
           subjectPattern: ^(?![A-Z]).+$
           subjectPatternError: |
