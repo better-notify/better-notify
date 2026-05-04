@@ -592,6 +592,26 @@ describe('slackTransport', () => {
     });
   });
 
+  it('throws PROVIDER when callApi receives an empty success body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('   ', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    const promise = t.send({ text: 'hi', to: '#x' }, ctx);
+
+    await expect(promise).rejects.toMatchObject({
+      message: 'Slack chat.postMessage: empty response body',
+      code: 'PROVIDER',
+    });
+  });
+
   it('returns PROVIDER when file upload fetch throws network error', async () => {
     const fetchMock = vi
       .fn()
