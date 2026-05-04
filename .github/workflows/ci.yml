@@ -32,7 +32,7 @@ jobs:
       - name: Save turbo cache
         uses: actions/cache/save@v4
         with:
-          path: node_modules/.cache/turbo
+          path: .turbo/cache
           key: turbo-${{ runner.os }}-${{ github.sha }}
 
   ci:
