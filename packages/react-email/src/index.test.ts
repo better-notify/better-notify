@@ -40,4 +40,29 @@ describe('reactEmail', () => {
     const result = await reactEmail(Welcome, { name: 'John' }, { pretty: true });
     expect(result.html).toContain('\n');
   });
+
+  it('handles UTF-8 props with accents and emoji', async () => {
+    const result = await reactEmail(Welcome, { name: 'José García 🌍' });
+    expect(result.html).toContain('José García 🌍');
+  });
+
+  it('wraps output with XHTML 1.0 Transitional DOCTYPE', async () => {
+    const result = await reactEmail(Welcome, { name: 'John' });
+    expect(result.html).toMatch(
+      /^<!DOCTYPE html PUBLIC "-\/\/W3C\/\/DTD XHTML 1\.0 Transitional\/\/EN"/,
+    );
+  });
+
+  it('preserves heading case in plain-text output (NO_UPPERCASE_SELECTORS)', async () => {
+    const result = await reactEmail(Welcome, { name: 'World' }, { plainText: true });
+    expect(result.text).toContain('Hello, World!');
+    expect(result.text).not.toContain('HELLO, WORLD!');
+  });
+
+  it('pretty and plainText together produce formatted html and text', async () => {
+    const result = await reactEmail(Welcome, { name: 'John' }, { pretty: true, plainText: true });
+    expect(result.html).toContain('\n');
+    expect(result.text).toBeDefined();
+    expect(result.text).toContain('Hello, John!');
+  });
 });

@@ -25,7 +25,9 @@ export const catalog = rpc.catalog({
   welcome: rpc
     .email()
     .input(z.object({ name: z.string(), code: z.string() }))
-    .template(mjmlTemplate(`
+    .template(
+      mjmlTemplate(
+        `
       <mjml>
         <mj-body>
           <mj-section>
@@ -36,10 +38,13 @@ export const catalog = rpc.catalog({
           </mj-section>
         </mj-body>
       </mjml>
-    `, {
-      subject: 'Welcome, {{name}}!',
-      text: 'Hello {{name}}. Your code: {{code}}',
-    })),
+    `,
+        {
+          subject: 'Welcome, {{name}}!',
+          text: 'Hello {{name}}. Your code: {{code}}',
+        },
+      ),
+    ),
 });
 ```
 
@@ -47,14 +52,14 @@ export const catalog = rpc.catalog({
 
 ### `mjmlTemplate(source, opts?)`
 
-| Arg            | Type                                      | Notes                                                                     |
-| -------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
-| `source`       | `string`                                  | MJML markup with optional `{{}}` placeholders. Compiled eagerly.          |
-| `opts.text`    | `string`                                  | Handlebars template for the plain-text alternative.                       |
-| `opts.subject` | `string`                                  | Handlebars template for the subject line.                                 |
-| `opts.helpers` | `Record<string, Handlebars.HelperDelegate>` | Custom Handlebars helpers available in all templates.                     |
-| `opts.partials`| `Record<string, string>`                  | Named partials available via `{{> partialName}}`.                         |
-| `opts.mjml`    | `MjmlOptions`                             | Options passed to `mjml2html` (validation level, beautify, minify, etc.). |
+| Arg             | Type                                        | Notes                                                                     |
+| --------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
+| `source`        | `string`                                    | MJML markup with optional `{{}}` placeholders. Compiled eagerly.          |
+| `opts.text`     | `string`                                    | Handlebars template for the plain-text alternative.                       |
+| `opts.subject`  | `string`                                    | Handlebars template for the subject line.                                 |
+| `opts.helpers`  | `Record<string, Handlebars.HelperDelegate>` | Custom Handlebars helpers available in all templates.                     |
+| `opts.partials` | `Record<string, string>`                    | Named partials available via `{{> partialName}}`.                         |
+| `opts.mjml`     | `MjmlOptions`                               | Options passed to `mjml2html` (validation level, beautify, minify, etc.). |
 
 Returns a `TemplateAdapter<TInput>`. Two-phase rendering:
 

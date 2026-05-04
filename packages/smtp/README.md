@@ -82,6 +82,38 @@ If you see this and want the original address to stick, switch to a provider tha
 defaults: { from: { name: 'My App', email: process.env.SMTP_USER! } }
 ```
 
+## Attachments
+
+Pass attachments through the `attachments` field on send args. Each entry needs `filename` and `content` (Buffer or string); `contentType` defaults to `application/octet-stream`. Use `cid` for inline images referenced via `<img src="cid:logo@inline">` in your HTML.
+
+```ts
+await mail.welcome.send({
+  to: 'user@example.com',
+  input: { name: 'Alice' },
+  attachments: [
+    {
+      filename: 'invoice.pdf',
+      content: await readFile('./invoice.pdf'),
+      contentType: 'application/pdf',
+    },
+    {
+      filename: 'logo.png',
+      content: logoPngBuffer,
+      contentType: 'image/png',
+      cid: 'logo@inline',
+    },
+  ],
+});
+```
+
+## UTF-8 and special characters
+
+Nodemailer handles UTF-8 encoding for subjects, display names, and body content automatically. Non-ASCII characters (accented names, CJK, emoji) work without extra configuration in subjects, From/To display names, and HTML/text bodies.
+
+## Known limitations
+
+The SMTP transport maps `from`, `to`, `cc`, `bcc`, `replyTo`, `subject`, `html`, `text`, `headers`, and `attachments` from `RenderedMessage`. The `inlineAssets`, `tags`, and `priority` fields are **not forwarded** to nodemailer — SMTP has no standard mechanism for metadata tags or priority hints beyond custom headers. If you need these, map them to `X-` headers via middleware before they reach the transport.
+
 ## Tests & development
 
 ```sh
@@ -89,4 +121,25 @@ pnpm --filter @betternotify/smtp test
 pnpm --filter @betternotify/smtp build
 ```
 
-Tests use a mocked nodemailer — no real SMTP server needed. To exercise against a local catcher, point at [Mailpit](https://github.com/axllent/mailpit) or [maildev](https://github.com/maildev/maildev).
+Unit tests use a mocked nodemailer — no real SMTP server needed. To exercise against a local catcher, point at [Mailpit](https://github.com/axllent/mailpit) or [maildev](https://github.com/maildev/maildev).
+
+### Integration tests (Ethereal)
+
+The `integration.test.ts` suite sends real email through [Ethereal](https://ethereal.email/) (a free throwaway SMTP service from the nodemailer team). It's skipped by default and requires network access:
+
+```sh
+SMTP_INTEGRATION=1 pnpm --filter @betternotify/smtp test
+```
+
+The test prints an Ethereal preview URL so you can inspect the delivered message in a browser.
+
+## Manual verification checklist
+
+These scenarios need live credentials and cannot be fully automated:
+
+- **Deliverability**: send to a real inbox (Gmail, Outlook) and confirm the message arrives in the primary tab, not spam.
+- **DKIM signature**: configure `dkim` and verify the signature using a mail header analyzer (e.g. Google Admin Toolbox).
+- **From-address rewriting**: send with a `from` different from `auth.user` and check whether the provider rewrites it. Observe the one-time warning in logs.
+- **Large attachments**: send a message with a 10 MB+ attachment; confirm the provider doesn't silently truncate or reject.
+- **Connection pool reconnect**: enable `pool: true`, send a message, wait 10+ minutes (beyond server idle timeout), then send another. Verify the pool recovers without error.
+- **TLS modes**: test both `secure: false` (STARTTLS on 587) and `secure: true` (implicit TLS on 465) against your provider.
