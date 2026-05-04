@@ -196,4 +196,80 @@ describe('smtpTransport', () => {
     delete msg.from;
     await expect(t.send(msg as never, baseCtx)).rejects.toThrow(/no "from"/);
   });
+
+  it('handles UTF-8 subject, display name, and body', async () => {
+    sendMailMock.mockResolvedValue({ messageId: 'x', accepted: [], rejected: [] });
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    await t.send(
+      {
+        ...baseMessage,
+        from: { name: 'José García', email: 'jose@example.com' },
+        to: [{ name: 'Müller', email: 'muller@example.com' }],
+        subject: 'Welcome — José! 📧',
+        html: '<p>Héllo wörld 🌍</p>',
+        text: 'Héllo wörld 🌍',
+      },
+      baseCtx,
+    );
+    const arg = sendMailMock.mock.calls[0]?.[0];
+    expect(arg.from).toBe('"José García" <jose@example.com>');
+    expect(arg.to).toEqual(['"Müller" <muller@example.com>']);
+    expect(arg.subject).toBe('Welcome — José! 📧');
+    expect(arg.html).toBe('<p>Héllo wörld 🌍</p>');
+    expect(arg.text).toBe('Héllo wörld 🌍');
+  });
+
+  it('passes custom headers through to nodemailer', async () => {
+    sendMailMock.mockResolvedValue({ messageId: 'x', accepted: [], rejected: [] });
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const headers = { 'X-Custom-Id': 'abc-123', 'X-Campaign': 'onboarding' };
+    await t.send({ ...baseMessage, headers }, baseCtx);
+    const arg = sendMailMock.mock.calls[0]?.[0];
+    expect(arg.headers).toEqual(headers);
+  });
+
+  it('verify() rejects when nodemailer rejects', async () => {
+    verifyMock.mockRejectedValue(new Error('ECONNREFUSED'));
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    if (!t.verify) throw new Error('verify expected');
+    await expect(t.verify()).rejects.toThrow('ECONNREFUSED');
+  });
+
+  it('sends HTML-only when text is omitted', async () => {
+    sendMailMock.mockResolvedValue({ messageId: 'x', accepted: [], rejected: [] });
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const { text: _text, ...htmlOnly } = baseMessage;
+    await t.send(htmlOnly as never, baseCtx);
+    const arg = sendMailMock.mock.calls[0]?.[0];
+    expect(arg.html).toBe('<p>hi</p>');
+    expect(arg.text).toBeUndefined();
+  });
+
+  it('sends text-only when html is omitted', async () => {
+    sendMailMock.mockResolvedValue({ messageId: 'x', accepted: [], rejected: [] });
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const { html: _html, ...textOnly } = baseMessage;
+    await t.send(textOnly as never, baseCtx);
+    const arg = sendMailMock.mock.calls[0]?.[0];
+    expect(arg.text).toBe('hi');
+    expect(arg.html).toBeUndefined();
+  });
+
+  it('silently drops inlineAssets, tags, and priority (not mapped to nodemailer)', async () => {
+    sendMailMock.mockResolvedValue({ messageId: 'x', accepted: [], rejected: [] });
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    await t.send(
+      {
+        ...baseMessage,
+        inlineAssets: { logo: { content: Buffer.from('png'), contentType: 'image/png' } },
+        tags: { campaign: 'onboarding' },
+        priority: 'high',
+      } as never,
+      baseCtx,
+    );
+    const arg = sendMailMock.mock.calls[0]?.[0];
+    expect(arg.inlineAssets).toBeUndefined();
+    expect(arg.tags).toBeUndefined();
+    expect(arg.priority).toBeUndefined();
+  });
 });

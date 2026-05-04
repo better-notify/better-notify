@@ -73,9 +73,7 @@ describe('mjmlTemplate', () => {
   });
 
   it('throws on malformed MJML source', () => {
-    expect(() => mjmlTemplate('<invalid>not mjml</invalid>')).toThrow(
-      /Malformed MJML/,
-    );
+    expect(() => mjmlTemplate('<invalid>not mjml</invalid>')).toThrow(/Malformed MJML/);
   });
 
   it('throws on MJML with validation errors by default', () => {

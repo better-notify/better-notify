@@ -15,6 +15,9 @@ catalogs:
     '@standard-schema/spec':
       specifier: 1.1.0
       version: 1.1.0
+    '@t3-oss/env-core':
+      specifier: 0.13.11
+      version: 0.13.11
     '@tailwindcss/vite':
       specifier: 4.2.4
       version: 4.2.4
@@ -285,7 +288,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../packages/telegram
       '@t3-oss/env-core':
-        specifier: 0.13.11
+        specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       handlebars:
         specifier: 'catalog:'

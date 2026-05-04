@@ -28,9 +28,7 @@ describe('handlebarsTemplate', () => {
   });
 
   it('supports nested object paths', async () => {
-    const adapter = handlebarsTemplate<{ user: { name: string } }>(
-      '<p>Hi {{user.name}}</p>',
-    );
+    const adapter = handlebarsTemplate<{ user: { name: string } }>('<p>Hi {{user.name}}</p>');
     const result = await adapter.render({ input: { user: { name: 'Bob' } }, ctx: {} });
     expect(result.html).toBe('<p>Hi Bob</p>');
   });
@@ -60,9 +58,7 @@ describe('handlebarsTemplate', () => {
   });
 
   it('supports conditional blocks', async () => {
-    const adapter = handlebarsTemplate<{ show: boolean }>(
-      '{{#if show}}<p>visible</p>{{/if}}',
-    );
+    const adapter = handlebarsTemplate<{ show: boolean }>('{{#if show}}<p>visible</p>{{/if}}');
     const shown = await adapter.render({ input: { show: true }, ctx: {} });
     expect(shown.html).toBe('<p>visible</p>');
     const hidden = await adapter.render({ input: { show: false }, ctx: {} });

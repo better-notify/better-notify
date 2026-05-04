@@ -17,6 +17,7 @@ catalog:
   '@phosphor-icons/react': 2.1.10
   '@react-email/components': 0.0.30
   '@standard-schema/spec': 1.1.0
+  '@t3-oss/env-core': 0.13.11
   '@tailwindcss/vite': 4.2.4
   '@tanstack/react-router': 1.168.25
   '@tanstack/react-start': 1.167.50

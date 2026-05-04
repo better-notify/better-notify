@@ -23,15 +23,20 @@ export const catalog = rpc.catalog({
   welcome: rpc
     .email()
     .input(z.object({ name: z.string(), items: z.array(z.string()) }))
-    .template(handlebarsTemplate(`
+    .template(
+      handlebarsTemplate(
+        `
       <h1>Hello {{name}}</h1>
       <ul>
         {{#each items}}<li>{{this}}</li>{{/each}}
       </ul>
-    `, {
-      subject: 'Welcome, {{name}}!',
-      text: 'Hello {{name}}. Items: {{#each items}}{{this}} {{/each}}',
-    })),
+    `,
+        {
+          subject: 'Welcome, {{name}}!',
+          text: 'Hello {{name}}. Items: {{#each items}}{{this}} {{/each}}',
+        },
+      ),
+    ),
 });
 ```
 
@@ -39,13 +44,13 @@ export const catalog = rpc.catalog({
 
 ### `handlebarsTemplate(source, opts?)`
 
-| Arg            | Type                                      | Notes                                                      |
-| -------------- | ----------------------------------------- | ---------------------------------------------------------- |
-| `source`       | `string`                                  | Handlebars HTML template. Compiled eagerly at creation.    |
-| `opts.text`    | `string`                                  | Handlebars template for the plain-text alternative.        |
-| `opts.subject` | `string`                                  | Handlebars template for the subject line.                  |
-| `opts.helpers` | `Record<string, Handlebars.HelperDelegate>` | Custom Handlebars helpers available in all templates.      |
-| `opts.partials`| `Record<string, string>`                  | Named partials available via `{{> partialName}}`.          |
+| Arg             | Type                                        | Notes                                                   |
+| --------------- | ------------------------------------------- | ------------------------------------------------------- |
+| `source`        | `string`                                    | Handlebars HTML template. Compiled eagerly at creation. |
+| `opts.text`     | `string`                                    | Handlebars template for the plain-text alternative.     |
+| `opts.subject`  | `string`                                    | Handlebars template for the subject line.               |
+| `opts.helpers`  | `Record<string, Handlebars.HelperDelegate>` | Custom Handlebars helpers available in all templates.   |
+| `opts.partials` | `Record<string, string>`                    | Named partials available via `{{> partialName}}`.       |
 
 Returns a `TemplateAdapter<TInput>`. Each `render({ input })` call executes the pre-compiled template with `input` as the Handlebars data context.
 
