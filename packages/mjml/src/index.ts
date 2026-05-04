@@ -51,7 +51,6 @@ export const mjmlTemplate = <TInput>(
   source: string,
   opts?: MjmlTemplateOptions,
 ): TemplateAdapter<TInput> => {
-  // @types/mjml-core@5 types mjml2html as async, but mjml@4 is sync at runtime
   const { html: compiledHtml, errors } = mjml2html(source, opts?.mjml) as unknown as MjmlResult;
 
   if (errors.length > 0) {
@@ -74,8 +73,8 @@ export const mjmlTemplate = <TInput>(
   }
 
   const htmlTemplate = instance.compile(compiledHtml);
-  const textTemplate = opts?.text ? instance.compile(opts.text) : undefined;
-  const subjectTemplate = opts?.subject ? instance.compile(opts.subject) : undefined;
+  const textTemplate = opts?.text !== undefined ? instance.compile(opts.text) : undefined;
+  const subjectTemplate = opts?.subject !== undefined ? instance.compile(opts.subject) : undefined;
 
   return {
     render: async ({ input }) => {

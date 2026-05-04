@@ -42,8 +42,8 @@ export const handlebarsTemplate = <TInput>(
   }
 
   const htmlTemplate = instance.compile(source);
-  const textTemplate = opts?.text ? instance.compile(opts.text) : undefined;
-  const subjectTemplate = opts?.subject ? instance.compile(opts.subject) : undefined;
+  const textTemplate = opts?.text !== undefined ? instance.compile(opts.text) : undefined;
+  const subjectTemplate = opts?.subject !== undefined ? instance.compile(opts.subject) : undefined;
 
   return {
     render: async ({ input }) => {

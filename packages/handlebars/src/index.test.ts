@@ -68,4 +68,14 @@ describe('handlebarsTemplate', () => {
     const hidden = await adapter.render({ input: { show: false }, ctx: {} });
     expect(hidden.html).toBe('');
   });
+
+  it('preserves explicit empty text/subject templates', async () => {
+    const adapter = handlebarsTemplate<{ name: string }>('<h1>Hello {{name}}</h1>', {
+      text: '',
+      subject: '',
+    });
+    const result = await adapter.render({ input: { name: 'Jane' }, ctx: {} });
+    expect(result.text).toBe('');
+    expect(result.subject).toBe('');
+  });
 });
