@@ -72,7 +72,10 @@ export const runDiscordZapier = async (): Promise<void> => {
     },
   });
 
-  console.log('zapier order.created:', { messageId: orderResult.messageId, data: orderResult.data });
+  console.log('zapier order.created:', {
+    messageId: orderResult.messageId,
+    data: orderResult.data,
+  });
 
   const vipResult = await notify.highValueOrder.send({
     input: { orderId: 'ORD-43', total: 5000, customerEmail: 'whale@corp.com' },

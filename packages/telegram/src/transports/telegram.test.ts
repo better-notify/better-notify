@@ -137,6 +137,52 @@ describe('telegramTransport', () => {
     });
   });
 
+  it('throws PROVIDER when the Telegram API returns an HTTP error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'too many requests' }), {
+          status: 429,
+          statusText: 'Too Many Requests',
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const t = telegramTransport({ token: 'T' });
+
+    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+      code: 'PROVIDER',
+      message: expect.stringContaining('HTTP 429'),
+    });
+  });
+
+  it('throws PROVIDER when the Telegram request fails before a response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('socket closed')));
+
+    const t = telegramTransport({ token: 'T' });
+
+    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+      code: 'PROVIDER',
+      message: expect.stringContaining('network error: socket closed'),
+      cause: expect.any(Error),
+    });
+  });
+
+  it('throws TIMEOUT when the Telegram request is aborted', async () => {
+    const error = new Error('aborted');
+    error.name = 'AbortError';
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(error));
+
+    const t = telegramTransport({ token: 'T', timeoutMs: 1 });
+
+    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+      code: 'TIMEOUT',
+      message: expect.stringContaining('request timed out'),
+      cause: error,
+    });
+  });
+
   it('verify() calls getMe and returns ok with details', async () => {
     const fetchMock = mockFetch({ ok: true, result: { id: 1, is_bot: true, first_name: 'Bot' } });
     vi.stubGlobal('fetch', fetchMock);

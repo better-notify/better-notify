@@ -38,7 +38,9 @@ describe('discordTransport', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toBe(WEBHOOK_URL);
     expect(init.method).toBe('POST');
-    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe(
+      'application/json',
+    );
     expect(JSON.parse(init.body)).toEqual({ content: 'Hello Discord!' });
   });
 
@@ -315,7 +317,9 @@ describe('discordTransport — attachments', () => {
     );
 
     const [, init] = fetchMock.mock.calls[0]!;
-    expect(new Headers((init.headers ?? {}) as Record<string, string>).get('Content-Type')).toBeNull();
+    expect(
+      new Headers((init.headers ?? {}) as Record<string, string>).get('Content-Type'),
+    ).toBeNull();
   });
 
   it('uses JSON when attachments array is empty', async () => {
@@ -325,7 +329,9 @@ describe('discordTransport — attachments', () => {
     await t.send({ ...baseMessage, attachments: [] }, ctx);
 
     const [, init] = fetchMock.mock.calls[0]!;
-    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe(
+      'application/json',
+    );
     expect(typeof init.body).toBe('string');
   });
 

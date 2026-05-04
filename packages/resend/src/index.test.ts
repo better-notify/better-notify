@@ -36,8 +36,12 @@ describe('resendTransport', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toBe('https://api.resend.com/emails');
     expect(init.method).toBe('POST');
-    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe('Bearer re_test_123');
-    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe(
+      'Bearer re_test_123',
+    );
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe(
+      'application/json',
+    );
   });
 
   it('maps RenderedMessage fields to the Resend request body', async () => {

@@ -65,7 +65,10 @@ export const zapierTransport = (opts: ZapierTransportOptions) => {
         tags: message.tags ?? {},
         attachments: (message.attachments ?? []).map((att) => ({
           filename: att.filename,
-          content: typeof att.content === 'string' ? att.content : Buffer.from(att.content).toString('base64'),
+          content:
+            typeof att.content === 'string'
+              ? att.content
+              : Buffer.from(att.content).toString('base64'),
           ...(att.contentType ? { contentType: att.contentType } : {}),
         })),
       };

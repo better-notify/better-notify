@@ -26,7 +26,9 @@ const ctx: SendContext = { route: 'orders.created', messageId: 'msg-1', attempt:
 describe('zapierChannelTransport', () => {
   it('POSTs envelope with event, route, messageId, timestamp, data', async () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ status: 'success' }), { status: 200 }),
+    );
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
     await t.send(baseRendered, ctx);
 

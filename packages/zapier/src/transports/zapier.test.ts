@@ -120,14 +120,20 @@ describe('zapierTransport', () => {
     await t.send(
       {
         ...baseMessage,
-        attachments: [{ filename: 'doc.pdf', content: Buffer.from('pdf-data'), contentType: 'application/pdf' }],
+        attachments: [
+          { filename: 'doc.pdf', content: Buffer.from('pdf-data'), contentType: 'application/pdf' },
+        ],
       },
       ctx,
     );
 
     const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
     expect(body.attachments).toEqual([
-      { filename: 'doc.pdf', content: Buffer.from('pdf-data').toString('base64'), contentType: 'application/pdf' },
+      {
+        filename: 'doc.pdf',
+        content: Buffer.from('pdf-data').toString('base64'),
+        contentType: 'application/pdf',
+      },
     ]);
   });
 

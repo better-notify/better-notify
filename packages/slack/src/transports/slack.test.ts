@@ -215,9 +215,7 @@ describe('slackTransport', () => {
   });
 
   it('verify() returns not ok on failure', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(jsonResponse({ ok: false, error: 'invalid_auth' }));
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: false, error: 'invalid_auth' }));
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-bad' });
@@ -253,10 +251,16 @@ describe('slackTransport', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
-        jsonResponse({ ok: true, upload_url: 'https://files.slack.com/upload/v1/abc', file_id: 'F123' }),
+        jsonResponse({
+          ok: true,
+          upload_url: 'https://files.slack.com/upload/v1/abc',
+          file_id: 'F123',
+        }),
       )
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
-      .mockResolvedValueOnce(jsonResponse({ ok: true, files: [{ id: 'F123', title: 'report.pdf' }] }));
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, files: [{ id: 'F123', title: 'report.pdf' }] }),
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-test' });
@@ -297,7 +301,9 @@ describe('slackTransport', () => {
   it('file upload uses custom title when provided', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(jsonResponse({ ok: true, files: [{ id: 'F1' }] }));
     vi.stubGlobal('fetch', fetchMock);
@@ -320,7 +326,9 @@ describe('slackTransport', () => {
   it('file upload includes thread_ts when threadTs is set', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(jsonResponse({ ok: true, files: [{ id: 'F1' }] }));
     vi.stubGlobal('fetch', fetchMock);
@@ -342,7 +350,9 @@ describe('slackTransport', () => {
   });
 
   it('returns error when getUploadURLExternal fails', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ ok: false, error: 'invalid_auth' }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ ok: false, error: 'invalid_auth' }));
     vi.stubGlobal('fetch', fetchMock);
 
     const t = slackTransport({ token: 'xoxb-bad' });
@@ -361,7 +371,9 @@ describe('slackTransport', () => {
   it('returns error when completeUploadExternal fails', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(jsonResponse({ ok: false, error: 'channel_not_found' }));
     vi.stubGlobal('fetch', fetchMock);
@@ -382,7 +394,9 @@ describe('slackTransport', () => {
   it('file upload sends alt_txt when altText is provided', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(jsonResponse({ ok: true, files: [{ id: 'F1' }] }));
     vi.stubGlobal('fetch', fetchMock);
@@ -405,7 +419,9 @@ describe('slackTransport', () => {
   it('file upload without text omits initial_comment', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(jsonResponse({ ok: true, files: [{ id: 'F1' }] }));
     vi.stubGlobal('fetch', fetchMock);
@@ -438,7 +454,9 @@ describe('slackTransport', () => {
   it('returns PROVIDER error when completeUploadExternal has no error field', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
       .mockResolvedValueOnce(jsonResponse({ ok: false }));
     vi.stubGlobal('fetch', fetchMock);
@@ -499,7 +517,9 @@ describe('slackTransport', () => {
   it('returns error when file binary upload HTTP response is not ok', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 403 }));
     vi.stubGlobal('fetch', fetchMock);
 
@@ -529,10 +549,7 @@ describe('slackTransport', () => {
   });
 
   it('throws TIMEOUT when callApi fetch times out', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new DOMException('aborted', 'AbortError')),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('aborted', 'AbortError')));
 
     const t = slackTransport({ token: 'xoxb-test' });
     const promise = t.send({ text: 'hi', to: '#x' }, ctx);
@@ -544,10 +561,7 @@ describe('slackTransport', () => {
   });
 
   it('throws PROVIDER when callApi response is not valid JSON', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response('not-json', { status: 200 })),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('not-json', { status: 200 })));
 
     const t = slackTransport({ token: 'xoxb-test' });
     const promise = t.send({ text: 'hi', to: '#x' }, ctx);
@@ -561,7 +575,9 @@ describe('slackTransport', () => {
   it('returns PROVIDER when file upload fetch throws network error', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockRejectedValueOnce(new TypeError('fetch failed'));
     vi.stubGlobal('fetch', fetchMock);
 
@@ -581,7 +597,9 @@ describe('slackTransport', () => {
   it('returns TIMEOUT when file upload fetch times out', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: true, upload_url: 'https://up.slack.com/x', file_id: 'F1' }),
+      )
       .mockRejectedValueOnce(new DOMException('aborted', 'AbortError'));
     vi.stubGlobal('fetch', fetchMock);
 

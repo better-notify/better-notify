@@ -36,7 +36,8 @@ export const postWebhook = async (opts: PostWebhookOptions): Promise<PostWebhook
     }
 
     const code = result.status === 410 ? 'CONFIG' : 'PROVIDER';
-    const detail = result.status === 410 ? 'webhook URL expired or deleted' : `HTTP ${result.status}`;
+    const detail =
+      result.status === 410 ? 'webhook URL expired or deleted' : `HTTP ${result.status}`;
     return {
       ok: false,
       error: new NotifyRpcError({

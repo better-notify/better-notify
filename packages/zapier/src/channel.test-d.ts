@@ -18,7 +18,9 @@ describe('zapierChannel type constraints', () => {
       .createBuilder({ ctx: undefined, rootMiddleware: [] })
       .input(z.object({ x: z.string() }));
 
-    expectTypeOf(builder.event).parameter(0).toMatchTypeOf<'a' | 'b' | ((...args: any[]) => 'a' | 'b')>();
+    expectTypeOf(builder.event)
+      .parameter(0)
+      .toMatchTypeOf<'a' | 'b' | ((...args: any[]) => 'a' | 'b')>();
   });
 
   it('constrained channel rejects invalid event string', () => {

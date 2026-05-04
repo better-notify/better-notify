@@ -43,10 +43,16 @@ describe('cloudflareEmailTransport', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(String(url)).toBe('https://api.cloudflare.com/client/v4/accounts/acc123/email/sending/send');
+    expect(String(url)).toBe(
+      'https://api.cloudflare.com/client/v4/accounts/acc123/email/sending/send',
+    );
     expect(init.method).toBe('POST');
-    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe('Bearer tok456');
-    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe(
+      'Bearer tok456',
+    );
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe(
+      'application/json',
+    );
   });
 
   it('maps RenderedMessage fields to the CF request body', async () => {

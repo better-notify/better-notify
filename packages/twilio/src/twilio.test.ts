@@ -72,8 +72,12 @@ describe('twilioSmsTransport — send', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toContain(`/Accounts/${ACCOUNT_SID}/Messages.json`);
     expect(init.method).toBe('POST');
-    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toMatch(/^Basic /);
-    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/x-www-form-urlencoded');
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toMatch(
+      /^Basic /,
+    );
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe(
+      'application/x-www-form-urlencoded',
+    );
 
     const params = new URLSearchParams(init.body);
     expect(params.get('To')).toBe('+15559876543');
@@ -93,7 +97,9 @@ describe('twilioSmsTransport — send', () => {
 
     const [, init] = fetchMock.mock.calls[0]!;
     const expected = btoa(`${ACCOUNT_SID}:${AUTH_TOKEN}`);
-    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe(`Basic ${expected}`);
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe(
+      `Basic ${expected}`,
+    );
   });
 
   it('returns SmsTransportData with sid and provider on success', async () => {
@@ -412,7 +418,9 @@ describe('twilioSmsTransport — verify', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toContain(`/Accounts/${ACCOUNT_SID}.json`);
     expect(init.method).toBe('GET');
-    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toMatch(/^Basic /);
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toMatch(
+      /^Basic /,
+    );
   });
 
   it('returns ok: false when account fetch fails', async () => {

@@ -148,8 +148,7 @@ export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport =
       if (!result.ok) {
         return {
           ok: false,
-          details:
-            result.kind === 'network' ? result.cause.message : `HTTP ${result.status}`,
+          details: result.kind === 'network' ? result.cause.message : `HTTP ${result.status}`,
         };
       }
 

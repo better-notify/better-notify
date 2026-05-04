@@ -200,6 +200,22 @@ describe('multiTransport — send', () => {
     expect([r1.data.id, r2.data.id].sort()).toEqual(['a-1', 'b-1']);
   });
 
+  it('skips sparse sequential entries', async () => {
+    const a = fakeTransport('a', ['ok']);
+    const b = fakeTransport('b', ['ok']);
+    const transports = [{ transport: a }, { transport: b }];
+    const m = multiTransport<R, D>({
+      strategy: 'failover',
+      transports,
+    });
+    delete transports[0];
+
+    const r = await m.send({ body: 'x' }, baseCtx);
+
+    expect(r).toMatchObject({ ok: true, data: { id: 'b-1' } });
+    expect(a.calls).toBe(0);
+  });
+
   it('random uses Math.random', async () => {
     const spy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const a = fakeTransport('a', ['ok']);
@@ -343,6 +359,19 @@ describe('multiTransport — verify and close', () => {
     });
     await expect(m.close!()).resolves.toBeUndefined();
   });
+
+  it('close ignores inners without close handlers', async () => {
+    const a: Transport<R, D> = {
+      name: 'a',
+      send: async () => ({ ok: true, data: { id: 'a' } }),
+    };
+    const m = multiTransport<R, D>({
+      strategy: 'failover',
+      transports: [{ transport: a }],
+    });
+
+    await expect(m.close!()).resolves.toBeUndefined();
+  });
 });
 
 describe('multiTransport — race', () => {
@@ -406,6 +435,31 @@ describe('multiTransport — race', () => {
     });
     await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow(/a-fail|b-fail/);
   });
+
+  it('throws the AggregateError when race entries are removed after construction', async () => {
+    const transports = [{ transport: fakeTransport('a', ['ok']) }];
+    const m = multiTransport<R, D>({
+      strategy: 'race',
+      transports,
+    });
+    transports.pop();
+
+    await expect(m.send({ body: 'x' }, baseCtx)).rejects.toBeInstanceOf(AggregateError);
+  });
+
+  it('handles a non-AggregateError Promise.any rejection defensively', async () => {
+    const anySpy = vi.spyOn(Promise, 'any').mockRejectedValueOnce(new Error('plain any failure'));
+    const m = multiTransport<R, D>({
+      strategy: 'race',
+      transports: [{ transport: fakeTransport('a', ['ok']) }],
+    });
+
+    try {
+      await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow('plain any failure');
+    } finally {
+      anySpy.mockRestore();
+    }
+  });
 });
 
 describe('multiTransport — parallel', () => {
@@ -467,6 +521,37 @@ describe('multiTransport — parallel', () => {
       transports: [{ transport: a }, { transport: b }],
     });
     await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow('soft fail');
+  });
+
+  it('throws CONFIG if the transport list is emptied after construction', async () => {
+    const transports = [{ transport: fakeTransport('a', ['ok']) }];
+    const m = multiTransport<R, D>({
+      strategy: 'parallel',
+      transports,
+    });
+    transports.pop();
+
+    await expect(m.send({ body: 'x' }, baseCtx)).rejects.toMatchObject({
+      code: 'CONFIG',
+      message: 'parallel requires at least one transport',
+    });
+  });
+
+  it('handles sparse allSettled results defensively', async () => {
+    const allSettledSpy = vi.spyOn(Promise, 'allSettled').mockResolvedValueOnce([
+      undefined,
+      { status: 'rejected', reason: new Error('extra fail') },
+    ] as never);
+    const m = multiTransport<R, D>({
+      strategy: 'parallel',
+      transports: [{ transport: fakeTransport('a', ['ok']) }],
+    });
+
+    try {
+      await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow('extra fail');
+    } finally {
+      allSettledSpy.mockRestore();
+    }
   });
 });
 
@@ -545,6 +630,36 @@ describe('multiTransport — mirrored', () => {
     });
     await expect(m.send({ body: 'x' }, baseCtx)).rejects.toThrow('primary boom');
     expect(mirrorRan).toBe(false);
+  });
+
+  it('throws CONFIG if the primary transport is removed after construction', async () => {
+    const transports = [{ transport: fakeTransport('primary', ['ok']) }];
+    const m = multiTransport<R, D>({
+      strategy: 'mirrored',
+      transports,
+    });
+    transports.pop();
+
+    await expect(m.send({ body: 'x' }, baseCtx)).rejects.toMatchObject({
+      code: 'CONFIG',
+      message: 'mirrored requires at least one transport',
+    });
+  });
+
+  it('skips sparse mirror entries', async () => {
+    const primary = fakeTransport('primary', ['ok']);
+    const mirror = fakeTransport('mirror', ['ok']);
+    const transports = [{ transport: primary }, { transport: mirror }];
+    const m = multiTransport<R, D>({
+      strategy: 'mirrored',
+      transports,
+    });
+    delete transports[1];
+
+    const r = await m.send({ body: 'x' }, baseCtx);
+
+    expect(r).toMatchObject({ ok: true, data: { id: 'primary-1' } });
+    expect(mirror.calls).toBe(0);
   });
 });
 

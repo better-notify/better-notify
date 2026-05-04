@@ -55,11 +55,12 @@ export const createHttpClient = (opts: HttpClientOptions = {}) => {
     url: string,
     init: HttpRequestInit = {},
   ): Promise<HttpResult<T, E>> => {
+    const headers = { ...opts.headers, ...init.headers };
     const [networkErr, result] = await handlePromise(
       $fetch<T>(url, {
         method: init.method ?? 'GET',
         body: init.body ?? undefined,
-        headers: init.headers,
+        headers,
       }),
     );
 
