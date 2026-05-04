@@ -20,7 +20,7 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.test-d.ts',
         '**/types.ts',
-        '**/multi.types.ts',
+        '**/*.types.ts',
         '**/with-*.types.ts',
         '**/template.ts',
         '**/transport.ts',

@@ -109,6 +109,28 @@ describe('zapierChannelTransport', () => {
     );
   });
 
+  it('returns CONFIG error when webhookUrl override is empty string', async () => {
+    const { zapierChannelTransport } = await import('./channel-transport.js');
+    const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
+    const result = await t.send({ ...baseRendered, webhookUrl: '' }, ctx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    expect(result.error.message).toContain('no webhook URL');
+  });
+
+  it('returns PROVIDER error on network failure', async () => {
+    const { zapierChannelTransport } = await import('./channel-transport.js');
+    fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+    const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
+    const result = await t.send(baseRendered, ctx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+  });
+
   it('has name "zapier-channel"', async () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });

@@ -136,6 +136,64 @@ describe('zapierTransport', () => {
     expect(() => zapierTransport({ webhookUrl: 'not-valid' })).toThrow(NotifyRpcError);
   });
 
+  it('includes replyTo when present', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send({ ...baseMessage, replyTo: { name: 'Support', email: 'support@acme.com' } }, ctx);
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.replyTo).toEqual({ name: 'Support', email: 'support@acme.com' });
+  });
+
+  it('sets text to null when not provided', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
+    const { text: _text, ...noText } = baseMessage;
+    await t.send(noText, ctx);
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.text).toBeNull();
+  });
+
+  it('returns PROVIDER error on network failure', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
+    const result = await t.send(baseMessage, ctx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+  });
+
+  it('handles string attachment content without base64 encoding', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send(
+      {
+        ...baseMessage,
+        attachments: [{ filename: 'note.txt', content: 'plain string content' }],
+      },
+      ctx,
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.attachments).toEqual([{ filename: 'note.txt', content: 'plain string content' }]);
+  });
+
+  it('normalizes address without name to just { email }', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send({ ...baseMessage, from: { email: 'no-name@test.com' } }, ctx);
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.from).toEqual({ email: 'no-name@test.com' });
+  });
+
   it('has name "zapier"', async () => {
     const { zapierTransport } = await import('./zapier.js');
     const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
