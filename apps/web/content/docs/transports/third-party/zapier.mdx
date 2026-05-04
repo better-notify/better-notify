@@ -1,0 +1,122 @@
+---
+title: Zapier
+icon: Lightning
+description: Send emails via Zapier webhook automation
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Zapier email transport is part of `@betternotify/zapier`. It posts the fully rendered email (HTML, subject, addresses, attachments) as JSON to a [Zapier Webhooks by Zapier](https://zapier.com/apps/webhooks/integrations) catch hook. Zapier then delivers it through any of its email actions (Gmail, SendGrid, Mailchimp, etc.).
+
+This is useful when you want Zapier to orchestrate email delivery — adding delays, conditionals, CRM updates, or multi-step workflows around each send.
+
+## Install
+
+```package-install
+@betternotify/zapier @betternotify/core @betternotify/email
+```
+
+## Getting your webhook URL
+
+1. Create a new Zap in [zapier.com](https://zapier.com).
+2. Choose **Webhooks by Zapier** as the trigger.
+3. Select **Catch Hook** as the event.
+4. Copy the webhook URL (starts with `https://hooks.zapier.com/hooks/catch/...`).
+5. Send a test from your app — Zapier will pick up the payload and let you map fields to downstream actions.
+
+Store it as an environment variable:
+
+```sh
+ZAPIER_WEBHOOK_URL=https://hooks.zapier.com/hooks/catch/123456/abcdef
+```
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { zapierTransport } from '@betternotify/zapier';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: zapierTransport({
+      webhookUrl: process.env.ZAPIER_WEBHOOK_URL!,
+    }),
+  },
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    webhookUrl: {
+      description: 'Zapier catch hook URL. Must be HTTPS. The URL itself is the credential — treat it as a secret.',
+      type: 'string',
+    },
+    timeoutMs: {
+      description: 'Request timeout in milliseconds.',
+      type: 'number',
+      default: '10000',
+    },
+    logger: {
+      description: 'Optional logger instance.',
+      type: 'LoggerLike',
+      default: 'consoleLogger()',
+    },
+  }}
+/>
+
+## Email payload format
+
+The transport posts all email fields as flat, individually-addressable JSON so you can map each one in the Zap editor:
+
+```json
+{
+  "type": "email",
+  "route": "welcome",
+  "messageId": "msg_abc123",
+  "timestamp": "2026-05-04T12:00:00.000Z",
+  "from": { "name": "My App", "email": "noreply@example.com" },
+  "to": [{ "name": "Alice", "email": "alice@example.com" }],
+  "cc": [],
+  "bcc": [],
+  "replyTo": null,
+  "subject": "Welcome to My App!",
+  "html": "<h1>Welcome!</h1>",
+  "text": "Welcome!",
+  "headers": {},
+  "tags": {},
+  "attachments": []
+}
+```
+
+Addresses are normalized to `{ name?, email }` objects (not RFC 5322 strings) for easy field mapping. Attachments are base64-encoded when present.
+
+## Error handling
+
+| Scenario | Error code |
+| --- | --- |
+| Missing `from` address | `CONFIG` |
+| Empty `to` array | `VALIDATION` |
+| Network failure | `PROVIDER` |
+| Request timeout | `TIMEOUT` |
+| HTTP 410 (webhook expired) | `CONFIG` |
+| Other HTTP errors | `PROVIDER` |
+
+## Limitations
+
+- Zapier catch hooks have a ~10 MB payload limit.
+- No delivery receipt — `transportMessageId` is always `undefined` since Zapier doesn't provide one.
+- Webhook URLs are the credential — if exposed, anyone can trigger your Zap. The transport redacts URLs in error messages and logs.

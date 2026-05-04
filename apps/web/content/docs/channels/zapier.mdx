@@ -1,0 +1,251 @@
+---
+title: Zapier
+icon: Lightning
+description: Trigger Zapier automations via webhook
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Zapier channel is provided by `@betternotify/zapier`. It posts structured JSON payloads to [Zapier Webhooks by Zapier](https://zapier.com/apps/webhooks/integrations) catch hooks, letting you trigger any of Zapier's 7000+ app integrations from your notification routes.
+
+## When to use Zapier
+
+Zapier is the right channel when you need to fan out events to third-party services without building individual integrations. Use it for CRM updates, spreadsheet logging, Slack/email routing through Zapier's automation builder, or any workflow where a human configures the downstream action in Zapier's UI. The channel sends structured JSON with a consistent envelope so Zapier users can filter and branch reliably.
+
+## Why the payload is semi-opinionated
+
+The webhook body has two layers:
+
+- **Envelope** (`event`, `route`, `messageId`, `timestamp`) is auto-injected by the transport. This gives Zapier users stable, predictable top-level fields to filter on without every route redeclaring them.
+- **Data** is fully user-defined via the `.data()` slot resolver. Your business payload goes here untouched.
+- **Meta** (optional) provides a filtering/routing namespace decoupled from domain models — useful for priority, source, or environment tags.
+
+This split means Zapier automations stay stable when your domain payload evolves, because filter logic targets envelope fields that never change shape.
+
+```package-install
+@betternotify/zapier
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { zapierChannel } from '@betternotify/zapier';
+
+const zapier = zapierChannel();
+
+const rpc = createNotify({ channels: { zapier } });
+```
+
+## Slots
+
+<TypeTable
+  type={{
+    event: {
+      description: 'The event name included in the webhook envelope. Used for filtering in Zapier. Accepts a static string or a resolver function.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    data: {
+      description: 'The business payload. Whatever this resolver returns becomes the `data` field in the webhook body. Fully user-defined.',
+      type: 'Record<string, unknown> | (args: { input, ctx }) => Record<string, unknown>',
+    },
+    meta: {
+      description: 'Optional envelope metadata for filtering/routing in Zapier. Kept separate from `data` so automation logic does not couple to domain models.',
+      type: 'Record<string, string> | (args: { input, ctx }) => Record<string, string>',
+      default: 'undefined',
+    },
+    webhookUrl: {
+      description: 'Optional per-route webhook URL override. When set, this route posts to a different Zapier catch hook than the transport default.',
+      type: 'string | (args: { input, ctx }) => string',
+      default: 'undefined',
+    },
+  }}
+/>
+
+## Send arguments
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+Zapier channels have no `to` field — the destination is determined by the webhook URL configured on the transport (or per-route via the `webhookUrl` slot).
+
+## Full example
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { zapierChannel, zapierChannelTransport } from '@betternotify/zapier';
+import { z } from 'zod';
+
+const zapier = zapierChannel();
+const rpc = createNotify({ channels: { zapier } });
+
+const catalog = rpc.catalog({
+  orderCreated: rpc
+    .zapier()
+    .input(z.object({ orderId: z.string(), total: z.number(), email: z.string() }))
+    .event('order.created')
+    .data(({ input }) => ({ orderId: input.orderId, total: input.total, email: input.email }))
+    .meta(() => ({ source: 'api' })),
+
+  highValueOrder: rpc
+    .zapier()
+    .input(z.object({ orderId: z.string(), total: z.number() }))
+    .event('order.high_value')
+    .data(({ input }) => ({ orderId: input.orderId, total: input.total }))
+    .meta(() => ({ priority: 'high' }))
+    .webhookUrl('https://hooks.zapier.com/hooks/catch/999/vip-orders'),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { zapier },
+  transportsByChannel: {
+    zapier: zapierChannelTransport({ webhookUrl: process.env.ZAPIER_WEBHOOK_URL! }),
+  },
+});
+
+await notify.orderCreated.send({
+  input: { orderId: 'ORD-42', total: 89.97, email: 'bob@example.com' },
+});
+```
+
+## Webhook payload shape
+
+Every POST to Zapier has this structure:
+
+```json
+{
+  "event": "order.created",
+  "route": "orderCreated",
+  "messageId": "msg_abc123",
+  "timestamp": "2026-05-04T12:00:00.000Z",
+  "data": { "orderId": "ORD-42", "total": 89.97, "email": "bob@example.com" },
+  "meta": { "source": "api" }
+}
+```
+
+Zapier users see `event`, `route`, `messageId`, and `timestamp` as top-level fields on every trigger — ideal for building filter steps and path branching.
+
+## Per-route webhook URL
+
+Set a default URL on the transport and override per-route via the `webhookUrl` slot:
+
+```ts
+const catalog = rpc.catalog({
+  standard: rpc
+    .zapier()
+    .input(z.object({ msg: z.string() }))
+    .event('standard')
+    .data(({ input }) => ({ msg: input.msg })),
+
+  vip: rpc
+    .zapier()
+    .input(z.object({ msg: z.string() }))
+    .event('vip')
+    .data(({ input }) => ({ msg: input.msg }))
+    .webhookUrl('https://hooks.zapier.com/hooks/catch/999/vip'),
+});
+```
+
+Routes without `.webhookUrl()` use the transport default. Routes with it post to their own dedicated Zap.
+
+## Email transport
+
+`@betternotify/zapier` also ships `zapierTransport` — an email transport that posts the full rendered email (HTML, subject, addresses) to a Zapier webhook. Use this when you want Zapier to handle email delivery via its Gmail, SendGrid, or Mailchimp actions:
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { zapierTransport } from '@betternotify/zapier';
+
+const email = emailChannel();
+const rpc = createNotify({ channels: { email } });
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .from('hello@acme.com')
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template({ render: async ({ input }) => ({ html: `<h1>Hi ${input.name}</h1>` }) }),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: zapierTransport({ webhookUrl: process.env.ZAPIER_EMAIL_WEBHOOK_URL! }),
+  },
+});
+```
+
+The email payload sent to Zapier includes all fields as flat JSON (`from`, `to`, `subject`, `html`, `text`, `attachments`) so each can be individually mapped in the Zap editor.
+
+## Transport
+
+### Built-in: `zapierChannelTransport`
+
+```ts
+import { zapierChannelTransport } from '@betternotify/zapier';
+
+const transport = zapierChannelTransport({
+  webhookUrl: process.env.ZAPIER_WEBHOOK_URL!,
+  timeoutMs: 10_000, // default
+});
+```
+
+<TypeTable
+  type={{
+    webhookUrl: {
+      description: 'Default Zapier catch hook URL. Must be HTTPS.',
+      type: 'string',
+    },
+    timeoutMs: {
+      description: 'Request timeout in milliseconds.',
+      type: 'number',
+      default: '10000',
+    },
+    logger: {
+      description: 'Optional logger instance.',
+      type: 'LoggerLike',
+      default: 'consoleLogger()',
+    },
+  }}
+/>
+
+### Mock transport
+
+Use `mockZapierTransport()` in tests:
+
+```ts
+import { mockZapierTransport } from '@betternotify/zapier';
+
+const transport = mockZapierTransport();
+
+// after sending...
+console.log(transport.payloads); // [{ event, data, meta?, id }]
+transport.reset();
+```
+
+### Multi-transport
+
+Use `multiTransport` from core for failover across multiple webhooks:
+
+```ts
+import { zapierChannelTransport } from '@betternotify/zapier';
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: zapierChannelTransport({ webhookUrl: process.env.ZAPIER_PRIMARY! }) },
+    { transport: zapierChannelTransport({ webhookUrl: process.env.ZAPIER_FALLBACK! }) },
+  ],
+});
+```
