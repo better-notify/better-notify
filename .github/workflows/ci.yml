@@ -22,28 +22,34 @@ jobs:
     steps:
       - run: echo "Preview gate passed"
 
-  ci:
-    runs-on: ubuntu-latest
-    needs: [preview-gate]
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/prepare
-      - run: pnpm run ci
-
-  code-quality:
-    name: Code quality
+  prepare:
     runs-on: ubuntu-latest
     needs: [preview-gate]
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/prepare
       - run: pnpm build
+      - name: Save turbo cache
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules/.cache/turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+
+  ci:
+    runs-on: ubuntu-latest
+    needs: [prepare]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/prepare
+      - run: pnpm build
+      - run: pnpm typecheck
       - run: pnpm test:coverage
+      - run: pnpm lint
 
   bundle-projects:
     name: Bundle and analyze affected projects
     runs-on: ubuntu-latest
-    needs: [preview-gate, ci]
+    needs: [ci]
     outputs:
       projects: ${{ steps.projects.outputs.projects }}
       pattern: ${{ steps.projects.outputs.pattern }}
@@ -82,7 +88,7 @@ jobs:
   publish-preview:
     name: Preview ${{ matrix.project.name }}
     runs-on: ubuntu-latest
-    needs: [bundle-projects, preview-gate]
+    needs: [bundle-projects]
     if: needs.bundle-projects.outputs.has-projects == 'true'
     environment: preview
     permissions:
@@ -160,8 +166,8 @@ jobs:
 
   pr-validation:
     name: PR validation
-    needs: [preview-gate, ci, code-quality, bundle-projects]
-    if: ${{ always() && needs.preview-gate.result == 'success' && !github.event.pull_request.draft }}
+    needs: [ci, bundle-projects]
+    if: ${{ always() && !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -172,7 +178,7 @@ jobs:
   deploy-preview-web:
     name: Deploy preview docs
     runs-on: ubuntu-latest
-    needs: [ci, preview-gate]
+    needs: [ci]
     environment: preview
     permissions:
       contents: read

@@ -50,3 +50,11 @@ runs:
       with:
         path: '**/node_modules'
         key: node-modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Restore turbo cache
+      uses: actions/cache/restore@v4
+      with:
+        path: node_modules/.cache/turbo
+        key: turbo-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-
