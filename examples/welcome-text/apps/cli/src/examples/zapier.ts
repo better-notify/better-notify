@@ -3,8 +3,11 @@ import { zapierChannel, zapierChannelTransport } from '@betternotify/zapier';
 import { z } from 'zod';
 import { env } from '../env';
 
+const events = z.enum(['order.created', 'payment.failed', 'refund.issued']);
+type Events = z.infer<typeof events>;
+
 export const runZapier = async (): Promise<void> => {
-  const zapier = zapierChannel();
+  const zapier = zapierChannel<Events>();
   const rpc = createNotify({ channels: { zapier } });
 
   const catalog = rpc.catalog({
