@@ -20,12 +20,26 @@ const slackArgsSchema = z.object({
 
 const validateSlackArgs = (args: unknown) => slackArgsSchema.parse(args);
 
+/**
+ * Slack notification channel.
+ *
+ * Slots:
+ * - `.text()` — Required fallback string. Shown in push notifications,
+ *   desktop alerts, and screen readers. Always sent even when blocks are present.
+ * - `.blocks()` — Optional rich layout (sections, headers, images, actions).
+ *   This is what renders in the Slack client UI. Falls back to `text` if blocks
+ *   cannot render.
+ * - `.file()` — Optional file attachment uploaded alongside the message.
+ */
 export const slackChannel = () =>
   defineChannel({
     name: 'slack' as const,
     slots: {
+      /** Required fallback text for notifications, alerts, and accessibility. */
       text: slot.resolver<string>(),
+      /** Rich Block Kit layout rendered in the Slack client; falls back to `text`. */
       blocks: slot.resolver<SlackBlock[]>().optional(),
+      /** File attachment uploaded with the message. */
       file: slot.resolver<SlackFile>().optional(),
     },
     validateArgs: validateSlackArgs,
