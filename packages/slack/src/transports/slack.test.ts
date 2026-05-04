@@ -207,13 +207,15 @@ describe('slackTransport', () => {
 
     const t = slackTransport({
       token: 'xoxb-test',
-      retry: {
-        type: 'linear',
-        attempts: 2,
-        delay: 0,
-        shouldRetry: (response) => response?.status === 503,
+      http: {
+        retry: {
+          type: 'linear',
+          attempts: 2,
+          delay: 0,
+          shouldRetry: (response) => response?.status === 503,
+        },
+        onRetry,
       },
-      onRetry,
     });
     const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 

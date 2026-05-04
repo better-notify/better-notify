@@ -77,20 +77,10 @@ const buildRequest = (
 
 export const discordTransport = (opts: DiscordTransportOptions): Transport => {
   const parsed = new URL(opts.webhookUrl);
-  if (opts.wait && opts.wait === true) parsed.searchParams.set('wait', 'true');
+  if (opts.wait === true) parsed.searchParams.set('wait', 'true');
   const url = parsed.toString();
   const log = (opts.logger ?? consoleLogger()).child({ component: 'discord' });
-  const http = createHttpClient({
-    timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    retry: opts.retry,
-    retryAttempt: opts.retryAttempt,
-    onRequest: opts.onRequest,
-    onResponse: opts.onResponse,
-    onSuccess: opts.onSuccess,
-    onError: opts.onError,
-    onRetry: opts.onRetry,
-    hookOptions: opts.hookOptions,
-  });
+  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
 
   return createTransport<RenderedDiscord, DiscordTransportData>({
     name: 'discord',

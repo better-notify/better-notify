@@ -101,7 +101,7 @@ describe('createHttpClient', () => {
         delay: 0,
         shouldRetry: (response) => response?.status === 503,
       },
-      onRetry,
+      onRetry: onRetry,
     });
 
     const result = await client.request<{ id: string }>('https://api.example.test/messages');

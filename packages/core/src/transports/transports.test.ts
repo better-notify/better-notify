@@ -538,10 +538,12 @@ describe('multiTransport — parallel', () => {
   });
 
   it('handles sparse allSettled results defensively', async () => {
-    const allSettledSpy = vi.spyOn(Promise, 'allSettled').mockResolvedValueOnce([
-      undefined,
-      { status: 'rejected', reason: new Error('extra fail') },
-    ] as never);
+    const allSettledSpy = vi
+      .spyOn(Promise, 'allSettled')
+      .mockResolvedValueOnce([
+        undefined,
+        { status: 'rejected', reason: new Error('extra fail') },
+      ] as never);
     const m = multiTransport<R, D>({
       strategy: 'parallel',
       transports: [{ transport: fakeTransport('a', ['ok']) }],

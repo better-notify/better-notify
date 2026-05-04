@@ -178,6 +178,81 @@ flowchart TD
 
 Both `verify` and `close` propagate through [multi-transport](/docs/transports/generic/multi-transport) composites automatically. If you only need `send`, skip them — `createTransport` fills in no-op defaults.
 
+## HTTP configuration
+
+All HTTP-backed transports (Slack, Telegram, Discord, Resend, Cloudflare Email, Twilio, Zapier) accept an optional `http` object for low-level HTTP tuning — timeouts, retry, and request lifecycle hooks:
+
+```ts
+import { slackTransport } from '@betternotify/slack';
+
+const transport = slackTransport({
+  token: process.env.SLACK_BOT_TOKEN!,
+  http: {
+    timeoutMs: 5_000,
+    retry: {
+      type: 'exponential',
+      attempts: 3,
+      baseDelay: 250,
+      maxDelay: 2_000,
+      shouldRetry: (response) => response?.status === 503,
+    },
+    onRetry: (ctx) => {
+      console.log('retrying request…');
+    },
+  },
+});
+```
+
+<TypeTable
+  type={{
+    timeoutMs: {
+      description: 'Request timeout in milliseconds.',
+      type: 'number',
+      default: '30000',
+    },
+    retry: {
+      description: 'Retry configuration passed to the underlying HTTP client. Retries operate at the HTTP level — a failed request is retried before the transport returns an error. Disabled by default.',
+      type: 'HttpRetryOptions',
+    },
+    retryAttempt: {
+      description: 'Override the starting retry attempt counter.',
+      type: 'number',
+    },
+    onRequest: {
+      description: 'Called before each HTTP request. Can mutate headers or return a modified request context.',
+      type: '(ctx: RequestContext) => void | RequestContext',
+    },
+    onResponse: {
+      description: 'Called after each HTTP response. Can return a replacement Response.',
+      type: '(ctx: ResponseContext) => void | Response',
+    },
+    onSuccess: {
+      description: 'Called after a successful HTTP response.',
+      type: '(ctx: SuccessContext) => void',
+    },
+    onError: {
+      description: 'Called after an HTTP error response. This is the HTTP-level error hook — distinct from the client pipeline onError hook.',
+      type: '(ctx: ErrorContext) => void',
+    },
+    onRetry: {
+      description: 'Called before each retry attempt.',
+      type: '(ctx: RetryContext) => void',
+    },
+  }}
+/>
+
+### Retry vs. multi-transport vs. queue retry
+
+HTTP retry, [multi-transport](/docs/transports/generic/multi-transport) retry, and queue retry operate at different layers:
+
+| Layer | Scope | Use case |
+| --- | --- | --- |
+| `http.retry` | Single HTTP request | Transient 503s, rate-limit backoff |
+| `multiTransport` | Across providers | Failover from Resend to SES |
+| Queue retry (BullMQ) | Entire send attempt | Retry the full pipeline after a crash |
+
+Each layer is independent. A single transport can use HTTP retry without `multiTransport`, and vice versa.
+
 ## Where to go next
 
 - Read [Custom Transports](/docs/transports/generic/custom-transports) to build your own provider adapter.

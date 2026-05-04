@@ -174,7 +174,7 @@ describe('telegramTransport', () => {
     error.name = 'AbortError';
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(error));
 
-    const t = telegramTransport({ token: 'T', timeoutMs: 1 });
+    const t = telegramTransport({ token: 'T', http: { timeoutMs: 1 } });
 
     await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
       code: 'TIMEOUT',

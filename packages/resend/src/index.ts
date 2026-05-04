@@ -74,17 +74,7 @@ export const resendTransport = (opts: ResendTransportOptions) => {
   const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
   const url = `${baseUrl}/emails`;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'resend' });
-  const http = createHttpClient({
-    timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    retry: opts.retry,
-    retryAttempt: opts.retryAttempt,
-    onRequest: opts.onRequest,
-    onResponse: opts.onResponse,
-    onSuccess: opts.onSuccess,
-    onError: opts.onError,
-    onRetry: opts.onRetry,
-    hookOptions: opts.hookOptions,
-  });
+  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
 
   return createTransport({
     name: 'resend',

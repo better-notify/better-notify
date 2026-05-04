@@ -75,6 +75,10 @@ console.log(result.data.messageId);
       description: 'Optional logger instance. Defaults to consoleLogger().',
       type: 'LoggerLike',
     },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
   }}
 />
 

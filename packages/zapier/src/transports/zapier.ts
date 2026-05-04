@@ -17,7 +17,7 @@ const toAddressObject = (addr: Address): { name?: string; email: string } => {
 export const zapierTransport = (opts: ZapierTransportOptions) => {
   validateWebhookUrl(opts.webhookUrl);
 
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = opts.timeoutMs ?? opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'zapier' });
 
   return createTransport({
@@ -79,14 +79,7 @@ export const zapierTransport = (opts: ZapierTransportOptions) => {
         url: opts.webhookUrl,
         body: payload as unknown as Record<string, unknown>,
         timeoutMs,
-        retry: opts.retry,
-        retryAttempt: opts.retryAttempt,
-        onRequest: opts.onRequest,
-        onResponse: opts.onResponse,
-        onSuccess: opts.onSuccess,
-        onError: opts.onError,
-        onRetry: opts.onRetry,
-        hookOptions: opts.hookOptions,
+        http: opts.http,
         route: ctx.route,
         messageId: ctx.messageId,
       });

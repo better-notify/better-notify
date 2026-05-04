@@ -12,7 +12,7 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 export const zapierChannelTransport = (opts: ZapierChannelTransportOptions): Transport => {
   validateWebhookUrl(opts.webhookUrl);
 
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = opts.timeoutMs ?? opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'zapier-channel' });
 
   return createTransport<RenderedZapier, ZapierChannelTransportData>({
@@ -67,14 +67,7 @@ export const zapierChannelTransport = (opts: ZapierChannelTransportOptions): Tra
         url,
         body: payload as unknown as Record<string, unknown>,
         timeoutMs,
-        retry: opts.retry,
-        retryAttempt: opts.retryAttempt,
-        onRequest: opts.onRequest,
-        onResponse: opts.onResponse,
-        onSuccess: opts.onSuccess,
-        onError: opts.onError,
-        onRetry: opts.onRetry,
-        hookOptions: opts.hookOptions,
+        http: opts.http,
         route: ctx.route,
         messageId: ctx.messageId,
       });

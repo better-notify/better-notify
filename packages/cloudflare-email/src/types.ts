@@ -1,11 +1,12 @@
 import type { LoggerLike } from '@betternotify/core';
 import type { HttpClientBehaviorOptions } from '@betternotify/core/transports';
 
-export type CloudflareEmailTransportOptions = HttpClientBehaviorOptions & {
+export type CloudflareEmailTransportOptions = {
   accountId: string;
   apiToken: string;
   baseUrl?: string;
   logger?: LoggerLike;
+  http?: HttpClientBehaviorOptions;
 };
 
 export type CloudflareEmailFrom = {

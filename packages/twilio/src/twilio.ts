@@ -53,21 +53,11 @@ export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport =
   }
 
   const baseUrl = opts.baseUrl ?? 'https://api.twilio.com';
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'twilio' });
   const authHeader = `Basic ${encodeBasicAuth(opts.accountSid, opts.authToken)}`;
   const messagesUrl = `${baseUrl}/2010-04-01/Accounts/${opts.accountSid}/Messages.json`;
-  const http = createHttpClient({
-    timeoutMs,
-    retry: opts.retry,
-    retryAttempt: opts.retryAttempt,
-    onRequest: opts.onRequest,
-    onResponse: opts.onResponse,
-    onSuccess: opts.onSuccess,
-    onError: opts.onError,
-    onRetry: opts.onRetry,
-    hookOptions: opts.hookOptions,
-  });
+  const http = createHttpClient({ ...opts.http, timeoutMs });
 
   return createTransport<RenderedSms, SmsTransportData>({
     name: 'twilio-sms',
