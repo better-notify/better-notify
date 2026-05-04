@@ -23,7 +23,7 @@
     "@betternotify/sms": "workspace:*",
     "@betternotify/smtp": "workspace:*",
     "@betternotify/telegram": "workspace:*",
-    "@t3-oss/env-core": "0.13.11",
+    "@t3-oss/env-core": "catalog:",
     "handlebars": "catalog:",
     "mjml": "catalog:",
     "react": "19.2.5",
