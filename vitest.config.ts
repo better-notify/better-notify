@@ -13,6 +13,7 @@ export default defineConfig({
       ],
     },
     coverage: {
+      enabled: true,
       provider: 'v8',
       reportsDirectory: 'coverage',
       include: ['packages/*/src/**/*.ts'],
@@ -35,6 +36,12 @@ export default defineConfig({
         'packages/*/src/channel/index.ts',
       ],
       reporter: ['text', 'html', 'lcov'],
+      thresholds: {
+        lines: 100,
+        statements: 100,
+        functions: 100,
+        branches: 100,
+      },
     },
   },
 });

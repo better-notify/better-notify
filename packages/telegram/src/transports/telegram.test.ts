@@ -261,6 +261,25 @@ describe('telegramTransport', () => {
     expect(result).toEqual({ ok: true, data: { messageId: 0, chatId: 0 } });
   });
 
+  it('throws PROVIDER when API returns empty response body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const t = telegramTransport({ token: 'T' });
+
+    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+      code: 'PROVIDER',
+      message: expect.stringContaining('empty response body'),
+    });
+  });
+
   it('verify() handles failure without description', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ok: false }), {

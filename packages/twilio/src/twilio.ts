@@ -109,7 +109,7 @@ export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport =
           };
         }
 
-        const errData = result.body ?? ({} as TwilioErrorResponse);
+        const errData = result.body as TwilioErrorResponse;
         const code = mapErrorCode(errData.code, result.status);
         const errorMessage = `Twilio transport: ${errData.message ?? `HTTP ${result.status}`}`;
         log.error(errorMessage, {

@@ -26,7 +26,7 @@ export const inMemoryRateLimitStore = (): RateLimitStore => {
     }
     trimmed.push(now);
     sliding.set(key, trimmed);
-    const oldest = trimmed[0] ?? now;
+    const oldest = trimmed[0] as number;
     return { count: trimmed.length, resetAtMs: oldest + windowMs };
   };
 

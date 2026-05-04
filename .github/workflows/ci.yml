@@ -30,6 +30,15 @@ jobs:
       - uses: ./.github/actions/prepare
       - run: pnpm run ci
 
+  code-quality:
+    name: Code quality
+    runs-on: ubuntu-latest
+    needs: [preview-gate]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/prepare
+      - run: pnpm test:coverage
+
   bundle-projects:
     name: Bundle and analyze affected projects
     runs-on: ubuntu-latest
@@ -147,6 +156,17 @@ jobs:
           regexFlags: ims
           appendContentOnMatchOnly: 'true'
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  pr-validation:
+    name: PR validation
+    needs: [preview-gate, ci, code-quality, bundle-projects]
+    if: ${{ always() && needs.preview-gate.result == 'success' && !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/check-for-job-errors
+        with:
+          needs: ${{ toJson(needs) }}
 
   deploy-preview-web:
     name: Deploy preview docs

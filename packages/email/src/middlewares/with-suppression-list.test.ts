@@ -104,6 +104,15 @@ describe('withSuppressionList', () => {
     expect(nextCalled()).toBe(true);
   });
 
+  it('passes through when fields option is empty (no addresses collected)', async () => {
+    const list = inMemorySuppressionList();
+    await list.set('any@x.com', { reason: 'bounce', createdAt: new Date() });
+    const mw = withSuppressionList({ list, fields: [] });
+    const { result, nextCalled } = callMw(mw, { to: 'any@x.com', input: {} });
+    expect((await result).messageId).toBe('m');
+    expect(nextCalled()).toBe(true);
+  });
+
   it('falls back to console.warn when no logger supplied', async () => {
     const list = inMemorySuppressionList();
     await list.set('blocked@x.com', { reason: 'bounce', createdAt: new Date() });

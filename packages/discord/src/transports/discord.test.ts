@@ -137,6 +137,14 @@ describe('discordTransport', () => {
     const t = discordTransport({ webhookUrl: WEBHOOK_URL });
     expect(t.name).toBe('discord');
   });
+
+  it('uses default timeout when http options are empty', async () => {
+    const { discordTransport } = await import('./discord.js');
+    mockFetchNoContent();
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL, http: {} });
+    const result = await t.send(baseMessage, ctx);
+    expect(result.ok).toBe(true);
+  });
 });
 
 describe('discordTransport — error mapping', () => {
@@ -232,6 +240,17 @@ describe('discordTransport — error mapping', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
     expect(result.error.message).toContain('HTTP 502');
+  });
+
+  it('falls back to empty error data when response body is null', async () => {
+    const { discordTransport } = await import('./discord.js');
+    fetchMock.mockResolvedValue(new Response('', { status: 502, statusText: 'Bad Gateway' }));
+    const t = discordTransport({ webhookUrl: WEBHOOK_URL });
+    const result = await t.send(baseMessage, ctx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcError);
+    expect((result.error as NotifyRpcError).message).toContain('HTTP 502');
   });
 });
 

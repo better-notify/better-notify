@@ -107,7 +107,7 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
           };
         }
 
-        const errData = result.body ?? {};
+        const errData = result.body as DiscordErrorResponse;
         const code = mapErrorCode(result.status);
         const retryAfterBody = errData.retry_after;
         const suffix = retryAfterBody ? ` (retry after ${retryAfterBody}s)` : '';

@@ -163,6 +163,19 @@ describe('twilioSmsTransport — send', () => {
     expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
   });
 
+  it('uses default timeout when http options are empty', async () => {
+    const { twilioSmsTransport } = await import('./twilio.js');
+    twilioSuccess();
+    const t = twilioSmsTransport({
+      accountSid: ACCOUNT_SID,
+      authToken: AUTH_TOKEN,
+      fromNumber: FROM_NUMBER,
+      http: {},
+    });
+    const result = await t.send(baseMessage, ctx);
+    expect(result.ok).toBe(true);
+  });
+
   it('uses custom baseUrl when provided', async () => {
     const { twilioSmsTransport } = await import('./twilio.js');
     twilioSuccess();
@@ -317,6 +330,21 @@ describe('twilioSmsTransport — error mapping', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
     expect(result.error.message).toContain('HTTP 502');
+  });
+
+  it('falls back to empty error data when response body is null', async () => {
+    const { twilioSmsTransport } = await import('./twilio.js');
+    fetchMock.mockResolvedValue(new Response('', { status: 500, statusText: 'Internal Server Error' }));
+    const t = twilioSmsTransport({
+      accountSid: ACCOUNT_SID,
+      authToken: AUTH_TOKEN,
+      fromNumber: FROM_NUMBER,
+    });
+    const result = await t.send(baseMessage, ctx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcError);
+    expect((result.error as NotifyRpcError).message).toContain('HTTP 500');
   });
 
   it('includes Twilio error message in NotifyRpcError message', async () => {

@@ -39,6 +39,18 @@ describe('consoleEventSink', () => {
     expect(logger.calls[0]?.msg).toBe('send event');
   });
 
+  it('uses default console logger when no logger is provided', async () => {
+    const sink = consoleEventSink();
+    await sink.write({ ...baseEvent, status: 'success' });
+  });
+
+  it('includes result in payload when present', async () => {
+    const logger = makeLogger();
+    const sink = consoleEventSink({ logger });
+    await sink.write({ ...baseEvent, status: 'success', result: { id: '123' } });
+    expect((logger.calls[0]!.payload as { result: unknown }).result).toEqual({ id: '123' });
+  });
+
   it('emits error events at error level with the err payload', async () => {
     const logger = makeLogger();
     const sink = consoleEventSink({ logger });
