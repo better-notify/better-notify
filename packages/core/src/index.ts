@@ -84,12 +84,15 @@ export {
   NotifyRpcValidationError,
   NotifyRpcRateLimitedError,
   NotifyRpcNotImplementedError,
+  NotifyRpcProviderError,
 } from './errors.js';
 export type {
   ErrorCode,
+  ProviderErrorCode,
   NotifyRpcErrorOptions,
   NotifyRpcValidationErrorOptions,
   NotifyRpcRateLimitedErrorOptions,
+  NotifyRpcProviderErrorOptions,
 } from './errors.js';
 
 export type { Priority, Tags } from './types.js';

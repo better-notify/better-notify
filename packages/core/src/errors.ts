@@ -186,3 +186,52 @@ export class NotifyRpcNotImplementedError extends NotifyRpcError {
     this.name = 'NotifyRpcNotImplementedError';
   }
 }
+
+export type ProviderErrorCode = 'PROVIDER' | 'TIMEOUT' | 'RATE_LIMITED' | 'CONFIG' | 'VALIDATION';
+
+export type NotifyRpcProviderErrorOptions = Omit<NotifyRpcErrorOptions, 'code'> & {
+  code?: ProviderErrorCode;
+  provider: string;
+  httpStatus?: number;
+  providerCode?: string | number;
+  retryAfterMs?: number;
+  retriable: boolean;
+};
+
+/**
+ * Thrown (or returned as `{ ok: false, error }`) when a transport encounters
+ * an error from the underlying provider — HTTP failures, API rejections,
+ * network timeouts, rate limits, or authentication problems.
+ *
+ * Carries structured provider metadata so consumers can branch on
+ * `retriable`, `httpStatus`, or `providerCode` without parsing message
+ * strings.
+ */
+export class NotifyRpcProviderError extends NotifyRpcError {
+  readonly provider: string;
+  readonly httpStatus: number | undefined;
+  readonly providerCode: string | number | undefined;
+  readonly retryAfterMs: number | undefined;
+  readonly retriable: boolean;
+
+  constructor(opts: NotifyRpcProviderErrorOptions) {
+    super({ ...opts, code: opts.code ?? 'PROVIDER' });
+    this.name = 'NotifyRpcProviderError';
+    this.provider = opts.provider;
+    this.httpStatus = opts.httpStatus;
+    this.providerCode = opts.providerCode;
+    this.retryAfterMs = opts.retryAfterMs;
+    this.retriable = opts.retriable;
+  }
+
+  override toJSON() {
+    return {
+      ...super.toJSON(),
+      provider: this.provider,
+      httpStatus: this.httpStatus,
+      providerCode: this.providerCode,
+      retryAfterMs: this.retryAfterMs,
+      retriable: this.retriable,
+    };
+  }
+}
