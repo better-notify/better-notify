@@ -24,29 +24,24 @@ const catalog = rpc.catalog({
     .text(({ input }) => textTemplate(input))
     .blocks(({ input }) => [
       {
-        type: 'header' as const,
-        text: { type: 'plain_text' as const, text: `🚨 ${input.title}` },
+        type: 'header',
+        text: { type: 'plain_text', text: `🚨 ${input.title}` },
       },
       {
-        type: 'section' as const,
+        type: 'section',
         fields: [
-          { type: 'mrkdwn' as const, text: `*Severity:*\n${input.severity.toUpperCase()}` },
-          { type: 'mrkdwn' as const, text: `*Service:*\n${input.service}` },
+          { type: 'mrkdwn', text: `*Severity:*\n${input.severity.toUpperCase()}` },
+          { type: 'mrkdwn', text: `*Service:*\n${input.service}` },
         ],
       },
       {
-        type: 'section' as const,
-        text: { type: 'mrkdwn' as const, text: input.description },
+        type: 'section',
+        text: { type: 'mrkdwn', text: input.description },
       },
+      { type: 'divider', block_id: 'div' },
       {
-        type: 'actions' as const,
-        elements: [
-          {
-            type: 'button' as const,
-            text: { type: 'plain_text' as const, text: '📖 Runbook' },
-            url: input.runbookUrl,
-          },
-        ],
+        type: 'context',
+        elements: [{ type: 'mrkdwn', text: `📖 Runbook: ${input.runbookUrl}` }],
       },
     ]),
 });
@@ -66,7 +61,8 @@ export const runSlackHandlebars = async (): Promise<void> => {
       title: 'Database connection pool exhausted',
       severity: 'critical',
       service: 'user-api',
-      description: 'Connection pool hit max (100/100). New queries are queuing. p99 latency spiked to 12s.',
+      description:
+        'Connection pool hit max (100/100). New queries are queuing. p99 latency spiked to 12s.',
       runbookUrl: 'https://wiki.example.com/runbooks/db-pool-exhausted',
     },
   });
