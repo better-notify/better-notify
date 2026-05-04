@@ -112,7 +112,10 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
           };
         }
 
-        const errBody = result.body as Partial<CloudflareApiResponse>;
+        const errBody =
+          result.body && typeof result.body === 'object'
+            ? (result.body as Partial<CloudflareApiResponse>)
+            : ({} as Partial<CloudflareApiResponse>);
         const errors = Array.isArray(errBody.errors) ? errBody.errors : [];
         const cfError = errors[0];
         const errorCode = cfError?.code;
@@ -140,7 +143,19 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
         };
       }
 
-      const data = result.data as CloudflareApiResponse;
+      const data = result.data;
+      if (!data) {
+        return {
+          ok: false,
+          error: new NotifyRpcError({
+            message: 'Cloudflare Email transport: empty response body',
+            code: 'PROVIDER',
+            route: ctx.route,
+            messageId: ctx.messageId,
+          }),
+        };
+      }
+
       const errors = Array.isArray(data.errors) ? data.errors : [];
       const cfResult = data.result;
 

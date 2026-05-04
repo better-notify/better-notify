@@ -377,4 +377,20 @@ describe('createHttpClient', () => {
       cause: error,
     });
   });
+
+  it('marks TimeoutError as timed out', async () => {
+    const error = new Error('timed out');
+    error.name = 'TimeoutError';
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(error));
+
+    const client = createHttpClient({ timeoutMs: 1 });
+    const result = await client.request('https://api.example.test/messages');
+
+    expect(result).toEqual({
+      ok: false,
+      kind: 'network',
+      timedOut: true,
+      cause: error,
+    });
+  });
 });

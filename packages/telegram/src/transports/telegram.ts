@@ -51,7 +51,14 @@ export const telegramTransport = (opts: TelegramTransportOptions): Transport => 
       });
     }
 
-    return result.data as TelegramApiResponse;
+    if (!result.data) {
+      throw new NotifyRpcError({
+        message: `Telegram ${method}: empty response body`,
+        code: 'PROVIDER',
+      });
+    }
+
+    return result.data;
   };
 
   return {
