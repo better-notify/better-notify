@@ -34,6 +34,7 @@ import { runSmtpHandlebars } from './examples/smtp-handlebars';
 import { runSmtpMjml } from './examples/smtp-mjml';
 import { runResendHandlebars } from './examples/resend-handlebars';
 import { runResendMjml } from './examples/resend-mjml';
+import { runEmailCustomHandlebars } from './examples/email-custom-handlebars';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -72,6 +73,7 @@ const examples: Record<string, () => Promise<void>> = {
   'smtp-mjml': runSmtpMjml,
   'resend-handlebars': runResendHandlebars,
   'resend-mjml': runResendMjml,
+  'email-custom-handlebars': runEmailCustomHandlebars,
 };
 
 const main = async (): Promise<void> => {

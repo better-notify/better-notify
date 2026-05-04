@@ -78,4 +78,16 @@ describe('handlebarsTemplate', () => {
     expect(result.text).toBe('');
     expect(result.subject).toBe('');
   });
+
+  it('accepts a pre-configured handlebars instance', async () => {
+    const { default: Handlebars } = await import('handlebars');
+    const hbs = Handlebars.create();
+    hbs.registerHelper('shout', (str: string) => `${str.toUpperCase()}!!!`);
+
+    const adapter = handlebarsTemplate<{ name: string }>('<p>{{shout name}}</p>', {
+      handlebars: hbs,
+    });
+    const result = await adapter.render({ input: { name: 'hey' }, ctx: {} });
+    expect(result.html).toBe('<p>HEY!!!</p>');
+  });
 });

@@ -6,6 +6,7 @@ export type HandlebarsTemplateOptions = {
   subject?: string;
   helpers?: Record<string, Handlebars.HelperDelegate>;
   partials?: Record<string, string>;
+  handlebars?: ReturnType<typeof Handlebars.create>;
 };
 
 /**
@@ -27,7 +28,7 @@ export const handlebarsTemplate = <TInput>(
   source: string,
   opts?: HandlebarsTemplateOptions,
 ): TemplateAdapter<TInput> => {
-  const instance = Handlebars.create();
+  const instance = opts?.handlebars ?? Handlebars.create();
 
   if (opts?.helpers) {
     for (const [name, fn] of Object.entries(opts.helpers)) {

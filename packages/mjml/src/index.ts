@@ -18,6 +18,7 @@ export type MjmlTemplateOptions = {
   subject?: string;
   helpers?: Record<string, Handlebars.HelperDelegate>;
   partials?: Record<string, string>;
+  handlebars?: ReturnType<typeof Handlebars.create>;
   mjml?: MjmlOptions;
 };
 
@@ -58,7 +59,7 @@ export const mjmlTemplate = <TInput>(
     throw new Error(`MJML compilation failed:\n${messages}`);
   }
 
-  const instance = Handlebars.create();
+  const instance = opts?.handlebars ?? Handlebars.create();
 
   if (opts?.helpers) {
     for (const [name, fn] of Object.entries(opts.helpers)) {
