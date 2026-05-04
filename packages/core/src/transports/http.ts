@@ -7,7 +7,7 @@ export type HttpClientOptions = {
   timeoutMs?: number;
 };
 
-export type HttpSuccess<T> = { ok: true; data: T };
+export type HttpSuccess<T> = { ok: true; data: T | null };
 
 export type HttpNetworkError = {
   ok: false;
@@ -76,16 +76,17 @@ export const createHttpClient = (opts: HttpClientOptions = {}) => {
     const { data, error } = result;
 
     if (error) {
+      const { status, statusText, ...body } = error;
       return {
         ok: false,
         kind: 'http',
-        status: error.status,
-        statusText: error.statusText,
-        body: error as E,
+        status,
+        statusText,
+        body: body as E,
       };
     }
 
-    return { ok: true, data: data as T };
+    return { ok: true, data: (data ?? null) as T | null };
   };
 
   return { request };

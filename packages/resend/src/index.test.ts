@@ -326,7 +326,7 @@ describe('resendTransport — network errors', () => {
     expect(result.error.message).toContain('network error');
   });
 
-  it('returns TIMEOUT when fetch throws TimeoutError', async () => {
+  it('returns TIMEOUT when fetch throws AbortError', async () => {
     const { resendTransport } = await import('./index.js');
     const err = new DOMException('aborted', 'AbortError');
     fetchMock.mockRejectedValue(err);

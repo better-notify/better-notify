@@ -1,4 +1,4 @@
-import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
 import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import type { RenderedSlack } from '../types.js';
 import type { SlackTransportData, Transport } from './types.js';
@@ -67,12 +67,22 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
     if (!result.ok) {
       const isTimeout = result.kind === 'network' && result.timedOut;
       const isNetwork = result.kind === 'network';
+      const detail = isNetwork
+        ? isTimeout
+          ? 'request timed out'
+          : `network error: ${result.cause.message}`
+        : `HTTP ${result.status} ${result.statusText}: ${JSON.stringify(result.body)}`;
       throw new NotifyRpcError({
-        message: isNetwork
-          ? `Slack ${method}: ${isTimeout ? 'request timed out' : `network error: ${result.cause.message}`}`
-          : `Slack ${method}: failed to parse response`,
+        message: `Slack ${method}: ${detail}`,
         code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
         cause: isNetwork ? result.cause : undefined,
+      });
+    }
+
+    if (!result.data) {
+      throw new NotifyRpcError({
+        message: `Slack ${method}: empty response body`,
+        code: 'PROVIDER',
       });
     }
 
@@ -152,29 +162,34 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
           };
         }
 
-        const uploadResult = await http.request<unknown>(uploadUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/octet-stream' },
-          body: rendered.file.data,
-        });
+        const [uploadErr, uploadResponse] = await handlePromise(
+          fetch(uploadUrl, {
+            method: 'POST',
+            signal: AbortSignal.timeout(timeoutMs),
+            headers: { 'Content-Type': 'application/octet-stream' },
+            body: rendered.file.data as RequestInit['body'],
+          }),
+        );
 
-        if (!uploadResult.ok) {
-          if (uploadResult.kind === 'network') {
-            return {
-              ok: false,
-              error: new NotifyRpcError({
-                message: `Slack file upload: ${uploadResult.timedOut ? 'request timed out' : `network error: ${uploadResult.cause.message}`}`,
-                code: uploadResult.timedOut ? 'TIMEOUT' : 'PROVIDER',
-                route: ctx.route,
-                messageId: ctx.messageId,
-                cause: uploadResult.cause,
-              }),
-            };
-          }
+        if (uploadErr) {
+          const isTimeout = uploadErr.name === 'AbortError' || uploadErr.name === 'TimeoutError';
           return {
             ok: false,
             error: new NotifyRpcError({
-              message: `Slack file upload failed with HTTP ${uploadResult.status}`,
+              message: `Slack file upload: ${isTimeout ? 'request timed out' : `network error: ${uploadErr.message}`}`,
+              code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+              cause: uploadErr,
+            }),
+          };
+        }
+
+        if (!uploadResponse.ok) {
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: `Slack file upload failed with HTTP ${uploadResponse.status}`,
               code: 'PROVIDER',
               route: ctx.route,
               messageId: ctx.messageId,

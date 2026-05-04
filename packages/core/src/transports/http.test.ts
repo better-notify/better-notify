@@ -88,7 +88,7 @@ describe('createHttpClient', () => {
     );
 
     const client = createHttpClient();
-    const result = await client.request<unknown, { error: string; status: number; statusText: string }>(
+    const result = await client.request<unknown, { error: string }>(
       'https://api.example.test/messages',
     );
 
@@ -97,7 +97,7 @@ describe('createHttpClient', () => {
       kind: 'http',
       status: 429,
       statusText: 'Too Many Requests',
-      body: { error: 'rate_limited', status: 429, statusText: 'Too Many Requests' },
+      body: { error: 'rate_limited' },
     });
   });
 

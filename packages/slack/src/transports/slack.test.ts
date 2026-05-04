@@ -257,7 +257,7 @@ describe('slackTransport', () => {
           file_id: 'F123',
         }),
       )
-      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(new Response('OK - 12', { status: 200 }))
       .mockResolvedValueOnce(
         jsonResponse({ ok: true, files: [{ id: 'F123', title: 'report.pdf' }] }),
       );
@@ -569,6 +569,26 @@ describe('slackTransport', () => {
     await expect(promise).rejects.toMatchObject({
       message: expect.stringContaining('network error'),
       code: 'PROVIDER',
+    });
+  });
+
+  it('throws PROVIDER with HTTP details when callApi receives a non-ok response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({ error: 'ratelimited', detail: 'slow down' }, 429),
+      ),
+    );
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    const promise = t.send({ text: 'hi', to: '#x' }, ctx);
+
+    await expect(promise).rejects.toMatchObject({
+      message: expect.stringContaining('HTTP 429'),
+      code: 'PROVIDER',
+    });
+    await expect(promise).rejects.toMatchObject({
+      message: expect.stringContaining('ratelimited'),
     });
   });
 
