@@ -1,7 +1,7 @@
 import type { LoggerLike } from '@betternotify/core';
+import type { HttpClientBehaviorOptions } from '@betternotify/core/transports';
 
-export type ZapierTransportOptions = {
+export type ZapierTransportOptions = HttpClientBehaviorOptions & {
   webhookUrl: string;
-  timeoutMs?: number;
   logger?: LoggerLike;
 };

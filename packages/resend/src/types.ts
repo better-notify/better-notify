@@ -1,9 +1,9 @@
 import type { LoggerLike } from '@betternotify/core';
+import type { HttpClientBehaviorOptions } from '@betternotify/core/transports';
 
-export type ResendTransportOptions = {
+export type ResendTransportOptions = HttpClientBehaviorOptions & {
   apiKey: string;
   baseUrl?: string;
-  timeoutMs?: number;
   logger?: LoggerLike;
 };
 

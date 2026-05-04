@@ -195,6 +195,33 @@ describe('slackTransport', () => {
     expect(String(call[0])).toBe('https://custom.slack/chat.postMessage');
   });
 
+  it('uses configured HTTP retry for Slack API calls', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ error: 'temporarily_unavailable', detail: 'try again' }, 503),
+      )
+      .mockResolvedValueOnce(jsonResponse({ ok: true, ts: '2.3', channel: 'C2' }));
+    const onRetry = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const t = slackTransport({
+      token: 'xoxb-test',
+      retry: {
+        type: 'linear',
+        attempts: 2,
+        delay: 0,
+        shouldRetry: (response) => response?.status === 503,
+      },
+      onRetry,
+    });
+    const result = await t.send({ text: 'hi', to: '#x' }, ctx);
+
+    expect(result).toEqual({ ok: true, data: { ts: '2.3', channel: 'C2' } });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
   it('verify() calls auth.test and returns ok with details', async () => {
     const fetchMock = vi
       .fn()
@@ -575,9 +602,7 @@ describe('slackTransport', () => {
   it('throws PROVIDER with HTTP details when callApi receives a non-ok response', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        jsonResponse({ error: 'ratelimited', detail: 'slow down' }, 429),
-      ),
+      vi.fn().mockResolvedValue(jsonResponse({ error: 'ratelimited', detail: 'slow down' }, 429)),
     );
 
     const t = slackTransport({ token: 'xoxb-test' });

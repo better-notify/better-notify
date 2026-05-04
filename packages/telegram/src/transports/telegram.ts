@@ -25,7 +25,17 @@ const methodForAttachment = (type: string): string => {
 export const telegramTransport = (opts: TelegramTransportOptions): Transport => {
   const apiUrl = opts.apiUrl ?? 'https://api.telegram.org';
   const log = (opts.logger ?? consoleLogger()).child({ component: 'telegram' });
-  const http = createHttpClient({ timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+  const http = createHttpClient({
+    timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    retry: opts.retry,
+    retryAttempt: opts.retryAttempt,
+    onRequest: opts.onRequest,
+    onResponse: opts.onResponse,
+    onSuccess: opts.onSuccess,
+    onError: opts.onError,
+    onRetry: opts.onRetry,
+    hookOptions: opts.hookOptions,
+  });
 
   const buildUrl = (method: string): string => `${apiUrl}/bot${opts.token}/${method}`;
 

@@ -1,7 +1,8 @@
 import { NotifyRpcError } from '@betternotify/core';
 import { createHttpClient } from '@betternotify/core/transports';
+import type { HttpClientBehaviorOptions } from '@betternotify/core/transports';
 
-export type PostWebhookOptions = {
+export type PostWebhookOptions = Omit<HttpClientBehaviorOptions, 'timeoutMs'> & {
   url: string;
   body: Record<string, unknown>;
   timeoutMs: number;
@@ -14,7 +15,17 @@ export type PostWebhookResult =
   | { ok: false; error: NotifyRpcError };
 
 export const postWebhook = async (opts: PostWebhookOptions): Promise<PostWebhookResult> => {
-  const http = createHttpClient({ timeoutMs: opts.timeoutMs });
+  const http = createHttpClient({
+    timeoutMs: opts.timeoutMs,
+    retry: opts.retry,
+    retryAttempt: opts.retryAttempt,
+    onRequest: opts.onRequest,
+    onResponse: opts.onResponse,
+    onSuccess: opts.onSuccess,
+    onError: opts.onError,
+    onRetry: opts.onRetry,
+    hookOptions: opts.hookOptions,
+  });
   const result = await http.request<unknown>(opts.url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

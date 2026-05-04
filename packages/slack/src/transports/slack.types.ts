@@ -1,9 +1,9 @@
 import type { LoggerLike } from '@betternotify/core';
+import type { HttpClientBehaviorOptions } from '@betternotify/core/transports';
 
-export type SlackTransportOptions = {
+export type SlackTransportOptions = HttpClientBehaviorOptions & {
   token: string;
   defaultChannel?: string;
   baseUrl?: string;
-  timeoutMs?: number;
   logger?: LoggerLike;
 };

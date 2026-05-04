@@ -80,7 +80,17 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
   if (opts.wait && opts.wait === true) parsed.searchParams.set('wait', 'true');
   const url = parsed.toString();
   const log = (opts.logger ?? consoleLogger()).child({ component: 'discord' });
-  const http = createHttpClient({ timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+  const http = createHttpClient({
+    timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    retry: opts.retry,
+    retryAttempt: opts.retryAttempt,
+    onRequest: opts.onRequest,
+    onResponse: opts.onResponse,
+    onSuccess: opts.onSuccess,
+    onError: opts.onError,
+    onRetry: opts.onRetry,
+    hookOptions: opts.hookOptions,
+  });
 
   return createTransport<RenderedDiscord, DiscordTransportData>({
     name: 'discord',

@@ -43,7 +43,17 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
   const baseUrl = opts.baseUrl ?? 'https://slack.com/api';
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'slack' });
-  const http = createHttpClient({ timeoutMs });
+  const http = createHttpClient({
+    timeoutMs,
+    retry: opts.retry,
+    retryAttempt: opts.retryAttempt,
+    onRequest: opts.onRequest,
+    onResponse: opts.onResponse,
+    onSuccess: opts.onSuccess,
+    onError: opts.onError,
+    onRetry: opts.onRetry,
+    hookOptions: opts.hookOptions,
+  });
 
   const callApi = async (
     method: string,

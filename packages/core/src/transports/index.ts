@@ -2,6 +2,10 @@ export type { Transport, TransportResult, TransportEntry } from './types.js';
 export { createHttpClient } from './http.js';
 export type {
   HttpClientOptions,
+  HttpClientBehaviorOptions,
+  HttpClientHooks,
+  HttpRetryOptions,
+  HttpRequestInit,
   HttpSuccess,
   HttpNetworkError,
   HttpStatusError,
