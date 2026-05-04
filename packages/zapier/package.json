@@ -36,6 +36,7 @@
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
     "rolldown": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

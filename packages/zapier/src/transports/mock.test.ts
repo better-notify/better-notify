@@ -47,12 +47,18 @@ describe('mockZapierTransport', () => {
     expect(t.payloads[1]!.event).toBe('second');
   });
 
-  it('reset clears sent records', async () => {
+  it('reset clears sent records, payloads, and resets counter', async () => {
     const t = mockZapierTransport();
     await t.send(baseRendered, ctx);
-    expect(t.sent).toHaveLength(1);
+    await t.send({ event: 'second', data: {} }, ctx);
+    expect(t.sent).toHaveLength(2);
+    expect(t.payloads).toHaveLength(2);
 
     t.reset();
     expect(t.sent).toHaveLength(0);
+    expect(t.payloads).toHaveLength(0);
+
+    await t.send(baseRendered, ctx);
+    expect(t.payloads[0]!.id).toBe('zapier-mock-1');
   });
 });

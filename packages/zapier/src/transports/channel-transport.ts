@@ -8,6 +8,7 @@ import { validateWebhookUrl } from '../lib/validate-url.js';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
+/** Zapier channel transport — posts structured webhook payloads to Zapier catch hooks. */
 export const zapierChannelTransport = (opts: ZapierChannelTransportOptions): Transport => {
   validateWebhookUrl(opts.webhookUrl);
 
@@ -30,6 +31,10 @@ export const zapierChannelTransport = (opts: ZapierChannelTransportOptions): Tra
             messageId: ctx.messageId,
           }),
         };
+      }
+
+      if (rendered.webhookUrl) {
+        validateWebhookUrl(rendered.webhookUrl);
       }
 
       if (!rendered.event) {
@@ -56,7 +61,7 @@ export const zapierChannelTransport = (opts: ZapierChannelTransportOptions): Tra
         payload.meta = rendered.meta;
       }
 
-      log.debug('posting to Zapier webhook', { url, event: rendered.event, route: ctx.route });
+      log.debug('posting to Zapier webhook', { event: rendered.event, route: ctx.route });
 
       const result = await postWebhook({
         url,

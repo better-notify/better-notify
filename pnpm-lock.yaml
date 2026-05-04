@@ -808,6 +808,9 @@ importers:
       rolldown:
         specifier: 'catalog:'
         version: 1.0.0-rc.17
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

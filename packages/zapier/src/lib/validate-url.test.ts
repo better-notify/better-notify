@@ -34,4 +34,25 @@ describe('validateWebhookUrl', () => {
     }
     throw new Error('should have thrown');
   });
+
+  it('does not leak the full URL in error messages', () => {
+    try {
+      validateWebhookUrl('not-a-secret-url');
+    } catch (err) {
+      expect((err as NotifyRpcError).message).not.toContain('not-a-secret-url');
+      return;
+    }
+    throw new Error('should have thrown');
+  });
+
+  it('redacts URL path in HTTPS protocol error', () => {
+    try {
+      validateWebhookUrl('http://hooks.zapier.com/hooks/catch/secret/token');
+    } catch (err) {
+      expect((err as NotifyRpcError).message).not.toContain('/hooks/catch/secret/token');
+      expect((err as NotifyRpcError).message).toContain('http://hooks.zapier.com/***');
+      return;
+    }
+    throw new Error('should have thrown');
+  });
 });

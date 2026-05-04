@@ -19,9 +19,15 @@ export const mockZapierTransport = (): MockZapierTransport => {
       return { status: 200, raw: {} };
     },
   });
+  const originalReset = base.reset.bind(base);
   return Object.assign(base, {
     get payloads() {
       return payloads;
+    },
+    reset() {
+      originalReset();
+      payloads.length = 0;
+      counter = 0;
     },
   });
 };

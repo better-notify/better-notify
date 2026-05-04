@@ -13,6 +13,7 @@ const toAddressObject = (addr: Address): { name?: string; email: string } => {
   return addr.name ? { name: addr.name, email: addr.email } : { email: addr.email };
 };
 
+/** Email transport that posts rendered messages to a Zapier catch hook webhook. */
 export const zapierTransport = (opts: ZapierTransportOptions) => {
   validateWebhookUrl(opts.webhookUrl);
 

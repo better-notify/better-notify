@@ -131,6 +131,16 @@ describe('zapierChannelTransport', () => {
     expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
   });
 
+  it('throws CONFIG when per-route webhookUrl override is HTTP', async () => {
+    const { zapierChannelTransport } = await import('./channel-transport.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
+
+    await expect(
+      t.send({ ...baseRendered, webhookUrl: 'http://insecure.com/hook' }, ctx),
+    ).rejects.toThrow(NotifyRpcError);
+  });
+
   it('has name "zapier-channel"', async () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
