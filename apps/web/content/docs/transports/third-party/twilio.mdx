@@ -40,6 +40,7 @@ Pass it to `createClient` via `transportsByChannel`:
 import { createNotify, createClient } from '@betternotify/core';
 import { smsChannel } from '@betternotify/sms';
 import { twilioSmsTransport } from '@betternotify/twilio';
+import { z } from 'zod';
 
 const sms = smsChannel();
 const rpc = createNotify({ channels: { sms } });
@@ -87,6 +88,9 @@ const result = await transport.send(
   { route: 'manual', messageId: 'msg-1', attempt: 1 },
 );
 
+if (!result.ok) {
+  throw result.error;
+}
 console.log(result.data.messageId); // Twilio Message SID
 ```
 

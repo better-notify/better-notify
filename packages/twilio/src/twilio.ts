@@ -41,6 +41,9 @@ const mapErrorCode = (
 const encodeBasicAuth = (accountSid: string, authToken: string): string =>
   btoa(`${accountSid}:${authToken}`);
 
+/**
+ * Creates an SMS transport backed by the Twilio Messages API.
+ */
 export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport => {
   if (!opts.fromNumber && !opts.messagingServiceSid) {
     throw new NotifyRpcError({
