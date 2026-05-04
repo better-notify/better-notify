@@ -35,6 +35,7 @@ jobs:
             telegram
             discord
             slack
+            zapier
             bullmq
             smtp
             ses
