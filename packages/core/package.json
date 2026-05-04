@@ -68,6 +68,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@better-fetch/fetch": "catalog:",
     "@standard-schema/spec": "catalog:"
   },
   "devDependencies": {

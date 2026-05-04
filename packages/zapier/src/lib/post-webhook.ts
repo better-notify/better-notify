@@ -1,4 +1,5 @@
-import { handlePromise, NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcError } from '@betternotify/core';
+import { createHttpClient } from '@betternotify/core/transports';
 
 export type PostWebhookOptions = {
   url: string;
@@ -13,35 +14,29 @@ export type PostWebhookResult =
   | { ok: false; error: NotifyRpcError };
 
 export const postWebhook = async (opts: PostWebhookOptions): Promise<PostWebhookResult> => {
-  const [fetchErr, response] = await handlePromise(
-    fetch(opts.url, {
-      method: 'POST',
-      signal: AbortSignal.timeout(opts.timeoutMs),
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(opts.body),
-    }),
-  );
+  const http = createHttpClient({ timeoutMs: opts.timeoutMs });
+  const result = await http.request<unknown>(opts.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(opts.body),
+  });
 
-  if (fetchErr) {
-    const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
-    return {
-      ok: false,
-      error: new NotifyRpcError({
-        message: `Zapier: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
-        code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
-        route: opts.route,
-        messageId: opts.messageId,
-        cause: fetchErr,
-      }),
-    };
-  }
+  if (!result.ok) {
+    if (result.kind === 'network') {
+      return {
+        ok: false,
+        error: new NotifyRpcError({
+          message: `Zapier: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
+          code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+          route: opts.route,
+          messageId: opts.messageId,
+          cause: result.cause,
+        }),
+      };
+    }
 
-  if (!response.ok) {
-    const code = response.status === 410 ? 'CONFIG' : 'PROVIDER';
-    const detail =
-      response.status === 410
-        ? 'webhook URL expired or deleted'
-        : `HTTP ${response.status}`;
+    const code = result.status === 410 ? 'CONFIG' : 'PROVIDER';
+    const detail = result.status === 410 ? 'webhook URL expired or deleted' : `HTTP ${result.status}`;
     return {
       ok: false,
       error: new NotifyRpcError({
@@ -53,7 +48,5 @@ export const postWebhook = async (opts: PostWebhookOptions): Promise<PostWebhook
     };
   }
 
-  const [, data] = await handlePromise(response.json());
-
-  return { ok: true, status: response.status, data: data ?? null };
+  return { ok: true, status: 200, data: result.data ?? null };
 };

@@ -43,10 +43,10 @@ describe('cloudflareEmailTransport', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('https://api.cloudflare.com/client/v4/accounts/acc123/email/sending/send');
+    expect(String(url)).toBe('https://api.cloudflare.com/client/v4/accounts/acc123/email/sending/send');
     expect(init.method).toBe('POST');
-    expect(init.headers['Authorization']).toBe('Bearer tok456');
-    expect(init.headers['Content-Type']).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe('Bearer tok456');
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/json');
   });
 
   it('maps RenderedMessage fields to the CF request body', async () => {
@@ -114,7 +114,7 @@ describe('cloudflareEmailTransport', () => {
     await t.send(baseMessage, baseCtx);
 
     const [url] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('https://mock.local/client/v4/accounts/acc123/email/sending/send');
+    expect(String(url)).toBe('https://mock.local/client/v4/accounts/acc123/email/sending/send');
   });
 
   it('omits optional fields from request body when not in RenderedMessage', async () => {

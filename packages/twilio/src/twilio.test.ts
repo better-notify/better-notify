@@ -70,10 +70,10 @@ describe('twilioSmsTransport — send', () => {
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toContain(`/Accounts/${ACCOUNT_SID}/Messages.json`);
+    expect(String(url)).toContain(`/Accounts/${ACCOUNT_SID}/Messages.json`);
     expect(init.method).toBe('POST');
-    expect(init.headers.Authorization).toMatch(/^Basic /);
-    expect(init.headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toMatch(/^Basic /);
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/x-www-form-urlencoded');
 
     const params = new URLSearchParams(init.body);
     expect(params.get('To')).toBe('+15559876543');
@@ -93,7 +93,7 @@ describe('twilioSmsTransport — send', () => {
 
     const [, init] = fetchMock.mock.calls[0]!;
     const expected = btoa(`${ACCOUNT_SID}:${AUTH_TOKEN}`);
-    expect(init.headers.Authorization).toBe(`Basic ${expected}`);
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toBe(`Basic ${expected}`);
   });
 
   it('returns SmsTransportData with sid and provider on success', async () => {
@@ -169,7 +169,7 @@ describe('twilioSmsTransport — send', () => {
     await t.send(baseMessage, ctx);
 
     const [url] = fetchMock.mock.calls[0]!;
-    expect(url).toMatch(/^https:\/\/mock-twilio\.test/);
+    expect(String(url)).toMatch(/^https:\/\/mock-twilio\.test/);
   });
 });
 
@@ -332,7 +332,7 @@ describe('twilioSmsTransport — error mapping', () => {
 describe('twilioSmsTransport — network errors', () => {
   it('returns TIMEOUT when fetch throws TimeoutError', async () => {
     const { twilioSmsTransport } = await import('./twilio.js');
-    fetchMock.mockRejectedValue(new DOMException('signal timed out', 'TimeoutError'));
+    fetchMock.mockRejectedValue(new DOMException('aborted', 'AbortError'));
     const t = twilioSmsTransport({
       accountSid: ACCOUNT_SID,
       authToken: AUTH_TOKEN,
@@ -410,9 +410,9 @@ describe('twilioSmsTransport — verify', () => {
     await t.verify!();
 
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toContain(`/Accounts/${ACCOUNT_SID}.json`);
+    expect(String(url)).toContain(`/Accounts/${ACCOUNT_SID}.json`);
     expect(init.method).toBe('GET');
-    expect(init.headers.Authorization).toMatch(/^Basic /);
+    expect(new Headers(init.headers as Record<string, string>).get('Authorization')).toMatch(/^Basic /);
   });
 
   it('returns ok: false when account fetch fails', async () => {

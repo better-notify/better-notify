@@ -1,5 +1,5 @@
-import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
-import { createTransport } from '@betternotify/core/transports';
+import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import type { RenderedSms, SmsTransportData, Transport } from '@betternotify/sms';
 import type { TwilioSmsTransportOptions } from './twilio.types.js';
 
@@ -57,6 +57,7 @@ export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport =
   const log = (opts.logger ?? consoleLogger()).child({ component: 'twilio' });
   const authHeader = `Basic ${encodeBasicAuth(opts.accountSid, opts.authToken)}`;
   const messagesUrl = `${baseUrl}/2010-04-01/Accounts/${opts.accountSid}/Messages.json`;
+  const http = createHttpClient({ timeoutMs });
 
   return createTransport<RenderedSms, SmsTransportData>({
     name: 'twilio-sms',
@@ -84,57 +85,35 @@ export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport =
         params.set('From', opts.fromNumber);
       }
 
-      const [fetchErr, response] = await handlePromise(
-        fetch(messagesUrl, {
-          method: 'POST',
-          signal: AbortSignal.timeout(timeoutMs),
-          headers: {
-            Authorization: authHeader,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: params.toString(),
-        }),
-      );
+      const result = await http.request<TwilioSuccessResponse, TwilioErrorResponse>(messagesUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+      });
 
-      if (fetchErr) {
-        const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
-        log.error('Twilio fetch failed', { err: fetchErr, route: ctx.route });
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: `Twilio transport: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
-            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: fetchErr,
-          }),
-        };
-      }
+      if (!result.ok) {
+        if (result.kind === 'network') {
+          log.error('Twilio fetch failed', { err: result.cause, route: ctx.route });
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: `Twilio transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
+              code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+              cause: result.cause,
+            }),
+          };
+        }
 
-      const [parseErr, data] = await handlePromise(
-        response.json() as Promise<TwilioSuccessResponse | TwilioErrorResponse>,
-      );
-
-      if (parseErr) {
-        log.error('Twilio response parse failed', { err: parseErr, route: ctx.route });
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: 'Twilio transport: failed to parse response',
-            code: 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: parseErr,
-          }),
-        };
-      }
-
-      if (!response.ok) {
-        const errData = data as TwilioErrorResponse;
-        const code = mapErrorCode(errData.code, response.status);
-        const errorMessage = `Twilio transport: ${errData.message ?? `HTTP ${response.status}`}`;
+        const errData = result.body ?? ({} as TwilioErrorResponse);
+        const code = mapErrorCode(errData.code, result.status);
+        const errorMessage = `Twilio transport: ${errData.message ?? `HTTP ${result.status}`}`;
         log.error(errorMessage, {
-          err: { status: response.status, code: errData.code, message: errData.message },
+          err: { status: result.status, code: errData.code, message: errData.message },
           route: ctx.route,
         });
 
@@ -149,7 +128,7 @@ export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport =
         };
       }
 
-      const successData = data as TwilioSuccessResponse;
+      const successData = result.data as TwilioSuccessResponse;
       return {
         ok: true as const,
         data: {
@@ -161,27 +140,20 @@ export const twilioSmsTransport = (opts: TwilioSmsTransportOptions): Transport =
 
     async verify() {
       const accountUrl = `${baseUrl}/2010-04-01/Accounts/${opts.accountSid}.json`;
+      const result = await http.request<Record<string, unknown>>(accountUrl, {
+        method: 'GET',
+        headers: { Authorization: authHeader },
+      });
 
-      const [fetchErr, response] = await handlePromise(
-        fetch(accountUrl, {
-          method: 'GET',
-          signal: AbortSignal.timeout(timeoutMs),
-          headers: { Authorization: authHeader },
-        }),
-      );
-
-      if (fetchErr) {
-        return { ok: false, details: fetchErr.message };
+      if (!result.ok) {
+        return {
+          ok: false,
+          details:
+            result.kind === 'network' ? result.cause.message : `HTTP ${result.status}`,
+        };
       }
 
-      const [parseErr, json] = await handlePromise(
-        response.json() as Promise<Record<string, unknown>>,
-      );
-
-      if (parseErr || !response.ok) {
-        return { ok: false, details: parseErr?.message ?? `HTTP ${response.status}` };
-      }
-
+      const json = result.data as Record<string, unknown>;
       return {
         ok: true,
         details: {

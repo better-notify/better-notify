@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@better-fetch/fetch':
+      specifier: 1.1.21
+      version: 1.1.21
     '@cloudflare/vite-plugin':
       specifier: 1.34.0
       version: 1.34.0
@@ -410,6 +413,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@better-fetch/fetch':
+        specifier: 'catalog:'
+        version: 1.1.21
       '@standard-schema/spec':
         specifier: 'catalog:'
         version: 1.1.0
@@ -1027,6 +1033,9 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+
+  '@better-fetch/fetch@1.1.21':
+    resolution: {integrity: sha512-/ImESw0sskqlVR94jB+5+Pxjf+xBwDZF/N5+y2/q4EqD7IARUTSpPfIo8uf39SYpCxyOCtbyYpUrZ3F/k0zT4A==}
 
   '@cloudflare/kv-asset-handler@0.4.2':
     resolution: {integrity: sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==}
@@ -7289,6 +7298,8 @@ snapshots:
       '@types/react': 19.2.14
 
   '@bcoe/v8-coverage@0.2.3': {}
+
+  '@better-fetch/fetch@1.1.21': {}
 
   '@cloudflare/kv-asset-handler@0.4.2': {}
 

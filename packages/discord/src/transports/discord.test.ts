@@ -36,9 +36,9 @@ describe('discordTransport', () => {
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(WEBHOOK_URL);
+    expect(String(url)).toBe(WEBHOOK_URL);
     expect(init.method).toBe('POST');
-    expect(init.headers['Content-Type']).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/json');
     expect(JSON.parse(init.body)).toEqual({ content: 'Hello Discord!' });
   });
 
@@ -105,7 +105,7 @@ describe('discordTransport', () => {
     await t.send(baseMessage, ctx);
 
     const [url] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(`${WEBHOOK_URL}?wait=true`);
+    expect(String(url)).toBe(`${WEBHOOK_URL}?wait=true`);
   });
 
   it('returns transportMessageId from wait=true response', async () => {
@@ -315,7 +315,7 @@ describe('discordTransport — attachments', () => {
     );
 
     const [, init] = fetchMock.mock.calls[0]!;
-    expect(init.headers).toBeUndefined();
+    expect(new Headers((init.headers ?? {}) as Record<string, string>).get('Content-Type')).toBeNull();
   });
 
   it('uses JSON when attachments array is empty', async () => {
@@ -325,7 +325,7 @@ describe('discordTransport — attachments', () => {
     await t.send({ ...baseMessage, attachments: [] }, ctx);
 
     const [, init] = fetchMock.mock.calls[0]!;
-    expect(init.headers['Content-Type']).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe('application/json');
     expect(typeof init.body).toBe('string');
   });
 
@@ -363,7 +363,7 @@ describe('discordTransport — network errors', () => {
 
   it('returns TIMEOUT when fetch throws TimeoutError', async () => {
     const { discordTransport } = await import('./discord.js');
-    const err = new DOMException('signal timed out', 'TimeoutError');
+    const err = new DOMException('aborted', 'AbortError');
     fetchMock.mockRejectedValue(err);
     const t = discordTransport({ webhookUrl: WEBHOOK_URL });
     const result = await t.send(baseMessage, ctx);

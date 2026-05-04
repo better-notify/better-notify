@@ -1,6 +1,7 @@
 import type { Address, RenderedMessage, Transport } from '@betternotify/email';
 import { normalizeAddress } from '@betternotify/email/transports';
-import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { createHttpClient } from '@betternotify/core/transports';
 import type {
   CloudflareEmailTransportOptions,
   CloudflareEmailFrom,
@@ -71,6 +72,7 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
   const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
   const url = `${baseUrl}/client/v4/accounts/${opts.accountId}/email/sending/send`;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'cloudflare-email' });
+  const http = createHttpClient({ timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS });
 
   return {
     name: 'cloudflare-email',
@@ -86,56 +88,63 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
       }
 
       const body = buildRequestBody(message, message.from);
+      const result = await http.request<CloudflareApiResponse>(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${opts.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
 
-      const [fetchErr, response] = await handlePromise(
-        fetch(url, {
-          method: 'POST',
-          signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
-          headers: {
-            Authorization: `Bearer ${opts.apiToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        }),
-      );
+      if (!result.ok) {
+        if (result.kind === 'network') {
+          log.error('Cloudflare Email fetch failed', { err: result.cause, route: ctx.route });
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: `Cloudflare Email transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
+              code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+              cause: result.cause,
+            }),
+          };
+        }
 
-      if (fetchErr) {
-        const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
-        log.error('Cloudflare Email fetch failed', { err: fetchErr, route: ctx.route });
+        const errBody = result.body as Partial<CloudflareApiResponse>;
+        const errors = Array.isArray(errBody.errors) ? errBody.errors : [];
+        const cfError = errors[0];
+        const errorCode = cfError?.code;
+        const code = VALIDATION_CODES.includes(errorCode as number)
+          ? 'VALIDATION'
+          : errorCode === 10203
+            ? 'CONFIG'
+            : 'PROVIDER';
+        const errorMessage = cfError
+          ? `Cloudflare Email transport: [${cfError.code}] ${cfError.message}`
+          : `Cloudflare Email transport: unknown error`;
+
+        log.error(errorMessage, {
+          err: { code: errorCode, message: cfError?.message },
+          route: ctx.route,
+        });
         return {
           ok: false,
           error: new NotifyRpcError({
-            message: `Cloudflare Email transport: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
-            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+            message: errorMessage,
+            code,
             route: ctx.route,
             messageId: ctx.messageId,
-            cause: fetchErr,
           }),
         };
       }
 
-      const [parseErr, data] = await handlePromise(
-        response.json() as Promise<CloudflareApiResponse>,
-      );
-
-      if (parseErr) {
-        log.error('Cloudflare Email response parse failed', { err: parseErr, route: ctx.route });
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: `Cloudflare Email transport: failed to parse response`,
-            code: 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: parseErr,
-          }),
-        };
-      }
-
+      const data = result.data as CloudflareApiResponse;
       const errors = Array.isArray(data.errors) ? data.errors : [];
-      const result = data.result;
+      const cfResult = data.result;
 
-      if (!data.success || !result) {
+      if (!data.success || !cfResult) {
         const cfError = errors[0];
         const errorCode = cfError?.code;
         const code = VALIDATION_CODES.includes(errorCode as number)
@@ -146,7 +155,7 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
 
         const errorMessage = cfError
           ? `Cloudflare Email transport: [${cfError.code}] ${cfError.message}`
-          : `Cloudflare Email transport: unknown error (HTTP ${response.status})`;
+          : `Cloudflare Email transport: unknown error`;
 
         log.error(errorMessage, {
           err: { code: errorCode, message: cfError?.message },
@@ -169,10 +178,10 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
         data: {
           transportMessageId: undefined,
           accepted: [
-            ...(Array.isArray(result.delivered) ? result.delivered : []),
-            ...(Array.isArray(result.queued) ? result.queued : []),
+            ...(Array.isArray(cfResult.delivered) ? cfResult.delivered : []),
+            ...(Array.isArray(cfResult.queued) ? cfResult.queued : []),
           ],
-          rejected: Array.isArray(result.permanent_bounces) ? result.permanent_bounces : [],
+          rejected: Array.isArray(cfResult.permanent_bounces) ? cfResult.permanent_bounces : [],
           raw: data,
         },
       };

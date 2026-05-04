@@ -4,10 +4,12 @@ import { telegramTransport } from './telegram.js';
 import { mockTelegramTransport } from './mock.js';
 
 const mockFetch = (response: { ok: boolean; result?: unknown; description?: string }) =>
-  vi.fn().mockResolvedValue({
-    ok: response.ok,
-    json: async () => response,
-  });
+  vi.fn().mockResolvedValue(
+    new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  );
 
 const ctx = { route: 'test.route', messageId: 'msg-1', attempt: 1 };
 
@@ -25,7 +27,7 @@ describe('telegramTransport', () => {
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const call = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(call[0]).toBe('https://api.telegram.org/botBOT_TOKEN/sendMessage');
+    expect(String(call[0])).toBe('https://api.telegram.org/botBOT_TOKEN/sendMessage');
     expect(JSON.parse(call[1].body as string)).toEqual({ chat_id: 123, text: 'Hello!' });
     expect(result).toEqual({ ok: true, data: { messageId: 42, chatId: 123 } });
   });
@@ -57,7 +59,7 @@ describe('telegramTransport', () => {
     );
 
     const call = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(call[0]).toContain('/sendPhoto');
+    expect(String(call[0])).toContain('/sendPhoto');
     const body = JSON.parse(call[1].body as string);
     expect(body.photo).toBe('https://img.png');
     expect(body.caption).toBe('Look!');
@@ -105,7 +107,7 @@ describe('telegramTransport', () => {
     await t.send({ body: 'x', to: 1, attachment: { type: 'video', url: 'https://v.mp4' } }, ctx);
 
     const call = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(call[0]).toContain('/sendVideo');
+    expect(String(call[0])).toContain('/sendVideo');
     expect(JSON.parse(call[1].body as string).video).toBe('https://v.mp4');
   });
 
@@ -117,7 +119,7 @@ describe('telegramTransport', () => {
     await t.send({ body: 'x', to: 1, attachment: { type: 'audio', url: 'https://a.mp3' } }, ctx);
 
     const call = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(call[0]).toContain('/sendAudio');
+    expect(String(call[0])).toContain('/sendAudio');
     expect(JSON.parse(call[1].body as string).audio).toBe('https://a.mp3');
   });
 
@@ -143,7 +145,7 @@ describe('telegramTransport', () => {
     const result = await t.verify?.();
 
     const call = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(call[0]).toContain('/getMe');
+    expect(String(call[0])).toContain('/getMe');
     expect(result).toEqual({ ok: true, details: { id: 1, is_bot: true, first_name: 'Bot' } });
   });
 
@@ -165,7 +167,7 @@ describe('telegramTransport', () => {
     await t.send({ body: 'hi', to: 1 }, ctx);
 
     const call = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(call[0]).toBe('https://custom.api/botT/sendMessage');
+    expect(String(call[0])).toBe('https://custom.api/botT/sendMessage');
   });
 
   it('falls back to sendDocument for unknown attachment type', async () => {
@@ -179,14 +181,16 @@ describe('telegramTransport', () => {
     );
 
     const call = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(call[0]).toContain('/sendDocument');
+    expect(String(call[0])).toContain('/sendDocument');
   });
 
   it('handles error response without description field', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      json: async () => ({ ok: false }),
-    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: false }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const t = telegramTransport({ token: 'T' });
@@ -197,10 +201,12 @@ describe('telegramTransport', () => {
   });
 
   it('handles success response with missing result fields', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ ok: true, result: {} }),
-    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, result: {} }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const t = telegramTransport({ token: 'T' });
@@ -210,10 +216,12 @@ describe('telegramTransport', () => {
   });
 
   it('verify() handles failure without description', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      json: async () => ({ ok: false }),
-    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: false }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const t = telegramTransport({ token: 'T' });

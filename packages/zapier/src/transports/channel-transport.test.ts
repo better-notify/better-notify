@@ -67,7 +67,7 @@ describe('zapierChannelTransport', () => {
     await t.send({ ...baseRendered, webhookUrl: override }, ctx);
 
     const [url] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(override);
+    expect(String(url)).toBe(override);
   });
 
   it('falls back to opts.webhookUrl when no override', async () => {
@@ -77,7 +77,7 @@ describe('zapierChannelTransport', () => {
     await t.send(baseRendered, ctx);
 
     const [url] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(WEBHOOK_URL);
+    expect(String(url)).toBe(WEBHOOK_URL);
   });
 
   it('returns ok with status and raw data on success', async () => {
