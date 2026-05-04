@@ -8,7 +8,9 @@ import { env } from '../env';
 const ch = emailChannel({
   defaults: { from: { name: env.SMTP_FROM_NAME, email: env.SMTP_USER } },
 });
+
 const rpc = createNotify({ channels: { email: ch } });
+
 const catalog = rpc.catalog({
   welcome: rpc
     .email()
