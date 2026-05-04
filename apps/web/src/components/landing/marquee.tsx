@@ -5,6 +5,7 @@ import {
   TelegramLogoIcon,
   SlackLogoIcon,
   DiscordLogoIcon,
+  LightningIcon,
 } from '@phosphor-icons/react';
 
 import type { ReactNode } from 'react';
@@ -101,6 +102,7 @@ const providers: { name: string; icon: ReactNode }[] = [
       </svg>
     ),
   },
+  { name: 'Zapier', icon: <LightningIcon size={20} weight="fill" className="text-[#FF4A00]" /> },
   { name: 'SMTP', icon: <AtIcon size={20} weight="fill" className="text-[#999]" /> },
   { name: 'SMS', icon: <PhoneIcon size={20} weight="fill" className="text-[#999]" /> },
   { name: 'Push', icon: <BellIcon size={20} weight="fill" className="text-[#999]" /> },

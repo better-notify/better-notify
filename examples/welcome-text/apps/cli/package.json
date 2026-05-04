@@ -24,6 +24,7 @@
     "@betternotify/smtp": "workspace:*",
     "@betternotify/telegram": "workspace:*",
     "@betternotify/twilio": "workspace:*",
+    "@betternotify/zapier": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "handlebars": "catalog:",
     "mjml": "catalog:",

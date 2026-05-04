@@ -85,6 +85,12 @@ export const env = createEnv({
       .optional()
       .default('+15559876543')
       .describe('Twilio destination phone number'),
+
+    ZAPIER_WEBHOOK_URL: z
+      .string()
+      .optional()
+      .default('https://hooks.zapier.com/hooks/catch/123/abc')
+      .describe('Zapier webhook URL'),
   },
   runtimeEnv: process.env,
 });
