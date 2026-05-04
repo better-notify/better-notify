@@ -186,7 +186,8 @@ type NormalizedHooks = {
 
 const toArray = <T>(v: T | T[] | undefined): T[] => {
   if (v === undefined) return [];
-  return Array.isArray(v) ? v : [v];
+  if (Array.isArray(v)) return v;
+  return [v];
 };
 
 const runHooks = async <T>(
@@ -268,11 +269,11 @@ export const createClient = <R extends AnyCatalog, Channels extends ChannelMap =
   const cache = new Map<string, unknown>();
 
   const plugins = options.plugins ?? [];
-  const pluginMiddleware: AnyMiddleware[] = plugins.flatMap((p) => p.middleware ?? []);
+  const pluginMiddleware: AnyMiddleware[] = plugins.flatMap((p) => p?.middleware ?? []);
   const baseLogger = (options.logger ?? consoleLogger()).child({ component: 'client' });
 
   const mergeHook = <K extends keyof NormalizedHooks>(key: K): HookFn<any>[] => [
-    ...plugins.flatMap((p) => toArray(p.hooks?.[key] as HookFn<any> | HookFn<any>[] | undefined)),
+    ...plugins.flatMap((p) => toArray(p?.hooks?.[key] as HookFn<any> | HookFn<any>[] | undefined)),
     ...toArray(options.hooks?.[key] as HookFn<any> | HookFn<any>[] | undefined),
   ];
 
@@ -563,8 +564,7 @@ export const createClient = <R extends AnyCatalog, Channels extends ChannelMap =
     return new Proxy(
       {},
       {
-        get(_t, key) {
-          if (typeof key !== 'string') return undefined;
+        get(_t, key: string) {
           const value = nestedNode[key];
           if (value === undefined) return undefined;
           const flatKey = pathPrefix ? `${pathPrefix}.${key}` : key;

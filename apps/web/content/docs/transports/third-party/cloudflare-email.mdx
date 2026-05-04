@@ -100,6 +100,10 @@ const mail = createClient({
       description: 'Override the default logger.',
       type: 'LoggerLike',
     },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
   }}
 />
 

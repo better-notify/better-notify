@@ -96,14 +96,13 @@ if (result.ok) {
       type: 'boolean',
       default: 'false',
     },
-    timeoutMs: {
-      description: 'Request timeout in milliseconds.',
-      type: 'number',
-      default: '30000',
-    },
     logger: {
       description: 'Optional logger instance. Defaults to consoleLogger().',
       type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
     },
   }}
 />

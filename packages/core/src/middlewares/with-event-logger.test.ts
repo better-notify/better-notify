@@ -60,6 +60,18 @@ describe('withEventLogger', () => {
     });
   });
 
+  it('omits code from event error when code is not a string', async () => {
+    const sink = inMemoryEventSink();
+    const mw = withEventLogger({ sink });
+    const err = Object.assign(new Error('no-code'), { code: 42 });
+    await expect(callMw(mw, async () => Promise.reject(err))).rejects.toThrow('no-code');
+    expect(sink.events[0]).toMatchObject({
+      status: 'error',
+      error: { name: 'Error', message: 'no-code' },
+    });
+    expect((sink.events[0] as { error: { code?: unknown } }).error.code).toBeUndefined();
+  });
+
   it('records duration', async () => {
     const sink = inMemoryEventSink();
     const mw = withEventLogger({ sink });

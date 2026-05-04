@@ -1,5 +1,5 @@
 import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
-import { createTransport } from '@betternotify/core/transports';
+import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import type { RenderedSlack } from '../types.js';
 import type { SlackTransportData, Transport } from './types.js';
 import type { SlackTransportOptions } from './slack.types.js';
@@ -41,8 +41,9 @@ const mapErrorCode = (error: string): 'CONFIG' | 'VALIDATION' | 'PROVIDER' => {
 
 export const slackTransport = (opts: SlackTransportOptions): Transport => {
   const baseUrl = opts.baseUrl ?? 'https://slack.com/api';
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'slack' });
+  const http = createHttpClient({ ...opts.http, timeoutMs });
 
   const callApi = async (
     method: string,
@@ -50,42 +51,42 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
     contentType: 'json' | 'form' = 'json',
   ): Promise<SlackApiResponse> => {
     const isForm = contentType === 'form';
-    const [fetchErr, response] = await handlePromise(
-      fetch(`${baseUrl}/${method}`, {
-        method: 'POST',
-        signal: AbortSignal.timeout(timeoutMs),
-        headers: {
-          Authorization: `Bearer ${opts.token}`,
-          'Content-Type': isForm ? 'application/x-www-form-urlencoded' : 'application/json',
-        },
-        body: isForm
-          ? new URLSearchParams(
-              Object.entries(body).map(([k, v]): [string, string] => [k, String(v)]),
-            ).toString()
-          : JSON.stringify(body),
-      }),
-    );
+    const result = await http.request<SlackApiResponse>(`${baseUrl}/${method}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${opts.token}`,
+        'Content-Type': isForm ? 'application/x-www-form-urlencoded' : 'application/json',
+      },
+      body: isForm
+        ? new URLSearchParams(
+            Object.entries(body).map(([k, v]): [string, string] => [k, String(v)]),
+          ).toString()
+        : JSON.stringify(body),
+    });
 
-    if (fetchErr) {
-      const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
+    if (!result.ok) {
+      const isTimeout = result.kind === 'network' && result.timedOut;
+      const isNetwork = result.kind === 'network';
+      const detail = isNetwork
+        ? isTimeout
+          ? 'request timed out'
+          : `network error: ${result.cause.message}`
+        : `HTTP ${result.status} ${result.statusText}: ${JSON.stringify(result.body)}`;
       throw new NotifyRpcError({
-        message: `Slack ${method}: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
+        message: `Slack ${method}: ${detail}`,
         code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
-        cause: fetchErr,
+        cause: isNetwork ? result.cause : undefined,
       });
     }
 
-    const [parseErr, json] = await handlePromise(response.json() as Promise<SlackApiResponse>);
-
-    if (parseErr) {
+    if (!result.data) {
       throw new NotifyRpcError({
-        message: `Slack ${method}: failed to parse response`,
+        message: `Slack ${method}: empty response body`,
         code: 'PROVIDER',
-        cause: parseErr,
       });
     }
 
-    return json;
+    return result.data as SlackApiResponse;
   };
 
   const buildError = (
@@ -166,12 +167,12 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
             method: 'POST',
             signal: AbortSignal.timeout(timeoutMs),
             headers: { 'Content-Type': 'application/octet-stream' },
-            body: rendered.file.data,
+            body: rendered.file.data as RequestInit['body'],
           }),
         );
 
         if (uploadErr) {
-          const isTimeout = uploadErr.name === 'TimeoutError' || uploadErr.name === 'AbortError';
+          const isTimeout = uploadErr.name === 'AbortError' || uploadErr.name === 'TimeoutError';
           return {
             ok: false,
             error: new NotifyRpcError({

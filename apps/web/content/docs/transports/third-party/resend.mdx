@@ -71,14 +71,13 @@ const mail = createClient({
       type: 'string',
       default: '"https://api.resend.com"',
     },
-    timeoutMs: {
-      description: 'Request timeout in milliseconds.',
-      type: 'number',
-      default: '30000',
-    },
     logger: {
       description: 'Override the default logger.',
       type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
     },
   }}
 />

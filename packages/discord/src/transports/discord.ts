@@ -1,5 +1,5 @@
-import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
-import { createTransport } from '@betternotify/core/transports';
+import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import type { RenderedDiscord } from '../types.js';
 import type { DiscordTransportData, Transport } from './types.js';
 import type { DiscordTransportOptions } from './discord.types.js';
@@ -48,19 +48,16 @@ const buildJsonPayload = (
   return body;
 };
 
-const buildFetchInit = (
+const buildRequest = (
   rendered: RenderedDiscord,
   opts: DiscordTransportOptions,
-  timeoutMs: number,
-): RequestInit => {
+): { body: string | FormData; headers?: Record<string, string> } => {
   const payload = buildJsonPayload(rendered, opts);
 
   if (!rendered.attachments?.length) {
     return {
-      method: 'POST',
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
     };
   }
 
@@ -75,75 +72,48 @@ const buildFetchInit = (
     form.append(`files[${i}]`, file);
   }
 
-  return {
-    method: 'POST',
-    signal: AbortSignal.timeout(timeoutMs),
-    body: form,
-  };
+  return { body: form };
 };
 
 export const discordTransport = (opts: DiscordTransportOptions): Transport => {
   const parsed = new URL(opts.webhookUrl);
-  if (opts.wait && opts.wait === true) parsed.searchParams.set('wait', 'true');
+  if (opts.wait === true) parsed.searchParams.set('wait', 'true');
   const url = parsed.toString();
   const log = (opts.logger ?? consoleLogger()).child({ component: 'discord' });
+  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
 
   return createTransport<RenderedDiscord, DiscordTransportData>({
     name: 'discord',
     async send(rendered, ctx) {
-      const init = buildFetchInit(rendered, opts, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+      const { body, headers } = buildRequest(rendered, opts);
+      const result = await http.request<DiscordSuccessResponse, DiscordErrorResponse>(url, {
+        method: 'POST',
+        body,
+        headers,
+      });
 
-      const [fetchErr, response] = await handlePromise(fetch(url, init));
+      if (!result.ok) {
+        if (result.kind === 'network') {
+          log.error('Discord fetch failed', { err: result.cause, route: ctx.route });
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: `Discord transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
+              code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+              cause: result.cause,
+            }),
+          };
+        }
 
-      if (fetchErr) {
-        const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
-        log.error('Discord fetch failed', { err: fetchErr, route: ctx.route });
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: `Discord transport: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
-            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: fetchErr,
-          }),
-        };
-      }
-
-      if (response.status === 204) {
-        return {
-          ok: true as const,
-          data: { transportMessageId: undefined, raw: {} } satisfies DiscordTransportData,
-        };
-      }
-
-      const [parseErr, data] = await handlePromise(
-        response.json() as Promise<DiscordSuccessResponse | DiscordErrorResponse>,
-      );
-
-      if (parseErr) {
-        log.error('Discord response parse failed', { err: parseErr, route: ctx.route });
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: 'Discord transport: failed to parse response',
-            code: 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: parseErr,
-          }),
-        };
-      }
-
-      if (!response.ok) {
-        const errData = data as DiscordErrorResponse;
-        const code = mapErrorCode(response.status);
-        const retryAfter = response.headers.get('retry-after');
-        const suffix = retryAfter ? ` (retry after ${retryAfter}s)` : '';
-
-        const errorMessage = `Discord transport: ${errData.message ?? `HTTP ${response.status}`}${suffix}`;
+        const errData = result.body as DiscordErrorResponse;
+        const code = mapErrorCode(result.status);
+        const retryAfterBody = errData.retry_after;
+        const suffix = retryAfterBody ? ` (retry after ${retryAfterBody}s)` : '';
+        const errorMessage = `Discord transport: ${errData.message ?? `HTTP ${result.status}`}${suffix}`;
         log.error(errorMessage, {
-          err: { status: response.status, code: errData.code, message: errData.message },
+          err: { status: result.status, code: errData.code, message: errData.message },
           route: ctx.route,
         });
 
@@ -158,12 +128,18 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
         };
       }
 
-      const successData = data as DiscordSuccessResponse;
+      if (!result.data || !('id' in result.data)) {
+        return {
+          ok: true as const,
+          data: { transportMessageId: undefined, raw: {} } satisfies DiscordTransportData,
+        };
+      }
+
       return {
         ok: true as const,
         data: {
-          transportMessageId: successData.id,
-          raw: successData,
+          transportMessageId: result.data.id,
+          raw: result.data,
         } satisfies DiscordTransportData,
       };
     },

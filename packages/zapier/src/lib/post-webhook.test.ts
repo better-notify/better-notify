@@ -21,15 +21,19 @@ const baseOpts = {
 describe('postWebhook', () => {
   it('POSTs JSON to the given URL', async () => {
     const { postWebhook } = await import('./post-webhook.js');
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ status: 'success' }), { status: 200 }),
+    );
 
     await postWebhook(baseOpts);
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(baseOpts.url);
+    expect(String(url)).toBe(baseOpts.url);
     expect(init.method).toBe('POST');
-    expect(init.headers['Content-Type']).toBe('application/json');
+    expect(new Headers(init.headers as Record<string, string>).get('Content-Type')).toBe(
+      'application/json',
+    );
     expect(JSON.parse(init.body)).toEqual(baseOpts.body);
   });
 
@@ -58,7 +62,7 @@ describe('postWebhook', () => {
 
   it('returns error with TIMEOUT code on timeout', async () => {
     const { postWebhook } = await import('./post-webhook.js');
-    const err = new DOMException('signal timed out', 'TimeoutError');
+    const err = new DOMException('aborted', 'AbortError');
     fetchMock.mockRejectedValue(err);
 
     const result = await postWebhook(baseOpts);

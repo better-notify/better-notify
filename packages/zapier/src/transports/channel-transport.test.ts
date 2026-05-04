@@ -26,7 +26,9 @@ const ctx: SendContext = { route: 'orders.created', messageId: 'msg-1', attempt:
 describe('zapierChannelTransport', () => {
   it('POSTs envelope with event, route, messageId, timestamp, data', async () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ status: 'success' }), { status: 200 }),
+    );
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
     await t.send(baseRendered, ctx);
 
@@ -67,7 +69,7 @@ describe('zapierChannelTransport', () => {
     await t.send({ ...baseRendered, webhookUrl: override }, ctx);
 
     const [url] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(override);
+    expect(String(url)).toBe(override);
   });
 
   it('falls back to opts.webhookUrl when no override', async () => {
@@ -77,7 +79,7 @@ describe('zapierChannelTransport', () => {
     await t.send(baseRendered, ctx);
 
     const [url] = fetchMock.mock.calls[0]!;
-    expect(url).toBe(WEBHOOK_URL);
+    expect(String(url)).toBe(WEBHOOK_URL);
   });
 
   it('returns ok with status and raw data on success', async () => {
@@ -145,5 +147,29 @@ describe('zapierChannelTransport', () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
     expect(t.name).toBe('zapier-channel');
+  });
+
+  it('uses default timeout when no timeout options are provided', async () => {
+    const { zapierChannelTransport } = await import('./channel-transport.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
+    const result = await t.send(baseRendered, ctx);
+    expect(result.ok).toBe(true);
+  });
+
+  it('uses opts.timeoutMs when provided', async () => {
+    const { zapierChannelTransport } = await import('./channel-transport.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL, timeoutMs: 5000 });
+    const result = await t.send(baseRendered, ctx);
+    expect(result.ok).toBe(true);
+  });
+
+  it('uses http.timeoutMs when opts.timeoutMs is absent', async () => {
+    const { zapierChannelTransport } = await import('./channel-transport.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL, http: { timeoutMs: 8000 } });
+    const result = await t.send(baseRendered, ctx);
+    expect(result.ok).toBe(true);
   });
 });

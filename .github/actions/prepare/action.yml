@@ -16,7 +16,34 @@ runs:
       with:
         node-version: 22
         registry-url: ${{ inputs.registry-url }}
-        cache: pnpm
 
-    - run: pnpm install --frozen-lockfile
+    - name: Get pnpm store directory
+      id: pnpm-store
       shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - name: Restore pnpm store cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-store-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Save pnpm store cache
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+    - name: Restore turbo cache
+      uses: actions/cache/restore@v4
+      with:
+        path: .turbo/cache
+        key: turbo-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-

@@ -1,4 +1,5 @@
 import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { createHttpClient } from '@betternotify/core/transports';
 import type { RenderedTelegram } from '../types.js';
 import type { TelegramTransportData, Transport } from './types.js';
 import type { TelegramTransportOptions } from './telegram.types.js';
@@ -8,6 +9,8 @@ type TelegramApiResponse = {
   result?: { message_id?: number; chat?: { id?: number }; [key: string]: unknown };
   description?: string;
 };
+
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 const methodForAttachment = (type: string): string => {
   const map: Record<string, string> = {
@@ -22,6 +25,7 @@ const methodForAttachment = (type: string): string => {
 export const telegramTransport = (opts: TelegramTransportOptions): Transport => {
   const apiUrl = opts.apiUrl ?? 'https://api.telegram.org';
   const log = (opts.logger ?? consoleLogger()).child({ component: 'telegram' });
+  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
 
   const buildUrl = (method: string): string => `${apiUrl}/bot${opts.token}/${method}`;
 
@@ -32,14 +36,29 @@ export const telegramTransport = (opts: TelegramTransportOptions): Transport => 
     const url = buildUrl(method);
     log.debug('calling Telegram API', { method });
 
-    const response = await fetch(url, {
+    const result = await http.request<TelegramApiResponse>(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
 
-    const json = (await response.json()) as TelegramApiResponse;
-    return json;
+    if (!result.ok) {
+      const isTimeout = result.kind === 'network' && result.timedOut;
+      throw new NotifyRpcError({
+        message: `Telegram ${method}: ${result.kind === 'network' ? (isTimeout ? 'request timed out' : `network error: ${result.cause.message}`) : `HTTP ${result.status}`}`,
+        code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+        cause: result.kind === 'network' ? result.cause : undefined,
+      });
+    }
+
+    if (!result.data) {
+      throw new NotifyRpcError({
+        message: `Telegram ${method}: empty response body`,
+        code: 'PROVIDER',
+      });
+    }
+
+    return result.data;
   };
 
   return {

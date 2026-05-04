@@ -46,6 +46,15 @@ export type {
   CreateMockTransportOptions,
   MockTransport,
   MapTransportFn,
+  HttpClientOptions,
+  HttpClientBehaviorOptions,
+  HttpClientHooks,
+  HttpRetryOptions,
+  HttpRequestInit,
+  HttpSuccess,
+  HttpNetworkError,
+  HttpStatusError,
+  HttpResult,
 } from './transports/index.js';
 
 export type {

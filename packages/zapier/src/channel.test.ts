@@ -53,7 +53,11 @@ describe('zapierChannel', () => {
       .meta(() => ({ priority: 'high', source: 'api' }));
     const def = ch.finalize(builder, 'order.created');
     const out = await ch.render(def, { input: { orderId: '1' } }, {});
-    expect(out).toEqual({ event: 'order.created', data: { x: 1 }, meta: { priority: 'high', source: 'api' } });
+    expect(out).toEqual({
+      event: 'order.created',
+      data: { x: 1 },
+      meta: { priority: 'high', source: 'api' },
+    });
   });
 
   it('includes webhookUrl when set', async () => {
@@ -64,7 +68,11 @@ describe('zapierChannel', () => {
       .webhookUrl('https://hooks.zapier.com/override');
     const def = ch.finalize(builder, 'test');
     const out = await ch.render(def, { input: { orderId: '1' } }, {});
-    expect(out).toEqual({ event: 'test', data: {}, webhookUrl: 'https://hooks.zapier.com/override' });
+    expect(out).toEqual({
+      event: 'test',
+      data: {},
+      webhookUrl: 'https://hooks.zapier.com/override',
+    });
   });
 
   it('omits optional fields when not set', async () => {

@@ -120,14 +120,20 @@ describe('zapierTransport', () => {
     await t.send(
       {
         ...baseMessage,
-        attachments: [{ filename: 'doc.pdf', content: Buffer.from('pdf-data'), contentType: 'application/pdf' }],
+        attachments: [
+          { filename: 'doc.pdf', content: Buffer.from('pdf-data'), contentType: 'application/pdf' },
+        ],
       },
       ctx,
     );
 
     const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
     expect(body.attachments).toEqual([
-      { filename: 'doc.pdf', content: Buffer.from('pdf-data').toString('base64'), contentType: 'application/pdf' },
+      {
+        filename: 'doc.pdf',
+        content: Buffer.from('pdf-data').toString('base64'),
+        contentType: 'application/pdf',
+      },
     ]);
   });
 
@@ -198,5 +204,29 @@ describe('zapierTransport', () => {
     const { zapierTransport } = await import('./zapier.js');
     const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
     expect(t.name).toBe('zapier');
+  });
+
+  it('uses default timeout when no timeout options are provided', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL });
+    await t.send(baseMessage, ctx);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('uses opts.timeoutMs when provided', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL, timeoutMs: 5000 });
+    await t.send(baseMessage, ctx);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('uses http.timeoutMs when opts.timeoutMs is absent', async () => {
+    const { zapierTransport } = await import('./zapier.js');
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const t = zapierTransport({ webhookUrl: WEBHOOK_URL, http: { timeoutMs: 8000 } });
+    await t.send(baseMessage, ctx);
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 });

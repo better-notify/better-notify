@@ -1,6 +1,7 @@
 import type { RenderedMessage } from '@betternotify/email';
 import { createTransport, formatAddress, normalizeAddress } from '@betternotify/email/transports';
-import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { createHttpClient } from '@betternotify/core/transports';
 import type { WebhookAdapter } from '@betternotify/core/webhook';
 import { NotifyRpcNotImplementedError } from '@betternotify/core';
 import type {
@@ -73,6 +74,7 @@ export const resendTransport = (opts: ResendTransportOptions) => {
   const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
   const url = `${baseUrl}/emails`;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'resend' });
+  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
 
   return createTransport({
     name: 'resend',
@@ -88,61 +90,35 @@ export const resendTransport = (opts: ResendTransportOptions) => {
       }
 
       const body = buildRequestBody(message, formatAddress(message.from));
+      const result = await http.request<ResendSuccessResponse, ResendErrorResponse>(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${opts.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
 
-      const [fetchErr, response] = await handlePromise(
-        fetch(url, {
-          method: 'POST',
-          signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
-          headers: {
-            Authorization: `Bearer ${opts.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        }),
-      );
+      if (!result.ok) {
+        if (result.kind === 'network') {
+          log.error('Resend fetch failed', { err: result.cause, route: ctx.route });
+          return {
+            ok: false,
+            error: new NotifyRpcError({
+              message: `Resend transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
+              code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+              route: ctx.route,
+              messageId: ctx.messageId,
+              cause: result.cause,
+            }),
+          };
+        }
 
-      if (fetchErr) {
-        const isTimeout = fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError';
-        log.error('Resend fetch failed', { err: fetchErr, route: ctx.route });
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: `Resend transport: ${isTimeout ? 'request timed out' : `network error: ${fetchErr.message}`}`,
-            code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: fetchErr,
-          }),
-        };
-      }
-
-      const [parseErr, data] = await handlePromise(
-        response.json() as Promise<ResendSuccessResponse | ResendErrorResponse>,
-      );
-
-      if (parseErr) {
-        log.error('Resend response parse failed', { err: parseErr, route: ctx.route });
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: 'Resend transport: failed to parse response',
-            code: 'PROVIDER',
-            route: ctx.route,
-            messageId: ctx.messageId,
-            cause: parseErr,
-          }),
-        };
-      }
-
-      if (!response.ok) {
-        const errData = data as ResendErrorResponse;
-        const code = mapErrorCode(response.status);
-        const retryAfter = response.headers.get('retry-after');
-        const suffix = retryAfter ? ` (retry after ${retryAfter}s)` : '';
-
-        const errorMessage = `Resend transport: [${errData.name}] ${errData.message}${suffix}`;
+        const errData = result.body ?? ({} as ResendErrorResponse);
+        const code = mapErrorCode(result.status);
+        const errorMessage = `Resend transport: [${errData.name}] ${errData.message}`;
         log.error(errorMessage, {
-          err: { status: response.status, name: errData.name, message: errData.message },
+          err: { status: result.status, name: errData.name, message: errData.message },
           route: ctx.route,
         });
 
@@ -157,7 +133,7 @@ export const resendTransport = (opts: ResendTransportOptions) => {
         };
       }
 
-      const successData = data as ResendSuccessResponse;
+      const successData = result.data as ResendSuccessResponse;
       return {
         ok: true,
         data: {

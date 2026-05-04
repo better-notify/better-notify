@@ -201,19 +201,19 @@ describe('createClient multi-channel', () => {
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
       hooks: {
-        onBeforeSend: () => {
+        onBeforeSend: [() => {
           order.push('before');
-        },
-        onExecute: ({ rendered }) => {
+        }],
+        onExecute: [({ rendered }: { rendered: unknown }) => {
           order.push('execute');
           if (!(rendered as unknown as TestRendered).body) throw new Error('rendered missing');
-        },
-        onAfterSend: ({ result }) => {
+        }],
+        onAfterSend: [({ result }: { result: { messageId?: string } }) => {
           order.push(`after:${result.messageId ? 'has-id' : 'no-id'}`);
-        },
-        onError: () => {
+        }],
+        onError: [() => {
           order.push('error');
-        },
+        }],
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
@@ -374,6 +374,26 @@ describe('createClient multi-channel', () => {
     expect(result.envelope).toEqual({ from: 'sender@x.com', to: ['rcpt@x.com'] });
   });
 
+  it('builds envelope from string addresses', async () => {
+    const ch = testChannel() as unknown as { render: (...a: unknown[]) => Promise<unknown> };
+    ch.render = async () => ({
+      from: 'sender@x.com',
+      to: ['rcpt@x.com'],
+      body: 'hi',
+    });
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: ch as unknown as AnyChannel },
+      transportsByChannel: { test: transport },
+    }) as unknown as {
+      ping: { send: (a: TestArgs) => Promise<{ envelope?: { from?: string; to: string[] } }> };
+    };
+    const result = await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(result.envelope).toEqual({ from: 'sender@x.com', to: ['rcpt@x.com'] });
+  });
+
   it('handles plugin onCreate / onClose lifecycle', async () => {
     const order: string[] = [];
     const plugin = {
@@ -512,6 +532,132 @@ describe('createClient multi-channel', () => {
     }) as unknown as { ping: { render: (i: unknown) => Promise<unknown> } };
     const out = await mail.ping.render({ name: 'A' });
     expect(out).toEqual({ preview: { name: 'A' } });
+  });
+
+  it('render() passes ctx through to previewRender', async () => {
+    const ch = testChannel() as unknown as {
+      previewRender?: (def: unknown, input: unknown, ctx: unknown) => Promise<unknown>;
+    };
+    ch.previewRender = async (_d, input, ctx) => ({ preview: input, ctx });
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: ch as unknown as AnyChannel },
+      transportsByChannel: { test: createTestTransport() },
+    }) as unknown as {
+      ping: { render: (i: unknown, opts?: { ctx?: unknown }) => Promise<unknown> };
+    };
+    const out = await mail.ping.render({ name: 'A' }, { ctx: { userId: '1' } });
+    expect(out).toEqual({ preview: { name: 'A' }, ctx: { userId: '1' } });
+  });
+
+  it('skips falsy entries in sparse plugins array', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    type AnyPlugin = NonNullable<Parameters<typeof createClient>[0]['plugins']>[number];
+    const sparse: AnyPlugin[] = [];
+    let closeCalled = false;
+    sparse[1] = {
+      name: 'real',
+      hooks: { onAfterSend: () => {} },
+      onClose: async () => {
+        closeCalled = true;
+      },
+    } as AnyPlugin;
+
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+      plugins: sparse,
+    }) as unknown as {
+      ping: { send: (a: TestArgs) => Promise<unknown> };
+      close: () => Promise<void>;
+    };
+    await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    await mail.close();
+    expect(closeCalled).toBe(true);
+  });
+
+  it('passes single hook function through toArray', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const order: string[] = [];
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+      hooks: {
+        onBeforeSend: () => { order.push('before'); },
+        onExecute: () => { order.push('execute'); },
+        onAfterSend: () => { order.push('after'); },
+      },
+      plugins: [{
+        name: 'hook-test',
+        hooks: {
+          onBeforeSend: () => { order.push('p-before'); },
+        },
+      }],
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(order).toContain('before');
+    expect(order).toContain('p-before');
+  });
+
+  it('middleware next() passes through ctx when called without args', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const ctxValues: unknown[] = [];
+    const ch = testChannel() as unknown as {
+      render: (...a: unknown[]) => Promise<TestRendered>;
+    };
+    ch.render = async (_def, args, ctx) => {
+      ctxValues.push(ctx);
+      return { body: 'x', to: (args as TestArgs).to };
+    };
+    const passthrough = async ({ next }: { next: () => Promise<unknown> }) => next();
+    const defs = catalog.definitions as unknown as Record<string, { middleware: unknown[] }>;
+    const ping = defs.ping;
+    if (!ping) throw new Error('ping missing');
+    ping.middleware = [passthrough];
+
+    const mail = createClient({
+      catalog,
+      channels: { test: ch as unknown as AnyChannel },
+      transportsByChannel: { test: transport },
+      ctx: { base: true } as never,
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(ctxValues[0]).toMatchObject({ base: true });
+  });
+
+  it('skips falsy entries in sparse middleware array', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const defs = catalog.definitions as unknown as Record<string, { middleware: unknown[] }>;
+    const ping = defs.ping;
+    if (!ping) throw new Error('ping missing');
+    const sparse: unknown[] = [];
+    sparse[1] = async ({ next }: { next: () => Promise<unknown> }) => next();
+    ping.middleware = sparse;
+
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+    }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+    const result = await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
+    expect(result).toBeDefined();
+  });
+
+  it('returns undefined for Symbol property access on proxy', () => {
+    const catalog = buildTestCatalog();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: createTestTransport() },
+    });
+    expect((mail as Record<symbol, unknown>)[Symbol.iterator]).toBeUndefined();
   });
 
   it('preserves NotifyRpcError when transport throws one (no re-wrap)', async () => {

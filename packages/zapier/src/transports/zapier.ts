@@ -17,7 +17,7 @@ const toAddressObject = (addr: Address): { name?: string; email: string } => {
 export const zapierTransport = (opts: ZapierTransportOptions) => {
   validateWebhookUrl(opts.webhookUrl);
 
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = opts.timeoutMs ?? opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'zapier' });
 
   return createTransport({
@@ -65,7 +65,10 @@ export const zapierTransport = (opts: ZapierTransportOptions) => {
         tags: message.tags ?? {},
         attachments: (message.attachments ?? []).map((att) => ({
           filename: att.filename,
-          content: typeof att.content === 'string' ? att.content : Buffer.from(att.content).toString('base64'),
+          content:
+            typeof att.content === 'string'
+              ? att.content
+              : Buffer.from(att.content).toString('base64'),
           ...(att.contentType ? { contentType: att.contentType } : {}),
         })),
       };
@@ -76,6 +79,7 @@ export const zapierTransport = (opts: ZapierTransportOptions) => {
         url: opts.webhookUrl,
         body: payload as unknown as Record<string, unknown>,
         timeoutMs,
+        http: opts.http,
         route: ctx.route,
         messageId: ctx.messageId,
       });

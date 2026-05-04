@@ -75,6 +75,10 @@ const mail = createClient({
       type: 'LoggerLike',
       default: 'consoleLogger()',
     },
+    http: {
+      description: 'HTTP client options — retry and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
   }}
 />
 
