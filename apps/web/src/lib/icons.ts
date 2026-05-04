@@ -56,6 +56,30 @@ import {
   WebhooksLogo,
   Wrench,
 } from '@phosphor-icons/react';
+import { createElement } from 'react';
+
+const TwilioLogo = ({ size = 18 }: { size?: number }) =>
+  createElement(
+    'svg',
+    {
+      width: size,
+      height: size,
+      viewBox: '0 0 256 256',
+      fill: 'none',
+      xmlns: 'http://www.w3.org/2000/svg',
+    },
+    createElement('circle', {
+      cx: '128',
+      cy: '128',
+      r: '112',
+      stroke: 'currentColor',
+      strokeWidth: '16',
+    }),
+    createElement('circle', { cx: '96', cy: '96', r: '24', fill: 'currentColor' }),
+    createElement('circle', { cx: '160', cy: '96', r: '24', fill: 'currentColor' }),
+    createElement('circle', { cx: '96', cy: '160', r: '24', fill: 'currentColor' }),
+    createElement('circle', { cx: '160', cy: '160', r: '24', fill: 'currentColor' }),
+  );
 
 export const iconMap = {
   Activity: Pulse,
@@ -108,6 +132,7 @@ export const iconMap = {
   SlackLogo,
   Tag,
   TelegramLogo,
+  TwilioLogo,
   Terminal,
   TestTube,
   TreeStructure,

@@ -43,6 +43,7 @@ jobs:
             handlebars
             react-email
             cloudflare-email
+            twilio
             release
             deps
             repo

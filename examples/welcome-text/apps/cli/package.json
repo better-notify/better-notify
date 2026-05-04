@@ -23,6 +23,7 @@
     "@betternotify/sms": "workspace:*",
     "@betternotify/smtp": "workspace:*",
     "@betternotify/telegram": "workspace:*",
+    "@betternotify/twilio": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "handlebars": "catalog:",
     "mjml": "catalog:",

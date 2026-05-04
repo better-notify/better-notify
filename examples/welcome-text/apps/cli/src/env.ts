@@ -69,6 +69,22 @@ export const env = createEnv({
      */
     SLACK_BOT_TOKEN: z.string().optional().default('xoxb-test').describe('Slack bot token'),
     SLACK_CHANNEL: z.string().optional().default('#general').describe('Slack channel'),
+
+    /**
+     * Twilio cluster
+     */
+    TWILIO_ACCOUNT_SID: z.string().optional().default('AC_test').describe('Twilio Account SID'),
+    TWILIO_AUTH_TOKEN: z.string().optional().default('token').describe('Twilio Auth Token'),
+    TWILIO_FROM_NUMBER: z
+      .string()
+      .optional()
+      .default('+15551234567')
+      .describe('Twilio sender phone number'),
+    TWILIO_DESTINATION_NUMBER: z
+      .string()
+      .optional()
+      .default('+15559876543')
+      .describe('Twilio destination phone number'),
   },
   runtimeEnv: process.env,
 });
