@@ -5,6 +5,7 @@ import {
   TelegramLogo,
   DiscordLogo,
   SlackLogo,
+  Lightning,
   WebhooksLogo,
 } from '@phosphor-icons/react';
 
@@ -52,6 +53,13 @@ const channels = [
     pkg: '@betternotify/slack',
     status: 'ready',
     detail: 'Bot API · Block Kit · Threads',
+  },
+  {
+    icon: Lightning,
+    name: 'Zapier',
+    pkg: '@betternotify/zapier',
+    status: 'ready',
+    detail: 'Webhooks · Automations · 7000+ apps',
   },
   {
     icon: WebhooksLogo,

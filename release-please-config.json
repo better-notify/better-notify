@@ -81,6 +81,11 @@
       "component": "@betternotify/slack",
       "prerelease-type": "alpha"
     },
+    "packages/zapier": {
+      "release-type": "node",
+      "component": "@betternotify/zapier",
+      "prerelease-type": "alpha"
+    },
     "apps/web": {
       "release-type": "node",
       "component": "@betternotify/web",
