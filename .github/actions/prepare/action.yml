@@ -17,21 +17,12 @@ runs:
         node-version: 22
         registry-url: ${{ inputs.registry-url }}
 
-    - name: Restore node_modules cache
-      id: cache-node-modules
-      uses: actions/cache/restore@v4
-      with:
-        path: '**/node_modules'
-        key: node-modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
     - name: Get pnpm store directory
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       id: pnpm-store
       shell: bash
       run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
     - name: Restore pnpm store cache
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v4
       with:
         path: ${{ steps.pnpm-store.outputs.path }}
@@ -40,16 +31,14 @@ runs:
           pnpm-store-${{ runner.os }}-
 
     - name: Install dependencies
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       shell: bash
       run: pnpm install --frozen-lockfile
 
-    - name: Save node_modules cache
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
+    - name: Save pnpm store cache
       uses: actions/cache/save@v4
       with:
-        path: '**/node_modules'
-        key: node-modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
     - name: Restore turbo cache
       uses: actions/cache/restore@v4
