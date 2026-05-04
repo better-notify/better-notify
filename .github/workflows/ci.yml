@@ -37,6 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/prepare
+      - run: pnpm build
       - run: pnpm test:coverage
 
   bundle-projects:
