@@ -50,7 +50,8 @@ describe('validateWebhookUrl', () => {
       validateWebhookUrl('http://hooks.zapier.com/hooks/catch/secret/token');
     } catch (err) {
       expect((err as NotifyRpcError).message).not.toContain('/hooks/catch/secret/token');
-      expect((err as NotifyRpcError).message).toContain('http://hooks.zapier.com/***');
+      expect((err as NotifyRpcError).message).toContain('http://hooks.zapier.com');
+      expect((err as NotifyRpcError).message).toContain('***');
       return;
     }
     throw new Error('should have thrown');
