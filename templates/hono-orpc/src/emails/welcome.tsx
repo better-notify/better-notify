@@ -53,6 +53,8 @@ const theme = {
   },
 };
 
+const APP_NAME = '{{name}}';
+
 export const Welcome = ({ name, verifyUrl }: Props) => {
   return (
     <Html>
@@ -63,7 +65,7 @@ export const Welcome = ({ name, verifyUrl }: Props) => {
           <Container className="mx-auto max-w-[560px] overflow-hidden rounded-2xl bg-white">
             <Section className="bg-navy-600 px-8 py-6">
               <Text className="m-0 text-sm font-bold uppercase tracking-[0.16em] text-white">
-                {'{{name}}'}
+                {APP_NAME}
               </Text>
               <Text className="mb-0 mt-2 text-sm text-navy-200">Account verification</Text>
             </Section>
@@ -111,7 +113,7 @@ export const Welcome = ({ name, verifyUrl }: Props) => {
             </Section>
 
             <Section className="bg-slate-50 px-8 py-7">
-              <Text className="m-0 text-sm font-semibold text-slate-700">{'{{name}}'}</Text>
+              <Text className="m-0 text-sm font-semibold text-slate-700">{APP_NAME}</Text>
               <Text className="mb-0 mt-4 text-xs leading-5 text-slate-500">
                 You are receiving this email because an account was created with this address.
               </Text>

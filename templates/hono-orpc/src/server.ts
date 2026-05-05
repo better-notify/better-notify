@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { RPCHandler } from '@orpc/server/fetch';
 import { router } from './rpc';
-import { notificationService } from './notify';
 
 const app = new Hono();
 
@@ -13,7 +12,6 @@ const handler = new RPCHandler(router);
 app.use('/rpc/*', async (c, next) => {
   const { matched, response } = await handler.handle(c.req.raw, {
     prefix: '/rpc',
-    context: { notificationService },
   });
 
   if (matched) {

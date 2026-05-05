@@ -1,12 +1,12 @@
 import { os } from '@orpc/server';
 import { z } from 'zod';
-import type { notificationService } from './notify';
+import { notificationService } from './notify';
 
-type AppContext = {
-  notificationService: typeof notificationService;
-};
+const injectNotify = os.middleware(async ({ next }) => {
+  return next({ context: { notificationService } });
+});
 
-const base = os.$context<AppContext>();
+const base = os.use(injectNotify);
 
 export const sendWelcome = base
   .input(

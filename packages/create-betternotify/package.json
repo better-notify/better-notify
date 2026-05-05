@@ -23,8 +23,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@clack/prompts": "latest",
-    "incur": "latest"
+    "@clack/prompts": "1.3.0",
+    "incur": "0.4.5"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
