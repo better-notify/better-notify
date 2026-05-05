@@ -7,7 +7,7 @@ export type ResolvedOptions = ScaffoldOptions & { pm: PackageManager };
 
 const NAME_RE = /^[a-z0-9@][a-z0-9._\-/]*$/;
 
-export const validateName = (value: string): string | undefined => {
+export const validateName = (value: string | undefined): string | undefined => {
   if (!value) return 'Required';
   if (!NAME_RE.test(value)) return 'Invalid package name';
 };
