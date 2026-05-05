@@ -83,7 +83,10 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
   const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
   const url = `${baseUrl}/client/v4/accounts/${opts.accountId}/email/sending/send`;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'cloudflare-email' });
-  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+  const http = createHttpClient({
+    ...opts.http,
+    timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
 
   return {
     name: 'cloudflare-email',

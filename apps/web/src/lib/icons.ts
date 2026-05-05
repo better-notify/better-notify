@@ -81,7 +81,6 @@ const TwilioLogo = ({ size = 18 }: { size?: number }) =>
     createElement('circle', { cx: '160', cy: '160', r: '24', fill: 'currentColor' }),
   );
 
-
 const MailchimpLogo = ({ size = 18 }: { size?: number }) =>
   createElement('svg', {
     width: size,

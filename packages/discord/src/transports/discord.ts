@@ -17,9 +17,12 @@ type DiscordSuccessResponse = {
   [key: string]: unknown;
 };
 
-const mapError = (status: number): { code: 'VALIDATION' | 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
+const mapError = (
+  status: number,
+): { code: 'VALIDATION' | 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
   if (status === 400) return { code: 'VALIDATION', retriable: false };
-  if (status === 401 || status === 403 || status === 404) return { code: 'CONFIG', retriable: false };
+  if (status === 401 || status === 403 || status === 404)
+    return { code: 'CONFIG', retriable: false };
   if (status === 429) return { code: 'RATE_LIMITED', retriable: true };
   return { code: 'PROVIDER', retriable: status >= 500 };
 };
@@ -81,7 +84,10 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
   if (opts.wait === true) parsed.searchParams.set('wait', 'true');
   const url = parsed.toString();
   const log = (opts.logger ?? consoleLogger()).child({ component: 'discord' });
-  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+  const http = createHttpClient({
+    ...opts.http,
+    timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
 
   return createTransport<RenderedDiscord, DiscordTransportData>({
     name: 'discord',

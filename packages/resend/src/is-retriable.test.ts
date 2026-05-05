@@ -4,12 +4,21 @@ import { isResendRetriable } from './is-retriable.js';
 
 describe('isResendRetriable', () => {
   it('returns true when NotifyRpcProviderError has retriable: true', () => {
-    const err = new NotifyRpcProviderError({ message: 'timeout', provider: 'resend', retriable: true });
+    const err = new NotifyRpcProviderError({
+      message: 'timeout',
+      provider: 'resend',
+      retriable: true,
+    });
     expect(isResendRetriable(err)).toBe(true);
   });
 
   it('returns false when NotifyRpcProviderError has retriable: false', () => {
-    const err = new NotifyRpcProviderError({ message: 'invalid', provider: 'resend', code: 'VALIDATION', retriable: false });
+    const err = new NotifyRpcProviderError({
+      message: 'invalid',
+      provider: 'resend',
+      code: 'VALIDATION',
+      retriable: false,
+    });
     expect(isResendRetriable(err)).toBe(false);
   });
 

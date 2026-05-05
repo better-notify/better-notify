@@ -81,6 +81,11 @@
       "component": "@betternotify/zapier",
       "prerelease-type": "alpha"
     },
+    "packages/create-betternotify": {
+      "release-type": "node",
+      "component": "create-betternotify",
+      "prerelease-type": "alpha"
+    },
     "apps/web": {
       "release-type": "node",
       "component": "@betternotify/web",

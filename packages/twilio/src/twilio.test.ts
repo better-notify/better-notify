@@ -378,7 +378,9 @@ describe('twilioSmsTransport — error mapping', () => {
 
   it('falls back to empty error data when response body is null', async () => {
     const { twilioSmsTransport } = await import('./twilio.js');
-    fetchMock.mockResolvedValue(new Response('', { status: 500, statusText: 'Internal Server Error' }));
+    fetchMock.mockResolvedValue(
+      new Response('', { status: 500, statusText: 'Internal Server Error' }),
+    );
     const t = twilioSmsTransport({
       accountSid: ACCOUNT_SID,
       authToken: AUTH_TOKEN,

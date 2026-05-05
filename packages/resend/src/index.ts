@@ -65,7 +65,9 @@ const buildRequestBody = (message: RenderedMessage, from: string): ResendRequest
   return body;
 };
 
-const mapError = (status: number): { code: 'VALIDATION' | 'CONFIG' | 'PROVIDER'; retriable: boolean } => {
+const mapError = (
+  status: number,
+): { code: 'VALIDATION' | 'CONFIG' | 'PROVIDER'; retriable: boolean } => {
   if (status === 422) return { code: 'VALIDATION', retriable: false };
   if (status === 401 || status === 403) return { code: 'CONFIG', retriable: false };
   return { code: 'PROVIDER', retriable: status >= 500 };
@@ -76,7 +78,10 @@ export const resendTransport = (opts: ResendTransportOptions) => {
   const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
   const url = `${baseUrl}/emails`;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'resend' });
-  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+  const http = createHttpClient({
+    ...opts.http,
+    timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
 
   return createTransport({
     name: 'resend',

@@ -39,7 +39,11 @@ const toRecipients = (addresses: Address[], type: 'to' | 'cc' | 'bcc'): Mandrill
     return { email: addr.email, ...(addr.name ? { name: addr.name } : {}), type };
   });
 
-const buildMessage = (message: RenderedMessage, fromEmail: string, fromName?: string): MandrillMessage => {
+const buildMessage = (
+  message: RenderedMessage,
+  fromEmail: string,
+  fromName?: string,
+): MandrillMessage => {
   const to: MandrillRecipient[] = [
     ...toRecipients(message.to, 'to'),
     ...(message.cc?.length ? toRecipients(message.cc, 'cc') : []),
@@ -108,7 +112,10 @@ export const mailchimpTransport = (opts: MailchimpTransportOptions) => {
   const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
   const url = `${baseUrl}/messages/send`;
   const log = (opts.logger ?? consoleLogger()).child({ component: 'mailchimp' });
-  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+  const http = createHttpClient({
+    ...opts.http,
+    timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
 
   return createTransport({
     name: 'mailchimp',
@@ -123,9 +130,7 @@ export const mailchimpTransport = (opts: MailchimpTransportOptions) => {
         });
       }
 
-      const from = typeof message.from === 'string'
-        ? { email: message.from }
-        : message.from;
+      const from = typeof message.from === 'string' ? { email: message.from } : message.from;
 
       const body: MandrillRequest = {
         key: opts.apiKey,

@@ -45,23 +45,23 @@ All packages build and publish in parallel via a matrix job. After merging the r
 
 ### Current packages
 
-| Package | Path |
-|---------|------|
-| `@betternotify/core` | `packages/core` |
-| `@betternotify/email` | `packages/email` |
-| `@betternotify/sms` | `packages/sms` |
-| `@betternotify/push` | `packages/push` |
-| `@betternotify/react-email` | `packages/react-email` |
-| `@betternotify/mjml` | `packages/mjml` |
-| `@betternotify/handlebars` | `packages/handlebars` |
-| `@betternotify/smtp` | `packages/smtp` |
-| `@betternotify/resend` | `packages/resend` |
+| Package                          | Path                        |
+| -------------------------------- | --------------------------- |
+| `@betternotify/core`             | `packages/core`             |
+| `@betternotify/email`            | `packages/email`            |
+| `@betternotify/sms`              | `packages/sms`              |
+| `@betternotify/push`             | `packages/push`             |
+| `@betternotify/react-email`      | `packages/react-email`      |
+| `@betternotify/mjml`             | `packages/mjml`             |
+| `@betternotify/handlebars`       | `packages/handlebars`       |
+| `@betternotify/smtp`             | `packages/smtp`             |
+| `@betternotify/resend`           | `packages/resend`           |
 | `@betternotify/cloudflare-email` | `packages/cloudflare-email` |
-| `@betternotify/bullmq` | `packages/bullmq` |
-| `@betternotify/slack` | `packages/slack` |
-| `@betternotify/discord` | `packages/discord` |
-| `@betternotify/telegram` | `packages/telegram` |
-| `@betternotify/zapier` | `packages/zapier` |
+| `@betternotify/bullmq`           | `packages/bullmq`           |
+| `@betternotify/slack`            | `packages/slack`            |
+| `@betternotify/discord`          | `packages/discord`          |
+| `@betternotify/telegram`         | `packages/telegram`         |
+| `@betternotify/zapier`           | `packages/zapier`           |
 
 `apps/web` (`@betternotify/web`) deploys to Cloudflare Workers via a separate job — it is never published to npm.
 
@@ -123,13 +123,13 @@ Add new examples to this checklist as they appear in `examples/`.
 
 ## Required secrets
 
-| Secret | Used by | Purpose |
-|--------|---------|---------|
-| `BETTER_NOTIFY_APP_ID` | release-please | GitHub App authentication |
-| `BETTER_NOTIFY_APP_PRIVATE_KEY` | release-please | GitHub App authentication |
-| `NPM_TOKEN` | publish + preview | npm registry publish access |
-| `CLOUDFLARE_ACCOUNT_ID` | deploy-web + preview docs | Cloudflare Workers deployment |
-| `CLOUDFLARE_API_TOKEN` | deploy-web + preview docs | Cloudflare Workers deployment |
+| Secret                          | Used by                   | Purpose                       |
+| ------------------------------- | ------------------------- | ----------------------------- |
+| `BETTER_NOTIFY_APP_ID`          | release-please            | GitHub App authentication     |
+| `BETTER_NOTIFY_APP_PRIVATE_KEY` | release-please            | GitHub App authentication     |
+| `NPM_TOKEN`                     | publish + preview         | npm registry publish access   |
+| `CLOUDFLARE_ACCOUNT_ID`         | deploy-web + preview docs | Cloudflare Workers deployment |
+| `CLOUDFLARE_API_TOKEN`          | deploy-web + preview docs | Cloudflare Workers deployment |
 
 ## Quick reference
 

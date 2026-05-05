@@ -151,7 +151,9 @@ describe('zapierChannelTransport', () => {
 
   it('uses default timeout when no timeout options are provided', async () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ status: 'success' }), { status: 200 }),
+    );
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL });
     const result = await t.send(baseRendered, ctx);
     expect(result.ok).toBe(true);
@@ -159,7 +161,9 @@ describe('zapierChannelTransport', () => {
 
   it('uses opts.timeoutMs when provided', async () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ status: 'success' }), { status: 200 }),
+    );
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL, timeoutMs: 5000 });
     const result = await t.send(baseRendered, ctx);
     expect(result.ok).toBe(true);
@@ -167,7 +171,9 @@ describe('zapierChannelTransport', () => {
 
   it('uses http.timeoutMs when opts.timeoutMs is absent', async () => {
     const { zapierChannelTransport } = await import('./channel-transport.js');
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 'success' }), { status: 200 }));
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ status: 'success' }), { status: 200 }),
+    );
     const t = zapierChannelTransport({ webhookUrl: WEBHOOK_URL, http: { timeoutMs: 8000 } });
     const result = await t.send(baseRendered, ctx);
     expect(result.ok).toBe(true);
