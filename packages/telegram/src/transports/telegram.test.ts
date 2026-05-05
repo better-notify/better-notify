@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcProviderError } from '@betternotify/core';
 import { telegramTransport } from './telegram.js';
 import { mockTelegramTransport } from './mock.js';
 
@@ -123,63 +123,157 @@ describe('telegramTransport', () => {
     expect(JSON.parse(call[1].body as string).audio).toBe('https://a.mp3');
   });
 
-  it('throws NotifyRpcError with code PROVIDER on non-ok response', async () => {
+  it('throws NotifyRpcProviderError with code PROVIDER on non-ok response', async () => {
     const fetchMock = mockFetch({ ok: false, description: 'Chat not found' });
     vi.stubGlobal('fetch', fetchMock);
 
     const t = telegramTransport({ token: 'T' });
 
     const promise = t.send({ body: 'hi', to: 999 }, ctx);
-    await expect(promise).rejects.toThrow(NotifyRpcError);
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
     await expect(promise).rejects.toMatchObject({
       code: 'PROVIDER',
+      provider: 'telegram',
+      retriable: false,
       message: expect.stringContaining('Chat not found'),
     });
   });
 
-  it('throws PROVIDER when the Telegram API returns an HTTP error', async () => {
+  it('throws RATE_LIMITED when the Telegram API returns HTTP 429', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: 'too many requests' }), {
-          status: 429,
-          statusText: 'Too Many Requests',
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: 'too many requests' }), {
+            status: 429,
+            statusText: 'Too Many Requests',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
       ),
     );
 
     const t = telegramTransport({ token: 'T' });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
 
-    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
-      code: 'PROVIDER',
-      message: expect.stringContaining('HTTP 429'),
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
+      code: 'RATE_LIMITED',
+      provider: 'telegram',
+      retriable: true,
+      httpStatus: 429,
     });
   });
 
-  it('throws PROVIDER when the Telegram request fails before a response', async () => {
+  it('throws PROVIDER with retriable true when the Telegram request fails before a response', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('socket closed')));
 
     const t = telegramTransport({ token: 'T' });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
 
-    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
       code: 'PROVIDER',
+      provider: 'telegram',
+      retriable: true,
       message: expect.stringContaining('network error: socket closed'),
       cause: expect.any(Error),
     });
   });
 
-  it('throws TIMEOUT when the Telegram request is aborted', async () => {
+  it('throws TIMEOUT with retriable true when the Telegram request is aborted', async () => {
     const error = new Error('aborted');
     error.name = 'AbortError';
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(error));
 
     const t = telegramTransport({ token: 'T', http: { timeoutMs: 1 } });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
 
-    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
       code: 'TIMEOUT',
+      provider: 'telegram',
+      retriable: true,
       message: expect.stringContaining('request timed out'),
       cause: error,
+    });
+  });
+
+  it('throws CONFIG when the Telegram API returns HTTP 401', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: 'unauthorized' }), {
+            status: 401,
+            statusText: 'Unauthorized',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      ),
+    );
+
+    const t = telegramTransport({ token: 'T' });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
+
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
+      code: 'CONFIG',
+      provider: 'telegram',
+      retriable: false,
+      httpStatus: 401,
+    });
+  });
+
+  it('throws CONFIG when the Telegram API returns HTTP 403', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: 'forbidden' }), {
+            status: 403,
+            statusText: 'Forbidden',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      ),
+    );
+
+    const t = telegramTransport({ token: 'T' });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
+
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
+      code: 'CONFIG',
+      provider: 'telegram',
+      retriable: false,
+      httpStatus: 403,
+    });
+  });
+
+  it('throws PROVIDER with retriable true when the Telegram API returns HTTP 500', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: 'internal server error' }), {
+            status: 500,
+            statusText: 'Internal Server Error',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      ),
+    );
+
+    const t = telegramTransport({ token: 'T' });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
+
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
+      code: 'PROVIDER',
+      provider: 'telegram',
+      retriable: true,
+      httpStatus: 500,
     });
   });
 
@@ -231,17 +325,26 @@ describe('telegramTransport', () => {
   });
 
   it('handles error response without description field', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ ok: false }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ ok: false }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      ),
     );
-    vi.stubGlobal('fetch', fetchMock);
 
     const t = telegramTransport({ token: 'T' });
-    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
+
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
       code: 'PROVIDER',
+      provider: 'telegram',
+      retriable: false,
       message: expect.stringContaining('Unknown Telegram API error'),
     });
   });
@@ -261,21 +364,27 @@ describe('telegramTransport', () => {
     expect(result).toEqual({ ok: true, data: { messageId: 0, chatId: 0 } });
   });
 
-  it('throws PROVIDER when API returns empty response body', async () => {
+  it('throws PROVIDER with retriable true when API returns empty response body', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        new Response('', {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response('', {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
       ),
     );
 
     const t = telegramTransport({ token: 'T' });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
 
-    await expect(t.send({ body: 'hi', to: 1 }, ctx)).rejects.toMatchObject({
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
       code: 'PROVIDER',
+      provider: 'telegram',
+      retriable: true,
       message: expect.stringContaining('empty response body'),
     });
   });

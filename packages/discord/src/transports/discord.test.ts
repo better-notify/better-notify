@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach, beforeEach, type Mock } from 'vitest';
-import { NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcProviderError } from '@betternotify/core';
 import type { RenderedDiscord } from '../types.js';
 import type { SendContext } from '@betternotify/core';
 
@@ -158,8 +158,12 @@ describe('discordTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect(result.error).toBeInstanceOf(NotifyRpcError);
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('discord');
+    expect(err.retriable).toBe(false);
+    expect(err.providerCode).toBe(50035);
   });
 
   it('returns CONFIG for 401 status', async () => {
@@ -172,7 +176,9 @@ describe('discordTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.retriable).toBe(false);
   });
 
   it('returns CONFIG for 403 status', async () => {
@@ -185,7 +191,9 @@ describe('discordTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.retriable).toBe(false);
   });
 
   it('returns CONFIG for 404 status (webhook deleted)', async () => {
@@ -198,10 +206,12 @@ describe('discordTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.retriable).toBe(false);
   });
 
-  it('returns PROVIDER for 429 rate limit with retry-after', async () => {
+  it('returns RATE_LIMITED for 429 with retryAfterMs', async () => {
     const { discordTransport } = await import('./discord.js');
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ message: 'You are being rate limited.', retry_after: 1.5 }), {
@@ -214,8 +224,11 @@ describe('discordTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
-    expect(result.error.message).toContain('retry after');
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('RATE_LIMITED');
+    expect(err.retriable).toBe(true);
+    expect(err.retryAfterMs).toBe(1500);
+    expect(err.provider).toBe('discord');
   });
 
   it('returns PROVIDER for 500 server error', async () => {
@@ -228,7 +241,9 @@ describe('discordTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.retriable).toBe(true);
   });
 
   it('falls back to HTTP status when error response has no message', async () => {
@@ -249,8 +264,8 @@ describe('discordTransport — error mapping', () => {
     const result = await t.send(baseMessage, ctx);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect(result.error).toBeInstanceOf(NotifyRpcError);
-    expect((result.error as NotifyRpcError).message).toContain('HTTP 502');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    expect((result.error as NotifyRpcProviderError).message).toContain('HTTP 502');
   });
 });
 
@@ -382,8 +397,12 @@ describe('discordTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
-    expect(result.error.message).toContain('network error');
+    const err = result.error as NotifyRpcProviderError;
+    expect(err).toBeInstanceOf(NotifyRpcProviderError);
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('discord');
+    expect(err.retriable).toBe(true);
+    expect(err.message).toContain('network error');
   });
 
   it('returns TIMEOUT when fetch throws TimeoutError', async () => {
@@ -395,8 +414,12 @@ describe('discordTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('TIMEOUT');
-    expect(result.error.message).toContain('request timed out');
+    const provErr = result.error as NotifyRpcProviderError;
+    expect(provErr).toBeInstanceOf(NotifyRpcProviderError);
+    expect(provErr.code).toBe('TIMEOUT');
+    expect(provErr.provider).toBe('discord');
+    expect(provErr.retriable).toBe(true);
+    expect(provErr.message).toContain('request timed out');
   });
 
   it('returns PROVIDER when response body is not valid JSON (wait=true)', async () => {
@@ -407,6 +430,6 @@ describe('discordTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect((result.error as NotifyRpcProviderError).code).toBe('PROVIDER');
   });
 });

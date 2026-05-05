@@ -1,6 +1,6 @@
 import type { RenderedMessage } from '@betternotify/email';
 import { createTransport, formatAddress, normalizeAddress } from '@betternotify/email/transports';
-import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
 import { createHttpClient } from '@betternotify/core/transports';
 import type { WebhookAdapter } from '@betternotify/core/webhook';
 import { NotifyRpcNotImplementedError } from '@betternotify/core';
@@ -20,6 +20,8 @@ export type {
   ResendErrorResponse,
   ResendTag,
 } from './types.js';
+
+export { isResendRetriable } from './is-retriable.js';
 
 const DEFAULT_BASE_URL = 'https://api.resend.com';
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -63,10 +65,10 @@ const buildRequestBody = (message: RenderedMessage, from: string): ResendRequest
   return body;
 };
 
-const mapErrorCode = (status: number): 'VALIDATION' | 'CONFIG' | 'PROVIDER' => {
-  if (status === 422) return 'VALIDATION';
-  if (status === 401 || status === 403) return 'CONFIG';
-  return 'PROVIDER';
+const mapError = (status: number): { code: 'VALIDATION' | 'CONFIG' | 'PROVIDER'; retriable: boolean } => {
+  if (status === 422) return { code: 'VALIDATION', retriable: false };
+  if (status === 401 || status === 403) return { code: 'CONFIG', retriable: false };
+  return { code: 'PROVIDER', retriable: status >= 500 };
 };
 
 /** @experimental Resend transport using the Resend HTTP API. */
@@ -104,9 +106,11 @@ export const resendTransport = (opts: ResendTransportOptions) => {
           log.error('Resend fetch failed', { err: result.cause, route: ctx.route });
           return {
             ok: false,
-            error: new NotifyRpcError({
+            error: new NotifyRpcProviderError({
               message: `Resend transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
               code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+              provider: 'resend',
+              retriable: true,
               route: ctx.route,
               messageId: ctx.messageId,
               cause: result.cause,
@@ -115,7 +119,7 @@ export const resendTransport = (opts: ResendTransportOptions) => {
         }
 
         const errData = result.body ?? ({} as ResendErrorResponse);
-        const code = mapErrorCode(result.status);
+        const { code, retriable } = mapError(result.status);
         const errorMessage = `Resend transport: [${errData.name}] ${errData.message}`;
         log.error(errorMessage, {
           err: { status: result.status, name: errData.name, message: errData.message },
@@ -124,9 +128,12 @@ export const resendTransport = (opts: ResendTransportOptions) => {
 
         return {
           ok: false,
-          error: new NotifyRpcError({
+          error: new NotifyRpcProviderError({
             message: errorMessage,
             code,
+            provider: 'resend',
+            httpStatus: result.status,
+            retriable,
             route: ctx.route,
             messageId: ctx.messageId,
           }),

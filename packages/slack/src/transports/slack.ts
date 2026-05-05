@@ -1,4 +1,4 @@
-import { consoleLogger, handlePromise, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, handlePromise, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
 import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import type { RenderedSlack } from '../types.js';
 import type { SlackTransportData, Transport } from './types.js';
@@ -33,10 +33,10 @@ const VALIDATION_ERRORS = new Set([
   'msg_too_long',
 ]);
 
-const mapErrorCode = (error: string): 'CONFIG' | 'VALIDATION' | 'PROVIDER' => {
-  if (CONFIG_ERRORS.has(error)) return 'CONFIG';
-  if (VALIDATION_ERRORS.has(error)) return 'VALIDATION';
-  return 'PROVIDER';
+const mapError = (error: string): { code: 'CONFIG' | 'VALIDATION' | 'PROVIDER'; retriable: boolean } => {
+  if (CONFIG_ERRORS.has(error)) return { code: 'CONFIG', retriable: false };
+  if (VALIDATION_ERRORS.has(error)) return { code: 'VALIDATION', retriable: false };
+  return { code: 'PROVIDER', retriable: true };
 };
 
 export const slackTransport = (opts: SlackTransportOptions): Transport => {
@@ -72,17 +72,22 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
           ? 'request timed out'
           : `network error: ${result.cause.message}`
         : `HTTP ${result.status} ${result.statusText}: ${JSON.stringify(result.body)}`;
-      throw new NotifyRpcError({
+      throw new NotifyRpcProviderError({
         message: `Slack ${method}: ${detail}`,
         code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+        provider: 'slack',
+        httpStatus: isNetwork ? undefined : result.status,
+        retriable: true,
         cause: isNetwork ? result.cause : undefined,
       });
     }
 
     if (!result.data) {
-      throw new NotifyRpcError({
+      throw new NotifyRpcProviderError({
         message: `Slack ${method}: empty response body`,
         code: 'PROVIDER',
+        provider: 'slack',
+        retriable: true,
       });
     }
 
@@ -93,12 +98,15 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
     method: string,
     error: string,
     ctx: { route: string; messageId: string },
-  ): NotifyRpcError => {
-    const code = mapErrorCode(error);
+  ): NotifyRpcProviderError => {
+    const { code, retriable } = mapError(error);
     log.error('Slack API error', { err: new Error(error), route: ctx.route });
-    return new NotifyRpcError({
+    return new NotifyRpcProviderError({
       message: `Slack ${method} failed: ${error}`,
       code,
+      provider: 'slack',
+      providerCode: error,
+      retriable,
       route: ctx.route,
       messageId: ctx.messageId,
     });
@@ -153,9 +161,11 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
         if (!uploadUrl || !fileId) {
           return {
             ok: false,
-            error: new NotifyRpcError({
+            error: new NotifyRpcProviderError({
               message: 'Slack files.getUploadURLExternal returned incomplete upload metadata',
               code: 'PROVIDER',
+              provider: 'slack',
+              retriable: true,
               route: ctx.route,
               messageId: ctx.messageId,
             }),
@@ -175,9 +185,11 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
           const isTimeout = uploadErr.name === 'AbortError' || uploadErr.name === 'TimeoutError';
           return {
             ok: false,
-            error: new NotifyRpcError({
+            error: new NotifyRpcProviderError({
               message: `Slack file upload: ${isTimeout ? 'request timed out' : `network error: ${uploadErr.message}`}`,
               code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+              provider: 'slack',
+              retriable: true,
               route: ctx.route,
               messageId: ctx.messageId,
               cause: uploadErr,
@@ -188,9 +200,12 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
         if (!uploadResponse.ok) {
           return {
             ok: false,
-            error: new NotifyRpcError({
+            error: new NotifyRpcProviderError({
               message: `Slack file upload failed with HTTP ${uploadResponse.status}`,
               code: 'PROVIDER',
+              provider: 'slack',
+              httpStatus: uploadResponse.status,
+              retriable: uploadResponse.status >= 500,
               route: ctx.route,
               messageId: ctx.messageId,
             }),

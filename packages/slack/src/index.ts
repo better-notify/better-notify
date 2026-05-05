@@ -39,6 +39,7 @@ export type {
 } from './types.js';
 export { slackChannel } from './channel.js';
 export type { TextResolver, BlocksResolver, FileResolver } from './channel.js';
+export { isSlackRetriable } from './is-retriable.js';
 export { mockSlackTransport, slackTransport } from './transports/index.js';
 export type {
   Transport,

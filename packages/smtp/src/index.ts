@@ -1,8 +1,28 @@
 import nodemailer from 'nodemailer';
 import type { Address, FromInput, Transport } from '@betternotify/email';
 import { formatAddress, normalizeAddress } from '@betternotify/email/transports';
-import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, handlePromise, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
 import type { SmtpTransportOptions } from './types.js';
+
+export { isSmtpRetriable } from './is-retriable.js';
+
+const AUTH_CODES = new Set(['EAUTH']);
+const CONNECTION_CODES = new Set(['ESOCKET', 'ECONNECTION', 'ETIMEDOUT', 'ECONNREFUSED']);
+
+const classifySmtpError = (
+  err: unknown,
+): { code: 'CONFIG' | 'PROVIDER'; retriable: boolean; providerCode?: number } => {
+  if (!(err instanceof Error)) return { code: 'PROVIDER', retriable: true };
+  const smtpErr = err as Error & { responseCode?: number; code?: string };
+  if (smtpErr.code && AUTH_CODES.has(smtpErr.code)) return { code: 'CONFIG', retriable: false };
+  if (smtpErr.code && CONNECTION_CODES.has(smtpErr.code))
+    return { code: 'PROVIDER', retriable: true };
+  if (smtpErr.responseCode) {
+    const retriable = smtpErr.responseCode >= 400 && smtpErr.responseCode < 500;
+    return { code: 'PROVIDER', retriable, providerCode: smtpErr.responseCode };
+  }
+  return { code: 'PROVIDER', retriable: true };
+};
 
 const fromInputToAddress = (input: Address | FromInput | undefined): Address | undefined => {
   if (!input) return undefined;
@@ -61,23 +81,42 @@ export const smtpTransport = (opts: SmtpTransportOptions): Transport => {
           });
         }
       }
-      const info = await transporter.sendMail({
-        from: formatAddress(from),
-        to: message.to.map(formatAddress),
-        cc: message.cc?.map(formatAddress),
-        bcc: message.bcc?.map(formatAddress),
-        replyTo: message.replyTo ? formatAddress(message.replyTo) : undefined,
-        subject: message.subject,
-        html: message.html,
-        text: message.text,
-        headers: message.headers,
-        attachments: message.attachments?.map((att) => ({
-          filename: att.filename,
-          content: att.content,
-          contentType: att.contentType,
-          cid: att.cid,
-        })),
-      });
+      const [sendErr, info] = await handlePromise(
+        transporter.sendMail({
+          from: formatAddress(from),
+          to: message.to.map(formatAddress),
+          cc: message.cc?.map(formatAddress),
+          bcc: message.bcc?.map(formatAddress),
+          replyTo: message.replyTo ? formatAddress(message.replyTo) : undefined,
+          subject: message.subject,
+          html: message.html,
+          text: message.text,
+          headers: message.headers,
+          attachments: message.attachments?.map((att) => ({
+            filename: att.filename,
+            content: att.content,
+            contentType: att.contentType,
+            cid: att.cid,
+          })),
+        }),
+      );
+
+      if (sendErr) {
+        const { code, retriable, providerCode } = classifySmtpError(sendErr);
+        return {
+          ok: false,
+          error: new NotifyRpcProviderError({
+            message: `SMTP transport: ${sendErr.message}`,
+            code,
+            provider: 'smtp',
+            providerCode,
+            retriable,
+            route: ctx.route,
+            messageId: ctx.messageId,
+            cause: sendErr,
+          }),
+        };
+      }
 
       return {
         ok: true,
