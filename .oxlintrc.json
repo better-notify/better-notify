@@ -6,7 +6,7 @@
     "**/skills/**",
     ".context/**",
     "**/dist/**",
-    "./templates/**"
+    "templates/**"
   ],
   "plugins": ["import", "typescript", "unicorn"],
   "env": {

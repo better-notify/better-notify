@@ -45,23 +45,23 @@ All packages build and publish in parallel via a matrix job. After merging the r
 
 ### Current packages
 
-| Package                          | Path                           |
-| -------------------------------- | ------------------------------ |
-| `@betternotify/core`             | `packages/core`                |
-| `@betternotify/email`            | `packages/email`               |
-| `@betternotify/sms`              | `packages/sms`                 |
-| `@betternotify/push`             | `packages/push`                |
-| `@betternotify/react-email`      | `packages/react-email`         |
-| `@betternotify/mjml`             | `packages/mjml`                |
-| `@betternotify/handlebars`       | `packages/handlebars`          |
-| `@betternotify/smtp`             | `packages/smtp`                |
-| `@betternotify/resend`           | `packages/resend`              |
-| `@betternotify/cloudflare-email` | `packages/cloudflare-email`    |
-| `@betternotify/bullmq`           | `packages/bullmq`              |
-| `@betternotify/slack`            | `packages/slack`               |
-| `@betternotify/discord`          | `packages/discord`             |
-| `@betternotify/telegram`         | `packages/telegram`            |
-| `@betternotify/zapier`           | `packages/zapier`              |
+| Package                          | Path                            |
+| -------------------------------- | ------------------------------- |
+| `@betternotify/core`             | `packages/core`                 |
+| `@betternotify/email`            | `packages/email`                |
+| `@betternotify/sms`              | `packages/sms`                  |
+| `@betternotify/push`             | `packages/push`                 |
+| `@betternotify/react-email`      | `packages/react-email`          |
+| `@betternotify/mjml`             | `packages/mjml`                 |
+| `@betternotify/handlebars`       | `packages/handlebars`           |
+| `@betternotify/smtp`             | `packages/smtp`                 |
+| `@betternotify/resend`           | `packages/resend`               |
+| `@betternotify/cloudflare-email` | `packages/cloudflare-email`     |
+| `@betternotify/bullmq`           | `packages/bullmq`               |
+| `@betternotify/slack`            | `packages/slack`                |
+| `@betternotify/discord`          | `packages/discord`              |
+| `@betternotify/telegram`         | `packages/telegram`             |
+| `@betternotify/zapier`           | `packages/zapier`               |
 | `create-better-notify`           | `packages/create-better-notify` |
 
 `apps/web` (`@betternotify/web`) deploys to Cloudflare Workers via a separate job — it is never published to npm.
