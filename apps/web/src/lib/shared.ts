@@ -4,6 +4,7 @@ export const appConfig = {
   baseUrl: 'https://better-notify.com',
   npmPackagePrefix: '@betternotify',
   twitterHandle: '@better_notify',
+  contactEmail: 'reis@better-notify.com',
   themeColor: '#3a5a8c',
   locale: {
     bcp47: 'en-US',

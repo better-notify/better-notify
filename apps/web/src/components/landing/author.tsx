@@ -1,4 +1,4 @@
-import { GithubLogoIcon, LinkedinLogoIcon, XLogoIcon } from '@phosphor-icons/react';
+import { EnvelopeSimpleIcon, GithubLogoIcon, LinkedinLogoIcon, XLogoIcon } from '@phosphor-icons/react';
 
 import { appConfig } from '@/lib/shared';
 import { useInView } from '@/hooks/use-in-view';
@@ -54,6 +54,16 @@ export function Author() {
                   {author.name}
                 </p>
                 <p className="text-muted-foreground text-sm leading-relaxed">{author.bio}</p>
+                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                  Shoutouts, partnerships, or coffee chats:{' '}
+                  <a
+                    href={`mailto:${appConfig.contactEmail}`}
+                    className="text-foreground hover:text-bn-navy-500 dark:hover:text-bn-navy-400 font-medium transition-colors"
+                  >
+                    <EnvelopeSimpleIcon size={14} className="mr-1 inline-block align-[-2px]" />
+                    {appConfig.contactEmail}
+                  </a>
+                </p>
                 <div className="mt-4 flex flex-wrap items-center gap-1.5">
                   {author.socials.map((s) => (
                     <a
