@@ -607,7 +607,7 @@ describe('mailchimpTransport — attachments', () => {
     expect(body.message.images).toEqual([
       {
         type: 'image/png',
-        name: 'logo.png',
+        name: 'logo@inline',
         content: Buffer.from('png-bytes').toString('base64'),
       },
     ]);
@@ -633,7 +633,7 @@ describe('mailchimpTransport — attachments', () => {
     expect(body.message.attachments).toHaveLength(1);
     expect(body.message.attachments[0].name).toBe('doc.pdf');
     expect(body.message.images).toHaveLength(1);
-    expect(body.message.images[0].name).toBe('logo.png');
+    expect(body.message.images[0].name).toBe('logo');
   });
 
   it('defaults contentType to application/octet-stream when not provided', async () => {

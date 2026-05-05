@@ -69,7 +69,7 @@ const buildMessage = (message: RenderedMessage, fromEmail: string, fromName?: st
     for (const att of message.attachments) {
       const entry: MandrillAttachment = {
         type: att.contentType ?? 'application/octet-stream',
-        name: att.filename,
+        name: att.cid ?? att.filename,
         content: toBase64(att.content),
       };
 
