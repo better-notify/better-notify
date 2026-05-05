@@ -109,6 +109,28 @@ describe('mailchimpTransport', () => {
     ]);
   });
 
+  it('treats bounced status as rejected', async () => {
+    const { mailchimpTransport } = await import('./index.js');
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          { email: 'a@x.com', status: 'sent', _id: 'id1' },
+          { email: 'b@x.com', status: 'bounced', _id: 'id2' },
+        ]),
+        { status: 200 },
+      ),
+    );
+    const t = mailchimpTransport({ apiKey: 'md-test-123' });
+    const result = await t.send(
+      { ...baseMessage, to: [{ email: 'a@x.com' }, { email: 'b@x.com' }] },
+      baseCtx,
+    );
+
+    if (!result.ok) throw new Error('expected ok');
+    expect(result.data.accepted).toEqual(['a@x.com']);
+    expect(result.data.rejected).toEqual(['b@x.com']);
+  });
+
   it('uses custom baseUrl when provided', async () => {
     const { mailchimpTransport } = await import('./index.js');
     mockFetchOk();

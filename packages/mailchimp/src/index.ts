@@ -182,7 +182,7 @@ export const mailchimpTransport = (opts: MailchimpTransportOptions) => {
         .filter((r) => r.status === 'sent' || r.status === 'queued')
         .map((r) => r.email);
       const rejected = recipients
-        .filter((r) => r.status === 'rejected' || r.status === 'invalid')
+        .filter((r) => r.status === 'rejected' || r.status === 'invalid' || r.status === 'bounced')
         .map((r) => r.email);
 
       const firstAccepted = recipients.find((r) => r.status === 'sent' || r.status === 'queued');

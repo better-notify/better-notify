@@ -41,7 +41,7 @@ export type MandrillRequest = {
 
 export type MandrillRecipientStatus = {
   email: string;
-  status: 'sent' | 'queued' | 'rejected' | 'invalid';
+  status: 'sent' | 'queued' | 'rejected' | 'invalid' | 'bounced';
   reject_reason?: string;
   _id: string;
 };
