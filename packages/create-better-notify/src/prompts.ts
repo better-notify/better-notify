@@ -19,7 +19,7 @@ export const resolveOptions = async (partial: {
   rpc?: string;
   pm?: string;
 }): Promise<ResolvedOptions> => {
-  p.intro('create-betternotify');
+  p.intro('create-better-notify');
 
   const nameError = partial.name ? validateName(partial.name) : undefined;
   if (nameError) {

@@ -62,7 +62,7 @@ All packages build and publish in parallel via a matrix job. After merging the r
 | `@betternotify/discord`          | `packages/discord`             |
 | `@betternotify/telegram`         | `packages/telegram`            |
 | `@betternotify/zapier`           | `packages/zapier`              |
-| `create-betternotify`            | `packages/create-betternotify` |
+| `create-better-notify`           | `packages/create-better-notify` |
 
 `apps/web` (`@betternotify/web`) deploys to Cloudflare Workers via a separate job — it is never published to npm.
 

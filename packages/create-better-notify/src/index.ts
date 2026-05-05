@@ -7,7 +7,7 @@ import * as p from '@clack/prompts';
 
 const AVAILABLE_TEMPLATES = ['hono-orpc'];
 
-Cli.create('create-betternotify', {
+Cli.create('create-better-notify', {
   description: 'Scaffold a better-notify project',
   version: '0.0.1',
   args: z.object({
