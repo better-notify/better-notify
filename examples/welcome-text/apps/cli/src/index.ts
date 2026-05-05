@@ -39,6 +39,7 @@ import { runTwilio } from './examples/sms-twilio';
 import { runZapier } from './examples/zapier';
 import { runEmailZapier } from './examples/email-zapier';
 import { runDiscordZapier } from './examples/discord-zapier';
+import { runEmailMailchimp } from './examples/email-mailchimp';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -82,6 +83,7 @@ const examples: Record<string, () => Promise<void>> = {
   zapier: runZapier,
   'email-zapier': runEmailZapier,
   'discord-zapier': runDiscordZapier,
+  'email-mailchimp': runEmailMailchimp,
 };
 
 const main = async (): Promise<void> => {

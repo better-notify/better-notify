@@ -81,6 +81,24 @@ const TwilioLogo = ({ size = 18 }: { size?: number }) =>
     createElement('circle', { cx: '160', cy: '160', r: '24', fill: 'currentColor' }),
   );
 
+
+const MailchimpLogo = ({ size = 18 }: { size?: number }) =>
+  createElement('svg', {
+    width: size,
+    height: size,
+    viewBox: '0 0 256 256',
+    fill: 'none',
+    xmlns: 'http://www.w3.org/2000/svg',
+    dangerouslySetInnerHTML: {
+      __html:
+        '<circle cx="128" cy="128" r="112" stroke="currentColor" stroke-width="16"/>' +
+        '<path d="M128 72c-20 0-36 16-36 36v12c0 8 4 16 10 22l-4 18c-2 8 2 16 8 20s14 4 20-2l4-4c6 2 14 2 20-2l4 4c6 6 14 6 20 2s10-12 8-20l-4-18c6-6 10-14 10-22v-12c0-20-16-36-36-36h-24z" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="116" cy="116" r="8" fill="currentColor"/>' +
+        '<circle cx="148" cy="116" r="8" fill="currentColor"/>' +
+        '<path d="M118 136c4 6 12 8 18 4" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>',
+    },
+  });
+
 export const iconMap = {
   Activity: Pulse,
   AmazonLogo: Globe,
@@ -116,6 +134,7 @@ export const iconMap = {
   Layout,
   Lightbulb,
   Lightning,
+  MailchimpLogo,
   Megaphone,
   Newspaper,
   Notebook,

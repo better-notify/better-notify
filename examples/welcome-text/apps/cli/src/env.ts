@@ -91,6 +91,18 @@ export const env = createEnv({
       .optional()
       .default('https://hooks.zapier.com/hooks/catch/123/abc')
       .describe('Zapier webhook URL'),
+
+    MANDRILL_API_KEY: z.string().optional().default('md-test-123').describe('Mandrill API key'),
+    MANDRILL_FROM_EMAIL: z
+      .string()
+      .optional()
+      .default('noreply@example.com')
+      .describe('Mandrill from email'),
+    MANDRILL_DESTINATION_EMAIL: z
+      .string()
+      .optional()
+      .default('example@email.com')
+      .describe('Mandrill destination email'),
   },
   runtimeEnv: process.env,
 });

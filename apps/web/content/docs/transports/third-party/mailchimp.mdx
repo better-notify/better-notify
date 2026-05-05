@@ -1,0 +1,164 @@
+---
+title: Mailchimp Transactional
+icon: MailchimpLogo
+description: Send emails via the Mailchimp Transactional (Mandrill) API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Mailchimp Transactional transport sends email through the [Mandrill](https://mandrillapp.com) HTTP API (now part of Mailchimp). It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+
+## Install
+
+```package-install
+@betternotify/mailchimp @betternotify/core @betternotify/email
+```
+
+## Getting your API key
+
+1. Log in to your [Mailchimp](https://mailchimp.com) account.
+2. Navigate to **Transactional** (or go directly to [mandrillapp.com](https://mandrillapp.com)).
+3. Go to **Settings > SMTP & API Info**.
+4. Click **+ New API Key** and copy the key.
+
+Store it as an environment variable:
+
+```sh
+MANDRILL_API_KEY=your-api-key-here
+```
+
+<Callout type="info">
+  You must verify a sending domain in your Mandrill account before sending email. Go to **Settings > Domains** to add and verify your domain.
+</Callout>
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { mailchimpTransport } from '@betternotify/mailchimp';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: mailchimpTransport({
+      apiKey: process.env.MANDRILL_API_KEY!,
+    }),
+  },
+});
+```
+
+## Standalone usage
+
+You can use the transport directly without the full Better-Notify pipeline:
+
+```ts
+import { mailchimpTransport } from '@betternotify/mailchimp';
+
+const transport = mailchimpTransport({
+  apiKey: process.env.MANDRILL_API_KEY!,
+});
+
+const result = await transport.send(
+  {
+    from: { name: 'My App', email: 'noreply@example.com' },
+    to: [{ email: 'user@example.com' }],
+    subject: 'Welcome!',
+    html: '<h1>Hello</h1>',
+  },
+  { route: 'welcome', messageId: 'msg-1', attempt: 1 },
+);
+```
+
+## Options
+
+<TypeTable
+  type={{
+    apiKey: {
+      description: 'Mandrill API key. Required.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Override the Mandrill API base URL. Useful for testing.',
+      type: 'string',
+      default: '"https://mandrillapp.com/api/1.0"',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+  }}
+/>
+
+## Error handling
+
+The transport maps Mandrill errors and HTTP status codes to Better-Notify error codes:
+
+| Condition | Mandrill error | Better-Notify code |
+| --- | --- | --- |
+| Invalid API key | `Invalid_Key` | `CONFIG` |
+| Payment required | `PaymentRequired` | `CONFIG` |
+| Unknown subaccount | `Unknown_Subaccount` | `CONFIG` |
+| Validation failure | `ValidationError` | `VALIDATION` |
+| HTTP 429 | Rate limited | `RATE_LIMITED` |
+| HTTP 5xx | Server error | `PROVIDER` |
+| Network failure | — | `PROVIDER` |
+| Timeout | — | `TIMEOUT` |
+
+Per-recipient rejections (`rejected`, `invalid`, `bounced`) are **not** transport-level errors — the send succeeds with `ok: true`, and rejected addresses appear in `result.data.rejected`.
+
+## Tags
+
+Mandrill supports up to 100 tags per message. Better-Notify's `tags` field (`Record<string, string | number | boolean>`) maps to Mandrill's tag array using the **keys only** (values are discarded — Mandrill tags are labels, not key-value pairs):
+
+```ts
+await mail.welcome.send({
+  to: 'user@example.com',
+  input: { name: 'Alice' },
+  tags: { onboarding: true, version: 2 },
+});
+// Sent as: ["onboarding", "version"]
+```
+
+## Attachments
+
+The transport base64-encodes attachment content before sending. Mandrill distinguishes between regular attachments and inline images:
+
+- Attachments **without** a `cid` go to Mandrill's `attachments` array.
+- Attachments **with** a `cid` go to Mandrill's `images` array (for inline images in HTML).
+
+```ts
+await mail.invoice.send({
+  to: 'user@example.com',
+  input: { orderId: '12345' },
+  attachments: [
+    { filename: 'invoice.pdf', content: pdfBuffer, contentType: 'application/pdf' },
+    { filename: 'logo.png', content: logoBuffer, contentType: 'image/png', cid: 'logo' },
+  ],
+});
+```
+
+## Limits
+
+These limits are enforced by Mandrill, not by the transport:
+
+- **1,000 recipients** per `/messages/send` call (to + cc + bcc combined)
+- **25 MB** total message size (including base64-encoded attachments)
+- **100 tags** per message
+- Sending limits depend on your [Mailchimp Transactional plan](https://mailchimp.com/pricing/transactional-email/)
+
+If you need throttling or provider fallback, add `withRateLimit` middleware or wrap the transport in `multiTransport({ strategy: 'failover' })`.

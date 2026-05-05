@@ -266,6 +266,9 @@ importers:
       '@betternotify/handlebars':
         specifier: workspace:*
         version: link:../../../../packages/handlebars
+      '@betternotify/mailchimp':
+        specifier: workspace:*
+        version: link:../../../../packages/mailchimp
       '@betternotify/mjml':
         specifier: workspace:*
         version: link:../../../../packages/mjml
@@ -513,6 +516,31 @@ importers:
       handlebars:
         specifier: 'catalog:'
         version: 4.7.0
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.0.0-rc.17
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@22.19.17)(lightningcss@1.32.0)(msw@2.14.2(@types/node@22.19.17)(typescript@6.0.3))
+
+  packages/mailchimp:
+    dependencies:
+      '@betternotify/core':
+        specifier: workspace:*
+        version: link:../core
+      '@betternotify/email':
+        specifier: workspace:*
+        version: link:../email
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
       rolldown:
         specifier: 'catalog:'
         version: 1.0.0-rc.17
