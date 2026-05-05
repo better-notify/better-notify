@@ -39,13 +39,13 @@ description: One-sentence summary for meta tags and sidebar.
 
 ```ts
 import { multiTransport } from '@betternotify/core/transports';
-import { sesTransport } from '@betternotify/ses';
+import { smtpTransport } from '@betternotify/smtp';
 import { resendTransport } from '@betternotify/resend';
 
 const transport = multiTransport({
   strategy: 'failover',
   transports: [
-    { transport: sesTransport({ region: 'us-east-1' }) },
+    { transport: smtpTransport({ host: 'email-smtp.us-east-1.amazonaws.com', port: 587, auth: { user: process.env.SES_SMTP_USER!, pass: process.env.SES_SMTP_PASS! } }) },
     { transport: resendTransport({ apiKey: process.env.RESEND_API_KEY }) },
   ],
 });

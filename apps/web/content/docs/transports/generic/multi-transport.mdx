@@ -10,9 +10,9 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 <SignalFlow
   nodes={[
-    { id: 'ses', label: 'SES' },
     { id: 'smtp', label: 'SMTP' },
     { id: 'resend', label: 'Resend' },
+    { id: 'cloudflare', label: 'Cloudflare' },
   ]}
   defaultStrategy="failover"
   maxRetries={2}
@@ -53,7 +53,7 @@ const transport = multiTransport({
   strategy: 'failover',
   transports: [
     { transport: resendTransport },
-    { transport: sesTransport },
+    { transport: smtpTransport },
   ],
 });
 ```
@@ -66,9 +66,9 @@ An in-process counter advances the start index on each `send()`, distributing lo
 const transport = multiTransport({
   strategy: 'round-robin',
   transports: [
-    { transport: sesAccountA },
-    { transport: sesAccountB },
-    { transport: sesAccountC },
+    { transport: smtpAccountA },
+    { transport: smtpAccountB },
+    { transport: smtpAccountC },
   ],
 });
 ```

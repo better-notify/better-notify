@@ -6,7 +6,7 @@ description: Build your own transport adapter
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-A transport is the wire-level adapter that delivers a fully-rendered message to a provider. Better-Notify ships transports for [SMTP](/docs/transports/third-party/smtp), [SES](/docs/transports/third-party/ses), and [Resend](/docs/transports/third-party/resend), but you can write your own for any provider that accepts an HTTP call, SDK method, or socket write.
+A transport is the wire-level adapter that delivers a fully-rendered message to a provider. Better-Notify ships transports for [SMTP](/docs/transports/third-party/smtp) and [Resend](/docs/transports/third-party/resend), but you can write your own for any provider that accepts an HTTP call, SDK method, or socket write.
 
 Transports receive a `RenderedMessage` — addresses, subject, HTML, text, attachments — and return a result. They never re-validate input or re-render templates; the pipeline handles that upstream.
 
@@ -185,7 +185,7 @@ Wraps an existing transport with a function that rewrites the rendered message b
 ```ts
 import { mapTransport } from '@betternotify/email/transports';
 
-const withTracking = mapTransport(sesTransport, (message, ctx) => ({
+const withTracking = mapTransport(smtpTransport, (message, ctx) => ({
   ...message,
   headers: {
     ...message.headers,

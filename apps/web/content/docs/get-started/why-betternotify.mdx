@@ -83,13 +83,13 @@ Runtime validation runs on top of compile-time checks. Better-Notify uses Standa
 
 ### Transports are pluggable and composable
 
-Transports are a simple interface: take a rendered message, deliver it, return a result. Swap SMTP for SES by changing one line. Compose multiple transports with failover, round-robin, or race strategies through `multiTransport`. Test with `createMockTransport` and deploy with real providers — same catalog, same client, same routes.
+Transports are a simple interface: take a rendered message, deliver it, return a result. Swap SMTP for Resend by changing one line. Compose multiple transports with failover, round-robin, or race strategies through `multiTransport`. Test with `createMockTransport` and deploy with real providers — same catalog, same client, same routes.
 
 ```ts
 const transport = multiTransport({
   strategy: 'failover',
   transports: [
-    { transport: sesTransport },
+    { transport: resendTransport },
     { transport: smtpTransport },
   ],
 });

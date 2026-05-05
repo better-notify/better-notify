@@ -120,12 +120,12 @@ function createSender<TCatalog extends AnyCatalog>(
 
 ```ts
 import { createSender } from '@betternotify/core/sender';
-import { sesTransport } from '@betternotify/ses';
+import { smtpTransport } from '@betternotify/smtp';
 import { catalog } from './catalog';
 
 const mail = createSender({
   catalog,
-  transport: sesTransport({ region: 'us-east-1' }),
+  transport: smtpTransport({ host: 'email-smtp.us-east-1.amazonaws.com', port: 587, auth: { user: process.env.SES_SMTP_USER!, pass: process.env.SES_SMTP_PASS! } }),
   defaults: { from: { name: 'Acme', email: 'noreply@acme.com' } },
 });
 

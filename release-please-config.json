@@ -46,11 +46,6 @@
       "component": "@betternotify/smtp",
       "prerelease-type": "alpha"
     },
-    "packages/ses": {
-      "release-type": "node",
-      "component": "@betternotify/ses",
-      "prerelease-type": "alpha"
-    },
     "packages/resend": {
       "release-type": "node",
       "component": "@betternotify/resend",
