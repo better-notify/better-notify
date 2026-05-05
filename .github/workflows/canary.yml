@@ -1,0 +1,101 @@
+name: Generate canary packages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  DO_NOT_TRACK: '1'
+  TURBO_TELEMETRY_DISABLED: '1'
+  TURBO_TELEMETRY_MESSAGE_DISABLED: '1'
+
+concurrency:
+  group: canary
+  cancel-in-progress: false
+
+jobs:
+  detect-affected:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.projects.outputs.projects }}
+      has-projects: ${{ steps.projects.outputs.has-projects }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/prepare
+
+      - id: base
+        shell: bash
+        run: |
+          before="${{ github.event.before }}"
+          if [[ "$before" == "0000000000000000000000000000000000000000" ]]; then
+            echo "ref=HEAD~1" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$before" >> "$GITHUB_OUTPUT"
+          fi
+
+      - id: projects
+        uses: ./.github/actions/affected-projects
+        with:
+          base: ${{ steps.base.outputs.ref }}
+          head: HEAD
+          task: build
+          summary-title: Canary Canary Packages
+
+  publish-canary:
+    name: Canary ${{ matrix.project.name }}
+    runs-on: ubuntu-latest
+    needs: [detect-affected]
+    if: needs.detect-affected.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.detect-affected.outputs.projects) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/prepare
+        with:
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm exec turbo run build --filter="${{ matrix.project.name }}..."
+
+      - id: meta
+        shell: bash
+        run: |
+          current=$(jq -r .version "${{ matrix.project.path }}/package.json")
+          echo "version=${current}.canary.$(date -u +%Y%m%d%H%M%S).${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/publish-packages
+        with:
+          filter: './${{ matrix.project.path }}'
+          tag: canary
+          version: ${{ steps.meta.outputs.version }}
+          provenance: 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  deploy-canary-docs:
+    name: Deploy canary docs
+    runs-on: ubuntu-latest
+    environment: canary
+    concurrency:
+      group: deploy-canary-docs
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/prepare
+
+      - run: pnpm exec turbo run build --filter=@betternotify/web...
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
+          command: deploy --env canary
