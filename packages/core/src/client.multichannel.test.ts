@@ -201,19 +201,27 @@ describe('createClient multi-channel', () => {
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
       hooks: {
-        onBeforeSend: [() => {
-          order.push('before');
-        }],
-        onExecute: [({ rendered }: { rendered: unknown }) => {
-          order.push('execute');
-          if (!(rendered as unknown as TestRendered).body) throw new Error('rendered missing');
-        }],
-        onAfterSend: [({ result }: { result: { messageId?: string } }) => {
-          order.push(`after:${result.messageId ? 'has-id' : 'no-id'}`);
-        }],
-        onError: [() => {
-          order.push('error');
-        }],
+        onBeforeSend: [
+          () => {
+            order.push('before');
+          },
+        ],
+        onExecute: [
+          ({ rendered }: { rendered: unknown }) => {
+            order.push('execute');
+            if (!(rendered as unknown as TestRendered).body) throw new Error('rendered missing');
+          },
+        ],
+        onAfterSend: [
+          ({ result }: { result: { messageId?: string } }) => {
+            order.push(`after:${result.messageId ? 'has-id' : 'no-id'}`);
+          },
+        ],
+        onError: [
+          () => {
+            order.push('error');
+          },
+        ],
       },
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
@@ -588,16 +596,26 @@ describe('createClient multi-channel', () => {
       channels: { test: testChannel() },
       transportsByChannel: { test: transport },
       hooks: {
-        onBeforeSend: () => { order.push('before'); },
-        onExecute: () => { order.push('execute'); },
-        onAfterSend: () => { order.push('after'); },
-      },
-      plugins: [{
-        name: 'hook-test',
-        hooks: {
-          onBeforeSend: () => { order.push('p-before'); },
+        onBeforeSend: () => {
+          order.push('before');
         },
-      }],
+        onExecute: () => {
+          order.push('execute');
+        },
+        onAfterSend: () => {
+          order.push('after');
+        },
+      },
+      plugins: [
+        {
+          name: 'hook-test',
+          hooks: {
+            onBeforeSend: () => {
+              order.push('p-before');
+            },
+          },
+        },
+      ],
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
     await mail.ping.send({ to: 'a@x.com', input: { name: 'A' } });
     expect(order).toContain('before');

@@ -34,6 +34,7 @@ export default defineConfig({
         'packages/*/src/stores/index.ts',
         'packages/*/src/tracers/index.ts',
         'packages/*/src/channel/index.ts',
+        'packages/create-better-notify/src/**',
       ],
       reporter: ['text', 'html', 'lcov'],
       thresholds: {

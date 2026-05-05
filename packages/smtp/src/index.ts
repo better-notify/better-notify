@@ -1,7 +1,12 @@
 import nodemailer from 'nodemailer';
 import type { Address, FromInput, Transport } from '@betternotify/email';
 import { formatAddress, normalizeAddress } from '@betternotify/email/transports';
-import { consoleLogger, handlePromise, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
+import {
+  consoleLogger,
+  handlePromise,
+  NotifyRpcError,
+  NotifyRpcProviderError,
+} from '@betternotify/core';
 import type { SmtpTransportOptions } from './types.js';
 
 export { isSmtpRetriable } from './is-retriable.js';

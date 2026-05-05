@@ -14,8 +14,8 @@
     "@betternotify/core": "workspace:*",
     "@betternotify/discord": "workspace:*",
     "@betternotify/email": "workspace:*",
-    "@betternotify/mailchimp": "workspace:*",
     "@betternotify/handlebars": "workspace:*",
+    "@betternotify/mailchimp": "workspace:*",
     "@betternotify/mjml": "workspace:*",
     "@betternotify/push": "workspace:*",
     "@betternotify/react-email": "workspace:*",
@@ -29,17 +29,17 @@
     "@t3-oss/env-core": "catalog:",
     "handlebars": "catalog:",
     "mjml": "catalog:",
-    "react": "19.2.5",
-    "react-email": "6.0.0",
-    "zod": "4.3.6"
+    "react": "catalog:",
+    "react-email": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "1.63.0",
+    "@dotenvx/dotenvx": "1.64.0",
     "@internal/tsconfig": "workspace:*",
-    "@types/node": "^22.10.0",
-    "@types/react": "^19.2.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.2"
+    "@types/node": "25.6.0",
+    "@types/react": "19.2.14",
+    "tsx": "4.21.0",
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": ">=22"

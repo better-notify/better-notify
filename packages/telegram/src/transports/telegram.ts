@@ -12,7 +12,9 @@ type TelegramApiResponse = {
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
-const mapHttpError = (status: number): { code: 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
+const mapHttpError = (
+  status: number,
+): { code: 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
   if (status === 401 || status === 403) return { code: 'CONFIG', retriable: false };
   if (status === 429) return { code: 'RATE_LIMITED', retriable: true };
   if (status >= 500) return { code: 'PROVIDER', retriable: true };
@@ -32,7 +34,10 @@ const methodForAttachment = (type: string): string => {
 export const telegramTransport = (opts: TelegramTransportOptions): Transport => {
   const apiUrl = opts.apiUrl ?? 'https://api.telegram.org';
   const log = (opts.logger ?? consoleLogger()).child({ component: 'telegram' });
-  const http = createHttpClient({ ...opts.http, timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS });
+  const http = createHttpClient({
+    ...opts.http,
+    timeoutMs: opts.http?.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  });
 
   const buildUrl = (method: string): string => `${apiUrl}/bot${opts.token}/${method}`;
 

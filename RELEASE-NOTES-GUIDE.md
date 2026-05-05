@@ -29,7 +29,7 @@ gh pr list --state merged --search "merged:>2026-04-01" --json number,title,labe
 
 ## Release notes structure
 
-```markdown
+````markdown
 # Better-Notify v0.0.X-alpha.0
 
 One or two sentences on the theme of this release.
@@ -46,6 +46,7 @@ One or two sentences on the theme of this release.
   - import { functionName } from '@betternotify/core'
   + import { newName } from '@betternotify/core'
   ```
+````
 
 ## Bug fixes
 
@@ -53,10 +54,10 @@ One or two sentences on the theme of this release.
 
 ## Packages released
 
-| Package | Version |
-|---------|---------|
+| Package            | Version       |
+| ------------------ | ------------- |
 | @betternotify/core | 0.0.X-alpha.0 |
-| ... | ... |
+| ...                | ...           |
 
 ## Upgrade
 
@@ -64,7 +65,7 @@ One or two sentences on the theme of this release.
 pnpm add @betternotify/core@alpha
 \`\`\`
 
-```
+`````
 
 ### Guidelines
 
@@ -97,7 +98,7 @@ Then write release notes following the structure in RELEASE-NOTES-GUIDE.md:
 - Include the packages-released table with versions.
 
 Output the notes as markdown. Don't commit or publish — just print them for review.
-````
+`````
 
 ### Review the draft
 

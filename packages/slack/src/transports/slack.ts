@@ -1,4 +1,9 @@
-import { consoleLogger, handlePromise, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
+import {
+  consoleLogger,
+  handlePromise,
+  NotifyRpcError,
+  NotifyRpcProviderError,
+} from '@betternotify/core';
 import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import type { RenderedSlack } from '../types.js';
 import type { SlackTransportData, Transport } from './types.js';
@@ -33,7 +38,9 @@ const VALIDATION_ERRORS = new Set([
   'msg_too_long',
 ]);
 
-const mapError = (error: string): { code: 'CONFIG' | 'VALIDATION' | 'PROVIDER'; retriable: boolean } => {
+const mapError = (
+  error: string,
+): { code: 'CONFIG' | 'VALIDATION' | 'PROVIDER'; retriable: boolean } => {
   if (CONFIG_ERRORS.has(error)) return { code: 'CONFIG', retriable: false };
   if (VALIDATION_ERRORS.has(error)) return { code: 'VALIDATION', retriable: false };
   return { code: 'PROVIDER', retriable: true };

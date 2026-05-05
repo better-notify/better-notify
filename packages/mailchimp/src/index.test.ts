@@ -20,9 +20,7 @@ const baseMessage: RenderedMessage = {
 
 const baseCtx: SendContext = { route: 'welcome', messageId: 'm1', attempt: 1 };
 
-const okResponse = [
-  { email: 'user@example.com', status: 'sent', _id: 'abc123' },
-];
+const okResponse = [{ email: 'user@example.com', status: 'sent', _id: 'abc123' }];
 
 const mockFetchOk = () =>
   fetchMock.mockResolvedValue(new Response(JSON.stringify(okResponse), { status: 200 }));
@@ -93,7 +91,15 @@ describe('mailchimpTransport', () => {
     );
     const t = mailchimpTransport({ apiKey: 'md-test-123' });
     const result = await t.send(
-      { ...baseMessage, to: [{ email: 'a@x.com' }, { email: 'b@x.com' }, { email: 'c@x.com' }, { email: 'd@x.com' }] },
+      {
+        ...baseMessage,
+        to: [
+          { email: 'a@x.com' },
+          { email: 'b@x.com' },
+          { email: 'c@x.com' },
+          { email: 'd@x.com' },
+        ],
+      },
       baseCtx,
     );
 
@@ -237,7 +243,10 @@ describe('mailchimpTransport', () => {
   it('strips trailing slashes from custom baseUrl', async () => {
     const { mailchimpTransport } = await import('./index.js');
     mockFetchOk();
-    const t = mailchimpTransport({ apiKey: 'md-test-123', baseUrl: 'https://mock.local/api/1.0///' });
+    const t = mailchimpTransport({
+      apiKey: 'md-test-123',
+      baseUrl: 'https://mock.local/api/1.0///',
+    });
     await t.send(baseMessage, baseCtx);
 
     const [url] = fetchMock.mock.calls[0]!;
@@ -269,7 +278,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'Invalid_Key', message: 'Invalid API key' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'Invalid_Key',
+          message: 'Invalid API key',
+        }),
         { status: 500 },
       ),
     );
@@ -289,7 +303,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'PaymentRequired', message: 'Payment required' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'PaymentRequired',
+          message: 'Payment required',
+        }),
         { status: 500 },
       ),
     );
@@ -307,7 +326,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'Unknown_Subaccount', message: 'Unknown subaccount' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'Unknown_Subaccount',
+          message: 'Unknown subaccount',
+        }),
         { status: 500 },
       ),
     );
@@ -325,7 +349,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'Unauthorized', message: 'Unauthorized' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'Unauthorized',
+          message: 'Unauthorized',
+        }),
         { status: 401 },
       ),
     );
@@ -363,7 +392,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -2, name: 'ValidationError', message: 'Validation error' }),
+        JSON.stringify({
+          status: 'error',
+          code: -2,
+          name: 'ValidationError',
+          message: 'Validation error',
+        }),
         { status: 500 },
       ),
     );
@@ -381,7 +415,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'TooManyRequests', message: 'Rate limit exceeded' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'TooManyRequests',
+          message: 'Rate limit exceeded',
+        }),
         { status: 429 },
       ),
     );
@@ -399,7 +438,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'GeneralError', message: 'Internal error' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'GeneralError',
+          message: 'Internal error',
+        }),
         { status: 500 },
       ),
     );
@@ -418,7 +462,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'SomeOtherError', message: 'Bad request' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'SomeOtherError',
+          message: 'Bad request',
+        }),
         { status: 400 },
       ),
     );
@@ -437,7 +486,12 @@ describe('mailchimpTransport — Mandrill API errors', () => {
     const { mailchimpTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'error', code: -1, name: 'Invalid_Key', message: 'Invalid API key' }),
+        JSON.stringify({
+          status: 'error',
+          code: -1,
+          name: 'Invalid_Key',
+          message: 'Invalid API key',
+        }),
         { status: 500 },
       ),
     );
@@ -451,9 +505,7 @@ describe('mailchimpTransport — Mandrill API errors', () => {
 
   it('falls back to status and "Unknown error" when error body has no name/message', async () => {
     const { mailchimpTransport } = await import('./index.js');
-    fetchMock.mockResolvedValue(
-      new Response('{}', { status: 502 }),
-    );
+    fetchMock.mockResolvedValue(new Response('{}', { status: 502 }));
     const t = mailchimpTransport({ apiKey: 'md-test-123' });
     const result = await t.send(baseMessage, baseCtx);
 
@@ -623,7 +675,12 @@ describe('mailchimpTransport — attachments', () => {
         ...baseMessage,
         attachments: [
           { filename: 'doc.pdf', content: Buffer.from('pdf'), contentType: 'application/pdf' },
-          { filename: 'logo.png', content: Buffer.from('png'), contentType: 'image/png', cid: 'logo' },
+          {
+            filename: 'logo.png',
+            content: Buffer.from('png'),
+            contentType: 'image/png',
+            cid: 'logo',
+          },
         ],
       },
       baseCtx,
