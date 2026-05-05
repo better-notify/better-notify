@@ -19,4 +19,9 @@
       "head_sampling_rate": 0.5,
     },
   },
+  "env": {
+    "canary": {
+      "routes": [{ "pattern": "canary.better-notify.com", "custom_domain": true }],
+    },
+  },
 }

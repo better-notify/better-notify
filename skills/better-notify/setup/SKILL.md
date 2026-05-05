@@ -68,6 +68,7 @@ Present a concise implementation plan as a markdown checklist. Example:
 - **Features:** Rate limiting, event logging
 
 ### Steps
+
 1. Install `@betternotify/core`, `@betternotify/email`, `@betternotify/slack`
 2. Install `@betternotify/smtp`, `@betternotify/react-email`
 3. Create `lib/notify.ts` with channel config and catalog
@@ -91,32 +92,32 @@ Only proceed after the user confirms the plan.
 
 **Channels:**
 
-| Package | When |
-|---------|------|
-| `@betternotify/email` | Email channel |
-| `@betternotify/sms` | SMS channel |
-| `@betternotify/push` | Push notifications |
-| `@betternotify/discord` | Discord webhooks |
-| `@betternotify/slack` | Slack messages |
-| `@betternotify/telegram` | Telegram bot |
+| Package                  | When               |
+| ------------------------ | ------------------ |
+| `@betternotify/email`    | Email channel      |
+| `@betternotify/sms`      | SMS channel        |
+| `@betternotify/push`     | Push notifications |
+| `@betternotify/discord`  | Discord webhooks   |
+| `@betternotify/slack`    | Slack messages     |
+| `@betternotify/telegram` | Telegram bot       |
 
 **Transports:**
 
-| Package | When |
-|---------|------|
-| `@betternotify/smtp` | SMTP email (Nodemailer) |
-| `@betternotify/resend` | Resend email |
-| `@betternotify/mailchimp` | Mailchimp Transactional |
-| `@betternotify/cloudflare-email` | Cloudflare Email |
-| `@betternotify/twilio` | Twilio SMS |
+| Package                          | When                    |
+| -------------------------------- | ----------------------- |
+| `@betternotify/smtp`             | SMTP email (Nodemailer) |
+| `@betternotify/resend`           | Resend email            |
+| `@betternotify/mailchimp`        | Mailchimp Transactional |
+| `@betternotify/cloudflare-email` | Cloudflare Email        |
+| `@betternotify/twilio`           | Twilio SMS              |
 
 **Templates:**
 
-| Package | When |
-|---------|------|
+| Package                     | When                  |
+| --------------------------- | --------------------- |
 | `@betternotify/react-email` | React Email templates |
-| `@betternotify/mjml` | MJML templates |
-| `@betternotify/handlebars` | Handlebars templates |
+| `@betternotify/mjml`        | MJML templates        |
+| `@betternotify/handlebars`  | Handlebars templates  |
 
 ### Step 2: Define the catalog (`lib/notify.ts`)
 
