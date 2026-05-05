@@ -1,0 +1,39 @@
+{
+  "name": "@betternotify/mailchimp",
+  "version": "0.0.1-alpha.0",
+  "description": "Mailchimp Transactional (Mandrill) transport for Better-Notify.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/better-notify/better-notify",
+    "directory": "packages/mailchimp"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@betternotify/core": "workspace:*",
+    "@betternotify/email": "workspace:*"
+  },
+  "devDependencies": {
+    "@internal/rolldown-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "rolldown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
