@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowRightIcon, GithubLogoIcon } from '@phosphor-icons/react';
 
 import { appConfig } from '@/lib/shared';
+import { CliPreview } from '@/components/landing/cli-preview';
 import { EmailSnippet } from '@/components/landing/snippets/email';
 import { TelegramSnippet } from '@/components/landing/snippets/telegram';
 import { CrossTransportSnippet } from '@/components/landing/snippets/cross-transport';
@@ -85,8 +86,15 @@ export function Hero() {
             </div>
 
             <div
-              className="hero-anim text-muted-foreground/60 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-[12px] lg:justify-start"
+              className="hero-anim mb-8 max-w-[400px] lg:mx-0"
               style={{ animationDelay: '220ms' }}
+            >
+              <CliPreview />
+            </div>
+
+            <div
+              className="hero-anim text-muted-foreground/60 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-[12px] lg:justify-start"
+              style={{ animationDelay: '280ms' }}
             >
               <span>ESM · Node ≥ 22</span>
               <span className="text-muted-foreground/30 hidden sm:inline">|</span>
