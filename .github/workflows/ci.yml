@@ -196,7 +196,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/web
+          workingDirectory: apps/web/dist/server
           command: versions upload --preview-alias "pr-${{ github.event.pull_request.number }}"
 
       - name: Parse preview URL
