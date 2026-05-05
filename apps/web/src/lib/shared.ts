@@ -3,7 +3,8 @@ export const appConfig = {
   version: '0.1.0-alpha',
   baseUrl: 'https://better-notify.com',
   npmPackagePrefix: '@betternotify',
-  twitterHandle: '@Better_Notify',
+  twitterHandle: '@better_notify',
+  contactEmail: 'reis@better-notify.com',
   themeColor: '#3a5a8c',
   locale: {
     bcp47: 'en-US',

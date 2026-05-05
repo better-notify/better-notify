@@ -9,6 +9,7 @@ import { Pipeline } from '@/components/landing/pipeline';
 import { Comparison } from '@/components/landing/comparison';
 import { Install } from '@/components/landing/install';
 import { Cta } from '@/components/landing/faq-cta';
+import { Author } from '@/components/landing/author';
 import { Footer } from '@/components/landing/footer';
 import { Marquee } from '@/components/landing/marquee';
 
@@ -29,6 +30,7 @@ function LandingPage() {
         <Comparison />
         <Install />
         <Cta />
+        <Author />
       </main>
       <Footer />
     </Suspense>

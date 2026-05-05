@@ -1,4 +1,4 @@
-import { GithubLogoIcon } from '@phosphor-icons/react';
+import { GithubLogoIcon, XLogoIcon } from '@phosphor-icons/react';
 
 import { appConfig } from '@/lib/shared';
 
@@ -39,15 +39,26 @@ export function Footer() {
             <p className="text-muted-foreground max-w-[280px] text-[13px] leading-relaxed">
               Type-safe notification infrastructure for Node. Open source, MIT licensed.
             </p>
-            <a
-              href={`https://github.com/${appConfig.git.user}/${appConfig.git.repo}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground mt-4 inline-flex items-center gap-1.5 text-[13px] no-underline transition-colors"
-            >
-              <GithubLogoIcon size={14} />
-              Star on GitHub
-            </a>
+            <div className="mt-4 flex items-center gap-3">
+              <a
+                href={`https://github.com/${appConfig.git.user}/${appConfig.git.repo}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-[13px] no-underline transition-colors"
+                aria-label="GitHub"
+              >
+                <GithubLogoIcon size={16} />
+              </a>
+              <a
+                href={`https://x.com/${appConfig.twitterHandle.replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-[13px] no-underline transition-colors"
+                aria-label="X (Twitter)"
+              >
+                <XLogoIcon size={16} />
+              </a>
+            </div>
           </div>
 
           {navColumns.map((col) => (

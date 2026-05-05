@@ -7,6 +7,7 @@ import {
   GithubLogoIcon,
   StarIcon,
   ListIcon,
+  XLogoIcon,
 } from '@phosphor-icons/react';
 import { useTheme } from 'fumadocs-ui/provider/base';
 import { useState } from 'react';
@@ -94,6 +95,16 @@ export function LandingHeader() {
           >
             {isDark ? <SunIcon size={14} /> : <MoonIcon size={14} />}
           </button>
+
+          <a
+            href={`https://x.com/${appConfig.twitterHandle.replace('@', '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border bg-card text-muted-foreground hover:bg-bn-slate-100 hover:text-foreground dark:hover:bg-bn-slate-800 hidden size-[34px] items-center justify-center rounded-md border transition-colors sm:inline-flex"
+            aria-label="Follow on X"
+          >
+            <XLogoIcon size={14} />
+          </a>
 
           <a
             href={`https://github.com/${appConfig.git.user}/${appConfig.git.repo}`}
