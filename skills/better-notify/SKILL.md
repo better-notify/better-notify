@@ -8,11 +8,11 @@ metadata:
 
 # Better Notify
 
-End-to-end typed notification infrastructure for Node.js (ESM-only, Node >= 22). A single catalog type drives the typed sender, queue worker, and webhook router — analogous to tRPC, but for notifications.
+End-to-end typed notification infrastructure for Node.js (ESM-only, Node >= 22). A single catalog type drives the typed sender and webhook router — analogous to tRPC, but for notifications.
 
 ## When to use
 
-When setting up typed notifications, adding email/SMS/push transports, defining notification catalogs, configuring queue workers, or answering questions about `@betternotify/*` packages.
+When setting up typed notifications, adding email/SMS/push transports, defining notification catalogs, or answering questions about `@betternotify/*` packages.
 
 ## Skills
 
@@ -23,7 +23,7 @@ When setting up typed notifications, adding email/SMS/push transports, defining 
 
 **Catalog** — Typed contract defining notification routes. Built with `createNotify()`, composed via `.catalog()`. Sub-catalogs flatten into dot-path IDs (`transactional.welcome`).
 
-**Client** — Type-safe sender derived from a catalog. `createClient()` returns `mail.<route>.send(input)`, `.queue()`, and `.render()`.
+**Client** — Type-safe sender derived from a catalog. `createClient()` returns `mail.<route>.send(input)` and `.render()`.
 
 **Channel** — Notification medium (email, SMS, push, etc.). Each defines its own message shape and transport interface. `defineChannel()` creates custom channels.
 
@@ -42,8 +42,6 @@ When setting up typed notifications, adding email/SMS/push transports, defining 
 **Transports:** `@betternotify/smtp` (Nodemailer), `@betternotify/{resend, cloudflare-email, twilio}`, `@betternotify/mailchimp` (Mandrill)
 
 **Templates:** `@betternotify/{react-email, mjml, handlebars}`
-
-**Queue:** `@betternotify/bullmq`
 
 **CLI:** `create-better-notify` — scaffolding tool (`npx create-better-notify`)
 

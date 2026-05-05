@@ -50,11 +50,7 @@ Ask all applicable questions in a single call. Skip any you already answered fro
    - "Which validation library do you use? Better Notify supports any Standard Schema provider."
    - Options: Zod | Valibot | ArkType
 
-6. **Queue** (always ask)
-   - "Do you need background queue processing?"
-   - Options: Yes (BullMQ + Redis) | No (send synchronously)
-
-7. **Features** (always ask, allow multiple)
+6. **Features** (always ask, allow multiple)
    - "Which additional features do you need?"
    - Options: Rate limiting | Idempotency (deduplication) | Suppression list | Tracing | Event logging | Dry-run mode | None
 
@@ -69,7 +65,6 @@ Present a concise implementation plan as a markdown checklist. Example:
 - **Email transport:** SMTP
 - **Templates:** React Email
 - **Validation:** Zod
-- **Queue:** No
 - **Features:** Rate limiting, event logging
 
 ### Steps
@@ -119,11 +114,6 @@ Only proceed after the user confirms the plan.
 | `@betternotify/react-email` | React Email templates |
 | `@betternotify/mjml` | MJML templates |
 | `@betternotify/handlebars` | Handlebars templates |
-
-**Queue:**
-| Package | When |
-|---------|------|
-| `@betternotify/bullmq` | Background processing |
 
 ### Step 2: Define the catalog (`lib/notify.ts`)
 
