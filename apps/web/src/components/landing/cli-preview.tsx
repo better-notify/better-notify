@@ -17,8 +17,12 @@ export function CliPreview() {
     skill: 'npx skills add better-notify/better-notify',
   } as const;
 
-  function handleCopy() {
-    navigator.clipboard?.writeText(commands[active]);
+  async function handleCopy() {
+    const ok = await navigator.clipboard?.writeText(commands[active]).then(
+      () => true,
+      () => false,
+    );
+    if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
   }
@@ -61,7 +65,7 @@ export function CliPreview() {
         </span>
         <code className="flex-1 font-mono text-[13px] text-bn-slate-700 dark:text-bn-slate-300">
           <span className="font-medium text-bn-navy-700 dark:text-bn-navy-300">npx</span>{' '}
-          {active === 'cli' ? 'create-better-notify' : 'skills add better-notify/better-notify'}
+          {commands[active].replace(/^npx\s+/, '')}
         </code>
         <button
           type="button"

@@ -261,9 +261,11 @@ TELEGRAM_BOT_TOKEN=...
 ### Step 6: Add middleware (optional)
 
 ```typescript
+import { createNotify } from '@betternotify/core';
 import { withRateLimit, withEventLogger } from '@betternotify/core/middlewares';
 import { inMemoryRateLimitStore } from '@betternotify/core/stores';
 import { consoleEventSink } from '@betternotify/core/sinks';
+import { ch } from './notify';
 
 const rpc = createNotify({ channels: { email: ch } })
   .use(
@@ -280,7 +282,10 @@ const rpc = createNotify({ channels: { email: ch } })
 ### Step 7: Testing with mock transports
 
 ```typescript
+import assert from 'node:assert/strict';
+import { createClient } from '@betternotify/core';
 import { mockTransport } from '@betternotify/email';
+import { catalog, ch } from './notify';
 
 const mock = mockTransport();
 const mail = createClient({
