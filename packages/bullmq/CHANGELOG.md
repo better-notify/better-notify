@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.4-alpha.0](https://github.com/better-notify/better-notify/compare/@betternotify/bullmq-v0.0.3-alpha.0...@betternotify/bullmq-v0.0.4-alpha.0) (2026-05-05)
+
+
+### Features
+
+* **cloudflare-email:** implement Cloudflare Email Service transport ([#34](https://github.com/better-notify/better-notify/issues/34)) ([914ee7e](https://github.com/better-notify/better-notify/commit/914ee7e01999713a4426ed80e75aa94408a15892))
+
+
+### Bug Fixes
+
+* package size and tree-shaking hardening ([#14](https://github.com/better-notify/better-notify/issues/14)) ([2f2c2e7](https://github.com/better-notify/better-notify/commit/2f2c2e79dbd0080e7f7429c0e2e74a33159041c2))
+
 ## [0.0.3-alpha.0](https://github.com/better-notify/better-notify/compare/@betternotify/bullmq-v0.0.2-alpha.0...@betternotify/bullmq-v0.0.3-alpha.0) (2026-04-27)
 
 
