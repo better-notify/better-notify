@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 const tabs = [
   { id: 'cli', label: 'CLI', soon: false },
-  { id: 'skill', label: 'Skill', soon: true },
+  { id: 'skill', label: 'Skill', soon: false },
 ] as const;
 
 type TabId = (typeof tabs)[number]['id'];
@@ -12,8 +12,13 @@ export function CliPreview() {
   const [active, setActive] = useState<TabId>('cli');
   const [copied, setCopied] = useState(false);
 
+  const commands = {
+    cli: 'npx create-better-notify',
+    skill: 'npx skills add better-notify/better-notify',
+  } as const;
+
   function handleCopy() {
-    navigator.clipboard?.writeText('npx create-better-notify');
+    navigator.clipboard?.writeText(commands[active]);
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
   }
@@ -56,7 +61,7 @@ export function CliPreview() {
         </span>
         <code className="flex-1 font-mono text-[13px] text-bn-slate-700 dark:text-bn-slate-300">
           <span className="font-medium text-bn-navy-700 dark:text-bn-navy-300">npx</span>{' '}
-          create-better-notify
+          {active === 'cli' ? 'create-better-notify' : 'skills add better-notify/better-notify'}
         </code>
         <button
           type="button"
