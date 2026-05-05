@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import type { RenderedMessage } from '@betternotify/email';
 import type { SendContext } from '@betternotify/core';
-import { NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcProviderError } from '@betternotify/core';
 
 let fetchMock: Mock;
 
@@ -205,8 +205,12 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect(result.error).toBeInstanceOf(NotifyRpcError);
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(false);
+    expect(err.providerCode).toBe(10001);
   });
 
   it('returns VALIDATION for CF error code 10200', async () => {
@@ -227,7 +231,12 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(false);
+    expect(err.providerCode).toBe(10200);
   });
 
   it('returns VALIDATION for CF error code 10201 (no content length)', async () => {
@@ -248,7 +257,12 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(false);
+    expect(err.providerCode).toBe(10201);
   });
 
   it('returns VALIDATION for CF error code 10202 (too big)', async () => {
@@ -269,7 +283,12 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(false);
+    expect(err.providerCode).toBe(10202);
   });
 
   it('returns CONFIG for CF error code 10203 (sending disabled)', async () => {
@@ -290,10 +309,15 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(false);
+    expect(err.providerCode).toBe(10203);
   });
 
-  it('returns PROVIDER for CF error code 10004 (rate limited)', async () => {
+  it('returns RATE_LIMITED for CF error code 10004 (rate limited)', async () => {
     const { cloudflareEmailTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
@@ -311,7 +335,12 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('RATE_LIMITED');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(true);
+    expect(err.providerCode).toBe(10004);
   });
 
   it('returns PROVIDER for CF error code 10002 (internal server error)', async () => {
@@ -332,7 +361,13 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(true);
+    expect(err.httpStatus).toBe(500);
+    expect(err.providerCode).toBe(10002);
   });
 
   it('returns PROVIDER for unknown CF error codes', async () => {
@@ -353,11 +388,33 @@ describe('cloudflareEmailTransport — CF API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(true);
+    expect(err.httpStatus).toBe(500);
+    expect(err.providerCode).toBe(99999);
   });
 });
 
 describe('cloudflareEmailTransport — network errors', () => {
+  it('returns TIMEOUT when fetch times out', async () => {
+    const { cloudflareEmailTransport } = await import('./index.js');
+    const abortError = new DOMException('The operation was aborted', 'AbortError');
+    fetchMock.mockRejectedValue(abortError);
+    const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('TIMEOUT');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(true);
+  });
+
   it('returns PROVIDER when fetch throws (network failure)', async () => {
     const { cloudflareEmailTransport } = await import('./index.js');
     fetchMock.mockRejectedValue(new TypeError('fetch failed'));
@@ -366,11 +423,15 @@ describe('cloudflareEmailTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(true);
     expect(result.error.message).toContain('network error');
   });
 
-  it('returns PROVIDER when response body is not valid JSON', async () => {
+  it('returns PROVIDER when response body is empty (not valid JSON)', async () => {
     const { cloudflareEmailTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(new Response('not json', { status: 200 }));
     const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
@@ -378,7 +439,11 @@ describe('cloudflareEmailTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.retriable).toBe(true);
   });
 
   it('returns PROVIDER when response is valid JSON but missing errors/result fields', async () => {
@@ -389,7 +454,11 @@ describe('cloudflareEmailTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('cloudflare-email');
+    expect(err.httpStatus).toBe(400);
     expect(result.error.message).toContain('unknown error');
   });
 });

@@ -1,6 +1,6 @@
 import type { Address, RenderedMessage, Transport } from '@betternotify/email';
 import { normalizeAddress } from '@betternotify/email/transports';
-import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
 import { createHttpClient } from '@betternotify/core/transports';
 import type {
   CloudflareEmailTransportOptions,
@@ -20,14 +20,25 @@ export type {
   CloudflareEmailResult,
 } from './types.js';
 
+export { isCloudflareEmailRetriable } from './is-retriable.js';
+
 const DEFAULT_BASE_URL = 'https://api.cloudflare.com';
-/**
- * CF error codes mapped to VALIDATION:
- * 10001 — invalid request schema, 10200 — invalid email content,
- * 10201 — missing content length, 10202 — message too large.
- */
 const VALIDATION_CODES = [10001, 10200, 10201, 10202];
+const RATE_LIMITED_CODES = [10004];
 const DEFAULT_TIMEOUT_MS = 30_000;
+
+const mapCfError = (
+  errorCode: number | undefined,
+  httpStatus: number,
+): { code: 'VALIDATION' | 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
+  if (errorCode !== undefined) {
+    if (VALIDATION_CODES.includes(errorCode)) return { code: 'VALIDATION', retriable: false };
+    if (errorCode === 10203) return { code: 'CONFIG', retriable: false };
+    if (RATE_LIMITED_CODES.includes(errorCode)) return { code: 'RATE_LIMITED', retriable: true };
+  }
+  if (httpStatus === 429) return { code: 'RATE_LIMITED', retriable: true };
+  return { code: 'PROVIDER', retriable: httpStatus >= 500 };
+};
 
 const toFrom = (addr: Address): CloudflareEmailFrom => {
   if (typeof addr === 'string') return { address: addr };
@@ -102,9 +113,11 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
           log.error('Cloudflare Email fetch failed', { err: result.cause, route: ctx.route });
           return {
             ok: false,
-            error: new NotifyRpcError({
+            error: new NotifyRpcProviderError({
               message: `Cloudflare Email transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
               code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+              provider: 'cloudflare-email',
+              retriable: true,
               route: ctx.route,
               messageId: ctx.messageId,
               cause: result.cause,
@@ -119,11 +132,7 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
         const errors = Array.isArray(errBody.errors) ? errBody.errors : [];
         const cfError = errors[0];
         const errorCode = cfError?.code;
-        const code = VALIDATION_CODES.includes(errorCode as number)
-          ? 'VALIDATION'
-          : errorCode === 10203
-            ? 'CONFIG'
-            : 'PROVIDER';
+        const mapped = mapCfError(errorCode as number | undefined, result.status);
         const errorMessage = cfError
           ? `Cloudflare Email transport: [${cfError.code}] ${cfError.message}`
           : `Cloudflare Email transport: unknown error`;
@@ -134,9 +143,13 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
         });
         return {
           ok: false,
-          error: new NotifyRpcError({
+          error: new NotifyRpcProviderError({
             message: errorMessage,
-            code,
+            code: mapped.code,
+            provider: 'cloudflare-email',
+            retriable: mapped.retriable,
+            httpStatus: result.status,
+            providerCode: errorCode as number | undefined,
             route: ctx.route,
             messageId: ctx.messageId,
           }),
@@ -147,9 +160,11 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
       if (!data) {
         return {
           ok: false,
-          error: new NotifyRpcError({
+          error: new NotifyRpcProviderError({
             message: 'Cloudflare Email transport: empty response body',
             code: 'PROVIDER',
+            provider: 'cloudflare-email',
+            retriable: true,
             route: ctx.route,
             messageId: ctx.messageId,
           }),
@@ -162,11 +177,7 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
       if (!data.success || !cfResult) {
         const cfError = errors[0];
         const errorCode = cfError?.code;
-        const code = VALIDATION_CODES.includes(errorCode as number)
-          ? 'VALIDATION'
-          : errorCode === 10203
-            ? 'CONFIG'
-            : 'PROVIDER';
+        const mapped = mapCfError(errorCode as number | undefined, 200);
 
         const errorMessage = cfError
           ? `Cloudflare Email transport: [${cfError.code}] ${cfError.message}`
@@ -179,9 +190,12 @@ export const cloudflareEmailTransport = (opts: CloudflareEmailTransportOptions):
 
         return {
           ok: false,
-          error: new NotifyRpcError({
+          error: new NotifyRpcProviderError({
             message: errorMessage,
-            code,
+            code: mapped.code,
+            provider: 'cloudflare-email',
+            retriable: mapped.retriable,
+            providerCode: errorCode as number | undefined,
             route: ctx.route,
             messageId: ctx.messageId,
           }),

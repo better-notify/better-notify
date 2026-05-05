@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
+import { NotifyRpcProviderError } from '@betternotify/core';
 import { slackTransport } from './slack.js';
 import { mockSlackTransport } from './mock.js';
 
@@ -96,8 +97,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('invalid_auth');
-      expect((result.error as any).code).toBe('CONFIG');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('invalid_auth');
+      expect(err.code).toBe('CONFIG');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('invalid_auth');
+      expect(err.retriable).toBe(false);
     }
   });
 
@@ -109,7 +115,14 @@ describe('slackTransport', () => {
     const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect((result.error as any).code).toBe('CONFIG');
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.code).toBe('CONFIG');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('token_revoked');
+      expect(err.retriable).toBe(false);
+    }
   });
 
   it('returns CONFIG error for not_authed', async () => {
@@ -120,7 +133,14 @@ describe('slackTransport', () => {
     const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect((result.error as any).code).toBe('CONFIG');
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.code).toBe('CONFIG');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('not_authed');
+      expect(err.retriable).toBe(false);
+    }
   });
 
   it('returns CONFIG error for account_inactive', async () => {
@@ -131,7 +151,14 @@ describe('slackTransport', () => {
     const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect((result.error as any).code).toBe('CONFIG');
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.code).toBe('CONFIG');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('account_inactive');
+      expect(err.retriable).toBe(false);
+    }
   });
 
   it('returns VALIDATION error for channel_not_found', async () => {
@@ -143,8 +170,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('channel_not_found');
-      expect((result.error as any).code).toBe('VALIDATION');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('channel_not_found');
+      expect(err.code).toBe('VALIDATION');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('channel_not_found');
+      expect(err.retriable).toBe(false);
     }
   });
 
@@ -156,7 +188,14 @@ describe('slackTransport', () => {
     const result = await t.send({ text: '', to: '#x' }, ctx);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect((result.error as any).code).toBe('VALIDATION');
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.code).toBe('VALIDATION');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('no_text');
+      expect(err.retriable).toBe(false);
+    }
   });
 
   it('returns PROVIDER error for ratelimited', async () => {
@@ -167,7 +206,14 @@ describe('slackTransport', () => {
     const result = await t.send({ text: 'hi', to: '#x' }, ctx);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect((result.error as any).code).toBe('PROVIDER');
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.code).toBe('PROVIDER');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('ratelimited');
+      expect(err.retriable).toBe(true);
+    }
   });
 
   it('returns PROVIDER error for unknown errors', async () => {
@@ -179,8 +225,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('some_unknown_error');
-      expect((result.error as any).code).toBe('PROVIDER');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('some_unknown_error');
+      expect(err.code).toBe('PROVIDER');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('some_unknown_error');
+      expect(err.retriable).toBe(true);
     }
   });
 
@@ -392,8 +443,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('files.getUploadURLExternal');
-      expect((result.error as any).code).toBe('CONFIG');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('files.getUploadURLExternal');
+      expect(err.code).toBe('CONFIG');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('invalid_auth');
+      expect(err.retriable).toBe(false);
     }
   });
 
@@ -415,8 +471,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('files.completeUploadExternal');
-      expect((result.error as any).code).toBe('VALIDATION');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('files.completeUploadExternal');
+      expect(err.code).toBe('VALIDATION');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('channel_not_found');
+      expect(err.retriable).toBe(false);
     }
   });
 
@@ -475,8 +536,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('unknown_error');
-      expect((result.error as any).code).toBe('PROVIDER');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('unknown_error');
+      expect(err.code).toBe('PROVIDER');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('unknown_error');
+      expect(err.retriable).toBe(true);
     }
   });
 
@@ -498,8 +564,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('unknown_error');
-      expect((result.error as any).code).toBe('PROVIDER');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('unknown_error');
+      expect(err.code).toBe('PROVIDER');
+      expect(err.provider).toBe('slack');
+      expect(err.providerCode).toBe('unknown_error');
+      expect(err.retriable).toBe(true);
     }
   });
 
@@ -560,8 +631,13 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('HTTP 403');
-      expect((result.error as any).code).toBe('PROVIDER');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('HTTP 403');
+      expect(err.code).toBe('PROVIDER');
+      expect(err.provider).toBe('slack');
+      expect(err.httpStatus).toBe(403);
+      expect(err.retriable).toBe(false);
     }
   });
 
@@ -571,9 +647,12 @@ describe('slackTransport', () => {
     const t = slackTransport({ token: 'xoxb-test' });
     const promise = t.send({ text: 'hi', to: '#x' }, ctx);
 
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
     await expect(promise).rejects.toMatchObject({
       message: expect.stringContaining('network error'),
       code: 'PROVIDER',
+      provider: 'slack',
+      retriable: true,
     });
   });
 
@@ -583,9 +662,12 @@ describe('slackTransport', () => {
     const t = slackTransport({ token: 'xoxb-test' });
     const promise = t.send({ text: 'hi', to: '#x' }, ctx);
 
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
     await expect(promise).rejects.toMatchObject({
       message: expect.stringContaining('request timed out'),
       code: 'TIMEOUT',
+      provider: 'slack',
+      retriable: true,
     });
   });
 
@@ -595,9 +677,12 @@ describe('slackTransport', () => {
     const t = slackTransport({ token: 'xoxb-test' });
     const promise = t.send({ text: 'hi', to: '#x' }, ctx);
 
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
     await expect(promise).rejects.toMatchObject({
       message: expect.stringContaining('network error'),
       code: 'PROVIDER',
+      provider: 'slack',
+      retriable: true,
     });
   });
 
@@ -610,9 +695,13 @@ describe('slackTransport', () => {
     const t = slackTransport({ token: 'xoxb-test' });
     const promise = t.send({ text: 'hi', to: '#x' }, ctx);
 
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
     await expect(promise).rejects.toMatchObject({
       message: expect.stringContaining('HTTP 429'),
       code: 'PROVIDER',
+      provider: 'slack',
+      httpStatus: 429,
+      retriable: true,
     });
     await expect(promise).rejects.toMatchObject({
       message: expect.stringContaining('ratelimited'),
@@ -633,9 +722,12 @@ describe('slackTransport', () => {
     const t = slackTransport({ token: 'xoxb-test' });
     const promise = t.send({ text: 'hi', to: '#x' }, ctx);
 
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
     await expect(promise).rejects.toMatchObject({
       message: 'Slack chat.postMessage: empty response body',
       code: 'PROVIDER',
+      provider: 'slack',
+      retriable: true,
     });
   });
 
@@ -656,8 +748,12 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('network error');
-      expect((result.error as any).code).toBe('PROVIDER');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('network error');
+      expect(err.code).toBe('PROVIDER');
+      expect(err.provider).toBe('slack');
+      expect(err.retriable).toBe(true);
     }
   });
 
@@ -678,8 +774,12 @@ describe('slackTransport', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('request timed out');
-      expect((result.error as any).code).toBe('TIMEOUT');
+      expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+      const err = result.error as NotifyRpcProviderError;
+      expect(err.message).toContain('request timed out');
+      expect(err.code).toBe('TIMEOUT');
+      expect(err.provider).toBe('slack');
+      expect(err.retriable).toBe(true);
     }
   });
 });

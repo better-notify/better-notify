@@ -1,4 +1,4 @@
-import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, NotifyRpcProviderError } from '@betternotify/core';
 import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import type { RenderedDiscord } from '../types.js';
 import type { DiscordTransportData, Transport } from './types.js';
@@ -17,10 +17,11 @@ type DiscordSuccessResponse = {
   [key: string]: unknown;
 };
 
-const mapErrorCode = (status: number): 'VALIDATION' | 'CONFIG' | 'PROVIDER' => {
-  if (status === 400) return 'VALIDATION';
-  if (status === 401 || status === 403 || status === 404) return 'CONFIG';
-  return 'PROVIDER';
+const mapError = (status: number): { code: 'VALIDATION' | 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
+  if (status === 400) return { code: 'VALIDATION', retriable: false };
+  if (status === 401 || status === 403 || status === 404) return { code: 'CONFIG', retriable: false };
+  if (status === 429) return { code: 'RATE_LIMITED', retriable: true };
+  return { code: 'PROVIDER', retriable: status >= 500 };
 };
 
 const buildJsonPayload = (
@@ -97,9 +98,11 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
           log.error('Discord fetch failed', { err: result.cause, route: ctx.route });
           return {
             ok: false,
-            error: new NotifyRpcError({
+            error: new NotifyRpcProviderError({
               message: `Discord transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
               code: result.timedOut ? 'TIMEOUT' : 'PROVIDER',
+              provider: 'discord',
+              retriable: true,
               route: ctx.route,
               messageId: ctx.messageId,
               cause: result.cause,
@@ -108,8 +111,9 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
         }
 
         const errData = result.body as DiscordErrorResponse;
-        const code = mapErrorCode(result.status);
+        const { code, retriable } = mapError(result.status);
         const retryAfterBody = errData.retry_after;
+        const retryAfterMs = retryAfterBody ? Math.ceil(retryAfterBody * 1000) : undefined;
         const suffix = retryAfterBody ? ` (retry after ${retryAfterBody}s)` : '';
         const errorMessage = `Discord transport: ${errData.message ?? `HTTP ${result.status}`}${suffix}`;
         log.error(errorMessage, {
@@ -119,9 +123,14 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
 
         return {
           ok: false,
-          error: new NotifyRpcError({
+          error: new NotifyRpcProviderError({
             message: errorMessage,
             code,
+            provider: 'discord',
+            httpStatus: result.status,
+            providerCode: errData.code,
+            retryAfterMs,
+            retriable,
             route: ctx.route,
             messageId: ctx.messageId,
           }),

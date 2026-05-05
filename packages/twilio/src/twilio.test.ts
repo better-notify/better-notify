@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach, beforeEach, type Mock } from 'vitest';
-import { NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
 import type { RenderedSms } from '@betternotify/sms';
 import type { SendContext } from '@betternotify/core';
 
@@ -205,7 +205,13 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('twilio');
+    expect(err.providerCode).toBe(21211);
+    expect(err.httpStatus).toBe(400);
+    expect(err.retriable).toBe(false);
   });
 
   it('maps Twilio 21610 (unsubscribed) to VALIDATION', async () => {
@@ -220,7 +226,11 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('twilio');
+    expect(err.retriable).toBe(false);
   });
 
   it('maps Twilio 20003 (auth failure) to CONFIG', async () => {
@@ -235,7 +245,13 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.provider).toBe('twilio');
+    expect(err.providerCode).toBe(20003);
+    expect(err.httpStatus).toBe(401);
+    expect(err.retriable).toBe(false);
   });
 
   it('maps HTTP 401 without Twilio code to CONFIG', async () => {
@@ -252,7 +268,12 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.provider).toBe('twilio');
+    expect(err.httpStatus).toBe(401);
+    expect(err.retriable).toBe(false);
   });
 
   it('maps 500 server error to PROVIDER', async () => {
@@ -267,7 +288,12 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('twilio');
+    expect(err.httpStatus).toBe(500);
+    expect(err.retriable).toBe(true);
   });
 
   it('maps Twilio 14107 (rate limit) to RATE_LIMITED', async () => {
@@ -282,7 +308,11 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('RATE_LIMITED');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('RATE_LIMITED');
+    expect(err.provider).toBe('twilio');
+    expect(err.retriable).toBe(true);
   });
 
   it('maps HTTP 429 without Twilio code to RATE_LIMITED', async () => {
@@ -299,7 +329,12 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('RATE_LIMITED');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('RATE_LIMITED');
+    expect(err.provider).toBe('twilio');
+    expect(err.httpStatus).toBe(429);
+    expect(err.retriable).toBe(true);
   });
 
   it('maps HTTP 400 without recognized Twilio code to VALIDATION', async () => {
@@ -314,7 +349,12 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('twilio');
+    expect(err.httpStatus).toBe(400);
+    expect(err.retriable).toBe(false);
   });
 
   it('falls back to HTTP status in error message when Twilio message is missing', async () => {
@@ -329,7 +369,11 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.message).toContain('HTTP 502');
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.httpStatus).toBe(502);
+    expect(err.retriable).toBe(true);
   });
 
   it('falls back to empty error data when response body is null', async () => {
@@ -343,11 +387,12 @@ describe('twilioSmsTransport — error mapping', () => {
     const result = await t.send(baseMessage, ctx);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect(result.error).toBeInstanceOf(NotifyRpcError);
-    expect((result.error as NotifyRpcError).message).toContain('HTTP 500');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    expect((result.error as NotifyRpcProviderError).message).toContain('HTTP 500');
+    expect((result.error as NotifyRpcProviderError).retriable).toBe(true);
   });
 
-  it('includes Twilio error message in NotifyRpcError message', async () => {
+  it('includes Twilio error message in NotifyRpcProviderError message', async () => {
     const { twilioSmsTransport } = await import('./twilio.js');
     twilioError(400, 21211, "The 'To' number is not a valid phone number.");
     const t = twilioSmsTransport({
@@ -359,6 +404,7 @@ describe('twilioSmsTransport — error mapping', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.message).toContain("The 'To' number is not a valid phone number.");
   });
 });
@@ -376,8 +422,13 @@ describe('twilioSmsTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('TIMEOUT');
-    expect(result.error.message).toContain('request timed out');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('TIMEOUT');
+    expect(err.provider).toBe('twilio');
+    expect(err.retriable).toBe(true);
+    expect(err.httpStatus).toBeUndefined();
+    expect(err.message).toContain('request timed out');
   });
 
   it('returns PROVIDER when fetch throws network error', async () => {
@@ -392,8 +443,13 @@ describe('twilioSmsTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
-    expect(result.error.message).toContain('network error');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('twilio');
+    expect(err.retriable).toBe(true);
+    expect(err.httpStatus).toBeUndefined();
+    expect(err.message).toContain('network error');
   });
 
   it('returns PROVIDER when response body is not valid JSON', async () => {
@@ -408,7 +464,11 @@ describe('twilioSmsTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('twilio');
+    expect(err.retriable).toBe(true);
   });
 });
 

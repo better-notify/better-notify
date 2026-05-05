@@ -18,3 +18,4 @@ export type {
   ZapierTransportOptions,
   MockZapierTransport,
 } from './transports/index.js';
+export { isZapierRetriable } from './is-retriable.js';

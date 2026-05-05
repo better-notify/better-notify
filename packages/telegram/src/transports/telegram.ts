@@ -1,4 +1,4 @@
-import { consoleLogger, NotifyRpcError } from '@betternotify/core';
+import { consoleLogger, NotifyRpcProviderError } from '@betternotify/core';
 import { createHttpClient } from '@betternotify/core/transports';
 import type { RenderedTelegram } from '../types.js';
 import type { TelegramTransportData, Transport } from './types.js';
@@ -11,6 +11,13 @@ type TelegramApiResponse = {
 };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
+
+const mapHttpError = (status: number): { code: 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
+  if (status === 401 || status === 403) return { code: 'CONFIG', retriable: false };
+  if (status === 429) return { code: 'RATE_LIMITED', retriable: true };
+  if (status >= 500) return { code: 'PROVIDER', retriable: true };
+  return { code: 'PROVIDER', retriable: false };
+};
 
 const methodForAttachment = (type: string): string => {
   const map: Record<string, string> = {
@@ -43,18 +50,32 @@ export const telegramTransport = (opts: TelegramTransportOptions): Transport => 
     });
 
     if (!result.ok) {
-      const isTimeout = result.kind === 'network' && result.timedOut;
-      throw new NotifyRpcError({
-        message: `Telegram ${method}: ${result.kind === 'network' ? (isTimeout ? 'request timed out' : `network error: ${result.cause.message}`) : `HTTP ${result.status}`}`,
-        code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
-        cause: result.kind === 'network' ? result.cause : undefined,
+      if (result.kind === 'network') {
+        const isTimeout = result.timedOut;
+        throw new NotifyRpcProviderError({
+          message: `Telegram ${method}: ${isTimeout ? 'request timed out' : `network error: ${result.cause.message}`}`,
+          code: isTimeout ? 'TIMEOUT' : 'PROVIDER',
+          provider: 'telegram',
+          retriable: true,
+          cause: result.cause,
+        });
+      }
+      const { code, retriable } = mapHttpError(result.status);
+      throw new NotifyRpcProviderError({
+        message: `Telegram ${method}: HTTP ${result.status}`,
+        code,
+        provider: 'telegram',
+        retriable,
+        httpStatus: result.status,
       });
     }
 
     if (!result.data) {
-      throw new NotifyRpcError({
+      throw new NotifyRpcProviderError({
         message: `Telegram ${method}: empty response body`,
         code: 'PROVIDER',
+        provider: 'telegram',
+        retriable: true,
       });
     }
 
@@ -88,9 +109,11 @@ export const telegramTransport = (opts: TelegramTransportOptions): Transport => 
       if (!json.ok) {
         const description = json.description ?? 'Unknown Telegram API error';
         log.error('Telegram API error', { err: new Error(description), route: ctx.route });
-        throw new NotifyRpcError({
+        throw new NotifyRpcProviderError({
           message: `Telegram ${method} failed: ${description}`,
           code: 'PROVIDER',
+          provider: 'telegram',
+          retriable: false,
           route: ctx.route,
           messageId: ctx.messageId,
         });

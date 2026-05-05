@@ -24,3 +24,4 @@ export { createMockTransport } from './mock-transport.js';
 export type { CreateMockTransportOptions, MockTransport } from './mock-transport.js';
 export { mapTransport } from './map-transport.js';
 export type { MapTransportFn } from './map-transport.js';
+export { isProviderRetriable } from './is-provider-retriable.js';

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import type { RenderedMessage } from '@betternotify/email';
 import type { SendContext } from '@betternotify/core';
-import { NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcProviderError } from '@betternotify/core';
 
 let fetchMock: Mock;
 
@@ -207,9 +207,13 @@ describe('resendTransport — Resend API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect(result.error).toBeInstanceOf(NotifyRpcError);
-    expect((result.error as NotifyRpcError).code).toBe('VALIDATION');
-    expect(result.error.message).toContain('missing_required_field');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('VALIDATION');
+    expect(err.provider).toBe('resend');
+    expect(err.httpStatus).toBe(422);
+    expect(err.retriable).toBe(false);
+    expect(err.message).toContain('missing_required_field');
   });
 
   it('returns CONFIG for 401 status', async () => {
@@ -229,7 +233,12 @@ describe('resendTransport — Resend API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.provider).toBe('resend');
+    expect(err.httpStatus).toBe(401);
+    expect(err.retriable).toBe(false);
   });
 
   it('returns CONFIG for 403 status', async () => {
@@ -249,7 +258,12 @@ describe('resendTransport — Resend API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('CONFIG');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('CONFIG');
+    expect(err.provider).toBe('resend');
+    expect(err.httpStatus).toBe(403);
+    expect(err.retriable).toBe(false);
   });
 
   it('returns PROVIDER for 429 rate limit', async () => {
@@ -269,10 +283,15 @@ describe('resendTransport — Resend API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('resend');
+    expect(err.httpStatus).toBe(429);
+    expect(err.retriable).toBe(false);
   });
 
-  it('returns PROVIDER for 500 server error', async () => {
+  it('returns PROVIDER for 500 server error (retriable)', async () => {
     const { resendTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
@@ -289,7 +308,12 @@ describe('resendTransport — Resend API errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('resend');
+    expect(err.httpStatus).toBe(500);
+    expect(err.retriable).toBe(true);
   });
 
   it('includes error name and message in the error string', async () => {
@@ -322,21 +346,31 @@ describe('resendTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
-    expect(result.error.message).toContain('network error');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('resend');
+    expect(err.retriable).toBe(true);
+    expect(err.httpStatus).toBeUndefined();
+    expect(err.message).toContain('network error');
   });
 
   it('returns TIMEOUT when fetch throws AbortError', async () => {
     const { resendTransport } = await import('./index.js');
-    const err = new DOMException('aborted', 'AbortError');
-    fetchMock.mockRejectedValue(err);
+    const abortErr = new DOMException('aborted', 'AbortError');
+    fetchMock.mockRejectedValue(abortErr);
     const t = resendTransport({ apiKey: 're_test_123' });
     const result = await t.send(baseMessage, baseCtx);
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('TIMEOUT');
-    expect(result.error.message).toContain('request timed out');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('TIMEOUT');
+    expect(err.provider).toBe('resend');
+    expect(err.retriable).toBe(true);
+    expect(err.httpStatus).toBeUndefined();
+    expect(err.message).toContain('request timed out');
   });
 
   it('returns PROVIDER when response body is not valid JSON', async () => {
@@ -347,7 +381,11 @@ describe('resendTransport — network errors', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect((result.error as NotifyRpcError).code).toBe('PROVIDER');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const err = result.error as NotifyRpcProviderError;
+    expect(err.code).toBe('PROVIDER');
+    expect(err.provider).toBe('resend');
+    expect(err.retriable).toBe(true);
   });
 });
 

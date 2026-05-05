@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach, beforeEach, type Mock } from 'vitest';
-import { NotifyRpcError } from '@betternotify/core';
+import { NotifyRpcProviderError } from '@betternotify/core';
 
 let fetchMock: Mock;
 
@@ -60,7 +60,7 @@ describe('postWebhook', () => {
     expect(result.status).toBe(200);
   });
 
-  it('returns error with TIMEOUT code on timeout', async () => {
+  it('returns NotifyRpcProviderError with TIMEOUT code on timeout', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     const err = new DOMException('aborted', 'AbortError');
     fetchMock.mockRejectedValue(err);
@@ -69,11 +69,13 @@ describe('postWebhook', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
-    expect(result.error).toBeInstanceOf(NotifyRpcError);
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.code).toBe('TIMEOUT');
+    expect(result.error.provider).toBe('zapier');
+    expect(result.error.retriable).toBe(true);
   });
 
-  it('returns error with PROVIDER code on network failure', async () => {
+  it('returns NotifyRpcProviderError with PROVIDER code on network failure', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     fetchMock.mockRejectedValue(new TypeError('fetch failed'));
 
@@ -81,11 +83,14 @@ describe('postWebhook', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.code).toBe('PROVIDER');
+    expect(result.error.provider).toBe('zapier');
+    expect(result.error.retriable).toBe(true);
     expect(result.error.message).toContain('network error');
   });
 
-  it('returns error with CONFIG code on 410 Gone', async () => {
+  it('returns NotifyRpcProviderError with CONFIG code on 410 Gone', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     fetchMock.mockResolvedValue(new Response('Gone', { status: 410 }));
 
@@ -93,11 +98,15 @@ describe('postWebhook', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.code).toBe('CONFIG');
+    expect(result.error.provider).toBe('zapier');
+    expect(result.error.httpStatus).toBe(410);
+    expect(result.error.retriable).toBe(false);
     expect(result.error.message).toContain('expired');
   });
 
-  it('returns error with PROVIDER code on 4xx (non-410)', async () => {
+  it('returns NotifyRpcProviderError with PROVIDER code on 4xx (non-410)', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     fetchMock.mockResolvedValue(new Response('Bad Request', { status: 400 }));
 
@@ -105,10 +114,14 @@ describe('postWebhook', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.code).toBe('PROVIDER');
+    expect(result.error.provider).toBe('zapier');
+    expect(result.error.httpStatus).toBe(400);
+    expect(result.error.retriable).toBe(false);
   });
 
-  it('returns error with PROVIDER code on 5xx', async () => {
+  it('returns NotifyRpcProviderError with PROVIDER code on 5xx', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     fetchMock.mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
 
@@ -116,10 +129,14 @@ describe('postWebhook', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.code).toBe('PROVIDER');
+    expect(result.error.provider).toBe('zapier');
+    expect(result.error.httpStatus).toBe(500);
+    expect(result.error.retriable).toBe(true);
   });
 
-  it('includes route and messageId in error when provided', async () => {
+  it('includes route and messageId in provider error when provided', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     fetchMock.mockRejectedValue(new TypeError('fetch failed'));
 
@@ -127,6 +144,7 @@ describe('postWebhook', () => {
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     expect(result.error.route).toBe('orders.new');
     expect(result.error.messageId).toBe('msg-1');
   });

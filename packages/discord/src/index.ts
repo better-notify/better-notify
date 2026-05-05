@@ -17,3 +17,4 @@ export type {
   MockDiscordTransport,
   DiscordTransportOptions,
 } from './transports/index.js';
+export { isDiscordRetriable } from './is-retriable.js';

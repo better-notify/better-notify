@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { NotifyRpcProviderError } from '@betternotify/core';
 
 const sendMailMock = vi.fn();
 const verifyMock = vi.fn();
@@ -271,5 +272,101 @@ describe('smtpTransport', () => {
     expect(arg.inlineAssets).toBeUndefined();
     expect(arg.tags).toBeUndefined();
     expect(arg.priority).toBeUndefined();
+  });
+});
+
+describe('smtpTransport — error normalization', () => {
+  it('returns retriable NotifyRpcProviderError for SMTP 4xx temp failure', async () => {
+    const err = new Error('Mailbox temporarily unavailable') as Error & {
+      responseCode: number;
+      code: string;
+    };
+    err.responseCode = 450;
+    err.code = 'EENVELOPE';
+    sendMailMock.mockRejectedValue(err);
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const result = await t.send(baseMessage, baseCtx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
+    const providerErr = result.error as NotifyRpcProviderError;
+    expect(providerErr.code).toBe('PROVIDER');
+    expect(providerErr.provider).toBe('smtp');
+    expect(providerErr.providerCode).toBe(450);
+    expect(providerErr.retriable).toBe(true);
+    expect(providerErr.cause).toBe(err);
+  });
+
+  it('returns terminal NotifyRpcProviderError for SMTP 5xx permanent failure', async () => {
+    const err = new Error('Mailbox not found') as Error & {
+      responseCode: number;
+      code: string;
+    };
+    err.responseCode = 550;
+    err.code = 'EENVELOPE';
+    sendMailMock.mockRejectedValue(err);
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const result = await t.send(baseMessage, baseCtx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    const providerErr = result.error as NotifyRpcProviderError;
+    expect(providerErr.code).toBe('PROVIDER');
+    expect(providerErr.provider).toBe('smtp');
+    expect(providerErr.providerCode).toBe(550);
+    expect(providerErr.retriable).toBe(false);
+  });
+
+  it('returns terminal CONFIG error for EAUTH', async () => {
+    const err = new Error('Invalid login') as Error & { code: string };
+    err.code = 'EAUTH';
+    sendMailMock.mockRejectedValue(err);
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const result = await t.send(baseMessage, baseCtx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    const providerErr = result.error as NotifyRpcProviderError;
+    expect(providerErr.code).toBe('CONFIG');
+    expect(providerErr.provider).toBe('smtp');
+    expect(providerErr.retriable).toBe(false);
+  });
+
+  it('returns retriable PROVIDER error for ESOCKET', async () => {
+    const err = new Error('Connection refused') as Error & { code: string };
+    err.code = 'ESOCKET';
+    sendMailMock.mockRejectedValue(err);
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const result = await t.send(baseMessage, baseCtx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    const providerErr = result.error as NotifyRpcProviderError;
+    expect(providerErr.code).toBe('PROVIDER');
+    expect(providerErr.provider).toBe('smtp');
+    expect(providerErr.retriable).toBe(true);
+  });
+
+  it('returns retriable PROVIDER error for ECONNECTION', async () => {
+    const err = new Error('Connection timeout') as Error & { code: string };
+    err.code = 'ECONNECTION';
+    sendMailMock.mockRejectedValue(err);
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const result = await t.send(baseMessage, baseCtx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    const providerErr = result.error as NotifyRpcProviderError;
+    expect(providerErr.code).toBe('PROVIDER');
+    expect(providerErr.provider).toBe('smtp');
+    expect(providerErr.retriable).toBe(true);
+  });
+
+  it('returns retriable PROVIDER error for unknown errors', async () => {
+    sendMailMock.mockRejectedValue(new Error('something unexpected'));
+    const t = smtpTransport({ host: 'smtp.x.com', port: 587 });
+    const result = await t.send(baseMessage, baseCtx);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    const providerErr = result.error as NotifyRpcProviderError;
+    expect(providerErr.code).toBe('PROVIDER');
+    expect(providerErr.provider).toBe('smtp');
+    expect(providerErr.retriable).toBe(true);
   });
 });
