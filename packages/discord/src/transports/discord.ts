@@ -69,7 +69,7 @@ const buildRequest = (
   form.append('payload_json', JSON.stringify(payload));
 
   for (const [i, att] of rendered.attachments.entries()) {
-    const raw = typeof att.content === 'string' ? Buffer.from(att.content) : att.content;
+    const raw = typeof att.content === 'string' ? att.content : new Uint8Array(att.content);
     const file = new File([raw], att.filename, {
       type: att.contentType ?? 'application/octet-stream',
     });
