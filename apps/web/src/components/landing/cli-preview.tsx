@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { handlePromise } from '@betternotify/core';
 import { Check, Copy } from '@phosphor-icons/react';
+import { useState } from 'react';
 
 const tabs = [
   { id: 'cli', label: 'CLI', soon: false },
@@ -12,10 +13,15 @@ export function CliPreview() {
   const [active, setActive] = useState<TabId>('cli');
   const [copied, setCopied] = useState(false);
 
-  function handleCopy() {
-    navigator.clipboard?.writeText('npx create-better-notify');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+  async function handleCopy() {
+    const [err] = await handlePromise(
+      navigator.clipboard?.writeText('npx create-better-notify') ??
+        Promise.reject(new Error('clipboard-unavailable')),
+    );
+    if (!err) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    }
   }
 
   return (
@@ -24,7 +30,9 @@ export function CliPreview() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => !tab.soon && setActive(tab.id)}
+            type="button"
+            disabled={tab.soon}
+            onClick={() => setActive(tab.id)}
             className={`relative border-0 bg-transparent px-3.5 pb-2.5 pt-3 font-sans text-[13px] font-medium transition-colors ${
               tab.soon
                 ? 'cursor-default text-bn-slate-300 dark:text-bn-slate-600'
@@ -57,6 +65,8 @@ export function CliPreview() {
           create-better-notify
         </code>
         <button
+          type="button"
+          aria-label={copied ? 'Copied' : 'Copy command'}
           onClick={handleCopy}
           className={`flex-shrink-0 border-0 bg-transparent transition-colors ${
             copied
