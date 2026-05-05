@@ -1,4 +1,3 @@
-import { handlePromise } from '@betternotify/core';
 import { Check, Copy } from '@phosphor-icons/react';
 import { useState } from 'react';
 
@@ -13,15 +12,10 @@ export function CliPreview() {
   const [active, setActive] = useState<TabId>('cli');
   const [copied, setCopied] = useState(false);
 
-  async function handleCopy() {
-    const [err] = await handlePromise(
-      navigator.clipboard?.writeText('npx create-better-notify') ??
-        Promise.reject(new Error('clipboard-unavailable')),
-    );
-    if (!err) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
-    }
+  function handleCopy() {
+    navigator.clipboard?.writeText('npx create-better-notify');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
   }
 
   return (
