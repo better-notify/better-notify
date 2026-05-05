@@ -1,0 +1,9 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Better-Notify API",
+    "version": "0.1.0",
+    "description": "Better-Notify webhook and management API"
+  },
+  "paths": {}
+}

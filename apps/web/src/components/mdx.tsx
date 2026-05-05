@@ -5,6 +5,7 @@ import { SignalFlow } from '@/components/signal-flow';
 import { PipelineFlow } from '@/components/pipeline-flow';
 import { RateLimitDemo } from '@/components/rate-limit-demo';
 import { IdempotencyDemo } from '@/components/idempotency-demo';
+import { APIPage } from '@/components/api-page';
 
 export const getMDXComponents = (components?: MDXComponents) => {
   return {
@@ -15,6 +16,7 @@ export const getMDXComponents = (components?: MDXComponents) => {
     PipelineFlow,
     RateLimitDemo,
     IdempotencyDemo,
+    APIPage,
     ...components,
   } satisfies MDXComponents;
 };

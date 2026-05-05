@@ -10,6 +10,7 @@ export default defineConfig({
     port: 4265,
   },
   ssr: {
+    external: ['@takumi-rs/image-response'],
     optimizeDeps: {
       exclude: ['beautiful-mermaid'],
     },
