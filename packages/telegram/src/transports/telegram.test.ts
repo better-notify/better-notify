@@ -251,6 +251,32 @@ describe('telegramTransport', () => {
     });
   });
 
+  it('throws non-retriable PROVIDER when the Telegram API returns HTTP 400', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ description: 'Bad Request' }), {
+            status: 400,
+            statusText: 'Bad Request',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      ),
+    );
+
+    const t = telegramTransport({ token: 'T' });
+    const promise = t.send({ body: 'hi', to: 1 }, ctx);
+
+    await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+    await expect(promise).rejects.toMatchObject({
+      code: 'PROVIDER',
+      provider: 'telegram',
+      retriable: false,
+      httpStatus: 400,
+    });
+  });
+
   it('throws PROVIDER with retriable true when the Telegram API returns HTTP 500', async () => {
     vi.stubGlobal(
       'fetch',
