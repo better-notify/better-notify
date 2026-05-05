@@ -63,6 +63,7 @@ One or two sentences on the theme of this release.
 \`\`\`sh
 pnpm add @betternotify/core@alpha
 \`\`\`
+
 ```
 
 ### Guidelines
@@ -79,7 +80,7 @@ pnpm add @betternotify/core@alpha
 
 Paste the following prompt into Claude Code, Cursor, or any AI coding assistant. Adjust the tag range for your release.
 
-````
+````markdown
 Write release notes for the Better-Notify release that just landed.
 
 Gather context:

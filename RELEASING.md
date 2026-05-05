@@ -34,10 +34,12 @@ All packages build and publish in parallel via a matrix job. After merging the r
 - [ ] Watch the `Release Please + npm publish` workflow in GitHub Actions.
 - [ ] Confirm all matrix jobs pass (one per released package, up to 16 packages + web).
 - [ ] Spot-check a published package:
+
   ```sh
   npm info @betternotify/core versions --json | tail -5
   npm info @betternotify/core dist-tags
   ```
+
 - [ ] Verify the `alpha` dist-tag points to the new version.
 - [ ] For packages that depend on other `@betternotify/*` packages, confirm the published `package.json` references the correct version range (not a stale `workspace:*`).
 
@@ -97,11 +99,13 @@ The docs site (`apps/web`) deploys to Cloudflare Workers only when `apps/web` is
 Verify examples work with the released versions.
 
 - [ ] `examples/welcome-text`: install fresh and run:
+
   ```sh
   cd examples/welcome-text
   pnpm install
   pnpm start
   ```
+
 - [ ] Confirm it runs without errors and produces expected output.
 - [ ] Verify any examples added since the last release the same way.
 
