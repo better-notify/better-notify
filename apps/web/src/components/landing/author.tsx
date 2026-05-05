@@ -49,7 +49,7 @@ export function Author() {
                 className="size-20 shrink-0 rounded-xl object-cover md:size-24"
               />
               <div className="min-w-0">
-                <p className="bn-eyebrow mb-1.5">Built by</p>
+                <p className="bn-eyebrow mb-1.5">Crafted by</p>
                 <h2
                   id="author-name"
                   className="text-foreground mb-1.5 text-lg font-bold tracking-tight"
