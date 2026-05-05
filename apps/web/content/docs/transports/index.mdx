@@ -7,7 +7,7 @@ description: How transports deliver your notifications
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import { Mermaid } from '@/components/mermaid';
 
-A transport is the wire-level adapter that takes a fully-rendered message and delivers it to a provider — SMTP relay, SES API, Resend HTTP endpoint, or anything else that can accept an outbound message.
+A transport is the wire-level adapter that takes a fully-rendered message and delivers it to a provider — SMTP relay, Resend HTTP endpoint, or anything else that can accept an outbound message.
 
 Transports sit at the bottom of the Better-Notify pipeline. By the time a transport's `send` is called, the input has been validated, the template rendered, and middleware has run. The transport's only job is delivery.
 
@@ -69,10 +69,10 @@ Transports that pull a non-trivial peer dependency ship as separate packages:
 
 <Cards>
   <Card href="/docs/transports/third-party/smtp" title="SMTP">
-    Deliver via any SMTP relay using Nodemailer. Works with Postfix, Mailgun SMTP, Amazon SES SMTP, and others.
+    Deliver via any SMTP relay using Nodemailer. Works with Amazon SES, Postfix, Mailgun, and others.
   </Card>
   <Card href="/docs/transports/third-party/ses" title="Amazon SES">
-    Send through the SES v2 API using the AWS SDK.
+    Send via SES SMTP credentials using the SMTP transport.
   </Card>
   <Card href="/docs/transports/third-party/resend" title="Resend">
     Send through the Resend HTTP API.
@@ -248,7 +248,7 @@ HTTP retry, [multi-transport](/docs/transports/generic/multi-transport) retry, a
 | Layer | Scope | Use case |
 | --- | --- | --- |
 | `http.retry` | Single HTTP request | Transient 503s, rate-limit backoff |
-| `multiTransport` | Across providers | Failover from Resend to SES |
+| `multiTransport` | Across providers | Failover from Resend to SMTP |
 | Queue retry (BullMQ) | Entire send attempt | Retry the full pipeline after a crash |
 
 Each layer is independent. A single transport can use HTTP retry without `multiTransport`, and vice versa.
@@ -257,4 +257,4 @@ Each layer is independent. A single transport can use HTTP retry without `multiT
 
 - Read [Custom Transports](/docs/transports/generic/custom-transports) to build your own provider adapter.
 - Read [Multi-Transport](/docs/transports/generic/multi-transport) to compose transports with failover, load balancing, or redundancy.
-- See the provider pages ([SMTP](/docs/transports/third-party/smtp), [SES](/docs/transports/third-party/ses), [Resend](/docs/transports/third-party/resend)) for provider-specific setup.
+- See the provider pages ([SMTP](/docs/transports/third-party/smtp), [Amazon SES](/docs/transports/third-party/ses), [Resend](/docs/transports/third-party/resend)) for provider-specific setup.

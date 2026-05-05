@@ -4,4 +4,41 @@ icon: AmazonLogo
 description: Send emails via Amazon Simple Email Service
 ---
 
-Documentation coming soon.
+Amazon SES exposes a standard SMTP interface. Use the [`@betternotify/smtp`](/docs/transports/third-party/smtp) transport with your SES SMTP credentials — no separate package needed.
+
+## Setup
+
+1. [Create SMTP credentials](https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html) in the AWS console (IAM user with `ses:SendRawEmail` permission).
+2. Note your regional SMTP endpoint (e.g. `email-smtp.us-east-1.amazonaws.com`).
+3. Wire the SMTP transport:
+
+```ts
+import { smtpTransport } from '@betternotify/smtp';
+
+const transport = smtpTransport({
+  host: 'email-smtp.us-east-1.amazonaws.com',
+  port: 587,
+  auth: {
+    user: process.env.SES_SMTP_USER!,
+    pass: process.env.SES_SMTP_PASS!,
+  },
+});
+```
+
+For implicit TLS on port `465`, set `secure: true`.
+
+## Why SMTP over the SDK
+
+- Zero extra dependency — no `@aws-sdk/client-sesv2` in your bundle.
+- Works in any runtime with a TCP socket (Node.js, Bun).
+- Same sending limits and deliverability as the SES v2 API.
+- SMTP credentials are scoped to `ses:SendRawEmail`, reducing the blast radius compared to full SDK credentials.
+
+## Webhook events
+
+SES delivers bounce, complaint, and delivery notifications via SNS. The webhook router will support SES SNS payloads in a future release — no separate adapter package required.
+
+## Further reading
+
+- [SMTP transport options](/docs/transports/third-party/smtp) for pool, DKIM, and advanced Nodemailer settings.
+- [Multi-Transport](/docs/transports/generic/multi-transport) for failover between SES and another provider.

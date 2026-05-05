@@ -112,10 +112,9 @@ TestTube, TreeStructure, Truck, Warning, Webhooks, Wrench
 | `persist` | `boolean` | Save selection to localStorage |
 
 ```mdx
-<Tabs items={['SES', 'Resend', 'SMTP']}>
-  <Tab value="SES">Configure with `sesTransport({ region: 'us-east-1' })`.</Tab>
-  <Tab value="Resend">Configure with `resendTransport({ apiKey })`.</Tab>
+<Tabs items={['SMTP', 'Resend']}>
   <Tab value="SMTP">Configure with `smtpTransport({ host, port, auth })`.</Tab>
+  <Tab value="Resend">Configure with `resendTransport({ apiKey })`.</Tab>
 </Tabs>
 ```
 
@@ -150,7 +149,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 ### Install the package
 
 ```bash
-pnpm add @betternotify/ses
+pnpm add @betternotify/smtp
 ```
 
 </Step>
@@ -159,9 +158,9 @@ pnpm add @betternotify/ses
 ### Configure the transport
 
 ```ts
-import { sesTransport } from '@betternotify/ses'
+import { smtpTransport } from '@betternotify/smtp'
 
-const transport = sesTransport({ region: 'us-east-1' })
+const transport = smtpTransport({ host: 'email-smtp.us-east-1.amazonaws.com', port: 587, auth: { user: process.env.SES_SMTP_USER!, pass: process.env.SES_SMTP_PASS! } })
 ```
 
 </Step>

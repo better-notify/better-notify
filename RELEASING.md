@@ -55,7 +55,6 @@ All packages build and publish in parallel via a matrix job. After merging the r
 | `@betternotify/mjml` | `packages/mjml` |
 | `@betternotify/handlebars` | `packages/handlebars` |
 | `@betternotify/smtp` | `packages/smtp` |
-| `@betternotify/ses` | `packages/ses` |
 | `@betternotify/resend` | `packages/resend` |
 | `@betternotify/cloudflare-email` | `packages/cloudflare-email` |
 | `@betternotify/bullmq` | `packages/bullmq` |

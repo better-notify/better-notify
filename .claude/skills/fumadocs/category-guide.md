@@ -36,9 +36,8 @@ By the end of this guide, you will send a transactional welcome email through SE
 
 <Callout title="Before you start" type="info">
 - `@betternotify/core` installed
-- `@betternotify/ses` installed
 - `@betternotify/smtp` installed
-- An AWS account with SES sending permissions
+- An AWS account with SES SMTP credentials
 - SMTP credentials for your fallback server
 </Callout>
 ```
@@ -78,18 +77,17 @@ const welcome = rpc.email()
 
 ### Configure the failover transport
 
-A failover transport tries each transport in order. SES handles production traffic; SMTP catches anything SES rejects or drops.
+A failover transport tries each transport in order. SES SMTP handles production traffic; a secondary relay catches anything SES rejects or drops.
 
 ```ts
 import { multiTransport } from '@betternotify/core/transports'
-import { sesTransport } from '@betternotify/ses'
 import { smtpTransport } from '@betternotify/smtp'
 
 const transport = multiTransport({
   strategy: 'failover',
   transports: [
-    { transport: sesTransport({ region: 'us-east-1' }) },
-    { transport: smtpTransport({ host: 'smtp.mailrelay.net', port: 587, auth: { user: 'relay', pass: process.env.SMTP_PASS } }) },
+    { transport: smtpTransport({ host: 'email-smtp.us-east-1.amazonaws.com', port: 587, auth: { user: process.env.SES_SMTP_USER!, pass: process.env.SES_SMTP_PASS! } }) },
+    { transport: smtpTransport({ host: 'smtp.mailrelay.net', port: 587, auth: { user: 'relay', pass: process.env.SMTP_PASS! } }) },
   ],
 })
 ```
@@ -137,7 +135,6 @@ await mail.welcome.send({
 import { createBetterNotify } from '@betternotify/core'
 import { createSender } from '@betternotify/core/sender'
 import { multiTransport } from '@betternotify/core/transports'
-import { sesTransport } from '@betternotify/ses'
 import { smtpTransport } from '@betternotify/smtp'
 import { z } from 'zod'
 
@@ -151,8 +148,8 @@ const welcome = rpc.email()
 const transport = multiTransport({
   strategy: 'failover',
   transports: [
-    { transport: sesTransport({ region: 'us-east-1' }) },
-    { transport: smtpTransport({ host: 'smtp.mailrelay.net', port: 587, auth: { user: 'relay', pass: process.env.SMTP_PASS } }) },
+    { transport: smtpTransport({ host: 'email-smtp.us-east-1.amazonaws.com', port: 587, auth: { user: process.env.SES_SMTP_USER!, pass: process.env.SES_SMTP_PASS! } }) },
+    { transport: smtpTransport({ host: 'smtp.mailrelay.net', port: 587, auth: { user: 'relay', pass: process.env.SMTP_PASS! } }) },
   ],
 })
 

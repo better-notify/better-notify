@@ -17,4 +17,4 @@ The webhook router will handle inbound webhook events from email providers (SES,
 - **toNodeHandler** and **toFetchHandler** — convert the router into an HTTP handler for Node.js or Fetch-based runtimes (Cloudflare Workers, Deno, Bun).
 - **Event correlation** — webhook events are matched to sends via the dot-path route ID used as the correlation key.
 
-The provider adapters (`@betternotify/ses`, `@betternotify/resend`) will each export a `WebhookAdapter` for signature verification.
+Provider adapters (e.g. `@betternotify/resend`) will each export a `WebhookAdapter` for signature verification. SES webhook support (SNS-based) will be built into core.

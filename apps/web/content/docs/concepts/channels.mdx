@@ -14,7 +14,7 @@ Better-Notify ships three channels as separate packages:
 
 <Cards>
   <Card href="/docs/channels/email" title="Email">
-    Rich HTML and plain text messages delivered through SMTP, SES, Resend, or any email transport.
+    Rich HTML and plain text messages delivered through SMTP, Resend, or any email transport.
   </Card>
   <Card href="/docs/channels/sms" title="SMS">
     Text messages delivered to phone numbers through your SMS provider.
@@ -44,7 +44,7 @@ Every procedure built with `rpc.email()` inherits the defaults. Individual proce
 
 A channel's `render` function produces a typed output — `RenderedMessage` for email, `RenderedSms` for SMS, your own type for custom channels. A transport receives that output and delivers it. The channel never knows which transport is running, and the transport never sees raw input or slot configuration.
 
-This separation is what makes transports swappable. The same email channel works with SMTP, SES, Resend, or a mock — because they all accept `RenderedMessage`. See [Transports](/docs/transports) for how delivery works.
+This separation is what makes transports swappable. The same email channel works with SMTP, Resend, or a mock — because they all accept `RenderedMessage`. See [Transports](/docs/transports) for how delivery works.
 
 ## Custom channels
 

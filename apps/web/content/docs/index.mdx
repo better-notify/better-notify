@@ -36,14 +36,14 @@ flowchart LR
   A[Channels<br/>email, sms, push, telegram, custom] --> B[createNotify]
   B --> C[rpc.catalog]
   C --> D[createClient]
-  E[transportsByChannel<br/>SMTP, SES, Resend, custom] --> D
+  E[transportsByChannel<br/>SMTP, Resend, custom] --> D
   D --> F[Typed client<br/>mail.welcome.send()]
   `}
 />
 
 - **Channels** define how a message is shaped and rendered. Email has `to`, `subject`, `html`. SMS has `to` and `body`. Push has `title`, `body`, and `data`. Telegram has `to`, `body`, and optional `attachment`. You can define custom channels for Slack, webhooks, or anything else.
 - **Routes** are contracts for individual notifications. Each route declares which channel it uses, what input it accepts, and how it renders. Routes compose into catalogs, which flatten into dot-path IDs like `transactional.welcome`.
-- **Transports** deliver rendered messages to providers. SMTP, SES, Resend, or your own adapter. Transports never see raw input — they receive fully validated, fully rendered messages.
+- **Transports** deliver rendered messages to providers. SMTP, Resend, or your own adapter. Transports never see raw input — they receive fully validated, fully rendered messages.
 - **The client** ties it all together. `createClient` takes a catalog and a transport per channel, then exposes typed `.send()` methods for every route in the catalog.
 
 The separation is the point. You can swap providers without touching routes. You can add middleware without changing templates. You can test with a mock transport and deploy with a multi-provider failover — same catalog, same client shape.

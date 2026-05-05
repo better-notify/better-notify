@@ -96,8 +96,7 @@ import {
 
 Provider transports for the email channel:
 
-- [`@betternotify/smtp`](../smtp) — SMTP via nodemailer
-- [`@betternotify/ses`](../ses) — AWS SES (stub)
+- [`@betternotify/smtp`](../smtp) — SMTP via nodemailer (also supports Amazon SES SMTP)
 - [`@betternotify/resend`](../resend) — Resend (stub)
 
 ## Custom render output
