@@ -1,9 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "better-notify",
+  "name": "better-notify-canary",
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
+  "workers_dev": false,
+  "routes": [{ "pattern": "canary.better-notify.com", "custom_domain": true }],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
