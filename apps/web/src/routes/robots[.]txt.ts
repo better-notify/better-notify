@@ -10,6 +10,14 @@ export const Route = createFileRoute('/robots.txt')({
           'User-agent: *',
           'Allow: /',
           '',
+          'User-agent: Googlebot',
+          'Allow: /',
+          'Crawl-delay: 1',
+          '',
+          'User-agent: Bingbot',
+          'Allow: /',
+          'Crawl-delay: 5',
+          '',
           `Sitemap: ${appConfig.baseUrl}/sitemap.xml`,
         ].join('\n');
 
