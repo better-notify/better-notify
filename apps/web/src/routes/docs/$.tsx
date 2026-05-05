@@ -17,20 +17,15 @@ export const Route = createFileRoute('/docs/$')({
     const slugs = params._splat?.split('/') ?? [];
     const data = await serverLoader({ data: slugs });
     await clientLoader.preload(data.path);
-    return { ...data, slugs };
+    return data;
   },
   head: ({ loaderData }) => {
-    const slugs = loaderData?.slugs ?? [];
-    const page = source.getPage(slugs);
-    const title = page
-      ? `${page.data.title} — ${appConfig.name} Docs`
-      : `Documentation — ${appConfig.name}`;
-    const description =
-      (page?.data.description as string | undefined) ??
-      'Better-Notify documentation and guides.';
-    const url = `${appConfig.baseUrl}/docs/${slugs.join('/')}`;
+    if (!loaderData) return { meta: [], links: [] };
 
-    const image = `${appConfig.baseUrl}/og/docs/${slugs.join('/')}/image.png`;
+    const title = `${loaderData.pageTitle} — ${appConfig.name} Docs`;
+    const description = loaderData.pageDescription ?? 'Better-Notify documentation and guides.';
+    const url = `${appConfig.baseUrl}/docs/${loaderData.slugs.join('/')}`;
+    const image = `${appConfig.baseUrl}/og/docs/${loaderData.slugs.join('/')}/image.png`;
 
     const { meta, links } = seo({
       title,
@@ -55,6 +50,9 @@ const serverLoader = createServerFn({
     return {
       path: page.path,
       pageTree: await source.serializePageTree(source.getPageTree()),
+      slugs,
+      pageTitle: page.data.title,
+      pageDescription: (page.data.description as string | undefined) ?? null,
     };
   });
 
@@ -76,7 +74,8 @@ const clientLoader = browserCollections.docs.createClientLoader({
 });
 
 function Page() {
-  const { slugs: _slugs, ...loaderData } = Route.useLoaderData();
+  const { slugs: _slugs, pageTitle: _pageTitle, pageDescription: _pageDescription, ...loaderData } =
+    Route.useLoaderData();
   const data = useFumadocsLoader(loaderData);
   if (!data) return null;
 
