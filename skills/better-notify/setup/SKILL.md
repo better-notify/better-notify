@@ -58,7 +58,7 @@ Ask all applicable questions in a single call. Skip any you already answered fro
 
 Present a concise implementation plan as a markdown checklist. Example:
 
-```
+```markdown
 ## Notification Setup Plan
 
 - **Channels:** Email, Slack
@@ -90,6 +90,7 @@ Only proceed after the user confirms the plan.
 **Core (always):** `@betternotify/core`
 
 **Channels:**
+
 | Package | When |
 |---------|------|
 | `@betternotify/email` | Email channel |
@@ -100,6 +101,7 @@ Only proceed after the user confirms the plan.
 | `@betternotify/telegram` | Telegram bot |
 
 **Transports:**
+
 | Package | When |
 |---------|------|
 | `@betternotify/smtp` | SMTP email (Nodemailer) |
@@ -109,6 +111,7 @@ Only proceed after the user confirms the plan.
 | `@betternotify/twilio` | Twilio SMS |
 
 **Templates:**
+
 | Package | When |
 |---------|------|
 | `@betternotify/react-email` | React Email templates |
@@ -148,6 +151,7 @@ export const catalog = rpc.catalog({
 import { createNotify } from '@betternotify/core';
 import { emailChannel } from '@betternotify/email';
 import { slackChannel } from '@betternotify/slack';
+import { z } from 'zod';
 
 const rpc = createNotify({
   channels: {
@@ -285,7 +289,10 @@ const mail = createClient({
   transportsByChannel: { email: mock },
 });
 
-await mail.welcome.send({ to: 'test@example.com', input: { name: 'Test' } });
+await mail.welcome.send({
+  to: 'test@example.com',
+  input: { name: 'Test', verifyUrl: 'https://example.com/verify' },
+});
 
 assert(mock.sent.length === 1);
 assert(mock.sent[0].subject === 'Welcome, Test!');
