@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.4-alpha.0](https://github.com/better-notify/better-notify/compare/@betternotify/email-v0.0.3-alpha.0...@betternotify/email-v0.0.4-alpha.0) (2026-05-05)
+
+
+### Features
+
+* **core:** adopt @better-fetch/fetch as internal HTTP transport layer ([#43](https://github.com/better-notify/better-notify/issues/43)) ([dfc5102](https://github.com/better-notify/better-notify/commit/dfc51023f5fe7d086bfeb2d7733f1f4cab29a514))
+* **ses:** remove ses package, use smtp transport ([#47](https://github.com/better-notify/better-notify/issues/47)) ([6c5ff25](https://github.com/better-notify/better-notify/commit/6c5ff255e3d2d9945f99957aac82fdb126279195))
+
+
+### Bug Fixes
+
+* package size and tree-shaking hardening ([#14](https://github.com/better-notify/better-notify/issues/14)) ([2f2c2e7](https://github.com/better-notify/better-notify/commit/2f2c2e79dbd0080e7f7429c0e2e74a33159041c2))
+
 ## [0.0.3-alpha.0](https://github.com/better-notify/better-notify/compare/@betternotify/email-v0.0.2-alpha.0...@betternotify/email-v0.0.3-alpha.0) (2026-04-27)
 
 
