@@ -31,7 +31,7 @@ const openAPIHandler = new OpenAPIHandler(router, {
       schemaConverters: [new ZodToJsonSchemaConverter()],
     }),
     new OpenAPIReferencePlugin({
-      clientPath: '/docs',
+      docsPath: '/docs',
       schemaConverters: [new ZodToJsonSchemaConverter()],
       specGenerateOptions: {
         info: {
