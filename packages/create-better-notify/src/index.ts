@@ -60,7 +60,9 @@ Cli.create('create-better-notify', {
     installDeps(destDir, options.pm);
     s.stop('Dependencies installed.');
 
-    p.outro(`Done! cd ${options.path} && ${options.pm} run dev`);
+    p.outro(
+      `Done! cd ${options.path} && ${options.pm} run dev\n\nAPI Playground will be available at http://localhost:3000/api/docs`,
+    );
 
     return {
       name: options.name,

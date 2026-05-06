@@ -11,9 +11,9 @@ const base = os.use(injectNotify);
 export const sendWelcome = base
   .input(
     z.object({
-      to: z.string().email(),
+      to: z.email(),
       name: z.string(),
-      verifyUrl: z.string().url(),
+      verifyUrl: z.url(),
     }),
   )
   .handler(async ({ input, context }) => {
