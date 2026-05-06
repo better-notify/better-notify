@@ -13,6 +13,7 @@
     "@betternotify/resend": "0.0.0-inject",
     "@betternotify/smtp": "0.0.0-inject",
     "@hono/node-server": "2.0.1",
+    "@orpc/json-schema": "1.14.2",
     "@orpc/openapi": "1.14.2",
     "@orpc/server": "1.14.2",
     "@orpc/zod": "1.14.2",

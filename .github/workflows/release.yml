@@ -60,6 +60,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Tag as latest
+        working-directory: ${{ matrix.path }}
+        run: |
+          set -euo pipefail
+          PKG_NAME=$(node -e "console.log(require('./package.json').name)")
+          PKG_VERSION=$(node -e "console.log(require('./package.json').version)")
+          npm dist-tag add "${PKG_NAME}@${PKG_VERSION}" latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   deploy-web:
     name: Deploy website
     runs-on: ubuntu-latest
