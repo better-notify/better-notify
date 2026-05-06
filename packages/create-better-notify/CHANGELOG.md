@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4-alpha.0](https://github.com/better-notify/better-notify/compare/create-better-notify-v0.0.3-alpha.0...create-better-notify-v0.0.4-alpha.0) (2026-05-06)
+
+
+### Bug Fixes
+
+* oRPC zod4 export, release latest tag, and create-better-notify README ([#59](https://github.com/better-notify/better-notify/issues/59)) ([03a5bad](https://github.com/better-notify/better-notify/commit/03a5bad99fa753d5989efd9a3a621365c938ee4d))
+
 ## [0.0.3-alpha.0](https://github.com/better-notify/better-notify/compare/create-better-notify-v0.0.2-alpha.0...create-better-notify-v0.0.3-alpha.0) (2026-05-06)
 
 
