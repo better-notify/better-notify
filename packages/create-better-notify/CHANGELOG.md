@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3-alpha.0](https://github.com/better-notify/better-notify/compare/create-better-notify-v0.0.2-alpha.0...create-better-notify-v0.0.3-alpha.0) (2026-05-06)
+
+
+### Features
+
+* **create-better-notify:** add OpenAPI playground to scaffolded projects ([#57](https://github.com/better-notify/better-notify/issues/57)) ([b214da5](https://github.com/better-notify/better-notify/commit/b214da5f9919f4ea9a5b990b042e6466902fbebb))
+
 ## [0.0.2-alpha.0](https://github.com/better-notify/better-notify/compare/create-better-notify-v0.0.1-alpha.0...create-better-notify-v0.0.2-alpha.0) (2026-05-05)
 
 
