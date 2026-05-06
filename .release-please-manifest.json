@@ -13,7 +13,7 @@
   "packages/cloudflare-email": "0.0.2-alpha.0",
   "packages/discord": "0.0.2-alpha.0",
   "packages/zapier": "0.0.2-alpha.0",
-  "packages/create-better-notify": "0.0.4-alpha.0",
-  "apps/web": "1.1.0",
+  "packages/create-better-notify": "0.0.5-alpha.0",
+  "apps/web": "1.1.1",
   "packages/slack": "1.0.0"
 }
