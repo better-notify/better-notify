@@ -51,7 +51,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Build
-        run: pnpm build
+        run: pnpm exec turbo run build --filter='./${{ matrix.path }}...'
 
       - uses: ./.github/actions/publish-packages
         with:
