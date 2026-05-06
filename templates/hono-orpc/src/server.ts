@@ -3,7 +3,8 @@ import { serve } from '@hono/node-server';
 import { RPCHandler } from '@orpc/server/fetch';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins';
-import { ZodSmartCoercionPlugin, ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
+import { SmartCoercionPlugin } from '@orpc/json-schema';
+import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { router } from './rpc';
 
 const app = new Hono();
@@ -26,7 +27,9 @@ app.use('/rpc/*', async (c, next) => {
 
 const openAPIHandler = new OpenAPIHandler(router, {
   plugins: [
-    new ZodSmartCoercionPlugin(),
+    new SmartCoercionPlugin({
+      schemaConverters: [new ZodToJsonSchemaConverter()],
+    }),
     new OpenAPIReferencePlugin({
       clientPath: '/docs',
       schemaConverters: [new ZodToJsonSchemaConverter()],
