@@ -28,11 +28,11 @@ Pass flags to skip the prompts:
 npx create-better-notify my-app --framework hono --rpc orpc --pm pnpm
 ```
 
-| Flag | Values | Default |
-| --- | --- | --- |
-| `--framework` | `hono` | prompted |
-| `--rpc` | `orpc` | prompted |
-| `--pm` | `npm`, `pnpm`, `yarn`, `bun` | auto-detected |
+| Flag          | Values                       | Default       |
+| ------------- | ---------------------------- | ------------- |
+| `--framework` | `hono`                       | prompted      |
+| `--rpc`       | `orpc`                       | prompted      |
+| `--pm`        | `npm`, `pnpm`, `yarn`, `bun` | auto-detected |
 
 ## What you get
 
@@ -88,9 +88,9 @@ Open [http://localhost:3000/api/docs](http://localhost:3000/api/docs) to explore
 
 ## Templates
 
-| Template | Framework | RPC | Status |
-| --- | --- | --- | --- |
-| `hono-orpc` | Hono | oRPC | Available |
+| Template    | Framework | RPC  | Status    |
+| ----------- | --------- | ---- | --------- |
+| `hono-orpc` | Hono      | oRPC | Available |
 
 More templates are on the roadmap.
 

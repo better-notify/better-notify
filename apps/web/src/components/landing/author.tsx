@@ -1,4 +1,9 @@
-import { EnvelopeSimpleIcon, GithubLogoIcon, LinkedinLogoIcon, XLogoIcon } from '@phosphor-icons/react';
+import {
+  EnvelopeSimpleIcon,
+  GithubLogoIcon,
+  LinkedinLogoIcon,
+  XLogoIcon,
+} from '@phosphor-icons/react';
 
 import { appConfig } from '@/lib/shared';
 import { useInView } from '@/hooks/use-in-view';
