@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0...@betternotify/web-v1.1.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* **create-better-notify,web:** add [@latest](https://github.com/latest) to hero CLI command and format landing components ([#61](https://github.com/better-notify/better-notify/issues/61)) ([e3d0e78](https://github.com/better-notify/better-notify/commit/e3d0e78f0d38628dabe2e33fa7c2978a430cb249))
+
 ## [1.1.0](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.0...@betternotify/web-v1.1.0) (2026-05-05)
 
 
