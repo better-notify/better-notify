@@ -13,7 +13,7 @@ export function CliPreview() {
   const [copied, setCopied] = useState(false);
 
   const commands = {
-    cli: 'npx create-better-notify',
+    cli: 'npx create-better-notify@latest',
     skill: 'npx skills add better-notify/better-notify',
   } as const;
 
