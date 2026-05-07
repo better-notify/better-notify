@@ -10,6 +10,7 @@ import { Suspense } from 'react';
 import { useMDXComponents } from '@/components/mdx';
 import { seo } from '@/lib/seo';
 import { appConfig } from '@/lib/shared';
+import { LandingHeader } from '@/components/landing/header';
 
 export const Route = createFileRoute('/docs/$')({
   component: Page,
@@ -80,8 +81,11 @@ function Page() {
   if (!data) return null;
 
   return (
-    <DocsLayout {...baseOptions()} tree={data.pageTree}>
-      <Suspense>{clientLoader.useContent(data.path)}</Suspense>
-    </DocsLayout>
+    <>
+      <LandingHeader />
+      <DocsLayout {...baseOptions()} tree={data.pageTree} nav={{ enabled: false }}>
+        <Suspense>{clientLoader.useContent(data.path)}</Suspense>
+      </DocsLayout>
+    </>
   );
 }

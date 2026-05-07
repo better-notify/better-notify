@@ -1,15 +1,23 @@
 import { useState } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { CalendarIcon, TagIcon, FunnelIcon } from '@phosphor-icons/react';
+import { z } from 'zod';
 import { blogSource } from '@/lib/blog-source';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { seo } from '@/lib/seo';
 import { appConfig } from '@/lib/shared';
 
+const searchSchema = z.object({
+  category: z.string().optional(),
+});
+
 export const Route = createFileRoute('/blog/')({
   component: BlogIndexPage,
+  validateSearch: searchSchema,
   loader: async () => {
     return await serverLoader();
   },
@@ -70,7 +78,8 @@ const serverLoader = createServerFn({
 
 function BlogIndexPage() {
   const { posts, categories, allTags } = Route.useLoaderData();
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const { category: searchCategory } = Route.useSearch();
+  const [activeCategory, setActiveCategory] = useState<string | null>(searchCategory ?? null);
   const [activeTags, setActiveTags] = useState<string[]>([]);
 
   const filtered = posts.filter((post) => {
@@ -102,28 +111,23 @@ function BlogIndexPage() {
           </div>
 
           <div className="mb-6 flex flex-wrap gap-2 md:hidden">
-            <button
+            <Button
+              variant={!activeCategory ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setActiveCategory(null)}
-              className={`cursor-pointer rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                !activeCategory
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground'
-              }`}
             >
               All
-            </button>
+            </Button>
             {categories.map((cat) => (
-              <button
+              <Button
                 key={cat}
+                variant={activeCategory === cat ? 'default' : 'outline'}
+                size="sm"
                 onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                className={`cursor-pointer rounded-md border px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
-                  activeCategory === cat
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground'
-                }`}
+                className="capitalize"
               >
                 {cat}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -146,9 +150,9 @@ function BlogIndexPage() {
                     >
                       <div className="mb-3 flex items-center gap-2">
                         {post.category && (
-                          <span className="bg-primary text-primary-foreground rounded-md px-2 py-0.5 text-[10px] font-medium capitalize">
+                          <Badge variant="default" className="capitalize">
                             {post.category}
-                          </span>
+                          </Badge>
                         )}
                         <span className="text-muted-foreground flex items-center gap-1 text-xs">
                           <CalendarIcon size={12} />
@@ -168,12 +172,9 @@ function BlogIndexPage() {
                       {post.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {post.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="border-border text-muted-foreground rounded border px-1.5 py-0.5 text-[10px]"
-                            >
+                            <Badge key={tag} variant="outline">
                               {tag}
-                            </span>
+                            </Badge>
                           ))}
                         </div>
                       )}
@@ -191,28 +192,24 @@ function BlogIndexPage() {
                     Categories
                   </h3>
                   <div className="flex flex-col gap-1">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setActiveCategory(null)}
-                      className={`cursor-pointer rounded-md px-2.5 py-1.5 text-left text-[13px] font-medium transition-colors ${
-                        !activeCategory
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
+                      className={`justify-start ${!activeCategory ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
                     >
                       All posts
-                    </button>
+                    </Button>
                     {categories.map((cat) => (
-                      <button
+                      <Button
                         key={cat}
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                        className={`cursor-pointer rounded-md px-2.5 py-1.5 text-left text-[13px] font-medium capitalize transition-colors ${
-                          activeCategory === cat
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`justify-start capitalize ${activeCategory === cat ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
                       >
                         {cat}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -225,17 +222,14 @@ function BlogIndexPage() {
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
                       {allTags.map((tag) => (
-                        <button
+                        <Button
                           key={tag}
+                          variant={activeTags.includes(tag) ? 'default' : 'outline'}
+                          size="xs"
                           onClick={() => toggleTag(tag)}
-                          className={`cursor-pointer rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
-                            activeTags.includes(tag)
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border text-muted-foreground hover:text-foreground'
-                          }`}
                         >
                           {tag}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>

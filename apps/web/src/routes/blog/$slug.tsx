@@ -1,6 +1,7 @@
-import { createFileRoute, notFound } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { Suspense } from 'react';
+import { CaretRightIcon } from '@phosphor-icons/react';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import browserCollections from 'collections/browser';
 import { blogSource } from '@/lib/blog-source';
@@ -72,7 +73,7 @@ const clientLoader = browserCollections.blogPosts.createClientLoader({
   component({ toc, default: MDX }, _props: undefined) {
     return (
       <>
-        <InlineTOC items={toc} />
+        {toc.length >= 2 && <InlineTOC items={toc} className="mb-8" />}
         <div className="prose prose-neutral dark:prose-invert max-w-none">
           <MDX components={useMDXComponents()} />
         </div>
@@ -88,13 +89,33 @@ function BlogArticlePage() {
     <>
       <LandingHeader />
       <main className="min-h-screen">
-        <article className="mx-auto w-full max-w-[720px] px-5 py-12 md:px-8">
+        <article className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-8">
+          <nav aria-label="Breadcrumb" className="mb-6">
+            <ol className="text-muted-foreground flex list-none items-center gap-1.5 p-0 text-sm">
+              <li>
+                <Link to="/blog" className="hover:text-foreground no-underline transition-colors">
+                  Blog
+                </Link>
+              </li>
+              {loaderData.pageCategory && (
+                <>
+                  <li><CaretRightIcon size={12} className="text-border" /></li>
+                  <li>
+                    <Link
+                      to="/blog"
+                      search={{ category: loaderData.pageCategory }}
+                      className="hover:text-foreground capitalize no-underline transition-colors"
+                    >
+                      {loaderData.pageCategory}
+                    </Link>
+                  </li>
+                </>
+              )}
+              <li><CaretRightIcon size={12} className="text-border" /></li>
+              <li className="text-foreground font-medium">{loaderData.pageTitle}</li>
+            </ol>
+          </nav>
           <header className="mb-10">
-            {loaderData.pageCategory && (
-              <span className="bg-primary/10 text-primary mb-3 inline-block rounded-md px-2.5 py-1 text-xs font-medium capitalize">
-                {loaderData.pageCategory}
-              </span>
-            )}
             <h1
               className="text-foreground mb-3 text-3xl font-bold tracking-tight md:text-4xl"
               style={{ lineHeight: 1.15 }}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, Copy } from '@phosphor-icons/react';
 
 import { useInView } from '@/hooks/use-in-view';
+import { CliPreview } from '@/components/landing/cli-preview';
 import { K, F, S } from '@/components/landing/syntax';
 
 const commands: Record<string, string> = {
@@ -44,7 +45,17 @@ export function Install() {
         </div>
 
         <div className="mx-auto grid max-w-[640px] gap-4">
-          <InstallStep n={1} title="Install">
+          <InstallStep n={1} title="Bootstrap your project">
+            <CliPreview />
+          </InstallStep>
+
+          <div className="flex items-center gap-3">
+            <div className="border-border h-px flex-1 border-t" />
+            <span className="text-muted-foreground text-xs font-medium">or install manually</span>
+            <div className="border-border h-px flex-1 border-t" />
+          </div>
+
+          <InstallStep n={2} title="Install">
             <div className="mb-2.5 flex gap-1">
               {Object.keys(commands).map((x) => (
                 <button
@@ -72,7 +83,7 @@ export function Install() {
             </div>
           </InstallStep>
 
-          <InstallStep n={2} title="Define your catalog">
+          <InstallStep n={3} title="Define your catalog">
             <pre className="m-0 overflow-x-auto rounded-md border border-bn-slate-200 bg-bn-slate-50 px-3.5 py-2.5 font-mono text-xs leading-relaxed text-bn-slate-700 dark:border-bn-slate-800 dark:bg-bn-slate-950 dark:text-bn-slate-300">
               <K>const</K> welcome = rpc.<F>email</F>(){'\n'}
               {'  '}.<F>input</F>(WelcomeSchema){'\n'}
@@ -81,7 +92,7 @@ export function Install() {
             </pre>
           </InstallStep>
 
-          <InstallStep n={3} title="Send anywhere">
+          <InstallStep n={4} title="Send anywhere">
             <pre className="m-0 overflow-x-auto rounded-md border border-bn-slate-200 bg-bn-slate-50 px-3.5 py-2.5 font-mono text-xs leading-relaxed text-bn-slate-700 dark:border-bn-slate-800 dark:bg-bn-slate-950 dark:text-bn-slate-300">
               <K>await</K> mail.welcome.<F>send</F>({'{'}
               {'\n'}

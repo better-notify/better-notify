@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
 import {
   MagnifyingGlassIcon,
@@ -27,6 +27,9 @@ export function LandingHeader() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isDark = resolvedTheme === 'dark';
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isHome = pathname === '/';
+  const visibleLinks = isHome ? navLinks : navLinks.filter((l) => l.href.startsWith('/'));
 
   return (
     <header className="sticky top-0 z-30 border-b border-bn-slate-200 bg-[color-mix(in_oklch,var(--background)_88%,transparent)] backdrop-blur-md backdrop-saturate-[1.4] dark:border-bn-slate-800">
@@ -44,25 +47,22 @@ export function LandingHeader() {
         </Link>
 
         <nav className="hidden items-center gap-5 md:flex">
-          {navLinks.map((link) =>
-            link.href.startsWith('/') ? (
+          {visibleLinks.map((link) => {
+            const isActive = link.href.startsWith('/') && pathname.startsWith(link.href);
+            return (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-muted-foreground hover:text-foreground text-[13px] font-medium no-underline transition-colors"
+                className={`text-[13px] font-medium no-underline transition-colors ${
+                  isActive
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 {link.label}
               </a>
-            ) : (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground text-[13px] font-medium no-underline transition-colors"
-              >
-                {link.label}
-              </a>
-            ),
-          )}
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -132,16 +132,23 @@ export function LandingHeader() {
 
       {mobileOpen && (
         <nav className="border-border flex flex-col gap-1 border-t px-5 py-3 md:hidden">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium no-underline transition-colors"
-              onClick={() => setMobileOpen(false)}
-            >
-              {link.label}
-            </a>
-          ))}
+          {visibleLinks.map((link) => {
+            const isActive = link.href.startsWith('/') && pathname.startsWith(link.href);
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                className={`rounded-md px-3 py-2 text-sm font-medium no-underline transition-colors ${
+                  isActive
+                    ? 'text-foreground bg-bn-slate-100 dark:bg-bn-slate-800'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </nav>
       )}
     </header>
