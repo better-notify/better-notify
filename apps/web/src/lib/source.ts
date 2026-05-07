@@ -58,7 +58,10 @@ export const source = loader({
     typedPlugin({
       transformPageTree: {
         file(node) {
-          const slug = node.url?.replace('/docs/transports/', '');
+          const transportsPrefix = `${appConfig.docs.route}/transports/`;
+          if (!node.url?.startsWith(transportsPrefix)) return node;
+
+          const slug = node.url.slice(transportsPrefix.length).replace(/\/$/, '');
           if (!slug || !transportChannels[slug]) return node;
 
           const ch = channelBadges[transportChannels[slug]];
@@ -73,8 +76,10 @@ export const source = loader({
                 className:
                   'ml-auto pl-2 shrink-0 text-fd-muted-foreground channel-badge relative',
                 'data-tooltip': ch.tooltip,
+                'aria-label': ch.tooltip,
+                title: ch.tooltip,
               },
-              createElement(ch.icon, { size: 14 }),
+              createElement(ch.icon, { size: 14, 'aria-hidden': true }),
             ),
           );
 

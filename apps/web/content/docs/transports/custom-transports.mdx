@@ -194,7 +194,7 @@ const withTracking = mapTransport(smtpTransport, (message, ctx) => ({
 }));
 ```
 
-The rewrite function can be async. The returned transport is a drop-in replacement — pass it to `createSender`, `multiTransport`, or anywhere a `Transport` is expected.
+The rewrite function can be async. The returned transport is a drop-in replacement — pass it to `createClient`, `multiTransport`, or anywhere a `Transport` is expected.
 
 ## Implementing Transport directly
 
