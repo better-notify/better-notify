@@ -79,7 +79,7 @@ export const source = loader({
                 'aria-label': ch.tooltip,
                 title: ch.tooltip,
               },
-              createElement(ch.icon, { size: 14, 'aria-hidden': true }),
+              createElement(ch.icon, { size: 14, 'aria-hidden': true } as Record<string, unknown>),
             ),
           );
 
