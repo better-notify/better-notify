@@ -86,7 +86,7 @@ export function Hero() {
             </div>
 
             <div
-              className="hero-anim mb-8 max-w-[400px] lg:mx-0"
+              className="hero-anim mb-8 max-w-[480px] lg:mx-0"
               style={{ animationDelay: '220ms' }}
             >
               <CliPreview />
