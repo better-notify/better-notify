@@ -8,9 +8,7 @@ import { appConfig } from './shared';
 import { iconMap } from './icons';
 
 type ChannelBadge = {
-  label: string;
   tooltip: string;
-  color: string;
   icon: ComponentType<{ size?: number; className?: string }>;
 };
 
@@ -31,16 +29,11 @@ const transportChannels: Record<string, string> = {
 };
 
 const channelBadges: Record<string, ChannelBadge> = {
-  email: { label: 'email', tooltip: 'Email channel', color: 'text-purple-500', icon: Envelope },
-  chat: { label: 'chat', tooltip: 'Chat channel', color: 'text-indigo-500', icon: ChatText },
-  sms: { label: 'sms', tooltip: 'SMS channel', color: 'text-green-500', icon: DeviceMobile },
-  automation: {
-    label: 'automation',
-    tooltip: 'Automation channel',
-    color: 'text-amber-500',
-    icon: Lightning,
-  },
-  any: { label: 'any', tooltip: 'Any channel', color: 'text-gray-400', icon: Globe },
+  email: { tooltip: 'Email channel', icon: Envelope },
+  chat: { tooltip: 'Chat channel', icon: ChatText },
+  sms: { tooltip: 'SMS channel', icon: DeviceMobile },
+  automation: { tooltip: 'Automation channel', icon: Lightning },
+  any: { tooltip: 'Any channel', icon: Globe },
 };
 
 export const source = loader({
@@ -66,8 +59,9 @@ export const source = loader({
             createElement(
               'span',
               {
-                className: `ml-auto pl-2 shrink-0 ${ch.color}`,
-                title: ch.tooltip,
+                className:
+                  'ml-auto pl-2 shrink-0 text-fd-muted-foreground channel-badge relative',
+                'data-tooltip': ch.tooltip,
               },
               createElement(ch.icon, { size: 14 }),
             ),

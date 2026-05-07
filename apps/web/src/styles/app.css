@@ -550,3 +550,21 @@ html > body[data-scroll-locked] {
     transition-duration: 0.01ms !important;
   }
 }
+
+.channel-badge[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--color-fd-foreground);
+  color: var(--color-fd-background);
+  pointer-events: none;
+  z-index: 50;
+}
