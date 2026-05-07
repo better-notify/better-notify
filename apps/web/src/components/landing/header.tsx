@@ -16,6 +16,7 @@ import { appConfig } from '@/lib/shared';
 
 const navLinks = [
   { label: 'Docs', href: '/docs' },
+  { label: 'Blog', href: '/blog' },
   { label: 'Channels', href: '#channels' },
   { label: 'Pipeline', href: '#pipeline' },
   { label: 'Compare', href: '#compare' },
