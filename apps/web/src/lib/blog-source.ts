@@ -18,7 +18,7 @@ export type BlogPost = {
 };
 
 export function mapPageToPost(page: (typeof blogSource)['$inferPage']): BlogPost {
-  const data = page.data as Record<string, unknown>;
+  const data = page.data as unknown as Record<string, unknown>;
   return {
     slug: page.slugs.at(-1) ?? '',
     title: page.data.title,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { CalendarIcon, TagIcon, FunnelIcon } from '@phosphor-icons/react';
 import { z } from 'zod';
@@ -47,10 +47,10 @@ function BlogIndexPage() {
   const { posts, categories, allTags } = Route.useLoaderData();
   const { category: activeCategory } = Route.useSearch();
   const [activeTags, setActiveTags] = useState<string[]>([]);
-  const navigate = useNavigate();
+  const navigate = Route.useNavigate();
 
   const setActiveCategory = (cat: string | null) => {
-    void navigate({ search: (prev) => ({ ...prev, category: cat ?? undefined }) });
+    void navigate({ search: { category: cat ?? undefined } });
   };
 
   const filtered = posts.filter((post) => {

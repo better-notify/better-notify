@@ -55,7 +55,7 @@ const serverLoader = createServerFn({
     if (!page) throw notFound();
 
     const post = mapPageToPost(page);
-    const image = (page.data as Record<string, unknown>).image as string | undefined;
+    const image = (page.data as unknown as Record<string, unknown>).image as string | undefined;
 
     return {
       path: page.path,
