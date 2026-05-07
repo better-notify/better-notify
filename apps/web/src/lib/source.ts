@@ -1,32 +1,46 @@
 import { docs } from 'collections/server';
 import { loader } from 'fumadocs-core/source';
-import { createElement, Fragment } from 'react';
+import { type ComponentType, createElement, Fragment } from 'react';
+
+import { ChatText, DeviceMobile, Envelope, Globe, Lightning } from '@phosphor-icons/react';
 
 import { appConfig } from './shared';
 import { iconMap } from './icons';
 
-const transportBadges: Record<string, { kind: string; channel: string }> = {
-  smtp: { kind: 'provider', channel: 'email' },
-  ses: { kind: 'provider', channel: 'email' },
-  resend: { kind: 'provider', channel: 'email' },
-  'cloudflare-email': { kind: 'provider', channel: 'email' },
-  mailchimp: { kind: 'provider', channel: 'email' },
-  discord: { kind: 'provider', channel: 'chat' },
-  slack: { kind: 'provider', channel: 'chat' },
-  telegram: { kind: 'provider', channel: 'chat' },
-  twilio: { kind: 'provider', channel: 'sms' },
-  zapier: { kind: 'provider', channel: 'automation' },
-  mock: { kind: 'core', channel: 'any' },
-  'multi-transport': { kind: 'core', channel: 'any' },
-  'custom-transports': { kind: 'core', channel: 'any' },
+type ChannelBadge = {
+  label: string;
+  tooltip: string;
+  color: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
 };
 
-const channelLabels: Record<string, { label: string; color: string }> = {
-  email: { label: '✉ email', color: 'text-purple-500' },
-  chat: { label: '💬 chat', color: 'text-indigo-500' },
-  sms: { label: '📱 sms', color: 'text-green-500' },
-  automation: { label: '⚡ automation', color: 'text-amber-500' },
-  any: { label: 'any', color: 'text-gray-400' },
+const transportChannels: Record<string, string> = {
+  smtp: 'email',
+  ses: 'email',
+  resend: 'email',
+  'cloudflare-email': 'email',
+  mailchimp: 'email',
+  discord: 'chat',
+  slack: 'chat',
+  telegram: 'chat',
+  twilio: 'sms',
+  zapier: 'automation',
+  mock: 'any',
+  'multi-transport': 'any',
+  'custom-transports': 'any',
+};
+
+const channelBadges: Record<string, ChannelBadge> = {
+  email: { label: 'email', tooltip: 'Email channel', color: 'text-purple-500', icon: Envelope },
+  chat: { label: 'chat', tooltip: 'Chat channel', color: 'text-indigo-500', icon: ChatText },
+  sms: { label: 'sms', tooltip: 'SMS channel', color: 'text-green-500', icon: DeviceMobile },
+  automation: {
+    label: 'automation',
+    tooltip: 'Automation channel',
+    color: 'text-amber-500',
+    icon: Lightning,
+  },
+  any: { label: 'any', tooltip: 'Any channel', color: 'text-gray-400', icon: Globe },
 };
 
 export const source = loader({
@@ -41,10 +55,9 @@ export const source = loader({
       transformPageTree: {
         file(node) {
           const slug = node.url?.replace('/docs/transports/', '');
-          if (!slug || !transportBadges[slug]) return node;
+          if (!slug || !transportChannels[slug]) return node;
 
-          const badge = transportBadges[slug];
-          const ch = channelLabels[badge.channel];
+          const ch = channelBadges[transportChannels[slug]];
 
           node.name = createElement(
             Fragment,
@@ -53,9 +66,10 @@ export const source = loader({
             createElement(
               'span',
               {
-                className: `ml-auto pl-2 shrink-0 font-mono text-[10px] ${ch.color}`,
+                className: `ml-auto pl-2 shrink-0 ${ch.color}`,
+                title: ch.tooltip,
               },
-              ch.label,
+              createElement(ch.icon, { size: 14 }),
             ),
           );
 
