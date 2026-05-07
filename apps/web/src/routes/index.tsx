@@ -13,7 +13,7 @@ import { Cta } from '@/components/landing/faq-cta';
 import { BlogAndAuthor } from '@/components/landing/author';
 import { Footer } from '@/components/landing/footer';
 import { Marquee } from '@/components/landing/marquee';
-import { blogSource } from '@/lib/blog-source';
+import { getLatestBlogPosts } from '@/lib/blog-source';
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -25,27 +25,7 @@ export const Route = createFileRoute('/')({
 const getLatestPosts = createServerFn({
   method: 'GET',
 }).handler(async () => {
-  const pages = blogSource.getPages();
-
-  const posts = pages
-    .map((page) => {
-      const data = page.data as unknown as Record<string, unknown>;
-      const category = page.slugs.length > 1 ? page.slugs[0] : null;
-      const slug = page.slugs[page.slugs.length - 1];
-
-      return {
-        slug,
-        title: page.data.title,
-        description: (page.data.description as string) ?? '',
-        date: (data.date as string) ?? '',
-        category,
-        tags: (data.tags as string[]) ?? [],
-      };
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
-
-  return { latestPosts: posts };
+  return { latestPosts: getLatestBlogPosts(3) };
 });
 
 function LandingPage() {

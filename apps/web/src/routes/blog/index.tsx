@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { CalendarIcon, TagIcon, FunnelIcon } from '@phosphor-icons/react';
 import { z } from 'zod';
-import { blogSource } from '@/lib/blog-source';
+import { getAllBlogPosts } from '@/lib/blog-source';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { Button } from '@/components/ui/button';
@@ -37,50 +37,21 @@ export const Route = createFileRoute('/blog/')({
   },
 });
 
-type BlogPost = {
-  slug: string;
-  title: string;
-  description: string;
-  date: string;
-  author: string;
-  tags: string[];
-  category: string | null;
-};
-
 const serverLoader = createServerFn({
   method: 'GET',
 }).handler(async () => {
-  const pages = blogSource.getPages();
-
-  const posts: BlogPost[] = pages
-    .map((page) => {
-      const data = page.data as unknown as Record<string, unknown>;
-      const category = page.slugs.length > 1 ? page.slugs[0] : null;
-      const slug = page.slugs[page.slugs.length - 1];
-
-      return {
-        slug,
-        title: page.data.title,
-        description: (page.data.description as string) ?? '',
-        date: (data.date as string) ?? '',
-        author: (data.author as string) ?? 'Lucas Reis',
-        tags: (data.tags as string[]) ?? [],
-        category,
-      };
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const categories = [...new Set(posts.map((p) => p.category).filter(Boolean))] as string[];
-  const allTags = [...new Set(posts.flatMap((p) => p.tags))].sort();
-
-  return { posts, categories, allTags };
+  return getAllBlogPosts();
 });
 
 function BlogIndexPage() {
   const { posts, categories, allTags } = Route.useLoaderData();
-  const { category: searchCategory } = Route.useSearch();
-  const [activeCategory, setActiveCategory] = useState<string | null>(searchCategory ?? null);
+  const { category: activeCategory } = Route.useSearch();
   const [activeTags, setActiveTags] = useState<string[]>([]);
+  const navigate = useNavigate();
+
+  const setActiveCategory = (cat: string | null) => {
+    void navigate({ search: (prev) => ({ ...prev, category: cat ?? undefined }) });
+  };
 
   const filtered = posts.filter((post) => {
     if (activeCategory && post.category !== activeCategory) return false;
@@ -160,6 +131,7 @@ function BlogIndexPage() {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',
+                            timeZone: 'UTC',
                           })}
                         </span>
                       </div>

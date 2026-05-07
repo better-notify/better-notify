@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { CaretRightIcon } from '@phosphor-icons/react';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import browserCollections from 'collections/browser';
-import { blogSource } from '@/lib/blog-source';
+import { blogSource, mapPageToPost } from '@/lib/blog-source';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { useMDXComponents } from '@/components/mdx';
@@ -54,18 +54,19 @@ const serverLoader = createServerFn({
     const page = pages.find((p) => p.slugs[p.slugs.length - 1] === slug);
     if (!page) throw notFound();
 
-    const category = page.slugs.length > 1 ? page.slugs[0] : null;
+    const post = mapPageToPost(page);
+    const image = (page.data as Record<string, unknown>).image as string | undefined;
 
     return {
       path: page.path,
-      slug,
-      pageTitle: page.data.title,
-      pageDescription: (page.data.description as string | undefined) ?? null,
-      pageDate: (page.data as unknown as Record<string, unknown>).date as string,
-      pageAuthor: ((page.data as unknown as Record<string, unknown>).author as string) ?? 'Lucas Reis',
-      pageTags: ((page.data as unknown as Record<string, unknown>).tags as string[]) ?? [],
-      pageCategory: category,
-      pageImage: ((page.data as unknown as Record<string, unknown>).image as string | undefined) ?? null,
+      slug: post.slug,
+      pageTitle: post.title,
+      pageDescription: post.description || null,
+      pageDate: post.date,
+      pageAuthor: post.author,
+      pageTags: post.tags,
+      pageCategory: post.category,
+      pageImage: image ?? null,
     };
   });
 
@@ -135,6 +136,7 @@ function BlogArticlePage() {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
+                  timeZone: 'UTC',
                 })}
               </time>
             </div>

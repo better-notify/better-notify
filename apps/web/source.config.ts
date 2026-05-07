@@ -15,7 +15,7 @@ export const blogPosts = defineCollections({
   type: 'doc',
   dir: 'content/blog',
   schema: frontmatterSchema.extend({
-    date: z.string().date().or(z.date()),
+    date: z.iso.date().or(z.date()),
     tags: z.array(z.string()).optional().default([]),
     author: z.string().optional().default('Lucas Reis'),
     image: z.string().optional(),

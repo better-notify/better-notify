@@ -90,6 +90,7 @@ export function BlogAndAuthor({ posts }: { posts: BlogPreviewPost[] }) {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
+                        timeZone: 'UTC',
                       })}
                     </span>
                   </div>
