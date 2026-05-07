@@ -35,7 +35,7 @@ export const Route = createFileRoute('/blog/$slug')({
       article: {
         publishedTime: loaderData.pageDate,
         author: loaderData.pageAuthor,
-        section: loaderData.pageCategory,
+        section: loaderData.pageCategory ?? undefined,
         tags: loaderData.pageTags,
       },
     });
@@ -60,11 +60,11 @@ const serverLoader = createServerFn({
       slug,
       pageTitle: page.data.title,
       pageDescription: (page.data.description as string | undefined) ?? null,
-      pageDate: (page.data as Record<string, unknown>).date as string,
-      pageAuthor: ((page.data as Record<string, unknown>).author as string) ?? 'Lucas Reis',
-      pageTags: ((page.data as Record<string, unknown>).tags as string[]) ?? [],
+      pageDate: (page.data as unknown as Record<string, unknown>).date as string,
+      pageAuthor: ((page.data as unknown as Record<string, unknown>).author as string) ?? 'Lucas Reis',
+      pageTags: ((page.data as unknown as Record<string, unknown>).tags as string[]) ?? [],
       pageCategory: category,
-      pageImage: ((page.data as Record<string, unknown>).image as string | undefined) ?? null,
+      pageImage: ((page.data as unknown as Record<string, unknown>).image as string | undefined) ?? null,
     };
   });
 
