@@ -73,8 +73,7 @@ export const source = loader({
             createElement(
               'span',
               {
-                className:
-                  'ml-auto pl-2 shrink-0 text-fd-muted-foreground channel-badge relative',
+                className: 'ml-auto pl-2 shrink-0 text-fd-muted-foreground channel-badge relative',
                 'data-tooltip': ch.tooltip,
                 'aria-label': ch.tooltip,
                 title: ch.tooltip,
