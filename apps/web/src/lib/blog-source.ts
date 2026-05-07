@@ -17,7 +17,7 @@ export type BlogPost = {
   category: string | null;
 };
 
-export function mapPageToPost(page: (typeof blogSource)['$inferPage']): BlogPost {
+export const mapPageToPost = (page: (typeof blogSource)['$inferPage']): BlogPost => {
   const data = page.data as unknown as Record<string, unknown>;
   return {
     slug: page.slugs.at(-1) ?? '',
@@ -28,17 +28,17 @@ export function mapPageToPost(page: (typeof blogSource)['$inferPage']): BlogPost
     tags: (data.tags as string[]) ?? [],
     category: page.slugs.length > 1 ? (page.slugs[0] ?? null) : null,
   };
-}
+};
 
-export function getLatestBlogPosts(limit = 3): BlogPost[] {
+export const getLatestBlogPosts = (limit = 3): BlogPost[] => {
   return blogSource
     .getPages()
     .map(mapPageToPost)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit);
-}
+};
 
-export function getAllBlogPosts() {
+export const getAllBlogPosts = () => {
   const posts = blogSource
     .getPages()
     .map(mapPageToPost)
@@ -48,4 +48,4 @@ export function getAllBlogPosts() {
   const allTags = [...new Set(posts.flatMap((p) => p.tags))].sort();
 
   return { posts, categories, allTags };
-}
+};
