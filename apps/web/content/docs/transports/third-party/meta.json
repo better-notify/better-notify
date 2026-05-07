@@ -1,4 +1,0 @@
-{
-  "title": "Provider Packages",
-  "pages": ["ses", "cloudflare-email", "discord", "mailchimp", "resend", "slack", "smtp", "telegram", "twilio", "zapier"]
-}

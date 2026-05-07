@@ -6,6 +6,7 @@ description: How transports deliver your notifications
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import { Mermaid } from '@/components/mermaid';
+import { Badge } from '@/components/ui/badge';
 
 A transport is the wire-level adapter that takes a fully-rendered message and delivers it to a provider — SMTP relay, Resend HTTP endpoint, or anything else that can accept an outbound message.
 
@@ -57,43 +58,79 @@ type TransportResult<TData = unknown> =
   | { ok: false; error: Error };
 ```
 
-Return `{ ok: true, data }` on success with whatever provider-specific data you want to surface. Return `{ ok: false, error }` on controlled failure — this triggers failover in [multi-transport](/docs/transports/generic/multi-transport) strategies. Throwing works too; both paths are handled the same way.
+Return `{ ok: true, data }` on success with whatever provider-specific data you want to surface. Return `{ ok: false, error }` on controlled failure — this triggers failover in [multi-transport](/docs/transports/multi-transport) strategies. Throwing works too; both paths are handled the same way.
 
 ## Available transports
 
-Better-Notify ships several transports. They fall into two groups:
+<div className="border-fd-border divide-fd-border divide-y rounded-xl border">
+  <a href="/docs/transports/smtp" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors first:rounded-t-xl">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">SMTP</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
+  </a>
+  <a href="/docs/transports/ses" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Amazon SES</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
+  </a>
+  <a href="/docs/transports/resend" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Resend</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
+  </a>
+  <a href="/docs/transports/cloudflare-email" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Cloudflare Email</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
+  </a>
+  <a href="/docs/transports/mailchimp" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Mailchimp (Mandrill)</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
+  </a>
+  <a href="/docs/transports/discord" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Discord</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">discord</Badge>
+  </a>
+  <a href="/docs/transports/slack" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Slack</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">slack</Badge>
+  </a>
+  <a href="/docs/transports/telegram" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Telegram</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">telegram</Badge>
+  </a>
+  <a href="/docs/transports/twilio" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Twilio</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">sms</Badge>
+  </a>
+  <a href="/docs/transports/zapier" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Zapier</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">zapier</Badge>
+  </a>
+  <a href="/docs/transports/mock" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Mock Transport</span>
+    <Badge variant="outline">core</Badge>
+    <Badge variant="secondary">any</Badge>
+  </a>
+  <a href="/docs/transports/multi-transport" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Multi-Transport</span>
+    <Badge variant="outline">core</Badge>
+    <Badge variant="secondary">any</Badge>
+  </a>
+  <a href="/docs/transports/custom-transports" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors last:rounded-b-xl">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">Custom Transports</span>
+    <Badge variant="outline">core</Badge>
+    <Badge variant="secondary">any</Badge>
+  </a>
+</div>
 
-### Provider packages
-
-Transports that pull a non-trivial peer dependency ship as separate packages:
-
-<Cards>
-  <Card href="/docs/transports/third-party/smtp" title="SMTP">
-    Deliver via any SMTP relay using Nodemailer. Works with Amazon SES, Postfix, Mailgun, and others.
-  </Card>
-  <Card href="/docs/transports/third-party/ses" title="Amazon SES">
-    Send via SES SMTP credentials using the SMTP transport.
-  </Card>
-  <Card href="/docs/transports/third-party/resend" title="Resend">
-    Send through the Resend HTTP API.
-  </Card>
-</Cards>
-
-### Core utilities
-
-These live in `@betternotify/core/transports` — no extra packages needed:
-
-<Cards>
-  <Card href="/docs/transports/generic/mock" title="Mock Transport">
-    Captures sent messages in memory for assertions. Use in tests and local development.
-  </Card>
-  <Card href="/docs/transports/generic/multi-transport" title="Multi-Transport">
-    Composes multiple transports behind a single interface with failover, round-robin, race, and other strategies.
-  </Card>
-  <Card href="/docs/transports/generic/custom-transports" title="Custom Transports">
-    Build your own transport for any provider using createTransport or a plain object.
-  </Card>
-</Cards>
+<Badge variant="outline">provider</Badge> ships as a separate package with its own peer dependencies. <Badge variant="outline">core</Badge> lives in `@betternotify/core/transports` — no extra install needed. The channel badge shows which [channel](/docs/concepts/channels) the transport delivers to. <Badge variant="secondary">any</Badge> means the transport works with any channel.
 
 ## Wiring a transport to a client
 
@@ -116,7 +153,7 @@ const mail = createClient({
 });
 ```
 
-That single transport slot accepts any `Transport` — a provider package, a [custom transport](/docs/transports/generic/custom-transports), or a [multi-transport](/docs/transports/generic/multi-transport) composite that wraps several providers together.
+That single transport slot accepts any `Transport` — a provider package, a [custom transport](/docs/transports/custom-transports), or a [multi-transport](/docs/transports/multi-transport) composite that wraps several providers together.
 
 ## Swapping transports by environment
 
@@ -176,7 +213,7 @@ flowchart TD
 - **`send()`** runs on every delivery. Receives a fully-rendered message and a `SendContext`. Returns a `TransportResult`.
 - **`close()`** runs during graceful shutdown to release sockets, flush buffers, or close SDK clients.
 
-Both `verify` and `close` propagate through [multi-transport](/docs/transports/generic/multi-transport) composites automatically. If you only need `send`, skip them — `createTransport` fills in no-op defaults.
+Both `verify` and `close` propagate through [multi-transport](/docs/transports/multi-transport) composites automatically. If you only need `send`, skip them — `createTransport` fills in no-op defaults.
 
 ## HTTP configuration
 
@@ -243,7 +280,7 @@ const transport = slackTransport({
 
 ### Retry vs. multi-transport vs. queue retry
 
-HTTP retry, [multi-transport](/docs/transports/generic/multi-transport) retry, and queue retry operate at different layers:
+HTTP retry, [multi-transport](/docs/transports/multi-transport) retry, and queue retry operate at different layers:
 
 | Layer | Scope | Use case |
 | --- | --- | --- |
@@ -255,6 +292,6 @@ Each layer is independent. A single transport can use HTTP retry without `multiT
 
 ## Where to go next
 
-- Read [Custom Transports](/docs/transports/generic/custom-transports) to build your own provider adapter.
-- Read [Multi-Transport](/docs/transports/generic/multi-transport) to compose transports with failover, load balancing, or redundancy.
-- See the provider pages ([SMTP](/docs/transports/third-party/smtp), [Amazon SES](/docs/transports/third-party/ses), [Resend](/docs/transports/third-party/resend)) for provider-specific setup.
+- Read [Custom Transports](/docs/transports/custom-transports) to build your own provider adapter.
+- Read [Multi-Transport](/docs/transports/multi-transport) to compose transports with failover, load balancing, or redundancy.
+- See the provider pages ([SMTP](/docs/transports/smtp), [Amazon SES](/docs/transports/ses), [Resend](/docs/transports/resend)) for provider-specific setup.

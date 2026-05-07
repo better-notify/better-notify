@@ -4,6 +4,212 @@ icon: Wrench
 description: Build your own transport adapter
 ---
 
-Build custom transports with the step-by-step guide in [Generic Custom Transports](/docs/transports/generic/custom-transports).
+import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-If you're wiring an email provider, start there and import from `@betternotify/email/transports`. Use `@betternotify/core/transports` only when you're building channel-agnostic helpers.
+A transport is the wire-level adapter that delivers a fully-rendered message to a provider. Better-Notify ships transports for [SMTP](/docs/transports/smtp) and [Resend](/docs/transports/resend), but you can write your own for any provider that accepts an HTTP call, SDK method, or socket write.
+
+Transports receive a `RenderedMessage` — addresses, subject, HTML, text, attachments — and return a result. They never re-validate input or re-render templates; the pipeline handles that upstream.
+
+Most applications only need three steps:
+
+1. Import `createTransport` from your channel package.
+2. Call your provider inside `send`.
+3. Pass the result to `transportsByChannel`.
+
+If you're building an email transport, import from `@betternotify/email/transports`. If you're building a channel-agnostic helper, import from `@betternotify/core/transports` instead.
+
+## createTransport
+
+`createTransport()` is the easiest way to start. You give it a `name` and a `send` function. Everything else is optional.
+
+```ts
+import { createTransport, formatAddress, normalizeAddress } from '@betternotify/email/transports';
+
+const postmarkTransport = createTransport({
+  name: 'postmark',
+  async send(message) {
+    if (!message.from) {
+      return { ok: false, error: new Error('postmark: missing "from" address') };
+    }
+
+    const response = await fetch('https://api.postmarkapp.com/email', {
+      method: 'POST',
+      body: JSON.stringify({
+        From: formatAddress(message.from),
+        To: message.to.map(formatAddress).join(','),
+        Subject: message.subject,
+        HtmlBody: message.html,
+      }),
+    });
+
+    if (!response.ok) {
+      return { ok: false, error: new Error(`postmark: ${response.status}`) };
+    }
+
+    const { MessageID } = await response.json();
+    return {
+      ok: true,
+      data: {
+        transportMessageId: MessageID,
+        accepted: message.to.map(normalizeAddress),
+        rejected: [],
+      },
+    };
+  },
+});
+```
+
+Then register it like any other transport:
+
+```ts
+import { createClient } from '@betternotify/core';
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: { email: postmarkTransport },
+});
+```
+
+## createTransport options
+
+If you want the shape of `createTransport()` at a glance, these are the fields that matter. In practice, most custom transports only need `name` and `send`; `verify` and `close` are optional lifecycle hooks.
+
+<TypeTable
+  type={{
+    name: {
+      description: 'Identifier used in logs, multi-transport selection, and error messages.',
+      type: 'string',
+    },
+    send: {
+      description: 'Delivers a rendered message. Receives the message and a SendContext with route, messageId, and attempt number.',
+      type: '(message: RenderedMessage, ctx: SendContext) => Promise<TransportResult>',
+    },
+    verify: {
+      description: 'Optional startup check — validate credentials, test connectivity.',
+      type: '() => Promise<{ ok: boolean; details?: unknown }>',
+      default: '() => ({ ok: true })',
+    },
+    close: {
+      description: 'Optional cleanup — release sockets, close clients.',
+      type: '() => Promise<void>',
+      default: '() => {}',
+    },
+  }}
+/>
+
+## Return shape
+
+`send` must return a `TransportResult`:
+
+```ts
+// Success
+return { ok: true, data: { transportMessageId, accepted, rejected } };
+
+// Controlled failure — logged, triggers failover in multi-transport
+return { ok: false, error: new Error('rate limited') };
+```
+
+Throwing also works. Both `{ ok: false, error }` and thrown errors are handled the same way by [multi-transport](/docs/transports/multi-transport) strategies: the error is logged and the next transport is tried.
+
+<TypeTable
+  type={{
+    transportMessageId: {
+      description: "Provider's message ID, if available.",
+      type: 'string | undefined',
+    },
+    accepted: {
+      description: 'Email addresses the provider accepted.',
+      type: 'string[]',
+    },
+    rejected: {
+      description: 'Email addresses the provider rejected.',
+      type: 'string[]',
+    },
+    raw: {
+      description: 'Full provider response for debugging. Not forwarded to hooks.',
+      type: 'unknown',
+    },
+  }}
+/>
+
+## verify and close
+
+Both are optional. `createTransport` fills in no-op defaults when omitted.
+
+```ts
+import { createTransport } from '@betternotify/email/transports';
+
+const transport = createTransport({
+  name: 'postmark',
+  async send(message, ctx) {
+    // ...
+  },
+  async verify() {
+    const res = await fetch('https://api.postmarkapp.com/server', {
+      headers: { 'X-Postmark-Server-Token': process.env.POSTMARK_TOKEN! },
+    });
+    return { ok: res.ok, details: { status: res.status } };
+  },
+  async close() {
+    // release connection pools, flush buffers
+  },
+});
+```
+
+`verify()` runs during startup checks. `close()` runs during graceful shutdown. Both propagate through [multi-transport](/docs/transports/multi-transport) composites — `verify` requires at least one inner transport to pass; `close` waits for all inner transports to finish.
+
+## Address helpers
+
+`formatAddress` and `normalizeAddress` handle the `Address` type (`string | { name?: string; email: string }`) so you don't have to.
+
+```ts
+import { formatAddress, normalizeAddress } from '@betternotify/email/transports';
+
+formatAddress({ name: 'Ada', email: 'ada@example.com' });
+// → '"Ada" <ada@example.com>'
+
+formatAddress('ada@example.com');
+// → 'ada@example.com'
+
+normalizeAddress({ name: 'Ada', email: 'ada@example.com' });
+// → 'ada@example.com'
+```
+
+Use `formatAddress` when the provider expects RFC 5322 mailbox format (most SMTP and REST APIs). Use `normalizeAddress` when you need the bare email for comparison, routing keys, or analytics.
+
+## mapTransport
+
+Wraps an existing transport with a function that rewrites the rendered message before `send`. The wrapper preserves the original transport's `name`, `verify`, and `close`.
+
+```ts
+import { mapTransport } from '@betternotify/email/transports';
+
+const withTracking = mapTransport(smtpTransport, (message, ctx) => ({
+  ...message,
+  headers: {
+    ...message.headers,
+    'X-Trace-Id': ctx.messageId,
+  },
+}));
+```
+
+The rewrite function can be async. The returned transport is a drop-in replacement — pass it to `createClient`, `multiTransport`, or anywhere a `Transport` is expected.
+
+## Implementing Transport directly
+
+`createTransport` returns a plain object. You can skip it and build the object yourself:
+
+```ts
+import type { Transport } from '@betternotify/email/transports';
+
+const myTransport: Transport = {
+  name: 'my-provider',
+  async send(message, ctx) {
+    // ...
+    return { ok: true, data: { accepted: [], rejected: [] } };
+  },
+};
+```
+
+This is the same result — `createTransport` just fills in default `verify` and `close` implementations.

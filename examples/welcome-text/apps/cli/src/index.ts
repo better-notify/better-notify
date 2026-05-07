@@ -40,6 +40,7 @@ import { runZapier } from './examples/zapier';
 import { runEmailZapier } from './examples/email-zapier';
 import { runDiscordZapier } from './examples/discord-zapier';
 import { runEmailMailchimp } from './examples/email-mailchimp';
+import { runEmailSmtpFailover } from './examples/email-smtp-failover';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -84,6 +85,7 @@ const examples: Record<string, () => Promise<void>> = {
   'email-zapier': runEmailZapier,
   'discord-zapier': runDiscordZapier,
   'email-mailchimp': runEmailMailchimp,
+  'email-smtp-failover': runEmailSmtpFailover,
 };
 
 const main = async (): Promise<void> => {
