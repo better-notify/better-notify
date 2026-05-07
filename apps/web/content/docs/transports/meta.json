@@ -3,18 +3,18 @@
   "icon": "Truck",
   "pages": [
     "index",
-    "smtp",
-    "ses",
-    "resend",
     "cloudflare-email",
-    "mailchimp",
+    "custom-transports",
     "discord",
-    "slack",
-    "telegram",
-    "twilio",
-    "zapier",
+    "mailchimp",
     "mock",
     "multi-transport",
-    "custom-transports"
+    "resend",
+    "ses",
+    "slack",
+    "smtp",
+    "telegram",
+    "twilio",
+    "zapier"
   ]
 }
