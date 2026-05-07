@@ -6,6 +6,7 @@ description: How transports deliver your notifications
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import { Mermaid } from '@/components/mermaid';
+import { Badge } from '@/components/ui/badge';
 
 A transport is the wire-level adapter that takes a fully-rendered message and delivers it to a provider — SMTP relay, Resend HTTP endpoint, or anything else that can accept an outbound message.
 
@@ -62,70 +63,70 @@ Return `{ ok: true, data }` on success with whatever provider-specific data you 
 ## Available transports
 
 <div className="border-fd-border divide-fd-border divide-y rounded-xl border">
-  <a href="/docs/transports/smtp" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors first:rounded-t-xl">
+  <a href="/docs/transports/smtp" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors first:rounded-t-xl">
     <span className="text-fd-foreground flex-1 text-sm font-medium">SMTP</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">email</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
   </a>
-  <a href="/docs/transports/ses" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/ses" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Amazon SES</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">email</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
   </a>
-  <a href="/docs/transports/resend" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/resend" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Resend</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">email</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
   </a>
-  <a href="/docs/transports/cloudflare-email" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/cloudflare-email" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Cloudflare Email</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">email</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
   </a>
-  <a href="/docs/transports/mailchimp" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/mailchimp" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Mailchimp (Mandrill)</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">email</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">email</Badge>
   </a>
-  <a href="/docs/transports/discord" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/discord" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Discord</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">chat</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">chat</Badge>
   </a>
-  <a href="/docs/transports/slack" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/slack" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Slack</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">chat</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">chat</Badge>
   </a>
-  <a href="/docs/transports/telegram" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/telegram" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Telegram</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">chat</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">chat</Badge>
   </a>
-  <a href="/docs/transports/twilio" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/twilio" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Twilio</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">sms</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">sms</Badge>
   </a>
-  <a href="/docs/transports/zapier" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/zapier" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Zapier</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">provider</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">automation</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">automation</Badge>
   </a>
-  <a href="/docs/transports/mock" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/mock" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Mock Transport</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">core</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">any</span>
+    <Badge variant="outline">core</Badge>
+    <Badge variant="secondary">any</Badge>
   </a>
-  <a href="/docs/transports/multi-transport" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors">
+  <a href="/docs/transports/multi-transport" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Multi-Transport</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">core</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">any</span>
+    <Badge variant="outline">core</Badge>
+    <Badge variant="secondary">any</Badge>
   </a>
-  <a href="/docs/transports/custom-transports" className="hover:bg-fd-accent/50 flex items-center gap-3 px-4 py-3 no-underline transition-colors last:rounded-b-xl">
+  <a href="/docs/transports/custom-transports" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors last:rounded-b-xl">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Custom Transports</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">core</span>
-    <span className="text-fd-muted-foreground font-mono text-[10px] uppercase tracking-widest">any</span>
+    <Badge variant="outline">core</Badge>
+    <Badge variant="secondary">any</Badge>
   </a>
 </div>
 
