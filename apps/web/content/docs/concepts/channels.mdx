@@ -46,6 +46,44 @@ A channel's `render` function produces a typed output — `RenderedMessage` for 
 
 This separation is what makes transports swappable. The same email channel works with SMTP, Resend, or a mock — because they all accept `RenderedMessage`. See [Transports](/docs/transports) for how delivery works.
 
+## One route, one channel
+
+Every procedure binds to exactly one channel. When you call `rpc.email()`, that route is an email route — it cannot also be an SMS route or a Discord route. The type system enforces this: each channel defines its own slots (`.subject()` and `.template()` for email, `.body()` for SMS, `.embeds()` for Discord), and they are not interchangeable.
+
+To reach users across multiple channels, define a separate procedure per channel and orchestrate sends at the application level:
+
+```ts
+const rpc = createNotify({ channels: { email, discord, telegram } });
+
+const catalog = rpc.catalog({
+  welcomeEmail: rpc.email().input(welcomeInput).subject(/* ... */).template(/* ... */),
+  welcomeDiscord: rpc.discord().input(welcomeInput).body(/* ... */).embeds(/* ... */),
+  welcomeTelegram: rpc.telegram().input(welcomeInput).body(/* ... */).parseMode('HTML'),
+});
+```
+
+After creating the client, send to each channel independently — fire them in parallel when order does not matter:
+
+```ts
+const [emailResult, discordResult, telegramResult] = await Promise.all([
+  mail.welcomeEmail.send({ to: 'ada@example.com', input }),
+  mail.welcomeDiscord.send({ input }),
+  mail.welcomeTelegram.send({ to: chatId, input }),
+]);
+```
+
+| | Do | Don't |
+|---|---|---|
+| **Routing** | One procedure per channel — `welcomeEmail`, `welcomeSms` | Try to make one procedure send to multiple channels |
+| **Shared input** | Extract a shared Zod schema and pass it to each procedure's `.input()` | Duplicate the schema definition across procedures |
+| **Cross-channel dispatch** | Orchestrate with `Promise.all` or sequential `await` at the call site | Expect a single `.send()` to fan out across channels |
+| **Failover across providers** | Use `multiTransport` with `'failover'` strategy within one channel | Mix transports from different channels in `multiTransport` |
+| **Shared defaults** | Set channel-level defaults via `emailChannel({ defaults })` | Override channel-specific config from another channel's transport |
+
+<Callout>
+This constraint is intentional. Each channel has different rendering logic, addressing requirements, and slot shapes — mixing them in a single route would break type safety and make the pipeline unpredictable. Separate routes keep each channel independently testable and deployable.
+</Callout>
+
 ## Custom channels
 
 Any notification type you can model as "validate args → resolve slots → render output" fits as a channel. `defineChannel` and `slot` are the only imports you need:

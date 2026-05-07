@@ -1,5 +1,20 @@
 {
   "title": "Transports",
   "icon": "Truck",
-  "pages": ["index", "generic", "third-party"]
+  "pages": [
+    "index",
+    "smtp",
+    "ses",
+    "resend",
+    "cloudflare-email",
+    "mailchimp",
+    "discord",
+    "slack",
+    "telegram",
+    "twilio",
+    "zapier",
+    "mock",
+    "multi-transport",
+    "custom-transports"
+  ]
 }

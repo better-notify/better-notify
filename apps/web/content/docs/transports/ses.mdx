@@ -4,7 +4,7 @@ icon: AmazonLogo
 description: Send emails via Amazon Simple Email Service
 ---
 
-Amazon SES exposes a standard SMTP interface. Use the [`@betternotify/smtp`](/docs/transports/third-party/smtp) transport with your SES SMTP credentials — no separate package needed.
+Amazon SES exposes a standard SMTP interface. Use the [`@betternotify/smtp`](/docs/transports/smtp) transport with your SES SMTP credentials — no separate package needed.
 
 ## Setup
 
@@ -40,5 +40,5 @@ SES delivers bounce, complaint, and delivery notifications via SNS. The webhook 
 
 ## Further reading
 
-- [SMTP transport options](/docs/transports/third-party/smtp) for pool, DKIM, and advanced Nodemailer settings.
-- [Multi-Transport](/docs/transports/generic/multi-transport) for failover between SES and another provider.
+- [SMTP transport options](/docs/transports/smtp) for pool, DKIM, and advanced Nodemailer settings.
+- [Multi-Transport](/docs/transports/multi-transport) for failover between SES and another provider.
