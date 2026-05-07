@@ -91,17 +91,17 @@ Return `{ ok: true, data }` on success with whatever provider-specific data you 
   <a href="/docs/transports/discord" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Discord</span>
     <Badge variant="outline">provider</Badge>
-    <Badge variant="secondary">chat</Badge>
+    <Badge variant="secondary">discord</Badge>
   </a>
   <a href="/docs/transports/slack" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Slack</span>
     <Badge variant="outline">provider</Badge>
-    <Badge variant="secondary">chat</Badge>
+    <Badge variant="secondary">slack</Badge>
   </a>
   <a href="/docs/transports/telegram" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Telegram</span>
     <Badge variant="outline">provider</Badge>
-    <Badge variant="secondary">chat</Badge>
+    <Badge variant="secondary">telegram</Badge>
   </a>
   <a href="/docs/transports/twilio" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Twilio</span>
@@ -111,7 +111,7 @@ Return `{ ok: true, data }` on success with whatever provider-specific data you 
   <a href="/docs/transports/zapier" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Zapier</span>
     <Badge variant="outline">provider</Badge>
-    <Badge variant="secondary">automation</Badge>
+    <Badge variant="secondary">zapier</Badge>
   </a>
   <a href="/docs/transports/mock" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Mock Transport</span>
@@ -129,6 +129,8 @@ Return `{ ok: true, data }` on success with whatever provider-specific data you 
     <Badge variant="secondary">any</Badge>
   </a>
 </div>
+
+<Badge variant="outline">provider</Badge> ships as a separate package with its own peer dependencies. <Badge variant="outline">core</Badge> lives in `@betternotify/core/transports` — no extra install needed. The channel badge shows which [channel](/docs/concepts/channels) the transport delivers to. <Badge variant="secondary">any</Badge> means the transport works with any channel.
 
 ## Wiring a transport to a client
 
