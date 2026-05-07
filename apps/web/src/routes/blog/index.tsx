@@ -101,6 +101,20 @@ function BlogIndexPage() {
               </Button>
             ))}
           </div>
+          {allTags.length > 0 && (
+            <div className="mb-6 flex flex-wrap gap-1.5 md:hidden">
+              {allTags.map((tag) => (
+                <Button
+                  key={tag}
+                  variant={activeTags.includes(tag) ? 'default' : 'outline'}
+                  size="xs"
+                  onClick={() => toggleTag(tag)}
+                >
+                  {tag}
+                </Button>
+              ))}
+            </div>
+          )}
 
           <div className="flex gap-8">
             <div className="min-w-0 flex-1">

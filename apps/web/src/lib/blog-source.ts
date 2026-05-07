@@ -17,6 +17,21 @@ export type BlogPost = {
   category: string | null;
 };
 
+const toEpoch = (date: string): number => {
+  const epoch = Date.parse(date);
+  return Number.isNaN(epoch) ? Number.NEGATIVE_INFINITY : epoch;
+};
+
+const assertUniqueSlugs = (posts: BlogPost[]): void => {
+  const seen = new Set<string>();
+  for (const post of posts) {
+    if (seen.has(post.slug)) {
+      throw new Error(`Duplicate blog slug detected: "${post.slug}"`);
+    }
+    seen.add(post.slug);
+  }
+};
+
 export const mapPageToPost = (page: (typeof blogSource)['$inferPage']): BlogPost => {
   const data = page.data as unknown as Record<string, unknown>;
   return {
@@ -31,18 +46,20 @@ export const mapPageToPost = (page: (typeof blogSource)['$inferPage']): BlogPost
 };
 
 export const getLatestBlogPosts = (limit = 3): BlogPost[] => {
-  return blogSource
+  const posts = blogSource
     .getPages()
     .map(mapPageToPost)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, limit);
+    .sort((a, b) => toEpoch(b.date) - toEpoch(a.date));
+  assertUniqueSlugs(posts);
+  return posts.slice(0, limit);
 };
 
 export const getAllBlogPosts = () => {
   const posts = blogSource
     .getPages()
     .map(mapPageToPost)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort((a, b) => toEpoch(b.date) - toEpoch(a.date));
+  assertUniqueSlugs(posts);
 
   const categories = [...new Set(posts.map((p) => p.category).filter(Boolean))] as string[];
   const allTags = [...new Set(posts.flatMap((p) => p.tags))].sort();
