@@ -4,7 +4,7 @@ import { RootProvider } from 'fumadocs-ui/provider/tanstack';
 import { PostHogProvider } from '@posthog/react';
 
 import appCss from '@/styles/app.css?url';
-import { appConfig } from '@/lib/shared';
+import { appConfig, GOOGLE_ANALYTICS_ID } from '@/lib/shared';
 import { seo } from '@/lib/seo';
 import { usePosthogClient } from '@/hooks/use-posthog-client';
 
@@ -50,6 +50,32 @@ export const Route = createRootRoute({
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         ...seoLinks,
+      ],
+      scripts: [
+        {
+          children: `
+            (function() {
+              function loadGA() {
+                var script = document.createElement('script');
+                script.src = 'https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}';
+                script.async = true;
+                document.head.appendChild(script);
+
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                window.gtag = gtag;
+                gtag('js', new Date());
+                gtag('config', '${GOOGLE_ANALYTICS_ID}');
+              }
+
+              if ('requestIdleCallback' in window) {
+                requestIdleCallback(loadGA, { timeout: 3000 });
+              } else {
+                setTimeout(loadGA, 2000);
+              }
+            })();
+          `,
+        },
       ],
     };
   },
