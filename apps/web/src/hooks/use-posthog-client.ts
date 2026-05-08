@@ -1,7 +1,7 @@
 import posthog from 'posthog-js';
 import { useEffect } from 'react';
 
-export function usePosthogInit() {
+export const usePosthogInit = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
