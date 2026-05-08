@@ -33,7 +33,7 @@
 ## Quick start
 
 ```sh
-npm install @betternotify/core @betternotify/email
+npm install @betternotify/core @betternotify/email zod
 ```
 
 ```ts
