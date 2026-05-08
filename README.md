@@ -75,6 +75,10 @@ await mail.welcome.send({ to: 'john@example.com', input: { name: 'John' } });
 
 Scaffolding: [`create-better-notify`](https://www.npmjs.com/package/create-better-notify)
 
+```sh
+npx create-better-notify@latest
+```
+
 ---
 
 <p align="center">
