@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.0-beta.1...@betternotify/web-v1.0.0-beta.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* **web:** fix docs content flicker and rename posthog proxy ([#89](https://github.com/better-notify/better-notify/issues/89)) ([6fa3140](https://github.com/better-notify/better-notify/commit/6fa3140b9cb6490e607ff7c538c6014029b4d749))
+
 ## [1.0.0-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.2.0...@betternotify/web-v1.0.0-beta.1) (2026-05-08)
 
 
