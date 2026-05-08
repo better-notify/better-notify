@@ -10,7 +10,7 @@ module.exports = {
   branchPrefix: 'renovate/',
   platform: 'github',
   repositories: ['better-notify/better-notify'],
-  onboardingPrTitle: 'chore(repo): configure renovate',
+  onboardingPrTitle: 'configure renovate',
   onboarding: true,
   requireConfig: 'optional',
   prConcurrentLimit: 5,
