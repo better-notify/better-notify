@@ -70,7 +70,7 @@ router.post('/signup', async (req, res) => {
     description:
       'Better-Notify works anywhere Hono does — Cloudflare Workers, Deno, Bun, or Node.js. Both libraries are ESM-first, TypeScript-native, and designed for edge runtimes.',
     whyFits: [
-      'ESM-only — matches Hono\'s module system',
+      "ESM-only — matches Hono's module system",
       'Runs on Cloudflare Workers, Deno, Bun, Node.js',
       'Lightweight — no heavy dependencies for edge',
       'Cloudflare Email transport for edge-native delivery',
@@ -132,8 +132,8 @@ export default {
       'Add typed notifications to Fastify with zero plugins. Better-Notify runs as a plain import — use it in route handlers, hooks, or background tasks.',
     whyFits: [
       'No Fastify plugin needed — just import',
-      'Matches Fastify\'s schema-first approach',
-      'Works with Fastify\'s TypeBox/Zod validation',
+      "Matches Fastify's schema-first approach",
+      "Works with Fastify's TypeBox/Zod validation",
       'Use in route handlers or lifecycle hooks',
     ],
     codeExample: `// routes/orders.ts

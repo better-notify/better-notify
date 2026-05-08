@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
+import { z } from 'zod';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { seo } from '@/lib/seo';
@@ -45,7 +46,7 @@ export const Route = createFileRoute('/integrations/$slug')({
 });
 
 const serverLoader = createServerFn({ method: 'GET' })
-  .inputValidator((slug: string) => slug)
+  .validator(z.string().min(1))
   .handler(({ data: slug }) => {
     const integration = getIntegration(slug);
     if (!integration) throw notFound();
@@ -63,7 +64,10 @@ function IntegrationPage() {
         <nav aria-label="Breadcrumb" className="mb-8">
           <ol className="text-muted-foreground flex list-none items-center gap-1.5 p-0 text-sm">
             <li>
-              <Link to="/integrations" className="hover:text-foreground no-underline transition-colors">
+              <Link
+                to="/integrations"
+                className="hover:text-foreground no-underline transition-colors"
+              >
                 Integrations
               </Link>
             </li>
@@ -103,7 +107,11 @@ function IntegrationPage() {
           <ul className="space-y-2">
             {data.features.map((feature) => (
               <li key={feature} className="text-muted-foreground flex items-start gap-2 text-sm">
-                <CheckCircleIcon size={16} weight="fill" className="text-foreground mt-0.5 shrink-0" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="text-foreground mt-0.5 shrink-0"
+                />
                 {feature}
               </li>
             ))}

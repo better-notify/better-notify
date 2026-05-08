@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
+import { z } from 'zod';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { seo } from '@/lib/seo';
@@ -47,7 +48,7 @@ export const Route = createFileRoute('/for/$slug')({
 });
 
 const serverLoader = createServerFn({ method: 'GET' })
-  .inputValidator((slug: string) => slug)
+  .validator(z.string().min(1))
   .handler(({ data: slug }) => {
     const persona = getPersona(slug);
     if (!persona) throw notFound();
@@ -88,7 +89,11 @@ function PersonaPage() {
           <ul className="space-y-2">
             {data.whyFits.map((reason) => (
               <li key={reason} className="text-muted-foreground flex items-start gap-2 text-sm">
-                <CheckCircleIcon size={16} weight="fill" className="text-foreground mt-0.5 shrink-0" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="text-foreground mt-0.5 shrink-0"
+                />
                 {reason}
               </li>
             ))}
