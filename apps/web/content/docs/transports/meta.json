@@ -3,12 +3,12 @@
   "icon": "Truck",
   "pages": [
     "index",
+    "multi-transport",
     "cloudflare-email",
     "custom-transports",
     "discord",
     "mailchimp",
     "mock",
-    "multi-transport",
     "resend",
     "ses",
     "slack",

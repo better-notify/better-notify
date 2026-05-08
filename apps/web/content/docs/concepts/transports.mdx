@@ -1,0 +1,98 @@
+---
+title: Transports
+icon: Globe
+description: How transports deliver rendered messages to providers
+---
+
+A transport is the last step in the send pipeline. By the time it runs, the input has been validated, middleware has executed, and the channel has rendered the final output. The transport's only job is to take that rendered message and hand it to a provider — an SMTP relay, an HTTP API, a webhook endpoint.
+
+## Where transports sit
+
+<PipelineFlow
+  nodes={[
+    { id: 'validate', label: 'validate' },
+    { id: 'middleware', label: 'middleware' },
+    { id: 'render', label: 'render' },
+    { id: 'transport', label: 'transport' },
+  ]}
+/>
+
+Everything upstream — validation, context enrichment, rendering — is done before the transport sees the message. This is by design: transports are deliberately simple. They receive a fully-resolved output and deliver it. No re-validation, no re-rendering, no address resolution. That work belongs to the layers above.
+
+This simplicity is what makes transports interchangeable. Swapping from Resend to SMTP changes one line of configuration, not the pipeline.
+
+## Channels render, transports deliver
+
+A [channel](/docs/concepts/channels) defines the shape of a notification and how to render it — email has subjects, HTML, and plain text; SMS has a body; push has a title and device tokens. The channel's `render` function produces a typed output (`RenderedMessage` for email, `RenderedSms` for SMS).
+
+A transport receives that output and delivers it to a provider. The channel never knows which transport is running, and the transport never sees raw input or slot configuration. This separation means the same email channel works identically with SMTP, Resend, SES, or a mock transport — because they all accept `RenderedMessage`.
+
+```ts
+import { createClient } from '@betternotify/core';
+import { smtpTransport } from '@betternotify/smtp';
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: smtpTransport({ host: 'smtp.example.com', port: 587 }),
+  },
+});
+```
+
+Each channel maps to one transport in `transportsByChannel`. That transport slot accepts any `Transport` — a provider package, a [custom transport](/docs/transports/custom-transports), or a [multi-transport](/docs/transports/multi-transport) composite.
+
+## Provider packages vs core transports
+
+Transports split into two groups:
+
+**Provider packages** ship as separate `@betternotify/*` packages with their own peer dependencies. Each provider gets its own package regardless of dependency weight — they are substantive enough to warrant isolation. Examples: `@betternotify/smtp`, `@betternotify/resend`, `@betternotify/slack`.
+
+**Core transports** live in `@betternotify/core/transports` — no extra install needed. These are utilities that work with any channel: [`mockTransport`](/docs/transports/mock) for testing, [`multiTransport`](/docs/transports/multi-transport) for composing providers.
+
+## Composing transports
+
+A single transport slot doesn't mean a single provider. [`multiTransport`](/docs/transports/multi-transport) composes multiple transports behind one `Transport` interface with strategies for failover, load balancing, race, and mirrored delivery:
+
+```ts
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: resendTransport },
+    { transport: smtpTransport },
+  ],
+});
+```
+
+If the primary fails, the composite advances to the next transport. From the client's perspective, it is still one transport.
+
+## Swapping by environment
+
+Because the catalog and client are separate, you can swap transports without touching route definitions. Use a mock in tests, a single provider in staging, and a multi-transport failover in production — the procedures stay the same:
+
+```ts
+import { createMockTransport } from '@betternotify/core/transports';
+
+const transport =
+  process.env.NODE_ENV === 'test'
+    ? createMockTransport()
+    : smtpTransport({ host: 'smtp.example.com', port: 587 });
+```
+
+## Three layers of retry
+
+Retry can happen at three independent levels. Each one operates at a different scope and is configured separately:
+
+<RetryLayers />
+
+- **HTTP retry** — retries a single HTTP request within one transport (e.g. transient 503s). Configured via the `http.retry` option on HTTP-backed transports.
+- **Multi-transport retry** — advances across providers when one fails (e.g. failover from Resend to SMTP). Configured via `multiTransport` options.
+- **Queue retry** — retries the entire send pipeline after a crash or persistent failure. Configured via your queue worker (BullMQ, etc.).
+
+You can use any combination. A single transport can use HTTP retry without multi-transport, and vice versa.
+
+## Reference
+
+For the full `Transport` type definition, lifecycle hooks, HTTP configuration, and the complete provider directory, see the [Transports reference](/docs/transports).
