@@ -1,13 +1,19 @@
 import posthog from 'posthog-js';
 import { useEffect } from 'react';
 
+let initialized = false;
+
+export const isPosthogReady = () => initialized;
+
 export const usePosthogInit = () => {
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || initialized) return;
 
     const posthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
 
-    if (!posthogKey || posthog.__loaded) return;
+    if (!posthogKey) return;
+
+    initialized = true;
 
     posthog.init(posthogKey, {
       api_host: '/ph',

@@ -1,5 +1,7 @@
 import posthog from 'posthog-js';
 
+import { isPosthogReady } from '@/hooks/use-posthog-client';
+
 export type ActionTypes =
   | 'accept'
   | 'add'
@@ -61,7 +63,7 @@ export const useAnalytics = (component: string) => {
   return {
     track: (track?: string) => ({
       action: (action: ActionTypes, data?: Record<string, unknown>) => {
-        if (!posthog.__loaded) return;
+        if (!isPosthogReady()) return;
 
         const event =
           component && track ? `${component}.${track}.${action}` : `${component}.${action}`;
