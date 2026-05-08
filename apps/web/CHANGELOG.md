@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.1-beta.1...@betternotify/web-v1.0.2-beta.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* **web:** remove conditional PostHogProvider to prevent layout flicker ([#93](https://github.com/better-notify/better-notify/issues/93)) ([98dfbef](https://github.com/better-notify/better-notify/commit/98dfbef9e3d2e833669bf75bad8765b26c7734cb))
+
 ## [1.0.1-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.0-beta.1...@betternotify/web-v1.0.1-beta.1) (2026-05-08)
 
 
