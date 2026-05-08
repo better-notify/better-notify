@@ -1,6 +1,18 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "boundaries": {
+    "tags": {
+      "app": {
+        "dependencies": {
+          "deny": ["package"]
+        }
+      },
+      "package": {},
+      "lib": {},
+      "internal": {}
+    }
+  },
   "tasks": {
     "//#oxlint": {
       "cache": true,
