@@ -9,6 +9,7 @@ module.exports = {
   rebaseWhen: 'never',
   branchPrefix: 'renovate/',
   platform: 'github',
+  platformCommit: 'disabled',
   repositories: ['better-notify/better-notify'],
   onboardingPrTitle: 'configure renovate',
   onboarding: true,
