@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/better-notify/better-notify/compare/@betternotify/slack-v1.0.0...@betternotify/slack-v1.1.0) (2026-05-08)
+
+
+### Features
+
+* **web:** add internal UI lib, redesign OG images, and improve navigation ([#67](https://github.com/better-notify/better-notify/issues/67)) ([045fd58](https://github.com/better-notify/better-notify/commit/045fd58e7b59d0999692f17f96dbcbe0a1e2b1c5))
+
 ## 1.0.0 (2026-05-05)
 
 
