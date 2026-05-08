@@ -17,13 +17,13 @@
     "@orpc/openapi": "1.14.2",
     "@orpc/server": "1.14.2",
     "@orpc/zod": "1.14.2",
-    "hono": "4.12.17",
+    "hono": "4.12.18",
     "react": "19.2.5",
     "react-email": "6.0.8",
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/node": "25.6.0",
+    "@types/node": "25.6.1",
     "@types/react": "19.2.14",
     "tsx": "4.21.0",
     "typescript": "6.0.3"
