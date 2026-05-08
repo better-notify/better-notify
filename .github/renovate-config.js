@@ -19,6 +19,7 @@ module.exports = {
   prHourlyLimit: 5,
   addLabels: ['dependencies'],
   minimumReleaseAge: '1 day',
+  statusCheckNames: null,
   packageRules: [
     {
       matchUpdateTypes: ['patch'],
