@@ -187,14 +187,16 @@ export function RetryLayers() {
       const pulseEl = pulseRefs.current.get(pulseId);
       const pathEl = pathRefs.current.get(pathId);
       if (!pulseEl || !pathEl) return Promise.resolve(false);
+      const pulse = pulseEl;
+      const path = pathEl;
 
-      const total = pathEl.getTotalLength();
+      const total = path.getTotalLength();
 
       if (reducedMotion) {
-        const end = pathEl.getPointAtLength(total);
-        pulseEl.setAttribute('cx', String(end.x));
-        pulseEl.setAttribute('cy', String(end.y));
-        pulseEl.setAttribute('opacity', '1');
+        const end = path.getPointAtLength(total);
+        pulse.setAttribute('cx', String(end.x));
+        pulse.setAttribute('cy', String(end.y));
+        pulse.setAttribute('opacity', '1');
         return Promise.resolve(true);
       }
 
@@ -202,17 +204,17 @@ export function RetryLayers() {
       const abort = abortRef.current;
 
       return new Promise((resolve) => {
-        pulseEl.setAttribute('opacity', '1');
+        pulse.setAttribute('opacity', '1');
         function frame(now: number) {
           if (abort.aborted) {
-            pulseEl.setAttribute('opacity', '0');
+            pulse.setAttribute('opacity', '0');
             resolve(false);
             return;
           }
           const t = Math.min((now - start) / duration, 1);
-          const pt = pathEl.getPointAtLength(easeOutQuart(t) * total);
-          pulseEl.setAttribute('cx', String(pt.x));
-          pulseEl.setAttribute('cy', String(pt.y));
+          const pt = path.getPointAtLength(easeOutQuart(t) * total);
+          pulse.setAttribute('cx', String(pt.x));
+          pulse.setAttribute('cy', String(pt.y));
           if (t < 1) requestAnimationFrame(frame);
           else resolve(true);
         }
