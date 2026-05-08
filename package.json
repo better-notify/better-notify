@@ -32,11 +32,11 @@
     "web:deploy": "turbo run deploy --filter=@betternotify/web"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
     "@turbo/gen": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "husky": "^8.0.3",
+    "husky": "8.0.3",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "tsx": "catalog:",
