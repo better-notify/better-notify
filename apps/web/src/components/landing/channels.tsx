@@ -17,21 +17,21 @@ const channels = [
     name: 'Email',
     pkg: '@betternotify/email',
     status: 'ready',
-    detail: 'SES · Resend · SMTP · React Email · Mailpit',
+    detail: 'Resend · Cloudflare · SMTP · Mailchimp · React Email',
   },
   {
     icon: ChatText,
     name: 'SMS',
     pkg: '@betternotify/sms',
     status: 'ready',
-    detail: 'Twilio · MessageBird · Vonage',
+    detail: 'Twilio',
   },
   {
     icon: Bell,
     name: 'Push',
     pkg: '@betternotify/push',
-    status: 'ready',
-    detail: 'APNs · FCM · Web Push · Expo',
+    status: 'soon',
+    detail: 'APNs · FCM · Web Push',
   },
   {
     icon: TelegramLogo,
@@ -104,7 +104,7 @@ export function Channels() {
             Same API. Any channel.
           </h2>
           <p className="text-muted-foreground max-w-[620px] text-[17px] leading-relaxed text-pretty">
-            Each channel is a package with its own slots and transport. Swap providers without
+            Each channel is a package with its own rendering and transport. Swap providers without
             touching route definitions. Build your own with{' '}
             <code className="bg-muted text-foreground rounded border px-1 py-0.5 font-mono text-xs">
               defineChannel()
@@ -126,8 +126,8 @@ export function Channels() {
               {primary.pkg}
             </code>
             <p className="text-muted-foreground mb-4 text-[13.5px] leading-relaxed">
-              The first channel shipping in v0.1. Typed templates with React Email, MJML, or plain
-              functions. Multi-provider failover out of the box.
+              Typed templates with React Email, MJML, or plain functions. Multi-provider failover
+              out of the box.
             </p>
             <p className="text-muted-foreground m-0 font-mono text-xs leading-relaxed">
               {primary.detail}

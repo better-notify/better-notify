@@ -13,7 +13,7 @@ import { K, F, P } from '@/components/landing/syntax';
 const anchor = {
   icon: StackIcon,
   title: 'End-to-end typed',
-  body: 'One catalog type drives your sender, queue worker, and webhook router. Refactor a route and every call site updates.',
+  body: 'One catalog types your sending across every channel. Refactor a route and every call site updates.',
 } as const;
 
 const supporting = [
@@ -30,7 +30,7 @@ const supporting = [
   {
     icon: PulseIcon,
     title: 'Provider failover',
-    body: 'multiTransport tries SES, then Resend, then SMTP. Health-checked, retry-aware.',
+    body: 'multiTransport tries Resend, then Cloudflare, then SMTP. Health-checked, retry-aware.',
   },
   {
     icon: ShieldIcon,

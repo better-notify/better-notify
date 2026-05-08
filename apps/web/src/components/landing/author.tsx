@@ -22,7 +22,7 @@ type BlogPreviewPost = {
 
 const author = {
   name: 'Lucas Reis',
-  bio: 'A brazilian full stack software engineer focused on developer experience and software quality.',
+  bio: 'A Brazilian full-stack software engineer focused on developer experience and software quality.',
   photo: '/lucas-reis.png',
   socials: [
     { icon: XLogoIcon, href: 'https://x.com/lucasreis', label: 'X' },
