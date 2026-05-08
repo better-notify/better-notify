@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.2.0...@betternotify/web-v1.0.0-beta.1) (2026-05-08)
+
+
+### Features
+
+* prepare release pipeline for v1.0.0-beta.1 ([#68](https://github.com/better-notify/better-notify/issues/68)) ([b4d9115](https://github.com/better-notify/better-notify/commit/b4d911566b286b9e98ae29ec2fc94b09617fdadb))
+
 ## [1.2.0](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.1...@betternotify/web-v1.2.0) (2026-05-08)
 
 
