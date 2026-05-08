@@ -12,7 +12,7 @@ module.exports = {
   repositories: ['better-notify/better-notify'],
   commitMessagePrefix: 'AUTOMATED',
   onboardingPrTitle: 'AUTOMATED: Configure Renovate',
-  onboarding: false,
+  onboarding: true,
   requireConfig: 'optional',
   prConcurrentLimit: 5,
   branchConcurrentLimit: 5,
