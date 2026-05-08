@@ -8,12 +8,12 @@ import { seo } from '@/lib/seo';
 export const Route = createRootRoute({
   head: () => {
     const { meta: seoMeta, links: seoLinks } = seo({
-      title: `${appConfig.name} — End-to-end Typed Notifications for Node.js`,
+      title: `${appConfig.name}: Typed Notifications for Node.js`,
       description:
         'Type-safe email, SMS, and push notification infrastructure for Node.js. Define once, send everywhere with full TypeScript support.',
       keywords:
-        'notifications, email, node.js, typescript, type-safe, email infrastructure, transactional email',
-      image: `${appConfig.baseUrl}/og-image.png`,
+        'notifications, email, node.js, typescript, type-safe, email infrastructure, transactional email, zapier, cloudflare, better-notify, cloudflare emails, telegram, twilio, push notifications',
+      image: `${appConfig.baseUrl}/og/image.png`,
       url: appConfig.baseUrl,
       canonicalUrl: appConfig.baseUrl,
     });
@@ -26,6 +26,7 @@ export const Route = createRootRoute({
       ],
       links: [
         { rel: 'stylesheet', href: appCss },
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         ...seoLinks,
       ],

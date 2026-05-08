@@ -1,4 +1,5 @@
 import { GithubLogoIcon, XLogoIcon } from '@phosphor-icons/react';
+import { LogoShort } from '@libs/ui';
 
 import { appConfig } from '@/lib/shared';
 
@@ -7,9 +8,7 @@ const navColumns = [
     title: 'Product',
     links: [
       { label: 'Features', href: '#features' },
-      { label: 'Channels', href: '#channels' },
-      { label: 'Pipeline', href: '#pipeline' },
-      { label: 'Compare', href: '#compare' },
+      { label: 'Changelog', href: '/docs/changelog' },
     ],
   },
   {
@@ -34,9 +33,12 @@ export function Footer() {
       <div className="mx-auto max-w-[1200px] px-5 py-12 md:px-8 md:py-16">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
-            <p className="text-foreground mb-2 text-sm font-semibold tracking-tight">
-              {appConfig.name}
-            </p>
+            <div className="mb-2 flex items-center gap-2">
+              <LogoShort className="size-5" />
+              <p className="text-foreground text-sm font-semibold tracking-tight">
+                {appConfig.name}
+              </p>
+            </div>
             <p className="text-muted-foreground max-w-[280px] text-[13px] leading-relaxed">
               Type-safe notification infrastructure for Node. Open source, MIT licensed.
             </p>

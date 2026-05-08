@@ -165,7 +165,7 @@ export function Marquee() {
             'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
         }}
       >
-        <div className="marquee-track flex w-max items-center gap-12">
+        <div className="marquee-track flex w-max select-none items-center gap-12">
           {Array.from({ length: 4 }, (_, set) =>
             providers.map((p) => (
               <div key={`${p.name}-${set}`} className="flex shrink-0 items-center gap-2.5">

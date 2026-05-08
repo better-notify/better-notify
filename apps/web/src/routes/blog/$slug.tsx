@@ -24,7 +24,7 @@ export const Route = createFileRoute('/blog/$slug')({
     const title = `${loaderData.pageTitle} — ${appConfig.name} Blog`;
     const description = loaderData.pageDescription ?? 'Better-Notify blog.';
     const url = `${appConfig.baseUrl}/blog/${loaderData.slug}`;
-    const image = loaderData.pageImage ?? `${appConfig.baseUrl}/og-image.png`;
+    const image = loaderData.pageImage ?? `${appConfig.baseUrl}/og/image.png`;
 
     const { meta, links } = seo({
       title,
@@ -100,7 +100,9 @@ function BlogArticlePage() {
               </li>
               {loaderData.pageCategory && (
                 <>
-                  <li><CaretRightIcon size={12} className="text-border" /></li>
+                  <li>
+                    <CaretRightIcon size={12} className="text-border" />
+                  </li>
                   <li>
                     <Link
                       to="/blog"
@@ -112,7 +114,9 @@ function BlogArticlePage() {
                   </li>
                 </>
               )}
-              <li><CaretRightIcon size={12} className="text-border" /></li>
+              <li>
+                <CaretRightIcon size={12} className="text-border" />
+              </li>
               <li className="text-foreground font-medium">{loaderData.pageTitle}</li>
             </ol>
           </nav>

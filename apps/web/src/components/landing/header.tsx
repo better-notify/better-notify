@@ -10,35 +10,49 @@ import {
   XLogoIcon,
 } from '@phosphor-icons/react';
 import { useTheme } from 'fumadocs-ui/provider/base';
-import { useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
+import { LogoShort } from '@libs/ui';
 import { appConfig } from '@/lib/shared';
 
 const navLinks = [
   { label: 'Docs', href: '/docs' },
   { label: 'Blog', href: '/blog' },
-  { label: 'Channels', href: '#channels' },
-  { label: 'Pipeline', href: '#pipeline' },
-  { label: 'Compare', href: '#compare' },
+  { label: 'Changelog', href: '/docs/changelog' },
 ] as const;
 
 export function LandingHeader() {
   const search = useSearchContext();
   const { setTheme, resolvedTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const isDark = resolvedTheme === 'dark';
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === '/';
   const visibleLinks = isHome ? navLinks : navLinks.filter((l) => l.href.startsWith('/'));
 
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () =>
+      document.documentElement.style.setProperty('--landing-header-height', `${el.offsetHeight}px`);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <header className="sticky top-0 z-30 border-b border-bn-slate-200 bg-[color-mix(in_oklch,var(--background)_88%,transparent)] backdrop-blur-md backdrop-saturate-[1.4] dark:border-bn-slate-800">
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-30 border-b border-bn-slate-200 bg-[color-mix(in_oklch,var(--background)_88%,transparent)] backdrop-blur-md backdrop-saturate-[1.4] dark:border-bn-slate-800"
+    >
       <div className="mx-auto flex max-w-[1200px] items-center gap-8 px-5 py-3 md:px-8">
         <Link
           to="/"
           className="flex items-center gap-2.5 text-base font-bold tracking-tight text-foreground no-underline"
         >
-          <BrandMark size={24} />
+          <LogoShort className="size-6" />
           {appConfig.name}
 
           <span className="bg-bn-navy-50 text-bn-navy-700 border-bn-navy-200 dark:bg-bn-navy-900 dark:text-bn-navy-300 dark:border-bn-navy-700 ml-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none tracking-normal border">
@@ -48,15 +62,16 @@ export function LandingHeader() {
 
         <nav className="hidden items-center gap-5 md:flex">
           {visibleLinks.map((link) => {
-            const isActive = link.href.startsWith('/') && pathname.startsWith(link.href);
+            const isActive =
+              link.href.startsWith('/') &&
+              pathname.startsWith(link.href) &&
+              !navLinks.some((other) => other.href !== link.href && other.href.startsWith(link.href) && pathname.startsWith(other.href));
             return (
               <a
                 key={link.label}
                 href={link.href}
                 className={`text-[13px] font-medium no-underline transition-colors ${
-                  isActive
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                  isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {link.label}
@@ -133,7 +148,10 @@ export function LandingHeader() {
       {mobileOpen && (
         <nav className="border-border flex flex-col gap-1 border-t px-5 py-3 md:hidden">
           {visibleLinks.map((link) => {
-            const isActive = link.href.startsWith('/') && pathname.startsWith(link.href);
+            const isActive =
+              link.href.startsWith('/') &&
+              pathname.startsWith(link.href) &&
+              !navLinks.some((other) => other.href !== link.href && other.href.startsWith(link.href) && pathname.startsWith(other.href));
             return (
               <a
                 key={link.label}
@@ -152,36 +170,5 @@ export function LandingHeader() {
         </nav>
       )}
     </header>
-  );
-}
-
-function BrandMark({ size = 24 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-      <rect x="2" y="2" width="60" height="60" rx="14" fill="var(--primary)" />
-      <g
-        stroke="var(--primary-foreground)"
-        strokeWidth="6.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      >
-        <line x1="20" y1="48" x2="20" y2="20" />
-        <line x1="20" y1="20" x2="44" y2="48" />
-        <line x1="44" y1="48" x2="44" y2="20" />
-      </g>
-      <circle
-        cx="20"
-        cy="48"
-        r="5"
-        className="fill-bn-danger-500"
-        stroke="var(--primary)"
-        strokeWidth="2"
-      />
-      <g stroke="var(--primary-foreground)" strokeLinecap="round" fill="none" opacity="0.95">
-        <path d="M48 18 a4.5 4.5 0 0 1 4.5 -4.5" strokeWidth="2.2" />
-        <path d="M48 14 a8.5 8.5 0 0 1 8.5 -8.5" strokeWidth="2.2" opacity="0.7" />
-      </g>
-    </svg>
   );
 }

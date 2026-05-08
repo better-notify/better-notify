@@ -38,7 +38,12 @@ export const mapPageToPost = (page: (typeof blogSource)['$inferPage']): BlogPost
     slug: page.slugs.at(-1) ?? '',
     title: page.data.title,
     description: (page.data.description as string) ?? '',
-    date: typeof data.date === 'string' ? data.date : data.date instanceof Date ? data.date.toISOString().split('T')[0] : '',
+    date:
+      typeof data.date === 'string'
+        ? data.date
+        : data.date instanceof Date
+          ? data.date.toISOString().split('T')[0]
+          : '',
     author: (data.author as string) ?? 'Lucas Reis',
     tags: (data.tags as string[]) ?? [],
     category: page.slugs.length > 1 ? (page.slugs[0] ?? null) : null,

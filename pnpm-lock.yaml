@@ -173,6 +173,9 @@ importers:
       '@fontsource-variable/inter':
         specifier: ^5.2.8
         version: 5.2.8
+      '@libs/ui':
+        specifier: workspace:*
+        version: link:../../libs/ui
       '@phosphor-icons/react':
         specifier: 'catalog:'
         version: 2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -387,6 +390,22 @@ importers:
         version: 0.18.4(rolldown@1.0.0-rc.17)(typescript@6.0.3)
 
   internal/tsconfig: {}
+
+  libs/ui:
+    dependencies:
+      react:
+        specifier: 'catalog:'
+        version: 19.2.5
+    devDependencies:
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   packages/bullmq:
     dependencies:

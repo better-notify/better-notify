@@ -100,9 +100,32 @@ ${versionsBody}${olderLink}
     writeFileSync(join(OUTPUT_DIR, `${pkg}.mdx`), mdx);
   }
 
+  const cards = slugs
+    .map((slug) => {
+      const label = slug === 'create-better-notify' ? slug : `@betternotify/${slug}`;
+      return `  <Card title="${label}" href="/docs/changelog/${slug}" />`;
+    })
+    .join('\n');
+
+  const indexMdx = `---
+title: Changelog
+icon: History
+description: Release history for all Better-Notify packages
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+Track what changed across every published package.
+
+<Cards>
+${cards}
+</Cards>
+`;
+  writeFileSync(join(OUTPUT_DIR, 'index.mdx'), indexMdx);
+
   const meta = {
     title: 'Changelog',
-    pages: slugs,
+    pages: ['---', ...slugs],
   };
   writeFileSync(join(OUTPUT_DIR, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
 
