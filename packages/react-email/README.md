@@ -1,11 +1,18 @@
 # @betternotify/react-email
 
-React Email render helper for [Better-Notify](../core).
+React Email render helper for [Better-Notify](https://github.com/better-notify/better-notify).
+
+<p>
+  <a href="https://better-notify.com">Website</a> ·
+  <a href="https://better-notify.com/docs">Docs</a> ·
+  <a href="https://github.com/better-notify/better-notify">GitHub</a> ·
+  <a href="https://x.com/better_notify">X</a>
+</p>
 
 ## Install
 
 ```sh
-pnpm add @betternotify/react-email @betternotify/core react react-email
+npm install @betternotify/react-email @betternotify/core react react-email
 ```
 
 ## Usage

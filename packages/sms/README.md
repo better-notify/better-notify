@@ -1,11 +1,18 @@
 # @betternotify/sms
 
-SMS channel for [Better-Notify](../../README.md). Provides `smsChannel()`, a `mockSmsTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedSms`.
+SMS channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `smsChannel()`, a `mockSmsTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedSms`.
+
+<p>
+  <a href="https://better-notify.com">Website</a> ·
+  <a href="https://better-notify.com/docs">Docs</a> ·
+  <a href="https://github.com/better-notify/better-notify">GitHub</a> ·
+  <a href="https://x.com/better_notify">X</a>
+</p>
 
 ## Install
 
 ```sh
-pnpm add @betternotify/sms @betternotify/core
+npm install @betternotify/sms @betternotify/core
 ```
 
 ## Usage
