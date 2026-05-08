@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-const POSTHOG_HOST = 'https://eu.posthog.com';
+const POSTHOG_HOST = 'https://eu.i.posthog.com';
 
 const proxy = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);

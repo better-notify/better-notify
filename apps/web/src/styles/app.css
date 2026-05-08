@@ -49,9 +49,9 @@
   --color-bn-warning-500: oklch(75% 0.16 85);
   --color-bn-warning-700: oklch(58% 0.14 85);
 
-  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
   --font-mono:
-    'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+    'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', 'Menlo', 'Consolas', monospace;
   --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
   --shadow-bn-xs: 0 1px 1px 0 oklch(20% 0.02 258 / 0.04);
