@@ -230,6 +230,14 @@
   --sidebar-ring: var(--color-bn-navy-500);
 }
 
+.dark .shiki,
+[data-theme='dark'] .shiki,
+.dark .shiki span,
+[data-theme='dark'] .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+}
+
 .dark,
 [data-theme='dark'] {
   --hero-fade: var(--color-bn-slate-950);

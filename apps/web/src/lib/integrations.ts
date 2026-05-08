@@ -325,7 +325,7 @@ const catalog = rpc.catalog({
     .email()
     .input(z.object({ name: z.string() }))
     .subject(({ input }) => \`Welcome, \${input.name}\`)
-    .template(reactEmail(WelcomeEmail)),
+    .template(({ input }) => reactEmail(WelcomeEmail, { name: input.name })),
 });`,
     features: [
       'React components as email templates',
@@ -355,7 +355,15 @@ const catalog = rpc.catalog({
     .email()
     .input(z.object({ amount: z.number(), orderId: z.string() }))
     .subject(({ input }) => \`Receipt for order \${input.orderId}\`)
-    .template(mjmlTemplate('./emails/receipt.mjml')),
+    .template(mjmlTemplate(\`<mjml>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-text>Receipt for order {{orderId}} — \${{amount}}</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>\`)),
 });`,
     features: [
       'MJML responsive email markup',
@@ -385,7 +393,7 @@ const catalog = rpc.catalog({
     .email()
     .input(z.object({ inviterName: z.string(), teamName: z.string() }))
     .subject(({ input }) => \`\${input.inviterName} invited you to \${input.teamName}\`)
-    .template(handlebarsTemplate('./emails/invite.hbs')),
+    .template(handlebarsTemplate('<h1>Welcome, {{inviterName}}</h1><p>Join {{teamName}} today.</p>')),
 });`,
     features: [
       'Handlebars template syntax',
