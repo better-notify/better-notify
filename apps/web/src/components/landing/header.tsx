@@ -56,10 +56,6 @@ export function LandingHeader() {
         >
           <LogoShort className="size-6" />
           {appConfig.name}
-
-          <span className="bg-bn-navy-50 text-bn-navy-700 border-bn-navy-200 dark:bg-bn-navy-900 dark:text-bn-navy-300 dark:border-bn-navy-700 ml-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none tracking-normal border">
-            v{appConfig.version}
-          </span>
         </Link>
 
         <nav className="hidden items-center gap-5 md:flex">

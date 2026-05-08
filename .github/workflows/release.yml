@@ -56,7 +56,7 @@ jobs:
       - uses: ./.github/actions/publish-packages
         with:
           filter: './${{ matrix.path }}'
-          tag: alpha
+          tag: beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

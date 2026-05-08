@@ -1,6 +1,5 @@
 export const appConfig = {
   name: 'Better-Notify',
-  version: '0.1.0-alpha',
   baseUrl: 'https://better-notify.com',
   npmPackagePrefix: '@betternotify',
   twitterHandle: '@better_notify',

@@ -7,11 +7,13 @@ Repeatable checklist for cutting a release. The pipeline is fully automated via 
 1. Conventional commits land on `main`.
 2. Release-please opens (or updates) a release PR bumping versions and changelogs.
 3. Merging the release PR triggers the `release.yml` workflow:
-   - **npm publish**: each affected package publishes to npm with the `alpha` dist-tag (matrix job, one per package).
+   - **npm publish**: each affected package publishes to npm with the `beta` dist-tag (matrix job, one per package), then also tags as `latest`.
    - **Docs deploy**: `apps/web` deploys to Cloudflare Workers (only when `apps/web` is part of the release).
 4. GitHub releases and tags (`@betternotify/<package>-v<version>`) are created automatically.
 
 Preview packages (`0.0.0-preview.<pr>.<sha>`) published during CI clean up automatically when the PR closes.
+
+> **Note on `release-as`:** After the initial `1.0.0-beta.1` release, remove the top-level `"release-as"` key from `release-please-config.json` so subsequent releases bump normally.
 
 ---
 
@@ -22,7 +24,7 @@ Before merging the release PR:
 - [ ] Open the release-please PR and review every `CHANGELOG.md` diff.
 - [ ] Verify entries match the actual changes — misleading commits produce misleading changelogs.
 - [ ] Confirm breaking changes are called out explicitly.
-- [ ] Confirm version bumps are correct — `alpha` pre-releases should bump patch, not minor/major, unless intentional.
+- [ ] Confirm version bumps are correct — `beta` pre-releases should bump patch, not minor/major, unless intentional.
 - [ ] Verify `.release-please-manifest.json` versions match what you expect.
 
 `apps/web/scripts/generate-changelog.ts` runs during `prebuild` and pulls each package's `CHANGELOG.md` into the docs site. Changelogs must be committed (via the release PR) before the web build runs.
@@ -32,7 +34,7 @@ Before merging the release PR:
 All packages build and publish in parallel via a matrix job. After merging the release PR:
 
 - [ ] Watch the `Release Please + npm publish` workflow in GitHub Actions.
-- [ ] Confirm all matrix jobs pass (one per released package, up to 16 packages + web).
+- [ ] Confirm all matrix jobs pass (one per released package, up to 17 packages + web).
 - [ ] Spot-check a published package:
 
   ```sh
@@ -40,7 +42,7 @@ All packages build and publish in parallel via a matrix job. After merging the r
   npm info @betternotify/core dist-tags
   ```
 
-- [ ] Verify the `alpha` dist-tag points to the new version.
+- [ ] Verify the `beta` dist-tag points to the new version.
 - [ ] For packages that depend on other `@betternotify/*` packages, confirm the published `package.json` references the correct version range (not a stale `workspace:*`).
 
 ### Current packages
@@ -57,12 +59,15 @@ All packages build and publish in parallel via a matrix job. After merging the r
 | `@betternotify/smtp`             | `packages/smtp`                 |
 | `@betternotify/resend`           | `packages/resend`               |
 | `@betternotify/cloudflare-email` | `packages/cloudflare-email`     |
-| `@betternotify/bullmq`           | `packages/bullmq`               |
 | `@betternotify/slack`            | `packages/slack`                |
 | `@betternotify/discord`          | `packages/discord`              |
 | `@betternotify/telegram`         | `packages/telegram`             |
 | `@betternotify/zapier`           | `packages/zapier`               |
+| `@betternotify/mailchimp`        | `packages/mailchimp`            |
+| `@betternotify/twilio`           | `packages/twilio`               |
 | `create-better-notify`           | `packages/create-better-notify` |
+
+`@betternotify/bullmq` is excluded from releases (`private: true`) until the implementation is complete.
 
 `apps/web` (`@betternotify/web`) deploys to Cloudflare Workers via a separate job — it is never published to npm.
 
@@ -138,7 +143,7 @@ Add new examples to this checklist as they appear in `examples/`.
 # Check latest published versions
 npm info @betternotify/core dist-tags
 
-# Check all alpha versions
+# Check all beta versions
 npm info @betternotify/core versions --json
 
 # Run full CI locally before release
