@@ -1,11 +1,18 @@
 # @betternotify/email
 
-Email channel for [Better-Notify](../../README.md). Provides `emailChannel()`, a `mockTransport` for tests, address helpers, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedMessage`.
+Email channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `emailChannel()`, a `mockTransport` for tests, address helpers, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedMessage`.
+
+<p>
+  <a href="https://better-notify.com">Website</a> ·
+  <a href="https://better-notify.com/docs">Docs</a> ·
+  <a href="https://github.com/better-notify/better-notify">GitHub</a> ·
+  <a href="https://x.com/better_notify">X</a>
+</p>
 
 ## Install
 
 ```sh
-pnpm add @betternotify/email @betternotify/core
+npm install @betternotify/email @betternotify/core
 ```
 
 ## Usage
@@ -96,8 +103,8 @@ import {
 
 Provider transports for the email channel:
 
-- [`@betternotify/smtp`](../smtp) — SMTP via nodemailer (also supports Amazon SES SMTP)
-- [`@betternotify/resend`](../resend) — Resend (stub)
+- [`@betternotify/smtp`](https://github.com/better-notify/better-notify/tree/main/packages/smtp) — SMTP via nodemailer (also supports Amazon SES SMTP)
+- [`@betternotify/resend`](https://github.com/better-notify/better-notify/tree/main/packages/resend) — Resend (stub)
 
 ## Custom render output
 

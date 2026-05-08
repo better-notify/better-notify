@@ -8,12 +8,13 @@
   "packages/handlebars": "0.0.5-alpha.0",
   "packages/smtp": "0.0.5-alpha.0",
   "packages/resend": "0.0.5-alpha.0",
-  "packages/bullmq": "0.0.5-alpha.0",
   "packages/telegram": "0.0.3-alpha.0",
   "packages/cloudflare-email": "0.0.3-alpha.0",
   "packages/discord": "0.0.3-alpha.0",
+  "packages/slack": "1.1.0",
   "packages/zapier": "0.0.3-alpha.0",
+  "packages/mailchimp": "0.0.1-alpha.0",
+  "packages/twilio": "0.0.1-alpha.0",
   "packages/create-better-notify": "0.0.6-alpha.0",
-  "apps/web": "1.2.0",
-  "packages/slack": "1.1.0"
+  "apps/web": "1.2.0"
 }

@@ -1,6 +1,7 @@
 {
   "name": "@betternotify/bullmq",
   "version": "0.0.5-alpha.0",
+  "private": true,
   "description": "BullMQ queue adapter for Better-Notify.",
   "license": "MIT",
   "repository": {

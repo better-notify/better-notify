@@ -2,6 +2,13 @@
 
 Scaffold a [Better Notify](https://github.com/better-notify/better-notify) project with your preferred framework and RPC layer. One command gives you a working server with typed notifications, OpenAPI playground, and email templates ready to go.
 
+<p>
+  <a href="https://better-notify.com">Website</a> ·
+  <a href="https://better-notify.com/docs">Docs</a> ·
+  <a href="https://github.com/better-notify/better-notify">GitHub</a> ·
+  <a href="https://x.com/better_notify">X</a>
+</p>
+
 ## Usage
 
 ```sh

@@ -19,14 +19,14 @@ jobs:
       web_release_created: ${{ steps.release.outputs['apps/web--release_created'] }}
     steps:
       - name: Generate GitHub App token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         id: app-token
         with:
           app-id: ${{ secrets.BETTER_NOTIFY_APP_ID }}
           private-key: ${{ secrets.BETTER_NOTIFY_APP_PRIVATE_KEY }}
 
       - name: Release Please
-        uses: googleapis/release-please-action@v5.0.0
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
           token: ${{ steps.app-token.outputs.token }}
@@ -45,7 +45,7 @@ jobs:
         exclude:
           - path: apps/web
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: ./.github/actions/prepare
         with:
           registry-url: https://registry.npmjs.org
@@ -56,7 +56,7 @@ jobs:
       - uses: ./.github/actions/publish-packages
         with:
           filter: './${{ matrix.path }}'
-          tag: alpha
+          tag: beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -80,7 +80,7 @@ jobs:
       group: deploy-web
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: ./.github/actions/prepare
 
       - name: Deploy

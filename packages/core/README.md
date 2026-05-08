@@ -1,11 +1,18 @@
 # @betternotify/core
 
-Channel-agnostic notification infrastructure: contracts, client pipeline, transport factories, middleware, hooks, plugins, and observability primitives. See the [root README](../../README.md) for the high-level overview and quick-start.
+Channel-agnostic notification infrastructure: contracts, client pipeline, transport factories, middleware, hooks, plugins, and observability primitives.
+
+<p>
+  <a href="https://better-notify.com">Website</a> ·
+  <a href="https://better-notify.com/docs">Docs</a> ·
+  <a href="https://github.com/better-notify/better-notify">GitHub</a> ·
+  <a href="https://x.com/better_notify">X</a>
+</p>
 
 ## Install
 
 ```sh
-pnpm add @betternotify/core
+npm install @betternotify/core
 ```
 
 ## What's in here

@@ -1,7 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "bump-minor-pre-major": true,
-  "bump-patch-for-minor-pre-major": true,
+  "release-as": "1.0.0-beta.1",
   "prerelease": true,
   "include-component-in-tag": true,
   "separate-pull-requests": false,
@@ -9,87 +8,94 @@
     "packages/core": {
       "release-type": "node",
       "component": "@betternotify/core",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/email": {
       "release-type": "node",
       "component": "@betternotify/email",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/sms": {
       "release-type": "node",
       "component": "@betternotify/sms",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/push": {
       "release-type": "node",
       "component": "@betternotify/push",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/react-email": {
       "release-type": "node",
       "component": "@betternotify/react-email",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/mjml": {
       "release-type": "node",
       "component": "@betternotify/mjml",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/handlebars": {
       "release-type": "node",
       "component": "@betternotify/handlebars",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/smtp": {
       "release-type": "node",
       "component": "@betternotify/smtp",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/resend": {
       "release-type": "node",
       "component": "@betternotify/resend",
-      "prerelease-type": "alpha"
-    },
-    "packages/bullmq": {
-      "release-type": "node",
-      "component": "@betternotify/bullmq",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/telegram": {
       "release-type": "node",
       "component": "@betternotify/telegram",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/cloudflare-email": {
       "release-type": "node",
       "component": "@betternotify/cloudflare-email",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/discord": {
       "release-type": "node",
       "component": "@betternotify/discord",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/slack": {
       "release-type": "node",
       "component": "@betternotify/slack",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "packages/zapier": {
       "release-type": "node",
       "component": "@betternotify/zapier",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
+    },
+    "packages/mailchimp": {
+      "release-type": "node",
+      "component": "@betternotify/mailchimp",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "45ff0e39f9ee0677380f32dc9fed369a585c02ca"
+    },
+    "packages/twilio": {
+      "release-type": "node",
+      "component": "@betternotify/twilio",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "45ff0e39f9ee0677380f32dc9fed369a585c02ca"
     },
     "packages/create-better-notify": {
       "release-type": "node",
       "component": "create-better-notify",
-      "prerelease-type": "alpha"
+      "prerelease-type": "beta"
     },
     "apps/web": {
       "release-type": "node",
       "component": "@betternotify/web",
-      "prerelease-type": "alpha",
+      "prerelease-type": "beta",
       "bootstrap-sha": "4edb9f254f0a3987a2a3026e1a9e03ed14485ed3"
     }
   }

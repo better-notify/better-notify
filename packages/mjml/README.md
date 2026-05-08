@@ -1,13 +1,20 @@
 # @betternotify/mjml
 
-MJML + Handlebars template adapter for [Better-Notify](../core).
+MJML + Handlebars template adapter for [Better-Notify](https://github.com/better-notify/better-notify).
+
+<p>
+  <a href="https://better-notify.com">Website</a> ·
+  <a href="https://better-notify.com/docs">Docs</a> ·
+  <a href="https://github.com/better-notify/better-notify">GitHub</a> ·
+  <a href="https://x.com/better_notify">X</a>
+</p>
 
 Compiles [MJML](https://mjml.io) markup to responsive HTML at creation time, then resolves `{{variable}}` placeholders via Handlebars on each render call.
 
 ## Install
 
 ```sh
-pnpm add @betternotify/mjml @betternotify/core mjml handlebars
+npm install @betternotify/mjml @betternotify/core mjml handlebars
 ```
 
 ## Usage

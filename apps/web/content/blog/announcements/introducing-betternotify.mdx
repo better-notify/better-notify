@@ -1,10 +1,160 @@
 ---
 title: Introducing Better-Notify
-description: End-to-end typed notifications for Node.js
-date: '2026-04-15'
+description: Type-safe notification infrastructure for Node.js — email, SMS, push, and custom channels from one typed catalog.
+date: '2026-05-10'
 tags:
   - release
+  - announcement
 author: Lucas Reis
 ---
 
-Documentation coming soon.
+It has never been so easy to send notifications to your customers. A welcome email, a transaction receipt, a Slack ping, a push notification — all dispatched from your Node.js backend with type safety, retry fallback, and observability built in.
+
+Better-Notify is an open-source notification infrastructure library for Node.js. You define a **catalog** of notification routes, and it gives you a fully typed client that validates inputs, renders templates, and delivers through any transport — with middleware for rate limiting, idempotency, tracing, and more.
+
+Today we're releasing **beta 1** — the first public version. Install it, try it, break it, tell us what's missing.
+
+## Why Better-Notify
+
+Notification code always starts simple. You add `nodemailer`, write a `sendWelcomeEmail` function, and move on. Then you need SMS. Then push. Then Slack alerts for ops. Then you need rate limiting because a loop bug just spammed 10,000 emails. Then you need retry because SES had a blip. Then you need observability because something failed and nobody noticed.
+
+Every team rebuilds this infrastructure from scratch — different providers, different APIs, no shared types, no shared middleware. The notification code becomes the worst spaghetti in the codebase.
+
+Better-Notify fixes this by giving you a typed, composable pipeline that works across channels. Define once, send anywhere, observe everything.
+
+## How It Works
+
+### Define a catalog
+
+A catalog is a typed map of notification routes. Each route declares its channel, input schema, and template:
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { smtpTransport } from '@betternotify/smtp';
+import { z } from 'zod';
+
+const rpc = createNotify({
+  channels: { email: emailChannel() },
+});
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template(({ input }) => ({
+      html: `<p>Welcome, ${input.name}!</p>`,
+    })),
+});
+```
+
+### Create a typed client
+
+The client infers every route from the catalog type. Autocomplete guides you; typos are compile errors:
+
+```ts
+const mail = createClient({
+  catalog,
+  channels: { email: emailChannel() },
+  transportsByChannel: {
+    email: smtpTransport({ host: 'smtp.gmail.com', port: 465 }),
+  },
+});
+
+await mail.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada' },
+});
+```
+
+### Multiple channels, one pipeline
+
+Email, SMS, and push share the same catalog, the same middleware, the same hooks:
+
+```ts
+import { smsChannel } from '@betternotify/sms';
+import { pushChannel } from '@betternotify/push';
+
+const rpc = createNotify({
+  channels: { email: emailChannel(), sms: smsChannel(), push: pushChannel() },
+});
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template(({ input }) => ({ html: `<p>Hi ${input.name}</p>` })),
+  welcomeSms: rpc
+    .sms()
+    .input(z.object({ name: z.string() }))
+    .body(({ input }) => `Welcome, ${input.name}! Reply STOP to opt out.`),
+  welcomePush: rpc
+    .push()
+    .input(z.object({ name: z.string() }))
+    .title('Welcome')
+    .body(({ input }) => `Hi ${input.name}, your account is ready.`),
+});
+```
+
+### Composable middleware
+
+Stack rate limiting, idempotency, and tracing on any route:
+
+```ts
+import { withRateLimit } from '@betternotify/core/middlewares';
+import { inMemoryRateLimitStore } from '@betternotify/core/stores';
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(schema)
+    .use(
+      withRateLimit({
+        store: inMemoryRateLimitStore(),
+        key: ({ args }) => String(args.to),
+        max: 3,
+        window: 60_000,
+      }),
+    )
+    .subject('Welcome')
+    .template(adapter),
+});
+```
+
+## What's in Beta 1
+
+- **Multi-channel pipeline** — email, SMS, push, Telegram, Discord, Slack, Zapier, and custom channels via `defineChannel`
+- **Typed catalog and client** — full TypeScript inference from definition to send call
+- **Standard Schema validation** — works with Zod, Valibot, ArkType, or any Standard Schema-compliant library
+- **Transport adapters** — SMTP, Resend, Twilio, Telegram, Discord, Slack, with `multiTransport` for failover, round-robin, mirrored, and parallel strategies
+- **Middleware** — `withRateLimit`, `withIdempotency`, `withDryRun`, `withTagInject`, `withEventLogger`, `withTracing`
+- **Hooks and observability** — `onBeforeSend`, `onExecute`, `onAfterSend`, `onError` with phase tracking
+- **React Email adapter** — render React Email components as templates with full type safety
+- **Error hierarchy** — structured, JSON-serializable errors that survive queue persistence
+
+## What's Next
+
+- **Queue and worker** — BullMQ integration for async delivery with retry and dead-letter queues
+- **Webhook router** — receive provider webhooks (bounces, opens, clicks) with signature verification
+- **Batch optimizations** — coalesce sends to the same provider in a single API call
+- **More template adapters** — MJML, Handlebars, and plain-HTML string adapters
+
+## Get Started
+
+Scaffold a new project with the CLI:
+
+```sh
+npx create-better-notify@latest
+```
+
+Or add Better-Notify to an existing project:
+
+```package-install
+@betternotify/core @betternotify/email @betternotify/smtp zod
+```
+
+Read the [quick start guide](/docs/get-started/quick-start) to send your first notification in under five minutes.
+
+The full source is on [GitHub](https://github.com/better-notify/better-notify) — issues, PRs, and feedback welcome.
