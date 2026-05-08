@@ -7,7 +7,6 @@ const navColumns = [
   {
     title: 'Product',
     links: [
-      { label: 'Features', href: '#features' },
       { label: 'Integrations', href: '/integrations' },
       { label: 'Frameworks', href: '/for' },
       { label: 'Changelog', href: '/docs/changelog' },
