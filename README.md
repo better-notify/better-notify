@@ -63,15 +63,15 @@ await mail.welcome.send({ to: 'john@example.com', input: { name: 'John' } });
 
 ## Packages
 
-| Channel | Transport | Template |
-|---------|-----------|----------|
-| [`@betternotify/email`](https://www.npmjs.com/package/@betternotify/email) | [`@betternotify/smtp`](https://www.npmjs.com/package/@betternotify/smtp) | [`@betternotify/react-email`](https://www.npmjs.com/package/@betternotify/react-email) |
-| [`@betternotify/sms`](https://www.npmjs.com/package/@betternotify/sms) | [`@betternotify/resend`](https://www.npmjs.com/package/@betternotify/resend) | [`@betternotify/mjml`](https://www.npmjs.com/package/@betternotify/mjml) |
-| [`@betternotify/push`](https://www.npmjs.com/package/@betternotify/push) | [`@betternotify/mailchimp`](https://www.npmjs.com/package/@betternotify/mailchimp) | [`@betternotify/handlebars`](https://www.npmjs.com/package/@betternotify/handlebars) |
-| [`@betternotify/slack`](https://www.npmjs.com/package/@betternotify/slack) | [`@betternotify/cloudflare-email`](https://www.npmjs.com/package/@betternotify/cloudflare-email) | |
-| [`@betternotify/discord`](https://www.npmjs.com/package/@betternotify/discord) | [`@betternotify/twilio`](https://www.npmjs.com/package/@betternotify/twilio) | |
-| [`@betternotify/telegram`](https://www.npmjs.com/package/@betternotify/telegram) | | |
-| [`@betternotify/zapier`](https://www.npmjs.com/package/@betternotify/zapier) | | |
+| Channel                                                                          | Transport                                                                                        | Template                                                                               |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| [`@betternotify/email`](https://www.npmjs.com/package/@betternotify/email)       | [`@betternotify/smtp`](https://www.npmjs.com/package/@betternotify/smtp)                         | [`@betternotify/react-email`](https://www.npmjs.com/package/@betternotify/react-email) |
+| [`@betternotify/sms`](https://www.npmjs.com/package/@betternotify/sms)           | [`@betternotify/resend`](https://www.npmjs.com/package/@betternotify/resend)                     | [`@betternotify/mjml`](https://www.npmjs.com/package/@betternotify/mjml)               |
+| [`@betternotify/push`](https://www.npmjs.com/package/@betternotify/push)         | [`@betternotify/mailchimp`](https://www.npmjs.com/package/@betternotify/mailchimp)               | [`@betternotify/handlebars`](https://www.npmjs.com/package/@betternotify/handlebars)   |
+| [`@betternotify/slack`](https://www.npmjs.com/package/@betternotify/slack)       | [`@betternotify/cloudflare-email`](https://www.npmjs.com/package/@betternotify/cloudflare-email) |                                                                                        |
+| [`@betternotify/discord`](https://www.npmjs.com/package/@betternotify/discord)   | [`@betternotify/twilio`](https://www.npmjs.com/package/@betternotify/twilio)                     |                                                                                        |
+| [`@betternotify/telegram`](https://www.npmjs.com/package/@betternotify/telegram) |                                                                                                  |                                                                                        |
+| [`@betternotify/zapier`](https://www.npmjs.com/package/@betternotify/zapier)     |                                                                                                  |                                                                                        |
 
 Scaffolding: [`create-better-notify`](https://www.npmjs.com/package/create-better-notify)
 

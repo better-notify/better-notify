@@ -59,8 +59,8 @@ await notify.deployAlert.send({
 | Slot     | Required | Type                                        |
 | -------- | -------- | ------------------------------------------- |
 | `text`   | yes      | `string \| ({input}) => string`             |
-| `blocks` | no       | `SlackBlock[] \| ({input}) => SlackBlock[]`  |
-| `file`   | no       | `SlackFile \| ({input}) => SlackFile`        |
+| `blocks` | no       | `SlackBlock[] \| ({input}) => SlackBlock[]` |
+| `file`   | no       | `SlackFile \| ({input}) => SlackFile`       |
 
 Plus `.input(schema)` and `.use(mw)`.
 
@@ -76,10 +76,7 @@ notify.deployAlert.send({
 ## Transports
 
 ```ts
-import {
-  slackTransport,
-  mockSlackTransport,
-} from '@betternotify/slack';
+import { slackTransport, mockSlackTransport } from '@betternotify/slack';
 
 const transport = slackTransport({
   botToken: process.env.SLACK_BOT_TOKEN!,

@@ -55,10 +55,10 @@ await notify.deployAlert.send({
 
 ## Builder slots
 
-| Slot     | Required | Type                                              |
-| -------- | -------- | ------------------------------------------------- |
-| `body`   | yes      | `string \| ({input}) => string`                   |
-| `embeds` | no       | `DiscordEmbed[] \| ({input}) => DiscordEmbed[]`   |
+| Slot     | Required | Type                                            |
+| -------- | -------- | ----------------------------------------------- |
+| `body`   | yes      | `string \| ({input}) => string`                 |
+| `embeds` | no       | `DiscordEmbed[] \| ({input}) => DiscordEmbed[]` |
 
 Plus `.input(schema)` and `.use(mw)`.
 
@@ -74,10 +74,7 @@ notify.deployAlert.send({
 ## Transports
 
 ```ts
-import {
-  discordTransport,
-  mockDiscordTransport,
-} from '@betternotify/discord';
+import { discordTransport, mockDiscordTransport } from '@betternotify/discord';
 ```
 
 - `mockDiscordTransport()` — records sent messages for tests.

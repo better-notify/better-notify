@@ -47,9 +47,9 @@ await notify.newSignup.send({
 
 ## Builder slots
 
-| Slot    | Required | Type                                                       |
-| ------- | -------- | ---------------------------------------------------------- |
-| `event` | yes      | `string \| ({input}) => string`                            |
+| Slot    | Required | Type                                                              |
+| ------- | -------- | ----------------------------------------------------------------- |
+| `event` | yes      | `string \| ({input}) => string`                                   |
 | `data`  | no       | `Record<string, unknown> \| ({input}) => Record<string, unknown>` |
 | `meta`  | no       | `Record<string, unknown> \| ({input}) => Record<string, unknown>` |
 
@@ -84,11 +84,7 @@ const mail = createClient({
 ## Transports
 
 ```ts
-import {
-  zapierChannelTransport,
-  zapierTransport,
-  mockZapierTransport,
-} from '@betternotify/zapier';
+import { zapierChannelTransport, zapierTransport, mockZapierTransport } from '@betternotify/zapier';
 ```
 
 - `mockZapierTransport()` — records sent messages for tests.

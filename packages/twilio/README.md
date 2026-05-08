@@ -50,12 +50,12 @@ await notify.loginCode.send({ to: '+15555555555', input: { code: '424242' } });
 
 ## Options
 
-| Field        | Type     | Description                                       |
-| ------------ | -------- | ------------------------------------------------- |
-| `accountSid` | `string` | Twilio Account SID. Required.                     |
-| `authToken`  | `string` | Twilio Auth Token. Required.                      |
+| Field        | Type     | Description                                             |
+| ------------ | -------- | ------------------------------------------------------- |
+| `accountSid` | `string` | Twilio Account SID. Required.                           |
+| `authToken`  | `string` | Twilio Auth Token. Required.                            |
 | `from`       | `string` | Sender phone number or messaging service SID. Required. |
-| `http`       | `object` | HTTP behavior options (retry, timeout, hooks).    |
+| `http`       | `object` | HTTP behavior options (retry, timeout, hooks).          |
 
 ## License
 

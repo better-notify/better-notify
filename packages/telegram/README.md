@@ -46,9 +46,9 @@ await notify.orderShipped.send({
 
 ## Builder slots
 
-| Slot          | Required | Type                                                     |
-| ------------- | -------- | -------------------------------------------------------- |
-| `body`        | yes      | `string \| ({input}) => string`                          |
+| Slot          | Required | Type                                                        |
+| ------------- | -------- | ----------------------------------------------------------- |
+| `body`        | yes      | `string \| ({input}) => string`                             |
 | `attachments` | no       | `TelegramAttachment[] \| ({input}) => TelegramAttachment[]` |
 
 Plus `.input(schema)` and `.use(mw)`.
@@ -76,10 +76,7 @@ const bold = md.bold('important');
 ## Transports
 
 ```ts
-import {
-  telegramTransport,
-  mockTelegramTransport,
-} from '@betternotify/telegram';
+import { telegramTransport, mockTelegramTransport } from '@betternotify/telegram';
 
 const transport = telegramTransport({
   botToken: process.env.TELEGRAM_BOT_TOKEN!,

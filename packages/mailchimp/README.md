@@ -43,10 +43,10 @@ const mail = createClient({
 
 ## Options
 
-| Field    | Type     | Description                                      |
-| -------- | -------- | ------------------------------------------------ |
-| `apiKey` | `string` | Mandrill API key. Required.                      |
-| `http`   | `object` | HTTP behavior options (retry, timeout, hooks).   |
+| Field    | Type     | Description                                    |
+| -------- | -------- | ---------------------------------------------- |
+| `apiKey` | `string` | Mandrill API key. Required.                    |
+| `http`   | `object` | HTTP behavior options (retry, timeout, hooks). |
 
 ## License
 
