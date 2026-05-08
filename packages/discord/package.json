@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/discord",
-  "version": "0.0.3-alpha.0",
+  "version": "1.0.0-beta.1",
   "description": "Discord channel plugin for betternotify.",
   "license": "MIT",
   "repository": {
