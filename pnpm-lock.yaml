@@ -132,10 +132,10 @@ importers:
   .:
     devDependencies:
       '@commitlint/cli':
-        specifier: ^19.8.1
+        specifier: 19.8.1
         version: 19.8.1(@types/node@25.6.0)(typescript@6.0.3)
       '@commitlint/config-conventional':
-        specifier: ^19.8.1
+        specifier: 19.8.1
         version: 19.8.1
       '@turbo/gen':
         specifier: 'catalog:'
@@ -144,7 +144,7 @@ importers:
         specifier: 'catalog:'
         version: 2.1.9(vitest@2.1.9(@types/node@25.6.0)(lightningcss@1.32.0)(msw@2.14.2(@types/node@25.6.0)(typescript@6.0.3)))
       husky:
-        specifier: ^8.0.3
+        specifier: 8.0.3
         version: 8.0.3
       oxfmt:
         specifier: 'catalog:'
@@ -4183,6 +4183,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@vitejs/plugin-react@6.0.1':
     resolution: {integrity: sha512-l9X/E3cDb+xY3SWzlG1MOGt2usfEHGMNIaegaUGFsLkb3RCn/k8/TOXBcab+OndDI4TBtktT8/9BwwW8Vi9KUQ==}
