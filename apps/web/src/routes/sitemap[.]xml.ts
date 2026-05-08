@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { appConfig } from '@/lib/shared';
 import { source } from '@/lib/source';
+import { integrations } from '@/lib/integrations';
+import { personas } from '@/lib/personas';
 
 export const Route = createFileRoute('/sitemap.xml')({
   server: {
@@ -16,6 +18,18 @@ export const Route = createFileRoute('/sitemap.xml')({
             loc: `${appConfig.baseUrl}${page.url}`,
             changefreq: 'weekly',
             priority: '0.7',
+          })),
+          { loc: `${appConfig.baseUrl}/integrations`, changefreq: 'weekly', priority: '0.8' },
+          ...integrations.map((i) => ({
+            loc: `${appConfig.baseUrl}/integrations/${i.slug}`,
+            changefreq: 'monthly',
+            priority: '0.6',
+          })),
+          { loc: `${appConfig.baseUrl}/for`, changefreq: 'weekly', priority: '0.8' },
+          ...personas.map((p) => ({
+            loc: `${appConfig.baseUrl}/for/${p.slug}`,
+            changefreq: 'monthly',
+            priority: '0.6',
           })),
         ];
 

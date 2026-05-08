@@ -8,6 +8,8 @@ const navColumns = [
     title: 'Product',
     links: [
       { label: 'Features', href: '#features' },
+      { label: 'Integrations', href: '/integrations' },
+      { label: 'Frameworks', href: '/for' },
       { label: 'Changelog', href: '/docs/changelog' },
     ],
   },
@@ -16,7 +18,7 @@ const navColumns = [
     links: [
       { label: 'Documentation', href: '/docs' },
       { label: 'Blog', href: '/blog' },
-      { label: 'Quick start', href: '/docs' },
+      { label: 'Quick start', href: '/docs/get-started/quick-start' },
       {
         label: 'GitHub',
         href: `https://github.com/${appConfig.git.user}/${appConfig.git.repo}`,
