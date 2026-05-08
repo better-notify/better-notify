@@ -182,9 +182,6 @@ importers:
       '@phosphor-icons/react':
         specifier: 'catalog:'
         version: 2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@posthog/react':
-        specifier: 1.9.0
-        version: 1.9.0(@types/react@19.2.14)(posthog-js@1.372.9)(react@19.2.5)
       '@takumi-rs/image-response':
         specifier: 'catalog:'
         version: 1.1.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -3031,16 +3028,6 @@ packages:
 
   '@posthog/core@1.28.3':
     resolution: {integrity: sha512-SOy0aphKawZzp8jxfeOpTcXPwi6ii0I2V6tX8YXnM+WbxKKR/R+BXLK0jS6LV8kZtW3H5YxmPAfuIbUP1UnGTw==}
-
-  '@posthog/react@1.9.0':
-    resolution: {integrity: sha512-lVdTsWT5+PtHBu44gSQ7QohbLjAYqHkFAIGAQ+HV8Eh9yj+OcnQ7mXCmyhaMlTBD3z7D0H1eWMp4vQaFnsIyWQ==}
-    peerDependencies:
-      '@types/react': '>=16.8.0'
-      posthog-js: '>=1.257.2'
-      react: '>=16.8.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
 
   '@posthog/types@1.372.9':
     resolution: {integrity: sha512-B7k9S+H9WUKHXxe1HOkQWbpWtMcrBvsodm5stZaLQ3pYxf9TowtwssdzTtX4hHjzSYqgrS1IpNnJX4vs1KgBzA==}
@@ -9161,13 +9148,6 @@ snapshots:
   '@posthog/core@1.28.3':
     dependencies:
       '@posthog/types': 1.372.9
-
-  '@posthog/react@1.9.0(@types/react@19.2.14)(posthog-js@1.372.9)(react@19.2.5)':
-    dependencies:
-      posthog-js: 1.372.9
-      react: 19.2.5
-    optionalDependencies:
-      '@types/react': 19.2.14
 
   '@posthog/types@1.372.9': {}
 
