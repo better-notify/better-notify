@@ -33,7 +33,7 @@ export const Route = createRootRoute({
       description:
         'Type-safe notification infrastructure for Node.js. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       keywords:
-        'notifications, email, node.js, typescript, type-safe, email infrastructure, transactional email, zapier, cloudflare, better-notify, cloudflare emails, telegram, twilio, push notifications',
+        'better-notify, betternotify, typed notifications, notification library nodejs, notification infrastructure, transactional email nodejs, send email nodejs, sms nodejs, telegram bot nodejs, slack notifications, discord webhooks, multi-channel notifications, typescript notifications, notification sdk, smtp nodejs, resend, cloudflare email, twilio sms, mailchimp transactional, type-safe api, notification catalog',
       image: `${appConfig.baseUrl}/og/image.png`,
     });
 

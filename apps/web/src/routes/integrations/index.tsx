@@ -16,7 +16,7 @@ export const Route = createFileRoute('/integrations/')({
       url,
       canonicalUrl: url,
       keywords:
-        'better-notify integrations, email api nodejs, sms api nodejs, slack notifications, discord webhooks, telegram bot nodejs',
+        'better-notify integrations, notification providers nodejs, email api nodejs, sms api nodejs, slack bot nodejs, discord webhook nodejs, telegram bot api nodejs, smtp transport, resend api, cloudflare email routing',
     });
     return { meta, links };
   },

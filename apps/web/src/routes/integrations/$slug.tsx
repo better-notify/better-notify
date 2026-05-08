@@ -6,6 +6,10 @@ import { Footer } from '@/components/landing/footer';
 import { seo } from '@/lib/seo';
 import { appConfig } from '@/lib/shared';
 import { getIntegration, getRelatedIntegrations } from '@/lib/integrations';
+import { highlightCode } from '@/lib/highlight';
+import { CodeEditor } from '@/components/code-editor';
+import { PackageInstall } from '@/components/package-install';
+import { Button } from '@/components/ui/button';
 import { CaretRightIcon, CheckCircleIcon, ArrowRightIcon } from '@phosphor-icons/react';
 
 export const Route = createFileRoute('/integrations/$slug')({
@@ -21,7 +25,7 @@ export const Route = createFileRoute('/integrations/$slug')({
       description: loaderData.tagline,
       url,
       canonicalUrl: url,
-      keywords: `${loaderData.name.toLowerCase()} nodejs, ${loaderData.name.toLowerCase()} notifications, better-notify ${loaderData.name.toLowerCase()}`,
+      keywords: `${loaderData.name.toLowerCase()} nodejs, ${loaderData.name.toLowerCase()} notifications, ${loaderData.name.toLowerCase()} typescript, better-notify ${loaderData.name.toLowerCase()}, send ${loaderData.channelLabel.toLowerCase()} ${loaderData.name.toLowerCase()}, ${loaderData.name.toLowerCase()} integration`,
     });
     return {
       meta,
@@ -46,12 +50,13 @@ export const Route = createFileRoute('/integrations/$slug')({
 });
 
 const serverLoader = createServerFn({ method: 'GET' })
-  .validator(z.string().min(1))
+  .inputValidator(z.string().min(1))
   .handler(({ data: slug }) => {
     const integration = getIntegration(slug);
     if (!integration) throw notFound();
     const related = getRelatedIntegrations(integration.related);
-    return { ...integration, relatedIntegrations: related };
+    const highlighted = highlightCode(integration.codeExample);
+    return { ...integration, relatedIntegrations: related, highlighted };
   });
 
 function IntegrationPage() {
@@ -90,16 +95,12 @@ function IntegrationPage() {
 
         <section className="mb-12">
           <h2 className="text-foreground mb-4 text-xl font-semibold">Install</h2>
-          <pre className="overflow-x-auto rounded-lg bg-fd-muted p-4 text-sm">
-            <code>{data.installCmd}</code>
-          </pre>
+          <PackageInstall pkg={data.package} />
         </section>
 
         <section className="mb-12">
           <h2 className="text-foreground mb-4 text-xl font-semibold">Quick start</h2>
-          <pre className="overflow-x-auto rounded-lg bg-fd-muted p-4 text-sm leading-relaxed">
-            <code>{data.codeExample}</code>
-          </pre>
+          <CodeEditor html={data.highlighted.html} filename={data.highlighted.filename} />
         </section>
 
         <section className="mb-12">

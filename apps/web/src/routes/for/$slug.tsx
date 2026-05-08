@@ -6,6 +6,9 @@ import { Footer } from '@/components/landing/footer';
 import { seo } from '@/lib/seo';
 import { appConfig } from '@/lib/shared';
 import { getPersona, getRelatedPersonas } from '@/lib/personas';
+import { highlightCode } from '@/lib/highlight';
+import { CodeEditor } from '@/components/code-editor';
+import { Button } from '@/components/ui/button';
 import { CaretRightIcon, CheckCircleIcon, ArrowRightIcon } from '@phosphor-icons/react';
 
 export const Route = createFileRoute('/for/$slug')({
@@ -21,7 +24,7 @@ export const Route = createFileRoute('/for/$slug')({
       description: loaderData.tagline,
       url,
       canonicalUrl: url,
-      keywords: `${loaderData.name.toLowerCase()} notifications, ${loaderData.name.toLowerCase()} email, ${loaderData.name.toLowerCase()} sms, better-notify ${loaderData.name.toLowerCase()}`,
+      keywords: `${loaderData.name.toLowerCase()} notifications, ${loaderData.name.toLowerCase()} send email, ${loaderData.name.toLowerCase()} sms, ${loaderData.name.toLowerCase()} notification library, better-notify ${loaderData.name.toLowerCase()}, typed notifications ${loaderData.name.toLowerCase()}`,
     });
     return {
       meta,
@@ -48,12 +51,13 @@ export const Route = createFileRoute('/for/$slug')({
 });
 
 const serverLoader = createServerFn({ method: 'GET' })
-  .validator(z.string().min(1))
+  .inputValidator(z.string().min(1))
   .handler(({ data: slug }) => {
     const persona = getPersona(slug);
     if (!persona) throw notFound();
     const related = getRelatedPersonas(persona.related);
-    return { ...persona, relatedPersonas: related };
+    const highlighted = highlightCode(persona.codeExample);
+    return { ...persona, relatedPersonas: related, highlighted };
   });
 
 function PersonaPage() {
@@ -102,9 +106,7 @@ function PersonaPage() {
 
         <section className="mb-12">
           <h2 className="text-foreground mb-4 text-xl font-semibold">Example</h2>
-          <pre className="overflow-x-auto rounded-lg bg-fd-muted p-4 text-sm leading-relaxed">
-            <code>{data.codeExample}</code>
-          </pre>
+          <CodeEditor html={data.highlighted.html} filename={data.highlighted.filename} />
         </section>
 
         <div className="mb-12 flex flex-wrap gap-3">

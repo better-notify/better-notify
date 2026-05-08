@@ -16,7 +16,7 @@ export const Route = createFileRoute('/for/')({
       url,
       canonicalUrl: url,
       keywords:
-        'nodejs notifications, nextjs email, express notifications, hono email, cloudflare workers email, fastify notifications, nestjs notifications',
+        'nodejs notification library, notification sdk nodejs, nextjs send email, express notifications, hono notifications, cloudflare workers email, fastify email, nestjs notifications, trpc notifications, remix email, typed notifications framework',
     });
     return { meta, links };
   },
