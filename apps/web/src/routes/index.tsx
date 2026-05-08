@@ -14,11 +14,47 @@ import { BlogAndAuthor } from '@/components/landing/author';
 import { Footer } from '@/components/landing/footer';
 import { Marquee } from '@/components/landing/marquee';
 import { getLatestBlogPosts } from '@/lib/blog-source';
+import { seo } from '@/lib/seo';
+import { appConfig } from '@/lib/shared';
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
   loader: async () => {
     return await getLatestPosts();
+  },
+  head: () => {
+    const { meta, links } = seo({
+      title: `${appConfig.name}: Typed Notifications for Node.js`,
+      description:
+        'Type-safe notification infrastructure for Node.js. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
+      url: appConfig.baseUrl,
+      canonicalUrl: appConfig.baseUrl,
+    });
+    return {
+      meta,
+      links,
+      scripts: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: appConfig.name,
+            url: appConfig.baseUrl,
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'Node.js',
+            description:
+              'Type-safe notification infrastructure for Node.js. Define once, send everywhere with full TypeScript support.',
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            author: {
+              '@type': 'Organization',
+              name: appConfig.name,
+              url: appConfig.baseUrl,
+            },
+          }),
+        },
+      ],
+    };
   },
 });
 

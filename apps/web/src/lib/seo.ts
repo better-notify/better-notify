@@ -15,13 +15,9 @@ type SEOParams = {
   image?: string;
   url?: string;
   type?: 'website' | 'article';
-  locale?: string;
   canonicalUrl?: string;
   article?: ArticleParams;
   noIndex?: boolean;
-  noFollow?: boolean;
-  newsKeywords?: string;
-  isNews?: boolean;
 };
 
 type SeoAssetAttributes = Record<string, string | boolean | undefined>;
@@ -48,13 +44,9 @@ export const seo = ({
   image,
   url,
   type = 'website',
-  locale = appConfig.locale.openGraph,
   canonicalUrl,
   article,
   noIndex = false,
-  noFollow = false,
-  newsKeywords,
-  isNews = false,
 }: SEOParams): SeoResult => {
   const safeTitle = truncateTitle(title);
   const safeDescription = truncateDescription(description);
@@ -68,33 +60,20 @@ export const seo = ({
     type === 'article' && article
       ? [
           ...(article.publishedTime
-            ? [
-                {
-                  property: 'article:published_time',
-                  content: article.publishedTime,
-                },
-              ]
+            ? [{ property: 'article:published_time', content: article.publishedTime }]
             : []),
           ...(article.modifiedTime
-            ? [
-                {
-                  property: 'article:modified_time',
-                  content: article.modifiedTime,
-                },
-              ]
+            ? [{ property: 'article:modified_time', content: article.modifiedTime }]
             : []),
           ...(article.author ? [{ property: 'article:author', content: article.author }] : []),
           ...(article.section ? [{ property: 'article:section', content: article.section }] : []),
-          ...(article.tags?.map((tag) => ({
-            property: 'article:tag',
-            content: tag,
-          })) ?? []),
+          ...(article.tags?.map((tag) => ({ property: 'article:tag', content: tag })) ?? []),
         ]
       : [];
 
   const robotsContent = [
     noIndex ? 'noindex' : 'index',
-    noFollow ? 'nofollow' : 'follow',
+    'follow',
     'max-image-preview:large',
     'max-snippet:-1',
     'max-video-preview:-1',
@@ -109,10 +88,8 @@ export const seo = ({
     { property: 'og:site_name', content: appConfig.name },
     { property: 'og:title', content: safeTitle },
     { property: 'og:description', content: safeDescription },
-    { property: 'og:locale', content: locale },
-    { property: 'og:locale:alternate', content: appConfig.locale.openGraph },
+    { property: 'og:locale', content: appConfig.locale.openGraph },
     { property: 'og:image', content: absoluteImage },
-    { property: 'og:image:secure_url', content: absoluteImage },
     { property: 'og:image:alt', content: safeTitle },
     { property: 'og:image:width', content: '1200' },
     { property: 'og:image:height', content: '630' },
@@ -125,49 +102,26 @@ export const seo = ({
     { name: 'twitter:creator', content: appConfig.twitterHandle },
     { name: 'twitter:title', content: safeTitle },
     { name: 'twitter:description', content: safeDescription },
-    { name: 'twitter:domain', content: 'csbot.app' },
+    { name: 'twitter:domain', content: new URL(appConfig.baseUrl).hostname },
     { name: 'twitter:image', content: absoluteImage },
     { name: 'twitter:image:alt', content: safeTitle },
 
     { name: 'robots', content: robotsContent },
-    { name: 'googlebot', content: robotsContent },
-    { name: 'googlebot-news', content: isNews ? 'index, follow' : 'noindex' },
-    { name: 'bingbot', content: noIndex ? 'noindex' : 'index, follow' },
-    ...(newsKeywords ? [{ name: 'news_keywords', content: newsKeywords }] : []),
-    ...(isNews
-      ? [
-          { name: 'syndication-source', content: url ?? appConfig.baseUrl },
-          { name: 'original-source', content: url ?? appConfig.baseUrl },
-        ]
-      : []),
     { name: 'author', content: article?.author ?? appConfig.name },
-    { name: 'creator', content: appConfig.name },
-    { name: 'publisher', content: appConfig.name },
-    {
-      name: 'viewport',
-      content: 'width=device-width, initial-scale=1, viewport-fit=cover',
-    },
     { name: 'theme-color', content: appConfig.themeColor },
-    { name: 'format-detection', content: 'telephone=no' },
-    { name: 'mobile-web-app-capable', content: 'yes' },
-    { name: 'apple-mobile-web-app-capable', content: 'yes' },
-    {
-      name: 'apple-mobile-web-app-status-bar-style',
-      content: 'black-translucent',
-    },
-    { name: 'apple-mobile-web-app-title', content: appConfig.name },
-    { name: 'generator', content: 'TanStack Start' },
-    { name: 'referrer', content: 'origin-when-cross-origin' },
     { name: 'color-scheme', content: 'dark light' },
-    { name: 'rating', content: 'general' },
-    { name: 'revisit-after', content: '1 day' },
-    { httpEquiv: 'x-ua-compatible', content: 'IE=edge' },
-    { httpEquiv: 'content-language', content: appConfig.locale.bcp47 },
+    { name: 'referrer', content: 'origin-when-cross-origin' },
   ];
 
   const canonicalHref: string | undefined = canonicalUrl ?? url;
   const links: SeoAssetAttributes[] = [
-    ...(canonicalHref ? [{ rel: 'canonical', href: canonicalHref }] : []),
+    ...(canonicalHref
+      ? [
+          { rel: 'canonical', href: canonicalHref },
+          { rel: 'alternate', hrefLang: appConfig.locale.bcp47, href: canonicalHref },
+          { rel: 'alternate', hrefLang: 'x-default', href: canonicalHref },
+        ]
+      : []),
     { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
     {
       rel: 'preconnect',
@@ -176,18 +130,6 @@ export const seo = ({
     },
     { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' },
     { rel: 'dns-prefetch', href: 'https://fonts.gstatic.com' },
-    { rel: 'preconnect', href: 'https://www.googletagmanager.com' },
-    { rel: 'dns-prefetch', href: 'https://www.googletagmanager.com' },
-    {
-      rel: 'alternate',
-      hrefLang: appConfig.locale.bcp47,
-      href: canonicalHref ?? appConfig.baseUrl,
-    },
-    {
-      rel: 'alternate',
-      hrefLang: 'x-default',
-      href: canonicalHref ?? appConfig.baseUrl,
-    },
   ];
 
   return { meta, links };

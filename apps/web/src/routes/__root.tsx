@@ -9,7 +9,7 @@ import { seo } from '@/lib/seo';
 import { usePosthogClient } from '@/hooks/use-posthog-client';
 
 function BaseProviders({ children }: { children: ReactNode }) {
-  return <RootProvider theme={{ disableTransitionOnChange: false }}>{children}</RootProvider>;
+  return <RootProvider theme={{ disableTransitionOnChange: true }}>{children}</RootProvider>;
 }
 
 function AnalyticsProvider({ children }: { children: ReactNode }) {
@@ -31,17 +31,16 @@ export const Route = createRootRoute({
     const { meta: seoMeta, links: seoLinks } = seo({
       title: `${appConfig.name}: Typed Notifications for Node.js`,
       description:
-        'Type-safe email, SMS, and push notification infrastructure for Node.js. Define once, send everywhere with full TypeScript support.',
+        'Type-safe notification infrastructure for Node.js. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       keywords:
-        'notifications, email, node.js, typescript, type-safe, email infrastructure, transactional email, zapier, cloudflare, better-notify, cloudflare emails, telegram, twilio, push notifications',
+        'better-notify, betternotify, typed notifications, notification library nodejs, notification infrastructure, transactional email nodejs, send email nodejs, sms nodejs, telegram bot nodejs, slack notifications, discord webhooks, multi-channel notifications, typescript notifications, notification sdk, smtp nodejs, resend, cloudflare email, twilio sms, mailchimp transactional, type-safe api, notification catalog',
       image: `${appConfig.baseUrl}/og/image.png`,
-      url: appConfig.baseUrl,
-      canonicalUrl: appConfig.baseUrl,
     });
 
     return {
       meta: [
         { charSet: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'application-name', content: appConfig.name },
         ...seoMeta,
       ],

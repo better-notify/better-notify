@@ -9,20 +9,20 @@ export default defineConfig({
   server: {
     port: 4265,
     proxy: {
-      '/ingest/static': {
+      '/ph/static': {
         target: 'https://eu-assets.i.posthog.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ingest/, ''),
+        rewrite: (path) => path.replace(/^\/ph/, ''),
       },
-      '/ingest/array': {
+      '/ph/array': {
         target: 'https://eu-assets.i.posthog.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ingest/, ''),
+        rewrite: (path) => path.replace(/^\/ph/, ''),
       },
-      '/ingest': {
+      '/ph': {
         target: 'https://eu.i.posthog.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ingest/, ''),
+        rewrite: (path) => path.replace(/^\/ph/, ''),
       },
     },
   },

@@ -4,7 +4,7 @@ const phases = [
   { label: 'Validate', detail: 'Standard Schema' },
   { label: 'Render', detail: 'React Email · template' },
   { label: 'Middleware', detail: 'rate-limit · retry · log' },
-  { label: 'Transport', detail: 'SES · Resend · SMTP' },
+  { label: 'Transport', detail: 'Resend · Cloudflare · SMTP' },
   { label: 'Result', detail: 'messageId · attempts' },
 ] as const;
 

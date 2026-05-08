@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-const POSTHOG_HOST = 'https://eu.posthog.com';
+const POSTHOG_HOST = 'https://eu.i.posthog.com';
 
 const proxy = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);
-  const path = url.pathname.replace(/^\/ingest/, '');
+  const path = url.pathname.replace(/^\/ph/, '');
   const target = `${POSTHOG_HOST}${path}${url.search}`;
 
   const headers = new Headers(request.headers);
@@ -30,7 +30,7 @@ const proxy = async (request: Request): Promise<Response> => {
   }
 };
 
-export const Route = createFileRoute('/ingest/$')({
+export const Route = createFileRoute('/ph/$')({
   server: {
     handlers: {
       GET: ({ request }) => proxy(request),

@@ -57,8 +57,8 @@ export function Hero() {
               <code className="bg-muted text-foreground rounded border px-1.5 py-0.5 font-mono text-[0.85em]">
                 Catalog
               </code>{' '}
-              drives your typed sender, queue worker, and webhook router across email, SMS, push,
-              and Telegram.
+              drives typed sending across email, SMS, Telegram, Slack, and Discord — via SMTP,
+              Resend, Cloudflare, or your own transport.
             </p>
 
             <div
@@ -106,9 +106,9 @@ export function Hero() {
             >
               <span>ESM · Node ≥ 22</span>
               <span className="text-muted-foreground/30 hidden sm:inline">|</span>
-              <span>MIT licensed</span>
+              <span>Open source</span>
               <span className="text-muted-foreground/30 hidden sm:inline">|</span>
-              <span>Standard Schema</span>
+              <span>Zero vendor lock-in</span>
             </div>
           </div>
 
