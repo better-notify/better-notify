@@ -86,6 +86,6 @@ npx create-better-notify@latest
   <a href="https://x.com/better_notify">X</a>
 </p>
 
-<p align="center">Created by <a href="https://github.com/thereis">Lucas Reis</a> · <a href="https://linkedin.com/in/lucasreismdias">LinkedIn</a></p>
+<p align="center">Created by <a href="https://github.com/thereis">Lucas Reis</a> · <a href="https://x.com/lucasreis">X</a></p>
 
 <p align="center">MIT License</p>
