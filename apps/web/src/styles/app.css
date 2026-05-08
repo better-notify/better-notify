@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/jetbrains-mono';
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/inter';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -49,10 +49,10 @@
   --color-bn-warning-500: oklch(75% 0.16 85);
   --color-bn-warning-700: oklch(58% 0.14 85);
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono:
     'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
-  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
   --shadow-bn-xs: 0 1px 1px 0 oklch(20% 0.02 258 / 0.04);
   --shadow-bn-sm: 0 1px 2px 0 oklch(20% 0.02 258 / 0.06), 0 1px 1px 0 oklch(20% 0.02 258 / 0.04);

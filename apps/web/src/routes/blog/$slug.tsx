@@ -16,7 +16,7 @@ export const Route = createFileRoute('/blog/$slug')({
   component: BlogArticlePage,
   loader: async ({ params }) => {
     const data = await serverLoader({ data: params.slug });
-    await clientLoader.preload(data.path);
+    if (typeof window !== 'undefined') await clientLoader.preload(data.path);
     return data;
   },
   head: ({ loaderData }) => {
@@ -169,7 +169,19 @@ function BlogArticlePage() {
               </div>
             )}
           </header>
-          <Suspense>{clientLoader.useContent(loaderData.path)}</Suspense>
+          <Suspense
+            fallback={
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 w-full rounded bg-fd-muted" />
+                <div className="h-4 w-5/6 rounded bg-fd-muted" />
+                <div className="h-4 w-4/6 rounded bg-fd-muted" />
+                <div className="mt-6 h-4 w-full rounded bg-fd-muted" />
+                <div className="h-4 w-3/4 rounded bg-fd-muted" />
+              </div>
+            }
+          >
+            {clientLoader.useContent(loaderData.path)}
+          </Suspense>
         </article>
       </main>
       <Footer />

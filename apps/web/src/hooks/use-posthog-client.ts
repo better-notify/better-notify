@@ -21,7 +21,7 @@ export const usePosthogClient = () => {
     }
 
     posthog.init(posthogKey, {
-      api_host: '/ingest',
+      api_host: '/ph',
       ui_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.posthog.com',
       person_profiles: 'identified_only',
       autocapture: true,

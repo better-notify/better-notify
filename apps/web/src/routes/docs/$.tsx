@@ -19,7 +19,7 @@ export const Route = createFileRoute('/docs/$')({
   loader: async ({ params }) => {
     const slugs = params._splat?.split('/') ?? [];
     const data = await serverLoader({ data: slugs });
-    await clientLoader.preload(data.path);
+    if (typeof window !== 'undefined') await clientLoader.preload(data.path);
     return data;
   },
   head: ({ loaderData }) => {
@@ -125,7 +125,25 @@ function Page() {
           style: { '--fd-banner-height': 'var(--landing-header-height, 0px)' } as React.CSSProperties,
         }}
       >
-        <Suspense>{clientLoader.useContent(data.path)}</Suspense>
+        <Suspense
+          fallback={
+            <div className="w-full max-w-[860px] animate-pulse space-y-6 px-6 pt-8">
+              <div className="h-9 w-2/3 rounded bg-fd-muted" />
+              <div className="h-4 w-1/3 rounded bg-fd-muted" />
+              <div className="mt-6 space-y-3">
+                <div className="h-4 w-full rounded bg-fd-muted" />
+                <div className="h-4 w-5/6 rounded bg-fd-muted" />
+                <div className="h-4 w-4/6 rounded bg-fd-muted" />
+              </div>
+              <div className="mt-4 space-y-3">
+                <div className="h-4 w-full rounded bg-fd-muted" />
+                <div className="h-4 w-3/4 rounded bg-fd-muted" />
+              </div>
+            </div>
+          }
+        >
+          {clientLoader.useContent(data.path)}
+        </Suspense>
       </DocsLayout>
     </>
   );

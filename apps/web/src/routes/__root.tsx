@@ -9,7 +9,7 @@ import { seo } from '@/lib/seo';
 import { usePosthogClient } from '@/hooks/use-posthog-client';
 
 function BaseProviders({ children }: { children: ReactNode }) {
-  return <RootProvider theme={{ disableTransitionOnChange: false }}>{children}</RootProvider>;
+  return <RootProvider theme={{ disableTransitionOnChange: true }}>{children}</RootProvider>;
 }
 
 function AnalyticsProvider({ children }: { children: ReactNode }) {
