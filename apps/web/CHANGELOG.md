@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.0-beta.1...@betternotify/web-v1.0.1-beta.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* replace release-as with auto-bump in release-please config ([#91](https://github.com/better-notify/better-notify/issues/91)) ([23761f1](https://github.com/better-notify/better-notify/commit/23761f1d5f5de4c97daf6fccf3c168e54317400a))
+* **web:** fix docs content flicker and rename posthog proxy ([#89](https://github.com/better-notify/better-notify/issues/89)) ([6fa3140](https://github.com/better-notify/better-notify/commit/6fa3140b9cb6490e607ff7c538c6014029b4d749))
+
 ## [1.0.0-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.0-beta.1...@betternotify/web-v1.0.0-beta.1) (2026-05-08)
 
 
