@@ -57,8 +57,8 @@ export function Hero() {
               <code className="bg-muted text-foreground rounded border px-1.5 py-0.5 font-mono text-[0.85em]">
                 Catalog
               </code>{' '}
-              drives your typed sender, queue worker, and webhook router across email, SMS, push,
-              and Telegram.
+              drives your typed sender across email, SMS, Telegram, Slack, and Discord — via SMTP,
+              Resend, Cloudflare, or your own transport.
             </p>
 
             <div

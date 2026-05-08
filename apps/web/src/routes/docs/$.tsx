@@ -127,15 +127,14 @@ function Page() {
       >
         <Suspense
           fallback={
-            <div className="w-full max-w-[860px] animate-pulse space-y-6 px-6 pt-8">
-              <div className="h-9 w-2/3 rounded bg-fd-muted" />
-              <div className="h-4 w-1/3 rounded bg-fd-muted" />
-              <div className="mt-6 space-y-3">
+            <div className="w-full max-w-[860px] space-y-6 px-6 pt-8">
+              <h1 className="text-3xl font-bold text-fd-foreground">{pageTitle}</h1>
+              <div className="animate-pulse space-y-3">
                 <div className="h-4 w-full rounded bg-fd-muted" />
                 <div className="h-4 w-5/6 rounded bg-fd-muted" />
                 <div className="h-4 w-4/6 rounded bg-fd-muted" />
               </div>
-              <div className="mt-4 space-y-3">
+              <div className="animate-pulse space-y-3">
                 <div className="h-4 w-full rounded bg-fd-muted" />
                 <div className="h-4 w-3/4 rounded bg-fd-muted" />
               </div>

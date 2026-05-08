@@ -35,13 +35,12 @@ export const Route = createRootRoute({
       keywords:
         'notifications, email, node.js, typescript, type-safe, email infrastructure, transactional email, zapier, cloudflare, better-notify, cloudflare emails, telegram, twilio, push notifications',
       image: `${appConfig.baseUrl}/og/image.png`,
-      url: appConfig.baseUrl,
-      canonicalUrl: appConfig.baseUrl,
     });
 
     return {
       meta: [
         { charSet: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'application-name', content: appConfig.name },
         ...seoMeta,
       ],
