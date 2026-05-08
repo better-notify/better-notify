@@ -3,7 +3,6 @@ import { loader } from 'fumadocs-core/source';
 import { type ComponentType, createElement, Fragment } from 'react';
 
 import {
-  ChatText,
   DeviceMobile,
   DiscordLogo,
   Envelope,

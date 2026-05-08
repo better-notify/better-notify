@@ -62,7 +62,7 @@ export const seo = ({
     ? image
     : image
       ? `${appConfig.baseUrl}${image.startsWith('/') ? '' : '/'}${image}`
-      : `${appConfig.baseUrl}/og-image.png`;
+      : `${appConfig.baseUrl}/og/image.png`;
 
   const articleMeta: SeoAssetAttributes[] =
     type === 'article' && article

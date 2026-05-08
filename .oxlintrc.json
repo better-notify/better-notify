@@ -63,6 +63,22 @@
         "no-console": "off",
         "typescript/no-non-null-assertion": "off"
       }
+    },
+    {
+      "files": ["apps/web/**/*.ts", "apps/web/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@betternotify/*"],
+                "message": "apps/web must not import @betternotify/* packages — it is a docs/marketing site, not a library consumer."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

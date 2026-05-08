@@ -20,3 +20,5 @@ export const appConfig = {
     branch: 'main',
   },
 } as const;
+
+export const GOOGLE_ANALYTICS_ID = 'G-YZZ3FGERN0';

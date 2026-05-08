@@ -17,7 +17,9 @@
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@fontsource-variable/inter": "^5.2.8",
+    "@libs/ui": "workspace:*",
     "@phosphor-icons/react": "catalog:",
+    "@posthog/react": "1.9.0",
     "@takumi-rs/image-response": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
@@ -28,6 +30,7 @@
     "fumadocs-core": "catalog:",
     "fumadocs-mdx": "catalog:",
     "fumadocs-ui": "catalog:",
+    "posthog-js": "^1.372.9",
     "react": "catalog:",
     "react-dom": "catalog:",
     "shadcn": "^4.6.0",

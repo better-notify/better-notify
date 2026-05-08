@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Check, Copy } from '@phosphor-icons/react';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 import { useInView } from '@/hooks/use-in-view';
 import { CliPreview } from '@/components/landing/cli-preview';
@@ -16,11 +17,13 @@ export function Install() {
   const [pm, setPm] = useState('pnpm');
   const [copied, setCopied] = useState(false);
   const cmd = commands[pm] ?? commands.pnpm;
+  const analytics = useAnalytics('install');
 
   function handleCopy() {
     navigator.clipboard?.writeText(cmd);
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
+    analytics.track('command').action('click', { package_manager: pm });
   }
 
   const [ref, inView, hydrated] = useInView();
@@ -60,7 +63,10 @@ export function Install() {
               {Object.keys(commands).map((x) => (
                 <button
                   key={x}
-                  onClick={() => setPm(x)}
+                  onClick={() => {
+                    setPm(x);
+                    analytics.track('pm').action('change', { package_manager: x });
+                  }}
                   className={`cursor-pointer rounded border-0 px-2.5 py-1 font-mono text-[11.5px] font-medium ${
                     pm === x ? 'bg-primary/10 text-primary' : 'text-muted-foreground bg-transparent'
                   }`}

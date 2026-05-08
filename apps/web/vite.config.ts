@@ -8,6 +8,23 @@ import { cloudflare } from '@cloudflare/vite-plugin';
 export default defineConfig({
   server: {
     port: 4265,
+    proxy: {
+      '/ingest/static': {
+        target: 'https://eu-assets.i.posthog.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ingest/, ''),
+      },
+      '/ingest/array': {
+        target: 'https://eu-assets.i.posthog.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ingest/, ''),
+      },
+      '/ingest': {
+        target: 'https://eu.i.posthog.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ingest/, ''),
+      },
+    },
   },
   ssr: {
     optimizeDeps: {

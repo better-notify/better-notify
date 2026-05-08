@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useAnalytics } from '@/hooks/use-analytics';
 import { CaretRightIcon } from '@phosphor-icons/react';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import browserCollections from 'collections/browser';
@@ -24,7 +25,7 @@ export const Route = createFileRoute('/blog/$slug')({
     const title = `${loaderData.pageTitle} — ${appConfig.name} Blog`;
     const description = loaderData.pageDescription ?? 'Better-Notify blog.';
     const url = `${appConfig.baseUrl}/blog/${loaderData.slug}`;
-    const image = loaderData.pageImage ?? `${appConfig.baseUrl}/og-image.png`;
+    const image = loaderData.pageImage ?? `${appConfig.baseUrl}/og/image.png`;
 
     const { meta, links } = seo({
       title,
@@ -85,6 +86,17 @@ const clientLoader = browserCollections.blogPosts.createClientLoader({
 
 function BlogArticlePage() {
   const loaderData = Route.useLoaderData();
+  const analytics = useAnalytics('blog');
+
+  useEffect(() => {
+    analytics.track('article').action('view', {
+      slug: loaderData.slug,
+      title: loaderData.pageTitle,
+      author: loaderData.pageAuthor,
+      category: loaderData.pageCategory,
+      tags: loaderData.pageTags,
+    });
+  }, [loaderData.slug]);
 
   return (
     <>
@@ -100,7 +112,9 @@ function BlogArticlePage() {
               </li>
               {loaderData.pageCategory && (
                 <>
-                  <li><CaretRightIcon size={12} className="text-border" /></li>
+                  <li aria-hidden="true" role="presentation">
+                    <CaretRightIcon size={12} className="text-border" />
+                  </li>
                   <li>
                     <Link
                       to="/blog"
@@ -112,7 +126,9 @@ function BlogArticlePage() {
                   </li>
                 </>
               )}
-              <li><CaretRightIcon size={12} className="text-border" /></li>
+              <li aria-hidden="true" role="presentation">
+                <CaretRightIcon size={12} className="text-border" />
+              </li>
               <li className="text-foreground font-medium">{loaderData.pageTitle}</li>
             </ol>
           </nav>

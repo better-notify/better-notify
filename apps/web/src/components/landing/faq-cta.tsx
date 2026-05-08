@@ -1,10 +1,12 @@
 import { ArrowRightIcon, GithubLogoIcon } from '@phosphor-icons/react';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 import { appConfig } from '@/lib/shared';
 import { useInView } from '@/hooks/use-in-view';
 
 export function Cta() {
   const [ref, inView, hydrated] = useInView();
+  const analytics = useAnalytics('cta');
 
   return (
     <section id="cta" className="py-24 md:py-28">
@@ -27,6 +29,9 @@ export function Cta() {
           <div className="flex flex-wrap gap-2.5">
             <a
               href={appConfig.docs.route}
+              onClick={() =>
+                analytics.track('quickstart').action('click', { destination: appConfig.docs.route })
+              }
               className="bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium transition-colors"
             >
               Quick start
@@ -36,6 +41,11 @@ export function Cta() {
               href={`https://github.com/${appConfig.git.user}/${appConfig.git.repo}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                analytics
+                  .track('github')
+                  .action('click', { repo: `${appConfig.git.user}/${appConfig.git.repo}` })
+              }
               className="border-border-strong bg-card hover:bg-accent inline-flex items-center gap-2 rounded-md border px-5 py-3 text-sm font-medium transition-colors"
             >
               <GithubLogoIcon size={14} />

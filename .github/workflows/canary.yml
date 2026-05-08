@@ -92,6 +92,10 @@ jobs:
       - uses: ./.github/actions/prepare
 
       - run: pnpm exec turbo run build --filter=@betternotify/web...
+        env:
+          VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          VITE_PUBLIC_ANALYTICS_ENABLED: 'false'
 
       - uses: cloudflare/wrangler-action@v3
         with:
