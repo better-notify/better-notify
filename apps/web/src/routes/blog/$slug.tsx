@@ -112,7 +112,7 @@ function BlogArticlePage() {
               </li>
               {loaderData.pageCategory && (
                 <>
-                  <li>
+                  <li aria-hidden="true" role="presentation">
                     <CaretRightIcon size={12} className="text-border" />
                   </li>
                   <li>
@@ -126,7 +126,7 @@ function BlogArticlePage() {
                   </li>
                 </>
               )}
-              <li>
+              <li aria-hidden="true" role="presentation">
                 <CaretRightIcon size={12} className="text-border" />
               </li>
               <li className="text-foreground font-medium">{loaderData.pageTitle}</li>

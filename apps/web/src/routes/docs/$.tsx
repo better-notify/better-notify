@@ -11,6 +11,7 @@ import { useMDXComponents } from '@/components/mdx';
 import { seo } from '@/lib/seo';
 import { appConfig } from '@/lib/shared';
 import { SidebarIcon } from '@phosphor-icons/react';
+import { cn } from '@/lib/utils';
 import { LandingHeader } from '@/components/landing/header';
 
 export const Route = createFileRoute('/docs/$')({
@@ -75,13 +76,20 @@ const clientLoader = browserCollections.docs.createClientLoader({
   },
 });
 
-function MobileSidebarHeader({ title, ...props }: React.ComponentProps<'header'> & { title?: string }) {
+function MobileSidebarHeader({
+  title,
+  className,
+  ...props
+}: React.ComponentProps<'header'> & { title?: string }) {
   const { slots } = useDocsLayout();
 
   return (
     <header
       {...props}
-      className="[grid-area:header] sticky top-(--fd-docs-row-1) z-30 flex items-center gap-2 ps-4 pe-2.5 border-b transition-colors backdrop-blur-sm bg-fd-background/80 h-(--fd-header-height) md:hidden max-md:layout:[--fd-header-height:--spacing(14)]"
+      className={cn(
+        '[grid-area:header] sticky top-(--fd-docs-row-1) z-30 flex items-center gap-2 ps-4 pe-2.5 border-b transition-colors backdrop-blur-sm bg-fd-background/80 h-(--fd-header-height) md:hidden max-md:layout:[--fd-header-height:--spacing(14)]',
+        className,
+      )}
     >
       <span className="flex-1 truncate text-sm font-medium text-fd-foreground">
         {title}

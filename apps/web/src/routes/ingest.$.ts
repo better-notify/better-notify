@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { handlePromise } from '@betternotify/core';
 
 const POSTHOG_HOST = 'https://eu.posthog.com';
 
@@ -11,12 +12,19 @@ const proxy = async (request: Request): Promise<Response> => {
   headers.set('host', new URL(POSTHOG_HOST).host);
   headers.delete('cookie');
 
-  const res = await fetch(target, {
-    method: request.method,
-    headers,
-    body: request.method === 'GET' ? undefined : request.body,
-  });
+  const result = await handlePromise(
+    fetch(target, {
+      method: request.method,
+      headers,
+      body: request.method === 'GET' ? undefined : request.body,
+    }),
+  );
 
+  if (!result[0]) {
+    return new Response('Analytics endpoint unavailable', { status: 503 });
+  }
+
+  const res = result[0];
   const responseHeaders = new Headers(res.headers);
   responseHeaders.delete('set-cookie');
 

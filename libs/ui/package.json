@@ -10,12 +10,13 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
+  "peerDependencies": {
     "react": "catalog:"
   },
   "devDependencies": {
     "@internal/tsconfig": "workspace:*",
     "@types/react": "catalog:",
+    "react": "catalog:",
     "typescript": "catalog:"
   }
 }
