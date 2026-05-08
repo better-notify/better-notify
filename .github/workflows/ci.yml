@@ -30,7 +30,7 @@ jobs:
       - uses: ./.github/actions/prepare
       - run: pnpm build
       - name: Save turbo cache
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: .turbo/cache
           key: turbo-${{ runner.os }}-${{ github.sha }}
