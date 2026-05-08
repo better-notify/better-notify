@@ -26,7 +26,7 @@ export const Route = createFileRoute('/')({
     const { meta, links } = seo({
       title: `${appConfig.name}: Typed Notifications for Node.js`,
       description:
-        'Type-safe email, SMS, and push notification infrastructure for Node.js. Define once, send everywhere with full TypeScript support.',
+        'Type-safe notification infrastructure for Node.js. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       url: appConfig.baseUrl,
       canonicalUrl: appConfig.baseUrl,
     });

@@ -31,7 +31,7 @@ export const Route = createRootRoute({
     const { meta: seoMeta, links: seoLinks } = seo({
       title: `${appConfig.name}: Typed Notifications for Node.js`,
       description:
-        'Type-safe email, SMS, and push notification infrastructure for Node.js. Define once, send everywhere with full TypeScript support.',
+        'Type-safe notification infrastructure for Node.js. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       keywords:
         'notifications, email, node.js, typescript, type-safe, email infrastructure, transactional email, zapier, cloudflare, better-notify, cloudflare emails, telegram, twilio, push notifications',
       image: `${appConfig.baseUrl}/og/image.png`,
