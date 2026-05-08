@@ -12,7 +12,7 @@ module.exports = {
   platformCommit: 'disabled',
   repositories: ['better-notify/better-notify'],
   onboardingPrTitle: 'configure renovate',
-  onboarding: true,
+  onboarding: false,
   requireConfig: 'optional',
   prConcurrentLimit: 5,
   branchConcurrentLimit: 5,
@@ -21,6 +21,10 @@ module.exports = {
   minimumReleaseAge: '1 day',
   statusCheckNames: null,
   packageRules: [
+    {
+      matchPackageNames: ['@betternotify/**'],
+      enabled: false,
+    },
     {
       matchUpdateTypes: ['patch'],
       groupName: 'all patch dependencies',
@@ -71,4 +75,8 @@ module.exports = {
     },
   ],
   ignorePaths: ['**/node_modules/**'],
+  vulnerabilityAlerts: {
+    enabled: true,
+    labels: ['dependencies', 'security'],
+  },
 };

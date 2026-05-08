@@ -28,4 +28,4 @@ jobs:
           env-regex: "^(?:RENOVATE_\\w+|LOG_LEVEL|NODE_OPTIONS)$"
         env:
           NODE_OPTIONS: '--max_old_space_size=6500'
-          LOG_LEVEL: 'debug'
+          LOG_LEVEL: 'info'
