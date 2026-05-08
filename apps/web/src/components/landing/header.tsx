@@ -11,6 +11,7 @@ import {
 } from '@phosphor-icons/react';
 import { useTheme } from 'fumadocs-ui/provider/base';
 import { useRef, useEffect, useState } from 'react';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 import { LogoShort } from '@libs/ui';
 import { appConfig } from '@/lib/shared';
@@ -26,6 +27,7 @@ export function LandingHeader() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const analytics = useAnalytics('header');
   const isDark = resolvedTheme === 'dark';
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === '/';
@@ -65,7 +67,12 @@ export function LandingHeader() {
             const isActive =
               link.href.startsWith('/') &&
               pathname.startsWith(link.href) &&
-              !navLinks.some((other) => other.href !== link.href && other.href.startsWith(link.href) && pathname.startsWith(other.href));
+              !navLinks.some(
+                (other) =>
+                  other.href !== link.href &&
+                  other.href.startsWith(link.href) &&
+                  pathname.startsWith(other.href),
+              );
             return (
               <a
                 key={link.label}
@@ -84,14 +91,20 @@ export function LandingHeader() {
           {search.enabled && (
             <>
               <button
-                onClick={() => search.setOpenSearch(true)}
+                onClick={() => {
+                  search.setOpenSearch(true);
+                  analytics.track('search').action('open', { trigger: 'mobile_icon' });
+                }}
                 className="border-border bg-card text-muted-foreground hover:bg-bn-slate-100 hover:text-foreground dark:hover:bg-bn-slate-800 inline-flex size-[34px] cursor-pointer items-center justify-center rounded-md border transition-colors sm:hidden"
                 aria-label="Search docs"
               >
                 <MagnifyingGlassIcon size={14} />
               </button>
               <button
-                onClick={() => search.setOpenSearch(true)}
+                onClick={() => {
+                  search.setOpenSearch(true);
+                  analytics.track('search').action('open', { trigger: 'search_bar' });
+                }}
                 className="border-border hidden cursor-text items-center gap-2 rounded-md border bg-bn-slate-100 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-bn-slate-200 dark:bg-bn-slate-900 dark:hover:bg-bn-slate-800 sm:flex"
                 style={{ width: 200 }}
               >
@@ -151,7 +164,12 @@ export function LandingHeader() {
             const isActive =
               link.href.startsWith('/') &&
               pathname.startsWith(link.href) &&
-              !navLinks.some((other) => other.href !== link.href && other.href.startsWith(link.href) && pathname.startsWith(other.href));
+              !navLinks.some(
+                (other) =>
+                  other.href !== link.href &&
+                  other.href.startsWith(link.href) &&
+                  pathname.startsWith(other.href),
+              );
             return (
               <a
                 key={link.label}

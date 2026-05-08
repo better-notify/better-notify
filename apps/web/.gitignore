@@ -4,3 +4,4 @@ dist/
 .source/
 .wrangler/
 content/docs/changelog/
+.env

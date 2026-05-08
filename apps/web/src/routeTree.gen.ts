@@ -16,6 +16,7 @@ import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as OgSplatRouteImport } from './routes/og.$'
+import { Route as IngestSplatRouteImport } from './routes/ingest.$'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
@@ -56,6 +57,11 @@ const OgSplatRoute = OgSplatRouteImport.update({
   path: '/og/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IngestSplatRoute = IngestSplatRouteImport.update({
+  id: '/ingest/$',
+  path: '/ingest/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocsSplatRoute = DocsSplatRouteImport.update({
   id: '/docs/$',
   path: '/docs/$',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/api/search': typeof ApiSearchRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/docs/$': typeof DocsSplatRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/og/$': typeof OgSplatRoute
   '/blog/': typeof BlogIndexRoute
   '/llms.mdx/docs/$': typeof LlmsDotmdxDocsSplatRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/api/search': typeof ApiSearchRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/docs/$': typeof DocsSplatRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/og/$': typeof OgSplatRoute
   '/blog': typeof BlogIndexRoute
   '/llms.mdx/docs/$': typeof LlmsDotmdxDocsSplatRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/api/search': typeof ApiSearchRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/docs/$': typeof DocsSplatRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/og/$': typeof OgSplatRoute
   '/blog/': typeof BlogIndexRoute
   '/llms.mdx/docs/$': typeof LlmsDotmdxDocsSplatRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/blog/$slug'
     | '/docs/$'
+    | '/ingest/$'
     | '/og/$'
     | '/blog/'
     | '/llms.mdx/docs/$'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/blog/$slug'
     | '/docs/$'
+    | '/ingest/$'
     | '/og/$'
     | '/blog'
     | '/llms.mdx/docs/$'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/blog/$slug'
     | '/docs/$'
+    | '/ingest/$'
     | '/og/$'
     | '/blog/'
     | '/llms.mdx/docs/$'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   ApiSearchRoute: typeof ApiSearchRoute
   BlogSlugRoute: typeof BlogSlugRoute
   DocsSplatRoute: typeof DocsSplatRoute
+  IngestSplatRoute: typeof IngestSplatRoute
   OgSplatRoute: typeof OgSplatRoute
   BlogIndexRoute: typeof BlogIndexRoute
   LlmsDotmdxDocsSplatRoute: typeof LlmsDotmdxDocsSplatRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OgSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ingest/$': {
+      id: '/ingest/$'
+      path: '/ingest/$'
+      fullPath: '/ingest/$'
+      preLoaderRoute: typeof IngestSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs/$': {
       id: '/docs/$'
       path: '/docs/$'
@@ -264,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSearchRoute: ApiSearchRoute,
   BlogSlugRoute: BlogSlugRoute,
   DocsSplatRoute: DocsSplatRoute,
+  IngestSplatRoute: IngestSplatRoute,
   OgSplatRoute: OgSplatRoute,
   BlogIndexRoute: BlogIndexRoute,
   LlmsDotmdxDocsSplatRoute: LlmsDotmdxDocsSplatRoute,

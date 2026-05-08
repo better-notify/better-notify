@@ -1,9 +1,30 @@
+import type { ReactNode } from 'react';
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { RootProvider } from 'fumadocs-ui/provider/tanstack';
+import { PostHogProvider } from '@posthog/react';
 
 import appCss from '@/styles/app.css?url';
 import { appConfig } from '@/lib/shared';
 import { seo } from '@/lib/seo';
+import { usePosthogClient } from '@/hooks/use-posthog-client';
+
+function BaseProviders({ children }: { children: ReactNode }) {
+  return <RootProvider theme={{ disableTransitionOnChange: false }}>{children}</RootProvider>;
+}
+
+function AnalyticsProvider({ children }: { children: ReactNode }) {
+  const { client } = usePosthogClient();
+
+  if (!client) {
+    return <BaseProviders>{children}</BaseProviders>;
+  }
+
+  return (
+    <PostHogProvider client={client}>
+      <BaseProviders>{children}</BaseProviders>
+    </PostHogProvider>
+  );
+}
 
 export const Route = createRootRoute({
   head: () => {
@@ -42,9 +63,9 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body className="flex min-h-screen flex-col">
-        <RootProvider theme={{ disableTransitionOnChange: false }}>
+        <AnalyticsProvider>
           <Outlet />
-        </RootProvider>
+        </AnalyticsProvider>
         <Scripts />
       </body>
     </html>

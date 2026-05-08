@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowRightIcon, GithubLogoIcon } from '@phosphor-icons/react';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 import { appConfig } from '@/lib/shared';
 import { CliPreview } from '@/components/landing/cli-preview';
@@ -33,6 +34,7 @@ const snippets = {
 
 export function Hero() {
   const [active, setActive] = useState<(typeof tabs)[number]>('email.ts');
+  const analytics = useAnalytics('hero');
 
   return (
     <section className="relative">
@@ -65,6 +67,7 @@ export function Hero() {
             >
               <a
                 href="/docs"
+                onClick={() => analytics.track('cta').action('click', { destination: '/docs' })}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 group inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold no-underline transition-colors"
               >
                 Get started
@@ -78,6 +81,11 @@ export function Hero() {
                 href={`https://github.com/${appConfig.git.user}/${appConfig.git.repo}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() =>
+                  analytics
+                    .track('github')
+                    .action('click', { repo: `${appConfig.git.user}/${appConfig.git.repo}` })
+                }
                 className="border-border bg-card hover:bg-accent hover:text-foreground text-muted-foreground inline-flex items-center gap-2 rounded-lg border px-5 py-3 text-sm font-medium no-underline transition-colors"
               >
                 <GithubLogoIcon size={16} weight="fill" />
@@ -118,7 +126,10 @@ export function Hero() {
                 {tabs.map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => setActive(tab)}
+                    onClick={() => {
+                      setActive(tab);
+                      analytics.track('snippet').action('change', { tab });
+                    }}
                     className={`cursor-pointer whitespace-nowrap rounded-md border-0 px-3 py-1 font-mono text-[12px] font-medium transition-colors ${
                       active === tab
                         ? 'bg-bn-slate-100 text-bn-slate-800 dark:bg-bn-slate-800 dark:text-bn-slate-200'

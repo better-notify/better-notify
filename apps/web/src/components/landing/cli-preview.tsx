@@ -1,5 +1,6 @@
 import { Check, Copy } from '@phosphor-icons/react';
 import { useState } from 'react';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 const tabs = [
   { id: 'cli', label: 'CLI', soon: false },
@@ -11,6 +12,7 @@ type TabId = (typeof tabs)[number]['id'];
 export function CliPreview() {
   const [active, setActive] = useState<TabId>('cli');
   const [copied, setCopied] = useState(false);
+  const analytics = useAnalytics('cli_preview');
 
   const commands = {
     cli: 'npx create-better-notify@latest',
@@ -25,6 +27,7 @@ export function CliPreview() {
     if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
+    analytics.track('command').action('click', { tab: active, command: commands[active] });
   }
 
   return (

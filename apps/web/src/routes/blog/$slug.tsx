@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useAnalytics } from '@/hooks/use-analytics';
 import { CaretRightIcon } from '@phosphor-icons/react';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import browserCollections from 'collections/browser';
@@ -85,6 +86,17 @@ const clientLoader = browserCollections.blogPosts.createClientLoader({
 
 function BlogArticlePage() {
   const loaderData = Route.useLoaderData();
+  const analytics = useAnalytics('blog');
+
+  useEffect(() => {
+    analytics.track('article').action('view', {
+      slug: loaderData.slug,
+      title: loaderData.pageTitle,
+      author: loaderData.pageAuthor,
+      category: loaderData.pageCategory,
+      tags: loaderData.pageTags,
+    });
+  }, [loaderData.slug]);
 
   return (
     <>
