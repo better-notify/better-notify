@@ -106,9 +106,9 @@ export function Hero() {
             >
               <span>ESM · Node ≥ 22</span>
               <span className="text-muted-foreground/30 hidden sm:inline">|</span>
-              <span>MIT licensed</span>
+              <span>Open source</span>
               <span className="text-muted-foreground/30 hidden sm:inline">|</span>
-              <span>Standard Schema</span>
+              <span>Zero vendor lock-in</span>
             </div>
           </div>
 
