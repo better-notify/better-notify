@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.1...@betternotify/web-v1.2.0) (2026-05-08)
+
+
+### Features
+
+* **web:** add internal UI lib, redesign OG images, and improve navigation ([#67](https://github.com/better-notify/better-notify/issues/67)) ([045fd58](https://github.com/better-notify/better-notify/commit/045fd58e7b59d0999692f17f96dbcbe0a1e2b1c5))
+* **web:** add SMTP failover example and flatten transport docs ([#66](https://github.com/better-notify/better-notify/issues/66)) ([817ed91](https://github.com/better-notify/better-notify/commit/817ed91f939932813c6cf1599bdcc05f7672c833))
+* **web:** move blog to landing page with standalone routes ([#64](https://github.com/better-notify/better-notify/issues/64)) ([a780eb5](https://github.com/better-notify/better-notify/commit/a780eb5a6f5ac4899b9ac1ec9532beb4b556c0fd))
+
 ## [1.1.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0...@betternotify/web-v1.1.1) (2026-05-06)
 
 
