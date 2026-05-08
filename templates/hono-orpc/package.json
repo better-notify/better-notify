@@ -9,7 +9,7 @@
   "dependencies": {
     "@betternotify/core": "0.0.0-inject",
     "@betternotify/email": "0.0.0-inject",
-    "@betternotify/react-email": "0.0.0-inject",
+    "@betternotify/react-email": "0.0.0-preview.10.c87393d6",
     "@betternotify/resend": "0.0.0-inject",
     "@betternotify/smtp": "0.0.0-inject",
     "@hono/node-server": "2.0.1",
