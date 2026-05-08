@@ -20,7 +20,6 @@
     "@fontsource-variable/manrope": "^5.2.8",
     "@libs/ui": "workspace:*",
     "@phosphor-icons/react": "catalog:",
-    "@posthog/react": "1.9.0",
     "@takumi-rs/image-response": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",

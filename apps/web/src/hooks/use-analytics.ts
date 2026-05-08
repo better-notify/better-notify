@@ -1,4 +1,6 @@
-import { usePostHog } from '@posthog/react';
+import posthog from 'posthog-js';
+
+import { isPosthogReady } from '@/hooks/use-posthog-client';
 
 export type ActionTypes =
   | 'accept'
@@ -58,15 +60,15 @@ export type ActionTypes =
   | 'write';
 
 export const useAnalytics = (component: string) => {
-  const ph = usePostHog();
-
   return {
     track: (track?: string) => ({
       action: (action: ActionTypes, data?: Record<string, unknown>) => {
+        if (!isPosthogReady()) return;
+
         const event =
           component && track ? `${component}.${track}.${action}` : `${component}.${action}`;
 
-        return ph?.capture(event, data);
+        return posthog.capture(event, data);
       },
     }),
   };
