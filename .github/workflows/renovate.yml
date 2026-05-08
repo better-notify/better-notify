@@ -13,7 +13,7 @@ jobs:
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
           private-key: ${{ secrets.BETTER_NOTIFY_APP_PRIVATE_KEY }}
-          client-id: ${{ secrets.BETTER_NOTIFY_APP_ID }}
+          app-id: ${{ secrets.BETTER_NOTIFY_APP_ID }}
           owner: ${{ github.repository_owner }}
           repositories: 'better-notify'
 
@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Renovate
-        uses: renovatebot/github-action@b67590ea780158ccd13192c22a3655a5231f869d # v46.1.8
+        uses: renovatebot/github-action@79dc0ba74dc3de28db0a7aeb1d0b95d5bf5fde2a # v46.1.8
         with:
           token: '${{ steps.get_token.outputs.token }}'
           configurationFile: ./.github/renovate-config.js
