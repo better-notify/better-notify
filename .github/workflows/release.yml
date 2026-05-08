@@ -19,7 +19,7 @@ jobs:
       web_release_created: ${{ steps.release.outputs['apps/web--release_created'] }}
     steps:
       - name: Generate GitHub App token
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
         id: app-token
         with:
           app-id: ${{ secrets.BETTER_NOTIFY_APP_ID }}
