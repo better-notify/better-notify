@@ -41,6 +41,7 @@ import { runEmailZapier } from './examples/email-zapier';
 import { runDiscordZapier } from './examples/discord-zapier';
 import { runEmailMailchimp } from './examples/email-mailchimp';
 import { runEmailSmtpFailover } from './examples/email-smtp-failover';
+import { runCloudflareEmailLoggerEvlog } from './examples/cloudflare-email-logger-evlog';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -67,6 +68,7 @@ const examples: Record<string, () => Promise<void>> = {
   'telegram-cross-transport': runTelegramCrossTransport,
   'cloudflare-email': runCloudflareEmail,
   'cloudflare-email-attachment': runCloudflareEmailAttachment,
+  'cloudflare-email-logger-evlog': runCloudflareEmailLoggerEvlog,
   resend: runResend,
   'resend-attachment': runResendAttachment,
   slack: runSlack,

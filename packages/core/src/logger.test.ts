@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { consoleLogger, fromPino } from './logger.js';
+import { consoleLogger, fromLogger, fromPino } from './logger.js';
 
 const lineOf = (spy: { mock: { calls: unknown[][] } }): string => {
   const call = spy.mock.calls[0];
@@ -223,6 +223,106 @@ describe('fromPino', () => {
     const child = log.child({ x: 1 });
     expect(calls.some((c) => c.method === 'child' && (c.obj as any).x === 1)).toBe(true);
     expect(() => child.info('test')).not.toThrow();
+  });
+});
+
+const makeSimpleLogger = () => {
+  const calls: Array<{ method: string; msg: string; payload?: object }> = [];
+  const logger = {
+    debug: (msg: string, payload?: object) => calls.push({ method: 'debug', msg, payload }),
+    info: (msg: string, payload?: object) => calls.push({ method: 'info', msg, payload }),
+    warn: (msg: string, payload?: object) => calls.push({ method: 'warn', msg, payload }),
+    error: (msg: string, payload?: object) => calls.push({ method: 'error', msg, payload }),
+  };
+  return { logger, calls };
+};
+
+describe('fromLogger', () => {
+  it('forwards each level method to the underlying logger', () => {
+    const { logger, calls } = makeSimpleLogger();
+    const log = fromLogger(logger);
+    log.debug('d', { a: 1 });
+    log.info('i', { b: 2 });
+    log.warn('w', { c: 3 });
+    log.error('e', { d: 4 });
+    expect(calls).toHaveLength(4);
+    expect(calls[0]).toEqual({ method: 'debug', msg: 'd', payload: { a: 1 } });
+    expect(calls[1]).toEqual({ method: 'info', msg: 'i', payload: { b: 2 } });
+    expect(calls[2]).toEqual({ method: 'warn', msg: 'w', payload: { c: 3 } });
+    expect(calls[3]).toEqual({ method: 'error', msg: 'e', payload: { d: 4 } });
+  });
+
+  it('passes undefined payload when omitted and no bindings', () => {
+    const { logger, calls } = makeSimpleLogger();
+    fromLogger(logger).info('msg');
+    expect(calls[0]).toEqual({ method: 'info', msg: 'msg', payload: undefined });
+  });
+
+  it('child merges bindings into payload', () => {
+    const { logger, calls } = makeSimpleLogger();
+    const log = fromLogger(logger).child({ component: 'client' });
+    log.info('msg', { route: 'welcome' });
+    expect(calls[0]).toEqual({
+      method: 'info',
+      msg: 'msg',
+      payload: { component: 'client', route: 'welcome' },
+    });
+  });
+
+  it('child passes bindings as payload when no payload given', () => {
+    const { logger, calls } = makeSimpleLogger();
+    fromLogger(logger).child({ component: 'client' }).info('msg');
+    expect(calls[0]).toEqual({
+      method: 'info',
+      msg: 'msg',
+      payload: { component: 'client' },
+    });
+  });
+
+  it('nested child merges bindings cumulatively', () => {
+    const { logger, calls } = makeSimpleLogger();
+    const log = fromLogger(logger).child({ component: 'client' }).child({ route: 'welcome' });
+    log.info('msg', { messageId: '123' });
+    expect(calls[0]).toEqual({
+      method: 'info',
+      msg: 'msg',
+      payload: { component: 'client', route: 'welcome', messageId: '123' },
+    });
+  });
+
+  it('payload overrides bindings on key conflict', () => {
+    const { logger, calls } = makeSimpleLogger();
+    fromLogger(logger).child({ x: 'from-binding' }).info('msg', { x: 'from-payload' });
+    expect(calls[0]).toEqual({
+      method: 'info',
+      msg: 'msg',
+      payload: { x: 'from-payload' },
+    });
+  });
+
+  it('delegates to underlying child when available', () => {
+    const childCalls: Array<{ method: string; msg: string; payload?: object }> = [];
+    const logger = {
+      debug: () => {},
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+      child: (_bindings: object) => ({
+        debug: (msg: string, payload?: object) =>
+          childCalls.push({ method: 'debug', msg, payload }),
+        info: (msg: string, payload?: object) => childCalls.push({ method: 'info', msg, payload }),
+        warn: (msg: string, payload?: object) => childCalls.push({ method: 'warn', msg, payload }),
+        error: (msg: string, payload?: object) =>
+          childCalls.push({ method: 'error', msg, payload }),
+      }),
+    };
+    const log = fromLogger(logger).child({ component: 'client' });
+    log.info('msg', { route: 'welcome' });
+    expect(childCalls[0]).toEqual({
+      method: 'info',
+      msg: 'msg',
+      payload: { route: 'welcome' },
+    });
   });
 });
 
