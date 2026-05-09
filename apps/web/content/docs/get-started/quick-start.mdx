@@ -1,22 +1,24 @@
 ---
-title: Quick Start
+title: Your First Email
 icon: Lightning
-description: Send your first typed email in minutes
+description: Build a working email setup with channels, routes, sub-catalogs, and a typed client
 ---
 
 import { Mermaid } from '@/components/mermaid';
 import { File, Folder, Files } from 'fumadocs-ui/components/files';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-This guide walks you through building a working Better-Notify setup and sending a real email through Gmail SMTP. You will define an email channel, create three routes organized into sub-catalogs, and send a welcome email to your own inbox.
+This guide walks you through the moving parts of a Better-Notify project: channels, routes, sub-catalogs, and the typed client.
 
-By the end, you will have a typed client where `mail.transactional.welcome.send(...)` only compiles if the route exists and the input matches its schema.
+By the end, you will understand why `mail.transactional.welcome.send(...)` only compiles when the route exists and the input matches its schema.
 
 <Callout>
-This guide assumes you have already installed the packages. If not, start with [Installation](/docs/get-started/installation).
+If you have not installed yet, start with [Installation](/docs/get-started/installation).
 </Callout>
 
-## What you will build
+## The big picture
+
+A Better-Notify project has four layers: a **channel** defines message shape, **routes** declare individual notifications, a **catalog** organizes routes into a tree, and a **client** ties the catalog to transports for delivery.
 
 <Mermaid
   code={`
@@ -47,7 +49,7 @@ flowchart LR
   `}
 />
 
-Three routes, two sub-catalogs, one typed client sending real emails through Gmail. The file structure will look like this:
+The file structure for this walkthrough:
 
 <Files>
   <Folder name="src" defaultOpen>
@@ -63,7 +65,7 @@ Three routes, two sub-catalogs, one typed client sending real emails through Gma
 
 ## Set up Gmail SMTP
 
-Before writing any code, you need a Gmail app password. Gmail does not allow regular passwords for SMTP — you need to generate a dedicated app password.
+Before writing any code, you need a Gmail app password. Gmail requires a dedicated app password for SMTP.
 
 <Steps>
 <Step>
@@ -102,7 +104,7 @@ Never commit `.env` files to version control. Add `.env` to your `.gitignore`.
 
 ## Define the email channel
 
-The channel sets shared defaults for every email route. Use your Gmail address as the `from`:
+The channel sets shared defaults for every email route.
 
 ```ts title="src/notifications/channel.ts"
 import { emailChannel } from '@betternotify/email';
@@ -237,7 +239,7 @@ export const mail = createClient({
 });
 ```
 
-`mail` is now a fully typed client. Autocomplete shows `mail.transactional.welcome`, `mail.transactional.passwordReset`, and `mail.marketing.newsletter` — nothing more, nothing less.
+`mail` is now a typed client. Autocomplete shows `mail.transactional.welcome`, `mail.transactional.passwordReset`, and `mail.marketing.newsletter` — nothing more, nothing less.
 
 ## Send your first email
 
@@ -261,7 +263,7 @@ Run it and check your inbox. You should see a styled welcome email from your own
 
 ## Send across sub-catalogs
 
-Now send from both sub-catalogs to see the full typed surface in action:
+Now send from both sub-catalogs:
 
 ```ts title="src/index.ts"
 import { mail } from './notifications/client';
@@ -317,11 +319,11 @@ await mail.transactional.welcome.send({
 });
 ```
 
-The first two are caught at compile time. The third is caught at runtime by the Zod schema. The catalog enforces both layers.
+TypeScript catches the first two at compile time. Zod catches the third at runtime. The catalog enforces both layers.
 
 ## Use a mock transport for tests
 
-When you do not want to send real emails — in tests or CI — swap the transport without touching routes or the catalog:
+To skip real sends in tests or CI, swap the transport without touching routes or the catalog:
 
 ```ts title="src/notifications/client.test.ts"
 import { createClient } from '@betternotify/core';
