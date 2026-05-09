@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.2-beta.1...@betternotify/web-v1.0.3-beta.1) (2026-05-09)
+
+
+### Bug Fixes
+
+* **web:** use appConfig for OG image domain and add missing aria-label ([#97](https://github.com/better-notify/better-notify/issues/97)) ([831d59d](https://github.com/better-notify/better-notify/commit/831d59dda53d2cf85cb32a5818fe0a9ab6e50177))
+
 ## [1.0.2-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.1-beta.1...@betternotify/web-v1.0.2-beta.1) (2026-05-08)
 
 
