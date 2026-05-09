@@ -25,4 +25,4 @@ export const usePosthogInit = () => {
       disable_session_recording: true,
     });
   }, []);
-}
+};

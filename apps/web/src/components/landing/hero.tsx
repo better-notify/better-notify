@@ -66,8 +66,12 @@ export function Hero() {
               style={{ animationDelay: '160ms' }}
             >
               <a
-                href="/docs"
-                onClick={() => analytics.track('cta').action('click', { destination: '/docs' })}
+                href="/docs/get-started/installation"
+                onClick={() =>
+                  analytics
+                    .track('cta')
+                    .action('click', { destination: '/docs/get-started/installation' })
+                }
                 className="bg-primary text-primary-foreground hover:bg-primary/90 group inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold no-underline transition-colors"
               >
                 Get started

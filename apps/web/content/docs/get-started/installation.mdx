@@ -6,11 +6,39 @@ description: Install Better-Notify and its dependencies
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Use this page to install Better-Notify for the channel you want to start with.
-
 Better-Notify is ESM-only and requires Node `>= 22`.
 
-## Choose a channel
+## Scaffold with the CLI
+
+The CLI scaffolds a project with channels, routes, a typed client, and a working transport — ready to send.
+
+```package-install
+create-better-notify@latest
+```
+
+The CLI walks you through channel selection (email, SMS, push), transport provider, and schema library. When it finishes, you get a project with this structure:
+
+```
+src/
+  notifications/
+    channel.ts     # channel definition with defaults
+    routes.ts      # routes grouped into sub-catalogs
+    client.ts      # typed client wired to your transport
+  index.ts         # entry point — sends a test notification
+.env               # provider credentials
+```
+
+Run the generated project to send your first notification:
+
+```sh
+npx tsx src/index.ts
+```
+
+The [Your First Email](/docs/get-started/quick-start) walkthrough explains what each file does.
+
+## Manual setup
+
+To install manually, follow the steps below.
 
 <Tabs items={['Email', 'SMS', 'Push']} defaultIndex={0}>
   <Tab value="email">
@@ -20,9 +48,9 @@ Better-Notify is ESM-only and requires Node `>= 22`.
 
 ### Confirm your runtime
 
-Make sure your app is running on Node `22` or newer.
+Use Node `22` or newer.
 
-If you are starting from scratch, your `package.json` should also use ESM:
+For new projects, set ESM in `package.json`:
 
 ```json
 {
@@ -35,50 +63,84 @@ If you are starting from scratch, your `package.json` should also use ESM:
 
 ### Install the packages
 
-If you are following the email + SMTP path from the intro and quick start, install these packages:
-
 ```package-install
 @betternotify/core @betternotify/email @betternotify/smtp zod
 ```
 
-`@betternotify/core` gives you `createNotify()` and `createClient()`. `@betternotify/email` gives you the email channel. `@betternotify/smtp` gives you the SMTP transport. `zod` defines the route input schemas used throughout the docs examples.
+`@betternotify/core` exports `createNotify()` and `createClient()`. `@betternotify/email` adds the email channel. `@betternotify/smtp` adds the SMTP transport. `zod` defines route input schemas used throughout these docs.
 
   </Step>
   <Step>
 
 ### Add SMTP credentials
 
-The examples assume you will provide SMTP credentials through environment variables:
+Create a `.env` file with your SMTP credentials:
 
-```sh
+```sh title=".env"
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
 SMTP_USER=mailer@example.com
 SMTP_PASS=your-password
 ```
 
-You will usually also want provider-specific values such as host and port:
-
-```sh
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-```
-
-The exact variable names are up to your app. The important part is that your `smtpTransport(...)` call can read valid credentials at runtime.
+The variable names are up to your app. Your `smtpTransport(...)` call must read valid credentials at runtime.
 
   </Step>
   <Step>
 
-### Verify the install
+### Define a channel and send
 
-Before writing your first route, make sure the imports resolve cleanly:
+Create a minimal setup to verify that the transport connects and delivers:
 
-```ts
+```ts title="src/index.ts"
 import { createNotify, createClient } from '@betternotify/core';
 import { emailChannel } from '@betternotify/email';
 import { smtpTransport } from '@betternotify/smtp';
 import { z } from 'zod';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: process.env.SMTP_USER! } },
+});
+
+const rpc = createNotify({ channels: { email } });
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template({
+      render: async ({ input }) => ({
+        text: `Welcome, ${input.name}!`,
+        html: `<h1>Welcome, ${input.name}!</h1>`,
+      }),
+    }),
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: smtpTransport({
+      host: process.env.SMTP_HOST!,
+      port: Number(process.env.SMTP_PORT!),
+      auth: {
+        user: process.env.SMTP_USER!,
+        pass: process.env.SMTP_PASS!,
+      },
+    }),
+  },
+});
+
+const result = await mail.welcome.send({
+  to: 'you@example.com',
+  input: { name: 'Ada Lovelace' },
+});
+
+console.log('sent!', result.messageId);
 ```
 
-If that typechecks, the installation step is done.
+A delivered email confirms your setup.
 
   </Step>
 </Steps>
@@ -88,39 +150,37 @@ If that typechecks, the installation step is done.
 
 SMS installation docs are `TBD`.
 
-For now, start with the email path unless you are writing the SMS docs in parallel.
+Start with the email path above.
 
   </Tab>
   <Tab value="push">
 
 Push installation docs are `TBD`.
 
-For now, start with the email path unless you are writing the push docs in parallel.
+Start with the email path above.
 
   </Tab>
 </Tabs>
 
 ## What you have now
 
-At this point, your project is ready for the first email route:
+You can now write notification routes:
 
 - Node `>= 22` and ESM are in place.
-- Better-Notify core, email, SMTP, and `zod` are installed.
-- Your app knows where to read SMTP credentials.
-- The imports resolve cleanly, so you can start writing routes.
+- Better-Notify core, a channel adapter, and a transport are installed.
+- Your app knows where to read provider credentials.
 
-The next docs build on that setup in two different ways:
+## Where to go next
 
-- [Quick Start](/docs/get-started/quick-start) builds a working setup with routes, sub-catalogs, and sends a real email through Gmail SMTP.
-- [Advanced: Failover and Middleware](/docs/advanced/failover-and-middleware) keeps the same email shape and adds provider failover, tracing, event logging, and rate limiting.
+- [Your First Email](/docs/get-started/quick-start) breaks down how channels, routes, sub-catalogs, and the typed client work together — useful whether you scaffolded with the CLI or installed manually.
+- [Channels](/docs/concepts/channels) explains how email, SMS, push, and custom channels are defined.
+- [Transports](/docs/transports) covers provider adapters, multi-transport composition, and failover.
 
 ## Other packages
 
-You do not need these for the first email + SMTP example, but they are the next common additions:
+These are the next common additions after the email + SMTP example:
 
 - `@betternotify/sms` for SMS routes.
 - `@betternotify/push` for push notification routes.
-- `@betternotify/react-email` if you want React Email templates.
-- `@betternotify/resend` if you prefer Resend over SMTP.
-
-Continue to [Quick Start](/docs/get-started/quick-start) to wire the first route and send the first message.
+- `@betternotify/react-email` for React Email templates.
+- `@betternotify/resend` for Resend as a transport instead of SMTP.
