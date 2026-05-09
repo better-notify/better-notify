@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.3-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.2-beta.1...@betternotify/web-v1.0.3-beta.1) (2026-05-09)
+## [1.0.3-beta.2](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.0.2-beta.1...@betternotify/web-v1.0.3-beta.2) (2026-05-09)
 
 
 ### Bug Fixes

@@ -54,6 +54,7 @@ jobs:
         run: pnpm exec turbo run build --filter='./${{ matrix.path }}...'
 
       - uses: ./.github/actions/publish-packages
+        if: matrix.path != ''
         with:
           filter: './${{ matrix.path }}'
           tag: beta
@@ -61,6 +62,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Tag as latest
+        if: matrix.path != ''
         working-directory: ${{ matrix.path }}
         run: |
           set -euo pipefail
