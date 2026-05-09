@@ -81,6 +81,8 @@ export function Install() {
                 {cmd}
               </span>
               <button
+                type="button"
+                aria-label={copied ? 'Copied' : 'Copy command'}
                 onClick={handleCopy}
                 className={`flex cursor-pointer border-0 bg-transparent ${copied ? 'text-bn-success-700 dark:text-bn-success-300' : 'text-bn-slate-400 dark:text-bn-slate-500'}`}
               >

@@ -205,7 +205,7 @@ function ogLayout(title: string, description?: string) {
               letterSpacing: '0.02em',
             },
           },
-          'better-notify.com',
+          new URL(appConfig.baseUrl).hostname,
         ),
       ),
     ),
