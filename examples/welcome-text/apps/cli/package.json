@@ -27,6 +27,7 @@
     "@betternotify/twilio": "workspace:*",
     "@betternotify/zapier": "workspace:*",
     "@t3-oss/env-core": "catalog:",
+    "evlog": "catalog:",
     "handlebars": "catalog:",
     "mjml": "catalog:",
     "react": "catalog:",

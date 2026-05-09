@@ -30,6 +30,7 @@ catalog:
   '@vitejs/plugin-react': 6.0.1
   '@vitest/coverage-v8': 2.1.9
   'bullmq': 5.0.0
+  'evlog': 2.16.0
   'fumadocs-core': 16.8.8
   'fumadocs-mdx': 14.3.2
   'fumadocs-openapi': 10.8.1

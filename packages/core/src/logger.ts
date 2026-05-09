@@ -173,6 +173,44 @@ type PinoLike = {
   child(bindings: object): PinoLike;
 };
 
+export type BaseLoggerLike = {
+  debug(message: string, payload?: object): void;
+  info(message: string, payload?: object): void;
+  warn(message: string, payload?: object): void;
+  error(message: string, payload?: object): void;
+};
+
+export type BaseLoggerWithChild = BaseLoggerLike & {
+  child(bindings: object): BaseLoggerWithChild;
+};
+
+export const fromLogger = (logger: BaseLoggerLike | BaseLoggerWithChild): LoggerLike => {
+  const wrap = (
+    current: BaseLoggerLike | BaseLoggerWithChild,
+    bindings: Record<string, unknown>,
+  ): LoggerLike => {
+    const merge = (payload?: object): object | undefined => {
+      const hasBindings = Object.keys(bindings).length > 0;
+      if (!hasBindings) return payload;
+      if (!payload) return bindings;
+      return { ...bindings, ...(payload as Record<string, unknown>) };
+    };
+    return {
+      debug: (msg, payload) => current.debug(msg, merge(payload)),
+      info: (msg, payload) => current.info(msg, merge(payload)),
+      warn: (msg, payload) => current.warn(msg, merge(payload)),
+      error: (msg, payload) => current.error(msg, merge(payload)),
+      child: (extra) => {
+        if ('child' in current) {
+          return wrap(current.child(extra), {});
+        }
+        return wrap(current, { ...bindings, ...(extra as Record<string, unknown>) });
+      },
+    };
+  };
+  return wrap(logger, {});
+};
+
 export const fromPino = (pino: PinoLike): LoggerLike => ({
   debug: (msg, payload) => pino.debug(payload ?? {}, msg),
   info: (msg, payload) => pino.info(payload ?? {}, msg),
