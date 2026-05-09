@@ -1,12 +1,5 @@
 # Changelog
 
-## [1.0.0-beta.2](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.1...@betternotify/core-v1.0.0-beta.2) (2026-05-10)
-
-
-### Features
-
-* **core:** add fromLogger adapter for loggers without child method ([#99](https://github.com/better-notify/better-notify/issues/99)) ([5ded36f](https://github.com/better-notify/better-notify/commit/5ded36faded6211cc3a17a11a51cc6f4c9a2b1c0))
-
 ## [1.0.0-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/core-v0.0.5-alpha.0...@betternotify/core-v1.0.0-beta.1) (2026-05-08)
 
 

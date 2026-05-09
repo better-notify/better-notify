@@ -1,5 +1,5 @@
 {
-  "packages/core": "1.0.0-beta.2",
+  "packages/core": "1.0.0-beta.1",
   "packages/email": "1.0.0-beta.1",
   "packages/sms": "1.0.0-beta.1",
   "packages/push": "1.0.0-beta.1",
