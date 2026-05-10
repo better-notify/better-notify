@@ -25,5 +25,6 @@ export type { CreateMockTransportOptions, MockTransport } from './mock-transport
 export { mapTransport } from './map-transport.js';
 export type { MapTransportFn } from './map-transport.js';
 export { isProviderRetriable } from './is-provider-retriable.js';
+export { HttpStatusCode } from './http-status-code.js';
 export { mapHttpStatus } from './map-http-status.js';
 export type { MappedHttpError } from './map-http-status.js';
