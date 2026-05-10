@@ -1,5 +1,5 @@
 {
-  "packages/core": "1.0.0-beta.2",
+  "packages/core": "1.0.0-beta.3",
   "packages/email": "1.0.0-beta.1",
   "packages/sms": "1.0.0-beta.1",
   "packages/push": "1.0.0-beta.1",
@@ -7,15 +7,15 @@
   "packages/mjml": "1.0.0-beta.1",
   "packages/handlebars": "1.0.0-beta.1",
   "packages/smtp": "1.0.0-beta.1",
-  "packages/resend": "1.0.0-beta.1",
+  "packages/resend": "1.0.0-beta.2",
   "packages/telegram": "1.0.0-beta.1",
-  "packages/cloudflare-email": "1.0.0-beta.1",
-  "packages/discord": "1.0.0-beta.1",
-  "packages/slack": "1.0.0-beta.1",
-  "packages/zapier": "1.0.0-beta.1",
+  "packages/cloudflare-email": "1.0.0-beta.2",
+  "packages/discord": "1.0.0-beta.2",
+  "packages/slack": "1.0.0-beta.2",
+  "packages/zapier": "1.0.0-beta.2",
   "packages/mailchimp": "1.0.0-beta.1",
-  "packages/twilio": "1.0.0-beta.1",
-  "packages/autosend": "1.0.0-beta.1",
-  "packages/create-better-notify": "1.0.0-beta.1",
-  "apps/web": "1.1.0-beta.2"
+  "packages/twilio": "1.0.0-beta.2",
+  "packages/autosend": "1.0.0-beta.2",
+  "packages/create-better-notify": "1.0.0-beta.2",
+  "apps/web": "1.1.0-beta.3"
 }
