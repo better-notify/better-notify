@@ -90,7 +90,7 @@ describe('postWebhook', () => {
     expect(result.error.message).toContain('network error');
   });
 
-  it('returns NotifyRpcProviderError with CONFIG code on 410 Gone', async () => {
+  it('returns NotifyRpcProviderError with PROVIDER code on 410 Gone', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     fetchMock.mockResolvedValue(new Response('Gone', { status: 410 }));
 
@@ -99,14 +99,14 @@ describe('postWebhook', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
     expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
-    expect(result.error.code).toBe('CONFIG');
+    expect(result.error.code).toBe('PROVIDER');
     expect(result.error.provider).toBe('zapier');
     expect(result.error.httpStatus).toBe(410);
     expect(result.error.retriable).toBe(false);
     expect(result.error.message).toContain('expired');
   });
 
-  it('returns NotifyRpcProviderError with PROVIDER code on 4xx (non-410)', async () => {
+  it('returns NotifyRpcProviderError with VALIDATION code on 400', async () => {
     const { postWebhook } = await import('./post-webhook.js');
     fetchMock.mockResolvedValue(new Response('Bad Request', { status: 400 }));
 
@@ -115,7 +115,7 @@ describe('postWebhook', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
     expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
-    expect(result.error.code).toBe('PROVIDER');
+    expect(result.error.code).toBe('VALIDATION');
     expect(result.error.provider).toBe('zapier');
     expect(result.error.httpStatus).toBe(400);
     expect(result.error.retriable).toBe(false);

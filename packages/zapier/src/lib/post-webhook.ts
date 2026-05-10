@@ -1,5 +1,5 @@
 import { NotifyRpcProviderError } from '@betternotify/core';
-import { createHttpClient, HttpStatusCode } from '@betternotify/core/transports';
+import { createHttpClient, HttpStatusCode, mapHttpStatus } from '@betternotify/core/transports';
 import type { HttpClientBehaviorOptions } from '@betternotify/core/transports';
 
 export type PostWebhookOptions = {
@@ -39,18 +39,20 @@ export const postWebhook = async (opts: PostWebhookOptions): Promise<PostWebhook
       };
     }
 
-    const code = result.status === HttpStatusCode.GONE ? 'CONFIG' : 'PROVIDER';
+    const mapped = mapHttpStatus(result.status);
     const detail =
-      result.status === HttpStatusCode.GONE ? 'webhook URL expired or deleted' : `HTTP ${result.status}`;
+      result.status === HttpStatusCode.GONE
+        ? 'webhook URL expired or deleted'
+        : `HTTP ${result.status}`;
 
     return {
       ok: false,
       error: new NotifyRpcProviderError({
         message: `Zapier: ${detail}`,
-        code,
+        code: mapped.code,
         provider: 'zapier',
         httpStatus: result.status,
-        retriable: result.status >= HttpStatusCode.INTERNAL_SERVER_ERROR,
+        retriable: mapped.retriable,
         route: opts.route,
         messageId: opts.messageId,
       }),
