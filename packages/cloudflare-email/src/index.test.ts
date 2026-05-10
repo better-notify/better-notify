@@ -446,7 +446,7 @@ describe('cloudflareEmailTransport — network errors', () => {
     expect(err.retriable).toBe(true);
   });
 
-  it('returns PROVIDER when response is valid JSON but missing errors/result fields', async () => {
+  it('returns VALIDATION when response is valid JSON but missing errors/result fields', async () => {
     const { cloudflareEmailTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: false }), { status: 400 }));
     const t = cloudflareEmailTransport({ accountId: 'acc123', apiToken: 'tok456' });
@@ -456,7 +456,7 @@ describe('cloudflareEmailTransport — network errors', () => {
     if (result.ok) throw new Error('expected not ok');
     expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     const err = result.error as NotifyRpcProviderError;
-    expect(err.code).toBe('PROVIDER');
+    expect(err.code).toBe('VALIDATION');
     expect(err.provider).toBe('cloudflare-email');
     expect(err.httpStatus).toBe(400);
     expect(result.error.message).toContain('unknown error');

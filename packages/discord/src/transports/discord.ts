@@ -1,5 +1,5 @@
 import { consoleLogger, NotifyRpcProviderError } from '@betternotify/core';
-import { createTransport, createHttpClient } from '@betternotify/core/transports';
+import { createTransport, createHttpClient, mapHttpStatus } from '@betternotify/core/transports';
 import type { RenderedDiscord } from '../types.js';
 import type { DiscordTransportData, Transport } from './types.js';
 import type { DiscordTransportOptions } from './discord.types.js';
@@ -15,16 +15,6 @@ type DiscordErrorResponse = {
 type DiscordSuccessResponse = {
   id: string;
   [key: string]: unknown;
-};
-
-const mapError = (
-  status: number,
-): { code: 'VALIDATION' | 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
-  if (status === 400) return { code: 'VALIDATION', retriable: false };
-  if (status === 401 || status === 403 || status === 404)
-    return { code: 'CONFIG', retriable: false };
-  if (status === 429) return { code: 'RATE_LIMITED', retriable: true };
-  return { code: 'PROVIDER', retriable: status >= 500 };
 };
 
 const buildJsonPayload = (
@@ -117,7 +107,7 @@ export const discordTransport = (opts: DiscordTransportOptions): Transport => {
         }
 
         const errData = result.body as DiscordErrorResponse;
-        const { code, retriable } = mapError(result.status);
+        const { code, retriable } = mapHttpStatus(result.status);
         const retryAfterBody = errData.retry_after;
         const retryAfterMs = retryAfterBody ? Math.ceil(retryAfterBody * 1000) : undefined;
         const suffix = retryAfterBody ? ` (retry after ${retryAfterBody}s)` : '';

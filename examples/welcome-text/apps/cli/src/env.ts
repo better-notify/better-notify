@@ -4,6 +4,21 @@ import z from 'zod';
 export const env = createEnv({
   server: {
     /**
+     * Autosend cluster
+     */
+    AUTOSEND_API_KEY: z.string().optional().default('as_test_123').describe('Autosend API key'),
+    AUTOSEND_FROM_EMAIL: z
+      .string()
+      .optional()
+      .default('noreply@example.com')
+      .describe('Autosend from email'),
+    AUTOSEND_DESTINATION_EMAIL: z
+      .string()
+      .optional()
+      .default('example@email.com')
+      .describe('Autosend destination email'),
+
+    /**
      * Telegram cluster
      */
     TELEGRAM_CHAT_ID: z.coerce.number().optional().default(123456).describe('Telegram chat ID'),

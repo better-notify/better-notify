@@ -1,5 +1,10 @@
 import { consoleLogger, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
-import { createTransport, createHttpClient } from '@betternotify/core/transports';
+import {
+  createTransport,
+  createHttpClient,
+  mapHttpStatus,
+  type MappedHttpError,
+} from '@betternotify/core/transports';
 import type { RenderedSms, SmsTransportData, Transport } from '@betternotify/sms';
 import type { TwilioSmsTransportOptions } from './twilio.types.js';
 
@@ -23,19 +28,14 @@ const CONFIG_CODES = new Set([20003, 20005, 20006, 20008]);
 const VALIDATION_CODES = new Set([21211, 21612, 21610, 21614, 21217, 21219]);
 const RATE_LIMITED_CODES = new Set([14107, 20429, 63018]);
 
-const mapError = (
-  twilioCode: number | undefined,
-  httpStatus: number,
-): { code: 'CONFIG' | 'VALIDATION' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
+const mapError = (twilioCode: number | undefined, httpStatus: number): MappedHttpError => {
   if (twilioCode !== undefined) {
     if (CONFIG_CODES.has(twilioCode)) return { code: 'CONFIG', retriable: false };
     if (VALIDATION_CODES.has(twilioCode)) return { code: 'VALIDATION', retriable: false };
     if (RATE_LIMITED_CODES.has(twilioCode)) return { code: 'RATE_LIMITED', retriable: true };
   }
-  if (httpStatus === 401 || httpStatus === 403) return { code: 'CONFIG', retriable: false };
-  if (httpStatus === 400) return { code: 'VALIDATION', retriable: false };
-  if (httpStatus === 429) return { code: 'RATE_LIMITED', retriable: true };
-  return { code: 'PROVIDER', retriable: httpStatus >= 500 };
+
+  return mapHttpStatus(httpStatus);
 };
 
 const encodeBasicAuth = (accountSid: string, authToken: string): string =>

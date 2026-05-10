@@ -1,0 +1,97 @@
+---
+title: Autosend
+icon: AutosendLogo
+description: Send emails via the Autosend HTTP API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Autosend transport is an official Better-Notify package that sends email through the [Autosend](https://autosend.com) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+
+## Install
+
+```package-install
+@betternotify/autosend @betternotify/core @betternotify/email
+```
+
+## Getting your API key
+
+1. Sign up or log in at [autosend.com](https://autosend.com).
+2. Navigate to **API Keys** in your dashboard.
+3. Click **Create API Key** and copy the generated key — it starts with `as_`.
+
+Store it as an environment variable:
+
+```sh
+AUTOSEND_API_KEY=as_xxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { autosendTransport } from '@betternotify/autosend';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: autosendTransport({
+      apiKey: process.env.AUTOSEND_API_KEY!,
+    }),
+  },
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    apiKey: {
+      description: 'Autosend API key (starts with as_). Required.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Override the Autosend API base URL. Useful for testing.',
+      type: 'string',
+      default: '"https://api.autosend.com"',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+  }}
+/>
+
+## Error handling
+
+The transport maps HTTP status codes to Better-Notify error codes using the shared `mapHttpStatus` utility:
+
+| HTTP status | Better-Notify code | Retriable |
+| --- | --- | --- |
+| 400 | `VALIDATION` | No |
+| 422 | `VALIDATION` | No |
+| 401 | `CONFIG` | No |
+| 403 | `CONFIG` | No |
+| 429 | `RATE_LIMITED` | Yes |
+| 5xx | `PROVIDER` | Yes |
+
+Network failures and unparseable responses are wrapped as `PROVIDER` errors. Timeouts are wrapped as `TIMEOUT` errors.
+
+## Multiple recipients
+
+Autosend's API accepts a single recipient per request. When you send to multiple recipients, the transport fires one request per recipient in parallel and aggregates the results — accepted recipients are reported in `accepted`, failed ones in `rejected`. If all recipients fail, the transport returns the first error.

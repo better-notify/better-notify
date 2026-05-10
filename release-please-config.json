@@ -89,6 +89,12 @@
       "prerelease-type": "beta",
       "bootstrap-sha": "45ff0e39f9ee0677380f32dc9fed369a585c02ca"
     },
+    "packages/autosend": {
+      "release-type": "node",
+      "component": "@betternotify/autosend",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "0a8e6c0b915533cc7082fa8e96b6f0165b479943"
+    },
     "packages/create-better-notify": {
       "release-type": "node",
       "component": "create-better-notify",

@@ -4,6 +4,7 @@
   "pages": [
     "index",
     "multi-transport",
+    "autosend",
     "cloudflare-email",
     "custom-transports",
     "discord",
