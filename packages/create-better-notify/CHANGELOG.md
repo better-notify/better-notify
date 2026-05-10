@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.2](https://github.com/better-notify/better-notify/compare/create-better-notify-v1.0.0-beta.1...create-better-notify-v1.0.0-beta.2) (2026-05-10)
+
+
+### Bug Fixes
+
+* **create-better-notify:** extract version injection into testable module ([#105](https://github.com/better-notify/better-notify/issues/105)) ([9fbf500](https://github.com/better-notify/better-notify/commit/9fbf500ee402576ef9c5bc9301778bb28a2bfabc))
+
 ## [1.0.0-beta.1](https://github.com/better-notify/better-notify/compare/create-better-notify-v0.0.6-alpha.0...create-better-notify-v1.0.0-beta.1) (2026-05-08)
 
 
