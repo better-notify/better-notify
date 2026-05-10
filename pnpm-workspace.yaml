@@ -42,8 +42,8 @@ catalog:
   'oxfmt': 0.46.0
   'oxlint': 1.61.0
   '@takumi-rs/image-response': 1.1.2
-  'react': 19.2.5
-  'react-dom': 19.2.5
+  'react': 19.2.6
+  'react-dom': 19.2.6
   'react-email': 6.0.0
   'shiki': 4.0.2
   'rolldown': 1.0.0
@@ -60,6 +60,6 @@ catalog:
 
 catalogs:
   'react-peer':
-    'react': '18.0.0 || 19.0.0'
+    'react': '18.0.0 || 19.0.0 || 19.2'
 
 minimumReleaseAge: 1440
