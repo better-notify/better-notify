@@ -76,6 +76,13 @@ describe('resolveWorkspaceVersions', () => {
 
     expect(versions['@betternotify/core']).toBe('1.0.0-beta.2');
   });
+
+  it('throws on malformed package.json', () => {
+    mkdirSync(join(packagesDir, 'bad'));
+    writeFileSync(join(packagesDir, 'bad', 'package.json'), '{invalid json}');
+
+    expect(() => resolveWorkspaceVersions(packagesDir)).toThrow(SyntaxError);
+  });
 });
 
 describe('injectVersions', () => {
@@ -195,5 +202,14 @@ describe('injectVersions', () => {
 
     const pkg = JSON.parse(readFileSync(join(templatesDir, 'valid', 'package.json'), 'utf-8'));
     expect(pkg.dependencies['@betternotify/core']).toBe('1.0.0-beta.2');
+  });
+
+  it('throws on malformed package.json', () => {
+    mkdirSync(join(templatesDir, 'bad'));
+    writeFileSync(join(templatesDir, 'bad', 'package.json'), '{invalid json}');
+
+    expect(() => injectVersions(templatesDir, { '@betternotify/core': '1.0.0' })).toThrow(
+      SyntaxError,
+    );
   });
 });
