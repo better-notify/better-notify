@@ -1,71 +1,70 @@
 import { describe, expect, it } from 'vitest';
 import { mapHttpStatus } from './map-http-status.js';
-import { HttpStatusCode } from './http-status-code.js';
 
 describe('mapHttpStatus', () => {
   it('maps 400 to VALIDATION', () => {
-    expect(mapHttpStatus(HttpStatusCode.BAD_REQUEST)).toEqual({
+    expect(mapHttpStatus(400)).toEqual({
       code: 'VALIDATION',
       retriable: false,
     });
   });
 
   it('maps 422 to VALIDATION', () => {
-    expect(mapHttpStatus(HttpStatusCode.UNPROCESSABLE_ENTITY)).toEqual({
+    expect(mapHttpStatus(422)).toEqual({
       code: 'VALIDATION',
       retriable: false,
     });
   });
 
   it('maps 401 to CONFIG', () => {
-    expect(mapHttpStatus(HttpStatusCode.UNAUTHORIZED)).toEqual({
+    expect(mapHttpStatus(401)).toEqual({
       code: 'CONFIG',
       retriable: false,
     });
   });
 
   it('maps 403 to CONFIG', () => {
-    expect(mapHttpStatus(HttpStatusCode.FORBIDDEN)).toEqual({
+    expect(mapHttpStatus(403)).toEqual({
       code: 'CONFIG',
       retriable: false,
     });
   });
 
   it('maps 404 to CONFIG', () => {
-    expect(mapHttpStatus(HttpStatusCode.NOT_FOUND)).toEqual({
+    expect(mapHttpStatus(404)).toEqual({
       code: 'CONFIG',
       retriable: false,
     });
   });
 
   it('maps 429 to RATE_LIMITED', () => {
-    expect(mapHttpStatus(HttpStatusCode.TOO_MANY_REQUESTS)).toEqual({
+    expect(mapHttpStatus(429)).toEqual({
       code: 'RATE_LIMITED',
       retriable: true,
     });
   });
 
   it('maps 5xx to retriable PROVIDER', () => {
-    expect(mapHttpStatus(HttpStatusCode.INTERNAL_SERVER_ERROR)).toEqual({
+    expect(mapHttpStatus(500)).toEqual({
       code: 'PROVIDER',
       retriable: true,
     });
-    expect(mapHttpStatus(HttpStatusCode.BAD_GATEWAY)).toEqual({
+    expect(mapHttpStatus(502)).toEqual({
       code: 'PROVIDER',
       retriable: true,
     });
-    expect(mapHttpStatus(HttpStatusCode.SERVICE_UNAVAILABLE)).toEqual({
+    expect(mapHttpStatus(503)).toEqual({
       code: 'PROVIDER',
       retriable: true,
     });
   });
 
   it('maps other 4xx to non-retriable PROVIDER', () => {
-    expect(mapHttpStatus(HttpStatusCode.CONFLICT)).toEqual({
+    expect(mapHttpStatus(409)).toEqual({
       code: 'PROVIDER',
       retriable: false,
     });
-    expect(mapHttpStatus(HttpStatusCode.GONE)).toEqual({
+    expect(mapHttpStatus(410)).toEqual({
       code: 'PROVIDER',
       retriable: false,
     });
