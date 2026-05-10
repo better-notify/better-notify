@@ -182,4 +182,18 @@ describe('injectVersions', () => {
     expect(pkg1.dependencies['@betternotify/core']).toBe('1.0.0-beta.2');
     expect(pkg2.dependencies['@betternotify/core']).toBe('1.0.0-beta.2');
   });
+
+  it('skips template directories without a package.json', () => {
+    mkdirSync(join(templatesDir, 'valid'));
+    mkdirSync(join(templatesDir, 'no-pkg'));
+    writeFileSync(
+      join(templatesDir, 'valid', 'package.json'),
+      JSON.stringify({ dependencies: { '@betternotify/core': '0.0.0-inject' } }),
+    );
+
+    injectVersions(templatesDir, { '@betternotify/core': '1.0.0-beta.2' });
+
+    const pkg = JSON.parse(readFileSync(join(templatesDir, 'valid', 'package.json'), 'utf-8'));
+    expect(pkg.dependencies['@betternotify/core']).toBe('1.0.0-beta.2');
+  });
 });
