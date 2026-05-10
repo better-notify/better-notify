@@ -43,12 +43,12 @@ const mail = createClient({
 
 ## Options
 
-| Field    | Type     | Description                                                  |
-| -------- | -------- | ------------------------------------------------------------ |
-| `apiKey` | `string` | Autosend API key. Required.                                  |
-| `baseUrl`| `string` | Override the API base URL. Defaults to `https://api.autosend.com`. |
-| `logger` | `object` | Optional `LoggerLike`. Defaults to `consoleLogger()`.        |
-| `http`   | `object` | HTTP behavior options (retry, timeout, hooks).               |
+| Field     | Type     | Description                                                        |
+| --------- | -------- | ------------------------------------------------------------------ |
+| `apiKey`  | `string` | Autosend API key. Required.                                        |
+| `baseUrl` | `string` | Override the API base URL. Defaults to `https://api.autosend.com`. |
+| `logger`  | `object` | Optional `LoggerLike`. Defaults to `consoleLogger()`.              |
+| `http`    | `object` | HTTP behavior options (retry, timeout, hooks).                     |
 
 ## Caveats
 

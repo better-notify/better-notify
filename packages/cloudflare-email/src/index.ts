@@ -1,7 +1,11 @@
 import type { Address, RenderedMessage, Transport } from '@betternotify/email';
 import { normalizeAddress } from '@betternotify/email/transports';
 import { consoleLogger, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
-import { createHttpClient } from '@betternotify/core/transports';
+import {
+  createHttpClient,
+  mapHttpStatus,
+  type MappedHttpError,
+} from '@betternotify/core/transports';
 import type {
   CloudflareEmailTransportOptions,
   CloudflareEmailFrom,
@@ -27,17 +31,14 @@ const VALIDATION_CODES = [10001, 10200, 10201, 10202];
 const RATE_LIMITED_CODES = [10004];
 const DEFAULT_TIMEOUT_MS = 30_000;
 
-const mapCfError = (
-  errorCode: number | undefined,
-  httpStatus: number,
-): { code: 'VALIDATION' | 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
+const mapCfError = (errorCode: number | undefined, httpStatus: number): MappedHttpError => {
   if (errorCode !== undefined) {
     if (VALIDATION_CODES.includes(errorCode)) return { code: 'VALIDATION', retriable: false };
     if (errorCode === 10203) return { code: 'CONFIG', retriable: false };
     if (RATE_LIMITED_CODES.includes(errorCode)) return { code: 'RATE_LIMITED', retriable: true };
   }
-  if (httpStatus === 429) return { code: 'RATE_LIMITED', retriable: true };
-  return { code: 'PROVIDER', retriable: httpStatus >= 500 };
+
+  return mapHttpStatus(httpStatus);
 };
 
 const toFrom = (addr: Address): CloudflareEmailFrom => {

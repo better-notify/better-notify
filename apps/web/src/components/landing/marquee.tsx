@@ -145,6 +145,46 @@ const providers: { name: string; icon: ReactNode }[] = [
       </svg>
     ),
   },
+  {
+    name: 'Autosend',
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="m14 13-2-3-2 3"
+        ></path>
+        <path
+          stroke="currentColor"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M14.5 5.5C14.5 8 12 10 12 10S9.5 8 9.5 5.5 10.62 2 12 2s2.5 1 2.5 3.5ZM18.5 15.5C16 15.5 14 13 14 13s2-2.5 4.5-2.5S22 11.62 22 13s-1 2.5-3.5 2.5ZM5.5 15.5C8 15.5 10 13 10 13s-2-2.5-4.5-2.5S2 11.62 2 13s1 2.5 3.5 2.5Z"
+        ></path>
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M16 22s-3-6-6-9"
+        ></path>
+        <path
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M8 22s3-6 6-9"
+        ></path>
+      </svg>
+    ),
+  },
   { name: 'Zapier', icon: <LightningIcon size={20} weight="fill" className="text-[#FF4A00]" /> },
   { name: 'SMTP', icon: <AtIcon size={20} weight="fill" className="text-[#999]" /> },
   { name: 'SMS', icon: <PhoneIcon size={20} weight="fill" className="text-[#999]" /> },

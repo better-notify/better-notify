@@ -242,10 +242,9 @@ describe('autosendTransport — multi-recipient fan-out', () => {
         ),
       )
       .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ success: false, message: 'Invalid recipient' }),
-          { status: 422 },
-        ),
+        new Response(JSON.stringify({ success: false, message: 'Invalid recipient' }), {
+          status: 422,
+        }),
       );
     const t = autosendTransport({ apiKey: 'as_test_123' });
     const result = await t.send(
@@ -266,10 +265,7 @@ describe('autosendTransport — multi-recipient fan-out', () => {
       }),
     );
     const t = autosendTransport({ apiKey: 'as_test_123' });
-    const result = await t.send(
-      { ...baseMessage, to: [{ email: 'a' }, { email: 'b' }] },
-      baseCtx,
-    );
+    const result = await t.send({ ...baseMessage, to: [{ email: 'a' }, { email: 'b' }] }, baseCtx);
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
@@ -310,10 +306,9 @@ describe('autosendTransport — Autosend API errors', () => {
   it('returns VALIDATION for 422 status', async () => {
     const { autosendTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({ success: false, message: 'Missing `to` field.' }),
-        { status: 422 },
-      ),
+      new Response(JSON.stringify({ success: false, message: 'Missing `to` field.' }), {
+        status: 422,
+      }),
     );
     const t = autosendTransport({ apiKey: 'as_test_123' });
     const result = await t.send(baseMessage, baseCtx);

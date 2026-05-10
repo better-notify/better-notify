@@ -10,6 +10,7 @@
     "dotenvx": "dotenvx"
   },
   "dependencies": {
+    "@betternotify/autosend": "workspace:*",
     "@betternotify/cloudflare-email": "workspace:*",
     "@betternotify/core": "workspace:*",
     "@betternotify/discord": "workspace:*",

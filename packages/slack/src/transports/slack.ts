@@ -4,7 +4,7 @@ import {
   NotifyRpcError,
   NotifyRpcProviderError,
 } from '@betternotify/core';
-import { createTransport, createHttpClient } from '@betternotify/core/transports';
+import { createTransport, createHttpClient, HttpStatusCode } from '@betternotify/core/transports';
 import type { RenderedSlack } from '../types.js';
 import type { SlackTransportData, Transport } from './types.js';
 import type { SlackTransportOptions } from './slack.types.js';
@@ -212,7 +212,7 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
               code: 'PROVIDER',
               provider: 'slack',
               httpStatus: uploadResponse.status,
-              retriable: uploadResponse.status >= 500,
+              retriable: uploadResponse.status >= HttpStatusCode.INTERNAL_SERVER_ERROR,
               route: ctx.route,
               messageId: ctx.messageId,
             }),

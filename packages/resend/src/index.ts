@@ -1,7 +1,7 @@
 import type { RenderedMessage } from '@betternotify/email';
 import { createTransport, formatAddress, normalizeAddress } from '@betternotify/email/transports';
 import { consoleLogger, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
-import { createHttpClient } from '@betternotify/core/transports';
+import { createHttpClient, mapHttpStatus } from '@betternotify/core/transports';
 import type { WebhookAdapter } from '@betternotify/core/webhook';
 import { NotifyRpcNotImplementedError } from '@betternotify/core';
 import type {
@@ -65,14 +65,6 @@ const buildRequestBody = (message: RenderedMessage, from: string): ResendRequest
   return body;
 };
 
-const mapError = (
-  status: number,
-): { code: 'VALIDATION' | 'CONFIG' | 'PROVIDER'; retriable: boolean } => {
-  if (status === 422) return { code: 'VALIDATION', retriable: false };
-  if (status === 401 || status === 403) return { code: 'CONFIG', retriable: false };
-  return { code: 'PROVIDER', retriable: status >= 500 };
-};
-
 /** @experimental Resend transport using the Resend HTTP API. */
 export const resendTransport = (opts: ResendTransportOptions) => {
   const baseUrl = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
@@ -124,7 +116,7 @@ export const resendTransport = (opts: ResendTransportOptions) => {
         }
 
         const errData = result.body ?? ({} as ResendErrorResponse);
-        const { code, retriable } = mapError(result.status);
+        const { code, retriable } = mapHttpStatus(result.status);
         const errorMessage = `Resend transport: [${errData.name}] ${errData.message}`;
         log.error(errorMessage, {
           err: { status: result.status, name: errData.name, message: errData.message },

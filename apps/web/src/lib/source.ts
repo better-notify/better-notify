@@ -21,6 +21,7 @@ type ChannelBadge = {
 };
 
 const transportChannels: Record<string, string> = {
+  autosend: 'email',
   smtp: 'email',
   ses: 'email',
   resend: 'email',

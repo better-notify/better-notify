@@ -284,6 +284,9 @@ importers:
 
   examples/welcome-text/apps/cli:
     dependencies:
+      '@betternotify/autosend':
+        specifier: workspace:*
+        version: link:../../../../packages/autosend
       '@betternotify/cloudflare-email':
         specifier: workspace:*
         version: link:../../../../packages/cloudflare-email

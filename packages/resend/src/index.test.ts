@@ -266,7 +266,7 @@ describe('resendTransport — Resend API errors', () => {
     expect(err.retriable).toBe(false);
   });
 
-  it('returns PROVIDER for 429 rate limit', async () => {
+  it('returns RATE_LIMITED for 429 rate limit', async () => {
     const { resendTransport } = await import('./index.js');
     fetchMock.mockResolvedValue(
       new Response(
@@ -285,10 +285,10 @@ describe('resendTransport — Resend API errors', () => {
     if (result.ok) throw new Error('expected not ok');
     expect(result.error).toBeInstanceOf(NotifyRpcProviderError);
     const err = result.error as NotifyRpcProviderError;
-    expect(err.code).toBe('PROVIDER');
+    expect(err.code).toBe('RATE_LIMITED');
     expect(err.provider).toBe('resend');
     expect(err.httpStatus).toBe(429);
-    expect(err.retriable).toBe(false);
+    expect(err.retriable).toBe(true);
   });
 
   it('returns PROVIDER for 500 server error (retriable)', async () => {

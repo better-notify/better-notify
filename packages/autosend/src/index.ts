@@ -1,7 +1,7 @@
 import type { Address, RenderedMessage } from '@betternotify/email';
 import { createTransport, normalizeAddress } from '@betternotify/email/transports';
 import { consoleLogger, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
-import { createHttpClient, type HttpResult } from '@betternotify/core/transports';
+import { createHttpClient, mapHttpStatus, type HttpResult } from '@betternotify/core/transports';
 import type {
   AutosendAddress,
   AutosendErrorResponse,
@@ -38,18 +38,11 @@ const buildRequestBody = (
     to: toAutosendAddress(to),
     subject: message.subject,
   };
+
   if (message.html) body.html = message.html;
   if (message.text) body.text = message.text;
-  return body;
-};
 
-const mapError = (
-  status: number,
-): { code: 'VALIDATION' | 'CONFIG' | 'RATE_LIMITED' | 'PROVIDER'; retriable: boolean } => {
-  if (status === 422 || status === 400) return { code: 'VALIDATION', retriable: false };
-  if (status === 401 || status === 403) return { code: 'CONFIG', retriable: false };
-  if (status === 429) return { code: 'RATE_LIMITED', retriable: true };
-  return { code: 'PROVIDER', retriable: status >= 500 };
+  return body;
 };
 
 const errorMessageFromBody = (body: AutosendErrorResponse | undefined, status: number): string => {
@@ -86,6 +79,7 @@ export const autosendTransport = (opts: AutosendTransportOptions) => {
 
   return createTransport({
     name: 'autosend',
+
     async send(message, ctx) {
       if (!message.from) {
         throw new NotifyRpcError({
@@ -140,6 +134,7 @@ export const autosendTransport = (opts: AutosendTransportOptions) => {
             route: ctx.route,
             recipient,
           });
+
           if (!firstError) {
             firstError = new NotifyRpcProviderError({
               message: `Autosend transport: ${result.timedOut ? 'request timed out' : `network error: ${result.cause.message}`}`,
@@ -151,17 +146,22 @@ export const autosendTransport = (opts: AutosendTransportOptions) => {
               cause: result.cause,
             });
           }
+
           continue;
         }
 
         const errBody = result.body ?? undefined;
-        const { code, retriable } = mapError(result.status);
+
+        const { code, retriable } = mapHttpStatus(result.status);
+
         const errorMessage = errorMessageFromBody(errBody, result.status);
+
         log.error(errorMessage, {
           err: { status: result.status, body: errBody },
           route: ctx.route,
           recipient,
         });
+
         if (!firstError) {
           firstError = new NotifyRpcProviderError({
             message: errorMessage,

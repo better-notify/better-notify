@@ -41,6 +41,7 @@ import { runEmailZapier } from './examples/email-zapier';
 import { runDiscordZapier } from './examples/discord-zapier';
 import { runEmailMailchimp } from './examples/email-mailchimp';
 import { runEmailSmtpFailover } from './examples/email-smtp-failover';
+import { runEmailAutosend } from './examples/email-autosend';
 import { runCloudflareEmailLoggerEvlog } from './examples/cloudflare-email-logger-evlog';
 
 const examples: Record<string, () => Promise<void>> = {
@@ -88,6 +89,7 @@ const examples: Record<string, () => Promise<void>> = {
   'discord-zapier': runDiscordZapier,
   'email-mailchimp': runEmailMailchimp,
   'email-smtp-failover': runEmailSmtpFailover,
+  'email-autosend': runEmailAutosend,
 };
 
 const main = async (): Promise<void> => {
