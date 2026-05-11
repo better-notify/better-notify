@@ -98,6 +98,38 @@ const MailchimpLogo = ({ size = 18 }: { size?: string | number }) =>
     },
   });
 
+const OneSignalLogo = ({ size = 18 }: { size?: string | number }) =>
+  createElement(
+    'svg',
+    {
+      width: size,
+      height: size,
+      viewBox: '0 0 256 256',
+      fill: 'none',
+      xmlns: 'http://www.w3.org/2000/svg',
+    },
+    createElement('circle', {
+      cx: '128',
+      cy: '128',
+      r: '112',
+      stroke: 'currentColor',
+      strokeWidth: '16',
+    }),
+    createElement('path', {
+      d: 'M128 64 L172 192 L84 192 Z',
+      stroke: 'currentColor',
+      strokeWidth: '16',
+      strokeLinejoin: 'round',
+      fill: 'none',
+    }),
+    createElement('circle', {
+      cx: '128',
+      cy: '152',
+      r: '10',
+      fill: 'currentColor',
+    }),
+  );
+
 const AutosendLogo = ({ size = 18 }: { size?: string | number }) =>
   createElement(
     'svg',
@@ -177,6 +209,7 @@ export const iconMap = {
   Megaphone,
   Newspaper,
   Notebook,
+  OneSignalLogo,
   Package,
   PaperPlane,
   Path,

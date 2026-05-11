@@ -1,0 +1,151 @@
+---
+title: OneSignal
+icon: OneSignalLogo
+description: Send push, email, and SMS via the OneSignal HTTP API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The OneSignal transport is an official Better-Notify package that delivers push notifications, emails, and SMS through the [OneSignal](https://onesignal.com) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+
+The package ships three transports — one per channel — that share the same options shape. All three target the unified `POST /notifications` endpoint, differentiated by a `?c=push|email|sms` query parameter.
+
+## Install
+
+```package-install
+@betternotify/onesignal @betternotify/core @betternotify/email @betternotify/push @betternotify/sms
+```
+
+Only the channel packages you actually use are required — install only `@betternotify/push` if you're sending push notifications, for example.
+
+## Getting your API key
+
+1. Sign up or log in at [onesignal.com](https://onesignal.com).
+2. Open your app in the dashboard and copy the **App ID** from **Settings → Keys & IDs**.
+3. From the same screen, copy the **REST API Key**.
+
+Store them as environment variables:
+
+```sh
+ONESIGNAL_APP_ID=00000000-0000-0000-0000-000000000000
+ONESIGNAL_API_KEY=os_v2_app_xxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { pushChannel } from '@betternotify/push';
+import { smsChannel } from '@betternotify/sms';
+import {
+  onesignalPushTransport,
+  onesignalEmailTransport,
+  onesignalSmsTransport,
+} from '@betternotify/onesignal';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+const push = pushChannel();
+const sms = smsChannel();
+
+const rpc = createNotify({ channels: { email, push, sms } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const shared = {
+  appId: process.env.ONESIGNAL_APP_ID!,
+  apiKey: process.env.ONESIGNAL_API_KEY!,
+};
+
+const notify = createClient({
+  catalog,
+  channels: { email, push, sms },
+  transportsByChannel: {
+    email: onesignalEmailTransport(shared),
+    push: onesignalPushTransport(shared),
+    sms: onesignalSmsTransport({ ...shared, from: '+15555550000' }),
+  },
+});
+```
+
+You can use any subset of the three — pair `onesignalPushTransport` with a different email provider, for example. Each transport is independent.
+
+## Options
+
+All three transports accept `OneSignalTransportOptions`. The SMS transport adds an optional `from` for `sms_from`.
+
+<TypeTable
+  type={{
+    appId: {
+      description: 'OneSignal App ID (UUID v4). Required.',
+      type: 'string',
+    },
+    apiKey: {
+      description: 'OneSignal REST API Key. Sent as `Authorization: Key <apiKey>`. Required.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Override the OneSignal API base URL. Useful for testing.',
+      type: 'string',
+      default: '"https://api.onesignal.com"',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+    from: {
+      description: 'SMS only — phone number (E.164) or Messaging Service SID used for `sms_from`.',
+      type: 'string',
+    },
+  }}
+/>
+
+## Endpoints
+
+| Transport                  | OneSignal endpoint                              |
+| -------------------------- | ----------------------------------------------- |
+| `onesignalPushTransport`   | `POST /notifications?c=push`                    |
+| `onesignalEmailTransport`  | `POST /notifications?c=email`                   |
+| `onesignalSmsTransport`    | `POST /notifications?c=sms`                     |
+
+## Targeting
+
+Each channel maps recipient input to a different OneSignal targeting field:
+
+| Channel | Recipient input | OneSignal field            |
+| ------- | --------------- | -------------------------- |
+| Push    | `to` on `RenderedPush` (subscription IDs) | `include_subscription_ids` |
+| Email   | `to` on `RenderedMessage` (email addresses) | `email_to`                 |
+| SMS     | `to` on `RenderedSms` (E.164 phone number) | `include_phone_numbers`    |
+
+Push delivery uses OneSignal **subscription IDs** (formerly player IDs). If you store user external IDs instead, you'll want to add an alias-targeting layer in front of the transport or fetch subscription IDs before sending.
+
+## Error handling
+
+The transport maps HTTP status codes to Better-Notify error codes using the shared `mapHttpStatus` utility:
+
+| HTTP status | Better-Notify code | Retriable |
+| --- | --- | --- |
+| 400 | `VALIDATION` | No |
+| 422 | `VALIDATION` | No |
+| 401 | `CONFIG` | No |
+| 403 | `CONFIG` | No |
+| 429 | `RATE_LIMITED` | Yes |
+| 5xx | `PROVIDER` | Yes |
+
+Network failures are wrapped as `PROVIDER` errors and timeouts as `TIMEOUT` errors.
+
+### Empty-id responses
+
+OneSignal returns `HTTP 200` with `id: ""` when every targeted subscription, address, or phone number is invalid or unsubscribed. The transport surfaces this as a non-retriable `VALIDATION` error so failover (via `multiTransport`) and queue retry layers don't waste attempts on impossible sends.
+
+## Caveats
+
+OneSignal is a notification platform first — its email and SMS APIs are oriented toward broadcast and campaigns, not deep transactional metadata. The following `RenderedMessage` fields are not part of OneSignal's documented send schema and are silently dropped: `cc`, `bcc`, custom `headers`, `attachments`, `inlineAssets`, `tags`, and `priority`. If you need them, prefer a dedicated email provider transport (e.g. [Resend](/docs/transports/resend), [Mailchimp](/docs/transports/mailchimp)).
