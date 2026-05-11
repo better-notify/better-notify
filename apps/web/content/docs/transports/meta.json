@@ -10,6 +10,7 @@
     "discord",
     "mailchimp",
     "mock",
+    "onesignal",
     "resend",
     "ses",
     "slack",

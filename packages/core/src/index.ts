@@ -34,7 +34,16 @@ export type {
 export type { Plugin } from './plugins/index.js';
 export { createPlugin } from './plugins/index.js';
 
-export type { Transport, TransportResult, AnyTransport, SendContext } from './transport.js';
+export type {
+  Transport,
+  TransportResult,
+  AnyTransport,
+  SendContext,
+  TransportDataMap,
+  TransportData,
+  TransportOverrides,
+  PerChannel,
+} from './transport.js';
 
 export type {
   TransportEntry,

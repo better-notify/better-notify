@@ -3,6 +3,7 @@ import { loader } from 'fumadocs-core/source';
 import { type ComponentType, createElement, Fragment } from 'react';
 
 import {
+  Bell,
   DeviceMobile,
   DiscordLogo,
   Envelope,
@@ -20,7 +21,7 @@ type ChannelBadge = {
   icon: ComponentType<{ size?: number; className?: string }>;
 };
 
-const transportChannels: Record<string, string> = {
+const transportChannels: Record<string, string | string[]> = {
   autosend: 'email',
   smtp: 'email',
   ses: 'email',
@@ -31,6 +32,7 @@ const transportChannels: Record<string, string> = {
   slack: 'slack',
   telegram: 'telegram',
   twilio: 'sms',
+  onesignal: ['push', 'email', 'sms'],
   zapier: 'zapier',
   mock: 'any',
   'multi-transport': 'any',
@@ -38,14 +40,27 @@ const transportChannels: Record<string, string> = {
 };
 
 const channelBadges: Record<string, ChannelBadge> = {
-  email: { tooltip: 'Email channel', icon: Envelope },
-  discord: { tooltip: 'Discord channel', icon: DiscordLogo },
-  slack: { tooltip: 'Slack channel', icon: SlackLogo },
-  telegram: { tooltip: 'Telegram channel', icon: TelegramLogo },
-  sms: { tooltip: 'SMS channel', icon: DeviceMobile },
-  zapier: { tooltip: 'Zapier channel', icon: Lightning },
+  email: { tooltip: 'Email', icon: Envelope },
+  push: { tooltip: 'Push', icon: Bell },
+  discord: { tooltip: 'Discord', icon: DiscordLogo },
+  slack: { tooltip: 'Slack', icon: SlackLogo },
+  telegram: { tooltip: 'Telegram', icon: TelegramLogo },
+  sms: { tooltip: 'SMS', icon: DeviceMobile },
+  zapier: { tooltip: 'Zapier', icon: Lightning },
   any: { tooltip: 'Any channel', icon: Globe },
 };
+
+const createBadgeElement = (ch: ChannelBadge) =>
+  createElement(
+    'span',
+    {
+      className: 'shrink-0 text-fd-muted-foreground channel-badge relative',
+      'data-tooltip': ch.tooltip,
+      'aria-label': ch.tooltip,
+      title: ch.tooltip,
+    },
+    createElement(ch.icon, { size: 14, 'aria-hidden': true } as Record<string, unknown>),
+  );
 
 export const source = loader({
   source: docs.toFumadocsSource(),
@@ -64,7 +79,9 @@ export const source = loader({
           const slug = node.url.slice(transportsPrefix.length).replace(/\/$/, '');
           if (!slug || !transportChannels[slug]) return node;
 
-          const ch = channelBadges[transportChannels[slug]];
+          const channels = transportChannels[slug];
+          const keys = Array.isArray(channels) ? channels : [channels];
+          const badges = keys.map((key) => channelBadges[key]).filter(Boolean);
 
           node.name = createElement(
             Fragment,
@@ -72,13 +89,8 @@ export const source = loader({
             createElement('span', null, node.name),
             createElement(
               'span',
-              {
-                className: 'ml-auto pl-2 shrink-0 text-fd-muted-foreground channel-badge relative',
-                'data-tooltip': ch.tooltip,
-                'aria-label': ch.tooltip,
-                title: ch.tooltip,
-              },
-              createElement(ch.icon, { size: 14, 'aria-hidden': true } as Record<string, unknown>),
+              { className: 'ml-auto pl-2 shrink-0 flex items-center gap-1' },
+              ...badges.map(createBadgeElement),
             ),
           );
 

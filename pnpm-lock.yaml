@@ -308,6 +308,9 @@ importers:
       '@betternotify/mjml':
         specifier: workspace:*
         version: link:../../../../packages/mjml
+      '@betternotify/onesignal':
+        specifier: workspace:*
+        version: link:../../../../packages/onesignal
       '@betternotify/push':
         specifier: workspace:*
         version: link:../../../../packages/push
@@ -682,6 +685,37 @@ importers:
       mjml:
         specifier: 'catalog:'
         version: 4.15.0
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.0.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@25.6.0)(lightningcss@1.32.0)(msw@2.14.2(@types/node@25.6.0)(typescript@6.0.3))
+
+  packages/onesignal:
+    dependencies:
+      '@betternotify/core':
+        specifier: workspace:*
+        version: link:../core
+      '@betternotify/email':
+        specifier: workspace:*
+        version: link:../email
+      '@betternotify/push':
+        specifier: workspace:*
+        version: link:../push
+      '@betternotify/sms':
+        specifier: workspace:*
+        version: link:../sms
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
       rolldown:
         specifier: 'catalog:'
         version: 1.0.0

@@ -5,7 +5,7 @@ import { isCatalog } from './catalog.js';
 import type { Plugin } from './plugins/types.js';
 import type { AnyMiddleware } from './middlewares/types.js';
 import type { AnyChannel, ChannelDefinition, ChannelMap, TransportsFor } from './channel/types.js';
-import type { Transport, TransportResult } from './transport.js';
+import type { Transport, TransportResult, SendContext, TransportOverrides } from './transport.js';
 import { consoleLogger, type LoggerLike } from './logger.js';
 import { handlePromise } from './lib/handle-promise.js';
 
@@ -137,10 +137,14 @@ type BatchResult<TResult> = {
 
 type BatchOptions = { interval?: number };
 
-type ChannelRouteMethods<TArgs> = {
-  send(args: TArgs): Promise<ChannelSendResult>;
+type TransportOverridesArg<TChannel extends string = string> = {
+  transport?: TransportOverrides<TChannel>;
+};
+
+type ChannelRouteMethods<TArgs, TChannel extends string = string> = {
+  send(args: TArgs & TransportOverridesArg<TChannel>): Promise<ChannelSendResult>;
   batch(
-    entries: ReadonlyArray<TArgs>,
+    entries: ReadonlyArray<TArgs & TransportOverridesArg<TChannel>>,
     opts?: BatchOptions,
   ): Promise<BatchResult<ChannelSendResult>>;
   queue(...args: unknown[]): Promise<never>;
@@ -148,12 +152,13 @@ type ChannelRouteMethods<TArgs> = {
 };
 
 type ArgsOfBuilder<B> = B extends { readonly _args: infer A } ? A : unknown;
+type ChannelOfBuilder<B> = B extends { readonly _channel: infer C extends string } ? C : string;
 
 type ClientFromMap<M> = {
   [K in keyof M]: M[K] extends AnyCatalog
     ? ClientFromMap<M[K] extends Catalog<infer SubM> ? SubM : never>
     : M[K] extends { readonly _channel: string }
-      ? ChannelRouteMethods<ArgsOfBuilder<M[K]>>
+      ? ChannelRouteMethods<ArgsOfBuilder<M[K]>, ChannelOfBuilder<M[K]>>
       : ChannelRouteMethods<unknown>;
 };
 
@@ -396,7 +401,15 @@ export const createClient = <R extends AnyCatalog, Channels extends ChannelMap =
       }
 
       const sendStart = performance.now();
-      const sendCtx = { route: flatKey, messageId, attempt: 1 };
+      const transportData = (
+        argsWithInput as { transport?: Record<string, Record<string, unknown>> }
+      ).transport;
+      const sendCtx: SendContext = {
+        route: flatKey,
+        messageId,
+        attempt: 1,
+        ...(transportData && { transport: transportData }),
+      };
       const sendTuple = await handlePromise(transport.send(rendered, sendCtx));
       timing.sendMs = performance.now() - sendStart;
       const sendThrow = sendTuple[0];
