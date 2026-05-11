@@ -47,6 +47,7 @@ import { runEmailMultiOnesignalSmtp } from './examples/email-multi-onesignal-smt
 import { runPushOnesignal } from './examples/push-onesignal';
 import { runEmailOnesignal } from './examples/email-onesignal';
 import { runSmsOnesignal } from './examples/sms-onesignal';
+import { runEmailSelligent } from './examples/email-selligent';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -98,6 +99,7 @@ const examples: Record<string, () => Promise<void>> = {
   'push-onesignal': runPushOnesignal,
   'email-onesignal': runEmailOnesignal,
   'sms-onesignal': runSmsOnesignal,
+  'email-selligent': runEmailSelligent,
 };
 
 const main = async (): Promise<void> => {

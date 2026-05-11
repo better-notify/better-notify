@@ -12,6 +12,7 @@
     "mock",
     "onesignal",
     "resend",
+    "selligent",
     "ses",
     "slack",
     "smtp",

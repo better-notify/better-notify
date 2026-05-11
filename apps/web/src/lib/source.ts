@@ -28,6 +28,7 @@ const transportChannels: Record<string, string | string[]> = {
   resend: 'email',
   'cloudflare-email': 'email',
   mailchimp: 'email',
+  selligent: 'email',
   discord: 'discord',
   slack: 'slack',
   telegram: 'telegram',
