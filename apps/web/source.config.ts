@@ -6,6 +6,9 @@ import { z } from 'zod';
 export const docs = defineDocs({
   dir: 'content/docs',
   docs: {
+    schema: pageSchema.extend({
+      channels: z.array(z.string()).optional(),
+    }),
     postprocess: {
       includeProcessedMarkdown: true,
     },

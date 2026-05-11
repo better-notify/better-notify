@@ -1,0 +1,158 @@
+---
+title: OneSignal SMS
+icon: OneSignalLogo
+description: Send SMS via the OneSignal HTTP API
+channels: [sms]
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The OneSignal SMS transport is part of `@betternotify/onesignal`. It delivers SMS through the [OneSignal](https://onesignal.com) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+
+The package also ships [push](/docs/transports/onesignal-push) and [email](/docs/transports/onesignal-email) transports — each is independent, pick only what you need.
+
+## Getting your API key
+
+1. Sign up or log in at [onesignal.com](https://onesignal.com).
+2. Open your app in the dashboard and copy the **App ID** from **Settings → Keys & IDs**.
+3. From the same screen, copy the **REST API Key**.
+
+Store them as environment variables:
+
+```sh
+ONESIGNAL_APP_ID=00000000-0000-0000-0000-000000000000
+ONESIGNAL_API_KEY=os_v2_app_xxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Install
+
+```package-install
+@betternotify/onesignal @betternotify/core @betternotify/sms
+```
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { smsChannel } from '@betternotify/sms';
+import { onesignalSmsTransport } from '@betternotify/onesignal';
+
+const sms = smsChannel();
+
+const rpc = createNotify({ channels: { sms } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const notify = createClient({
+  catalog,
+  channels: { sms },
+  transportsByChannel: {
+    sms: onesignalSmsTransport({
+      appId: process.env.ONESIGNAL_APP_ID!,
+      apiKey: process.env.ONESIGNAL_API_KEY!,
+      from: '+15555550000',
+    }),
+  },
+});
+```
+
+## Targeting
+
+Phone numbers (E.164 format) are passed through the `to` field on `RenderedSms` and mapped to OneSignal's `include_phone_numbers` field.
+
+**Endpoint:** `POST /notifications?c=sms`
+
+## SMS-specific options
+
+<TypeTable
+  type={{
+    from: {
+      description: 'Phone number (E.164) or Messaging Service SID used for `sms_from`.',
+      type: 'string',
+    },
+  }}
+/>
+
+## Shared options
+
+<TypeTable
+  type={{
+    appId: {
+      description: 'OneSignal App ID (UUID v4). Required.',
+      type: 'string',
+    },
+    apiKey: {
+      description: 'OneSignal REST API Key. Sent as `Authorization: Key <apiKey>`. Required.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Override the OneSignal API base URL. Useful for testing.',
+      type: 'string',
+      default: '"https://api.onesignal.com"',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+    body: {
+      description: 'Extra fields merged into every OneSignal request body. Useful for global defaults like `included_segments`.',
+      type: 'Record<string, unknown>',
+    },
+    bodyFor: {
+      description: 'Per-route overrides merged on top of `body` for matching routes. Pass `<typeof catalog>` as a type parameter for full route autocomplete.',
+      type: 'Partial<Record<string, Record<string, unknown>>>',
+    },
+  }}
+/>
+
+## Custom OneSignal fields
+
+The transport maps `RenderedSms` fields to the OneSignal API automatically. For any OneSignal-specific field not covered by the rendered message, use `body` (applied to every send) and `bodyFor` (per-route overrides).
+
+### Per-send overrides
+
+You can also pass OneSignal fields per-send via the `transport` key in `.send()`:
+
+```ts
+await notify.verifyPhone.send({
+  to: '+15551234567',
+  input: { code: '482901' },
+  transport: {
+    onesignal: { sms_media_urls: ['https://example.com/logo.png'] },
+  },
+});
+```
+
+### Merge order
+
+`body` (global) → `bodyFor[route]` (per-route) → `transport.onesignal` (per-send) → mapped rendered fields (always win).
+
+### Common SMS fields
+
+`sms_media_urls`, `template_id`, `custom_data`, `included_segments`, `filters`, `include_aliases`, `send_after`, `idempotency_key`
+
+See the [OneSignal API reference](https://documentation.onesignal.com/reference/create-message) for the full list of supported fields.
+
+## Error handling
+
+The transport maps HTTP status codes to Better-Notify error codes using the shared `mapHttpStatus` utility:
+
+| HTTP status | Better-Notify code | Retriable |
+| --- | --- | --- |
+| 400 | `VALIDATION` | No |
+| 422 | `VALIDATION` | No |
+| 401 | `CONFIG` | No |
+| 403 | `CONFIG` | No |
+| 429 | `RATE_LIMITED` | Yes |
+| 5xx | `PROVIDER` | Yes |
+
+Network failures are wrapped as `PROVIDER` errors and timeouts as `TIMEOUT` errors.
+
+### Empty-id responses
+
+OneSignal returns `HTTP 200` with `id: ""` when every targeted subscription, address, or phone number is invalid or unsubscribed. The transport surfaces this as a non-retriable `VALIDATION` error so failover (via `multiTransport`) and queue retry layers don't waste attempts on impossible sends.

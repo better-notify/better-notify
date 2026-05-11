@@ -2,16 +2,7 @@ import { docs } from 'collections/server';
 import { loader } from 'fumadocs-core/source';
 import { type ComponentType, createElement, Fragment } from 'react';
 
-import {
-  Bell,
-  DeviceMobile,
-  DiscordLogo,
-  Envelope,
-  Globe,
-  Lightning,
-  SlackLogo,
-  TelegramLogo,
-} from '@phosphor-icons/react';
+import { Bell, ChatText, DeviceMobile, Envelope, Globe, Lightning } from '@phosphor-icons/react';
 
 import { appConfig } from './shared';
 import { iconMap } from './icons';
@@ -29,12 +20,14 @@ const transportChannels: Record<string, string | string[]> = {
   'cloudflare-email': 'email',
   mailchimp: 'email',
   selligent: 'email',
-  discord: 'discord',
-  slack: 'slack',
-  telegram: 'telegram',
+  discord: 'chat',
+  slack: 'chat',
+  telegram: 'chat',
   twilio: 'sms',
-  onesignal: ['push', 'email', 'sms'],
-  zapier: 'zapier',
+  'onesignal-push': 'push',
+  'onesignal-email': 'email',
+  'onesignal-sms': 'sms',
+  zapier: 'automation',
   mock: 'any',
   'multi-transport': 'any',
   'custom-transports': 'any',
@@ -43,11 +36,9 @@ const transportChannels: Record<string, string | string[]> = {
 const channelBadges: Record<string, ChannelBadge> = {
   email: { tooltip: 'Email', icon: Envelope },
   push: { tooltip: 'Push', icon: Bell },
-  discord: { tooltip: 'Discord', icon: DiscordLogo },
-  slack: { tooltip: 'Slack', icon: SlackLogo },
-  telegram: { tooltip: 'Telegram', icon: TelegramLogo },
+  chat: { tooltip: 'Chat', icon: ChatText },
   sms: { tooltip: 'SMS', icon: DeviceMobile },
-  zapier: { tooltip: 'Zapier', icon: Lightning },
+  automation: { tooltip: 'Automation', icon: Lightning },
   any: { tooltip: 'Any channel', icon: Globe },
 };
 
