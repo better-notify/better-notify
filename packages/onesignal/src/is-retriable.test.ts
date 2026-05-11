@@ -24,10 +24,10 @@ describe('isOneSignalRetriable', () => {
     expect(isOneSignalRetriable(err)).toBe(false);
   });
 
-  it('returns true for unknown errors', async () => {
+  it('returns false for unknown errors', async () => {
     const { isOneSignalRetriable } = await import('./is-retriable.js');
-    expect(isOneSignalRetriable(new Error('unknown'))).toBe(true);
-    expect(isOneSignalRetriable('string error')).toBe(true);
-    expect(isOneSignalRetriable(null)).toBe(true);
+    expect(isOneSignalRetriable(new Error('unknown'))).toBe(false);
+    expect(isOneSignalRetriable('string error')).toBe(false);
+    expect(isOneSignalRetriable(null)).toBe(false);
   });
 });

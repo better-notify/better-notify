@@ -4,9 +4,11 @@ export type Tags = {
   [key: string]: string | number | boolean;
 };
 
+import type { TransportData } from './transport.js';
+
 export type SendContext = {
   route: string;
   messageId: string;
   attempt: number;
-  transport?: Record<string, Record<string, unknown>>;
+  transport?: TransportData;
 };

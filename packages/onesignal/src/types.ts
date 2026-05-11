@@ -1,7 +1,13 @@
 import type { AnyCatalog, Catalog, LoggerLike } from '@betternotify/core';
 import type { HttpClientBehaviorOptions } from '@betternotify/core/transports';
 
-type RoutesOf<TCatalog> = TCatalog extends Catalog<infer M, any> ? keyof M & string : string;
+type RoutesOfMap<TMap> = {
+  [K in keyof TMap & string]: TMap[K] extends Catalog<infer SubMap, any>
+    ? `${K}.${RoutesOfMap<SubMap>}`
+    : K;
+}[keyof TMap & string];
+
+type RoutesOf<TCatalog> = TCatalog extends Catalog<infer M, any> ? RoutesOfMap<M> : string;
 
 export type OneSignalTransportOptions = {
   /** OneSignal App ID (UUID v4). Found in Settings → Keys & IDs. */

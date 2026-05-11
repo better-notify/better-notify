@@ -44,11 +44,12 @@ export const createOneSignalSend = <TRendered, TData>(
       const sendOverrides = ctx.transport?.onesignal;
 
       const body: Record<string, unknown> = {
-        app_id: opts.appId,
         ...opts.body,
         ...routeOverrides,
         ...sendOverrides,
         ...config.buildBody(rendered),
+        app_id: opts.appId,
+        target_channel: config.channel,
       };
 
       const result = await http.request<OneSignalSuccessResponse, OneSignalErrorResponse>(url, {
