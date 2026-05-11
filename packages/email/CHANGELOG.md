@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.2](https://github.com/better-notify/better-notify/compare/@betternotify/email-v1.0.0-beta.1...@betternotify/email-v1.0.0-beta.2) (2026-05-11)
+
+
+### Features
+
+* **onesignal:** add OneSignal transport ([#111](https://github.com/better-notify/better-notify/issues/111)) ([718f957](https://github.com/better-notify/better-notify/commit/718f957fc28af4840ad33ebf0f9fe45dccfdd544))
+
 ## [1.0.0-beta.1](https://github.com/better-notify/better-notify/compare/@betternotify/email-v0.0.5-alpha.0...@betternotify/email-v1.0.0-beta.1) (2026-05-08)
 
 
