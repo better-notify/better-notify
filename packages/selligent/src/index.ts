@@ -99,9 +99,9 @@ const createTokenManager = (opts: SelligentTransportOptions) => {
     });
 
     if (!res.ok) {
-      const textResult = await handlePromise(res.text());
+      const [, body] = await handlePromise(res.text());
       throw new NotifyRpcProviderError({
-        message: `Selligent transport: OAuth token request failed [${res.status}]${textResult[1] ? `: ${textResult[1]}` : ''}`,
+        message: `Selligent transport: OAuth token request failed [${res.status}]${body ? `: ${body}` : ''}`,
         code: 'CONFIG',
         provider: 'selligent',
         httpStatus: res.status,
@@ -168,11 +168,11 @@ export const selligentTransport = (opts: SelligentTransportOptions) => {
     name: 'selligent',
 
     async verify() {
-      const verifyResult = await handlePromise(tokenManager.getToken());
-      if (verifyResult[0]) {
-        return { ok: false, details: verifyResult[0].message };
+      const [err, token] = await handlePromise(tokenManager.getToken());
+      if (err) {
+        return { ok: false, details: err.message };
       }
-      return { ok: true, details: { tokenLength: verifyResult[1].length } };
+      return { ok: true, details: { tokenLength: token.length } };
     },
 
     async send(message, ctx) {
@@ -186,21 +186,21 @@ export const selligentTransport = (opts: SelligentTransportOptions) => {
         });
       }
 
-      const tokenResult = await handlePromise(tokenManager.getToken());
-      if (tokenResult[0]) {
-        if (tokenResult[0] instanceof NotifyRpcProviderError) {
-          return { ok: false, error: tokenResult[0] };
+      const [tokenErr, token] = await handlePromise(tokenManager.getToken());
+      if (tokenErr) {
+        if (tokenErr instanceof NotifyRpcProviderError) {
+          return { ok: false, error: tokenErr };
         }
         return {
           ok: false,
           error: new NotifyRpcProviderError({
-            message: `Selligent transport: failed to obtain access token: ${tokenResult[0].message}`,
+            message: `Selligent transport: failed to obtain access token: ${tokenErr.message}`,
             code: 'CONFIG',
             provider: 'selligent',
             retriable: true,
             route: ctx.route,
             messageId: ctx.messageId,
-            cause: tokenResult[0],
+            cause: tokenErr,
           }),
         };
       }
@@ -211,7 +211,7 @@ export const selligentTransport = (opts: SelligentTransportOptions) => {
       const result = await http.request<unknown, SelligentErrorResponse>(url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${tokenResult[1]}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(items),
