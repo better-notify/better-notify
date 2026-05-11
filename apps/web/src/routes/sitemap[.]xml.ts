@@ -13,21 +13,21 @@ export const Route = createFileRoute('/sitemap.xml')({
         const pages = source.getPages();
 
         const urls = [
-          { loc: appConfig.baseUrl, changefreq: 'daily', priority: '1.0' },
+          { loc: `${appConfig.baseUrl}/`, changefreq: 'daily', priority: '1.0' },
           ...pages.map((page) => ({
-            loc: `${appConfig.baseUrl}${page.url}`,
+            loc: `${appConfig.baseUrl}${page.url}/`,
             changefreq: 'weekly',
             priority: '0.7',
           })),
-          { loc: `${appConfig.baseUrl}/integrations`, changefreq: 'weekly', priority: '0.8' },
+          { loc: `${appConfig.baseUrl}/integrations/`, changefreq: 'weekly', priority: '0.8' },
           ...integrations.map((i) => ({
-            loc: `${appConfig.baseUrl}/integrations/${i.slug}`,
+            loc: `${appConfig.baseUrl}/integrations/${i.slug}/`,
             changefreq: 'monthly',
             priority: '0.6',
           })),
-          { loc: `${appConfig.baseUrl}/for`, changefreq: 'weekly', priority: '0.8' },
+          { loc: `${appConfig.baseUrl}/for/`, changefreq: 'weekly', priority: '0.8' },
           ...personas.map((p) => ({
-            loc: `${appConfig.baseUrl}/for/${p.slug}`,
+            loc: `${appConfig.baseUrl}/for/${p.slug}/`,
             changefreq: 'monthly',
             priority: '0.6',
           })),
