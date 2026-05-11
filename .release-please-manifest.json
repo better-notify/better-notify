@@ -16,6 +16,7 @@
   "packages/mailchimp": "1.0.0-beta.1",
   "packages/twilio": "1.0.0-beta.2",
   "packages/autosend": "1.0.0-beta.2",
+  "packages/onesignal": "0.1.0-alpha.1",
   "packages/create-better-notify": "1.0.0-beta.2",
   "apps/web": "1.1.0-beta.3"
 }
