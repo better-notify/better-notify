@@ -19,7 +19,7 @@ export const Route = createFileRoute('/integrations/$slug')({
   },
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [], links: [] };
-    const url = `${appConfig.baseUrl}/integrations/${loaderData.slug}`;
+    const url = `${appConfig.baseUrl}/integrations/${loaderData.slug}/`;
     const { meta, links } = seo({
       title: `${loaderData.name} Integration — ${appConfig.name}`,
       description: loaderData.tagline,
