@@ -100,9 +100,8 @@ const createTokenManager = (opts: SelligentTransportOptions) => {
 
     if (!res.ok) {
       const textResult = await handlePromise(res.text());
-      const body = textResult[1];
       throw new NotifyRpcProviderError({
-        message: `Selligent transport: OAuth token request failed [${res.status}]${body ? `: ${body}` : ''}`,
+        message: `Selligent transport: OAuth token request failed [${res.status}]${textResult[1] ? `: ${textResult[1]}` : ''}`,
         code: 'CONFIG',
         provider: 'selligent',
         httpStatus: res.status,
