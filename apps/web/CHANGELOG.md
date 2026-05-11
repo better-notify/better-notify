@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0-beta.4](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.3...@betternotify/web-v1.1.0-beta.4) (2026-05-11)
+
+
+### Features
+
+* **onesignal:** add OneSignal transport ([#111](https://github.com/better-notify/better-notify/issues/111)) ([718f957](https://github.com/better-notify/better-notify/commit/718f957fc28af4840ad33ebf0f9fe45dccfdd544))
+* **selligent:** add Selligent transport ([#114](https://github.com/better-notify/better-notify/issues/114)) ([b466a0c](https://github.com/better-notify/better-notify/commit/b466a0c48b06ca0a849e386fb5ccf306e54b1a43))
+
+
+### Bug Fixes
+
+* **web:** add trailing slashes to canonical URLs and sitemap ([#109](https://github.com/better-notify/better-notify/issues/109)) ([4035819](https://github.com/better-notify/better-notify/commit/4035819cbdac873b9f857d9cf8f76d7f55600b67))
+
 ## [1.1.0-beta.3](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.2...@betternotify/web-v1.1.0-beta.3) (2026-05-10)
 
 
