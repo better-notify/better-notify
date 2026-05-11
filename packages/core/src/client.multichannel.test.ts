@@ -16,20 +16,24 @@ type TestTransportData = {
 
 type TestTransport = {
   name: string;
-  sent: Array<{ rendered: TestRendered; route: string }>;
+  sent: Array<{ rendered: TestRendered; route: string; transport?: Record<string, unknown> }>;
   send: (
     rendered: TestRendered,
-    ctx: { route: string; messageId: string; attempt: number },
+    ctx: { route: string; messageId: string; attempt: number; transport?: Record<string, unknown> },
   ) => Promise<{ ok: true; data: TestTransportData }>;
 };
 
 const createTestTransport = (): TestTransport => {
-  const sent: Array<{ rendered: TestRendered; route: string }> = [];
+  const sent: Array<{
+    rendered: TestRendered;
+    route: string;
+    transport?: Record<string, unknown>;
+  }> = [];
   return {
     name: 'test',
     sent,
     send: async (rendered, ctx) => {
-      sent.push({ rendered, route: ctx.route });
+      sent.push({ rendered, route: ctx.route, transport: ctx.transport });
       return {
         ok: true,
         data: {
@@ -110,6 +114,51 @@ describe('createClient multi-channel', () => {
     expect(transport.sent[0]?.rendered.to).toBe('alice@x.com');
     expect(transport.sent[0]?.route).toBe('ping');
     expect(result.data.transportMessageId).toBe(`test-${result.messageId}`);
+  });
+
+  it('forwards transport overrides from .send() args to SendContext', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+    }) as unknown as {
+      ping: {
+        send: (a: TestArgs & { transport?: Record<string, unknown> }) => Promise<{
+          messageId: string;
+          data: TestTransportData;
+        }>;
+      };
+    };
+
+    await mail.ping.send({
+      to: 'alice@x.com',
+      input: { name: 'Alice' },
+      transport: { myProvider: { priority: 10 } },
+    });
+
+    expect(transport.sent).toHaveLength(1);
+    expect(transport.sent[0]?.transport).toEqual({ myProvider: { priority: 10 } });
+  });
+
+  it('omits transport from SendContext when not provided', async () => {
+    const catalog = buildTestCatalog();
+    const transport = createTestTransport();
+    const mail = createClient({
+      catalog,
+      channels: { test: testChannel() },
+      transportsByChannel: { test: transport },
+    }) as unknown as {
+      ping: {
+        send: (a: TestArgs) => Promise<{ messageId: string; data: TestTransportData }>;
+      };
+    };
+
+    await mail.ping.send({ to: 'alice@x.com', input: { name: 'Alice' } });
+
+    expect(transport.sent).toHaveLength(1);
+    expect(transport.sent[0]?.transport).toBeUndefined();
   });
 
   it('batches non-email routes', async () => {

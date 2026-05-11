@@ -43,6 +43,10 @@ import { runEmailMailchimp } from './examples/email-mailchimp';
 import { runEmailSmtpFailover } from './examples/email-smtp-failover';
 import { runEmailAutosend } from './examples/email-autosend';
 import { runCloudflareEmailLoggerEvlog } from './examples/cloudflare-email-logger-evlog';
+import { runEmailMultiOnesignalSmtp } from './examples/email-multi-onesignal-smtp';
+import { runPushOnesignal } from './examples/push-onesignal';
+import { runEmailOnesignal } from './examples/email-onesignal';
+import { runSmsOnesignal } from './examples/sms-onesignal';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -90,6 +94,10 @@ const examples: Record<string, () => Promise<void>> = {
   'email-mailchimp': runEmailMailchimp,
   'email-smtp-failover': runEmailSmtpFailover,
   'email-autosend': runEmailAutosend,
+  'email-multi-onesignal-smtp': runEmailMultiOnesignalSmtp,
+  'push-onesignal': runPushOnesignal,
+  'email-onesignal': runEmailOnesignal,
+  'sms-onesignal': runSmsOnesignal,
 };
 
 const main = async (): Promise<void> => {

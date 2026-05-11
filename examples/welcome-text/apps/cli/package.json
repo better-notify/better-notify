@@ -18,6 +18,7 @@
     "@betternotify/handlebars": "workspace:*",
     "@betternotify/mailchimp": "workspace:*",
     "@betternotify/mjml": "workspace:*",
+    "@betternotify/onesignal": "workspace:*",
     "@betternotify/push": "workspace:*",
     "@betternotify/react-email": "workspace:*",
     "@betternotify/resend": "workspace:*",

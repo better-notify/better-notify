@@ -216,6 +216,134 @@ describe('onesignalPushTransport — HTTP errors', () => {
     if (result.ok) throw new Error('expected not ok');
     expect(result.error.message).toContain('HTTP 400');
   });
+
+  it('falls back to empty error object when response body is not parseable', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    fetchMock.mockResolvedValue(new Response('not json', { status: 502 }));
+    const t = onesignalPushTransport({ appId: 'app-id', apiKey: 'api-key' });
+    const result = await t.send(baseRendered, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error.message).toContain('HTTP 502');
+  });
+
+  it('merges body into request body', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    mockFetchOk();
+    const t = onesignalPushTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      body: { ttl: 259200, priority: 5 },
+    });
+    await t.send(baseRendered, baseCtx);
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.ttl).toBe(259200);
+    expect(body.priority).toBe(5);
+  });
+
+  it('merges bodyFor overrides for matching route', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    mockFetchOk();
+    const t = onesignalPushTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      body: { ttl: 259200, priority: 5 },
+      bodyFor: { notify: { priority: 10, ios_sound: 'alarm.wav' } },
+    });
+    await t.send(baseRendered, baseCtx);
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.ttl).toBe(259200);
+    expect(body.priority).toBe(10);
+    expect(body.ios_sound).toBe('alarm.wav');
+  });
+
+  it('ignores bodyFor when route does not match', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    mockFetchOk();
+    const t = onesignalPushTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      body: { ttl: 100 },
+      bodyFor: { 'other.route': { ttl: 999 } },
+    });
+    await t.send(baseRendered, baseCtx);
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.ttl).toBe(100);
+  });
+
+  it('merges ctx.transport.onesignal overrides from send context', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    mockFetchOk();
+    const t = onesignalPushTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      body: { ttl: 100 },
+      bodyFor: { notify: { priority: 5 } },
+    });
+    await t.send(baseRendered, {
+      ...baseCtx,
+      transport: { onesignal: { priority: 10, ios_sound: 'alarm.wav' } },
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.ttl).toBe(100);
+    expect(body.priority).toBe(10);
+    expect(body.ios_sound).toBe('alarm.wav');
+  });
+
+  it('ctx.transport.onesignal overrides body and bodyFor', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    mockFetchOk();
+    const t = onesignalPushTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      body: { ttl: 100, priority: 1 },
+      bodyFor: { notify: { priority: 5 } },
+    });
+    await t.send(baseRendered, {
+      ...baseCtx,
+      transport: { onesignal: { priority: 10 } },
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.ttl).toBe(100);
+    expect(body.priority).toBe(10);
+  });
+
+  it('rendered fields take precedence over all override layers', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    mockFetchOk();
+    const t = onesignalPushTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      body: { contents: { en: 'from-body' } },
+      bodyFor: { notify: { contents: { en: 'from-bodyFor' } } },
+    });
+    await t.send(baseRendered, {
+      ...baseCtx,
+      transport: { onesignal: { contents: { en: 'from-transport' } } },
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.contents).toEqual({ en: 'World' });
+  });
+
+  it('forwards custom http.timeoutMs to the HTTP client', async () => {
+    const { onesignalPushTransport } = await import('./push.js');
+    mockFetchOk();
+    const t = onesignalPushTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      http: { timeoutMs: 5000 },
+    });
+    const result = await t.send(baseRendered, baseCtx);
+
+    expect(result.ok).toBe(true);
+  });
 });
 
 describe('onesignalPushTransport — network errors', () => {

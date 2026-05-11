@@ -109,9 +109,7 @@ describe('onesignalSmsTransport', () => {
 
   it('returns VALIDATION error when response id is empty', async () => {
     const { onesignalSmsTransport } = await import('./sms.js');
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ id: '' }), { status: 200 }),
-    );
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: '' }), { status: 200 }));
     const t = onesignalSmsTransport({ appId: 'app-id', apiKey: 'api-key' });
     const result = await t.send(baseRendered, baseCtx);
 
@@ -181,6 +179,45 @@ describe('onesignalSmsTransport — HTTP errors', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
     expect(result.error.message).toContain('HTTP 400');
+  });
+
+  it('falls back to empty error object when response body is not parseable', async () => {
+    const { onesignalSmsTransport } = await import('./sms.js');
+    fetchMock.mockResolvedValue(new Response('not json', { status: 502 }));
+    const t = onesignalSmsTransport({ appId: 'app-id', apiKey: 'api-key' });
+    const result = await t.send(baseRendered, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error.message).toContain('HTTP 502');
+  });
+
+  it('forwards custom http.timeoutMs to the HTTP client', async () => {
+    const { onesignalSmsTransport } = await import('./sms.js');
+    mockFetchOk();
+    const t = onesignalSmsTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      http: { timeoutMs: 5000 },
+    });
+    const result = await t.send(baseRendered, baseCtx);
+
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe('onesignalSmsTransport — transport overrides', () => {
+  it('merges ctx.transport.onesignal into request body', async () => {
+    const { onesignalSmsTransport } = await import('./sms.js');
+    mockFetchOk();
+    const t = onesignalSmsTransport({ appId: 'app-id', apiKey: 'api-key' });
+    await t.send(baseRendered, {
+      ...baseCtx,
+      transport: { onesignal: { sms_media_urls: ['https://example.com/img.png'] } },
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.sms_media_urls).toEqual(['https://example.com/img.png']);
   });
 });
 

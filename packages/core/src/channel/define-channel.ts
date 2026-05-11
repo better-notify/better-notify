@@ -26,22 +26,23 @@ export type ChannelBuilder<
   TSlotConfig extends SlotMap,
   TArgsBase,
   TRendered,
+  TChannel extends string = string,
 > = {
-  readonly _channel: string;
+  readonly _channel: TChannel;
   readonly _state: BuilderState;
   readonly _args: TArgsBase & { input: TInput };
   readonly _rendered: TRendered;
   input<TSchema extends AnyStandardSchema>(
     schema: TSchema,
-  ): ChannelBuilder<InferOutput<TSchema>, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+  ): ChannelBuilder<InferOutput<TSchema>, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel>;
   use<TCtxOut = unknown>(
     middleware: Middleware<TInput, unknown, TCtxOut>,
-  ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+  ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel>;
   _finalize(id: string): ChannelDefinition<TArgsBase & { input: TInput }, TRendered>;
 } & {
   [K in keyof TSlotValues & keyof TSlotConfig & string]: (
     value: SlotValueType<TSlotConfig[K], TSlotValues[K], TInput>,
-  ) => ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+  ) => ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel>;
 };
 
 type BuilderState = {
@@ -110,19 +111,24 @@ const buildBuilder = <
   TSlotConfig extends SlotMap,
   TArgsBase,
   TRendered,
+  TChannel extends string = string,
 >(
-  channelName: string,
+  channelName: TChannel,
   slots: TSlotConfig,
   state: BuilderState,
-): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered> => {
+): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel> => {
   const next = (
     patch: Partial<BuilderState>,
-  ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered> =>
-    buildBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>(channelName, slots, {
-      ...state,
-      ...patch,
-      runtime: { ...state.runtime, ...patch.runtime },
-    });
+  ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel> =>
+    buildBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel>(
+      channelName,
+      slots,
+      {
+        ...state,
+        ...patch,
+        runtime: { ...state.runtime, ...patch.runtime },
+      },
+    );
 
   const builder: Record<string | symbol, unknown> = {
     _channel: channelName,
@@ -166,7 +172,14 @@ const buildBuilder = <
     };
   }
 
-  return builder as ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered>;
+  return builder as ChannelBuilder<
+    TInput,
+    TSlotValues,
+    TSlotConfig,
+    TArgsBase,
+    TRendered,
+    TChannel
+  >;
 };
 
 export const defineChannel = <
@@ -183,7 +196,8 @@ export const defineChannel = <
     SlotValuesOf<TSlotConfig>,
     TSlotConfig,
     ArgsBase<ArgsFromValidator<TValidator>>,
-    TRendered
+    TRendered,
+    TName
   >,
   ArgsFromValidator<TValidator>,
   TRendered,
@@ -196,7 +210,8 @@ export const defineChannel = <
       SlotValuesOf<TSlotConfig>,
       TSlotConfig,
       ArgsBase<ArgsFromValidator<TValidator>>,
-      TRendered
+      TRendered,
+      TName
     >(opts.name, opts.slots, {
       schema: undefined,
       middleware: [...ctx.rootMiddleware],
@@ -209,7 +224,8 @@ export const defineChannel = <
         SlotValuesOf<TSlotConfig>,
         TSlotConfig,
         ArgsBase<ArgsFromValidator<TValidator>>,
-        TRendered
+        TRendered,
+        TName
       >
     )._finalize(id) as ChannelDefinition<ArgsFromValidator<TValidator>, TRendered>,
   validateArgs: isStandardSchema(opts.validateArgs)

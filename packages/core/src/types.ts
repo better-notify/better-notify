@@ -8,4 +8,5 @@ export type SendContext = {
   route: string;
   messageId: string;
   attempt: number;
+  transport?: Record<string, unknown>;
 };

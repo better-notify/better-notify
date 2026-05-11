@@ -148,9 +148,7 @@ describe('onesignalEmailTransport', () => {
 
   it('returns VALIDATION error when response id is empty', async () => {
     const { onesignalEmailTransport } = await import('./email.js');
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ id: '' }), { status: 200 }),
-    );
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: '' }), { status: 200 }));
     const t = onesignalEmailTransport({ appId: 'app-id', apiKey: 'api-key' });
     const result = await t.send(baseMessage, baseCtx);
 
@@ -220,6 +218,48 @@ describe('onesignalEmailTransport — HTTP errors', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('expected not ok');
     expect(result.error.message).toContain('HTTP 400');
+  });
+
+  it('falls back to empty error object when response body is not parseable', async () => {
+    const { onesignalEmailTransport } = await import('./email.js');
+    fetchMock.mockResolvedValue(new Response('not json', { status: 502 }));
+    const t = onesignalEmailTransport({ appId: 'app-id', apiKey: 'api-key' });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected not ok');
+    expect(result.error.message).toContain('HTTP 502');
+  });
+
+  it('forwards custom http.timeoutMs to the HTTP client', async () => {
+    const { onesignalEmailTransport } = await import('./email.js');
+    mockFetchOk();
+    const t = onesignalEmailTransport({
+      appId: 'app-id',
+      apiKey: 'api-key',
+      http: { timeoutMs: 5000 },
+    });
+    const result = await t.send(baseMessage, baseCtx);
+
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe('onesignalEmailTransport — transport overrides', () => {
+  it('merges ctx.transport.onesignal into request body', async () => {
+    const { onesignalEmailTransport } = await import('./email.js');
+    mockFetchOk();
+    const t = onesignalEmailTransport({ appId: 'app-id', apiKey: 'api-key' });
+    await t.send(baseMessage, {
+      ...baseCtx,
+      transport: {
+        onesignal: { email_preheader: 'Preview text', disable_email_click_tracking: true },
+      },
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.email_preheader).toBe('Preview text');
+    expect(body.disable_email_click_tracking).toBe(true);
   });
 });
 

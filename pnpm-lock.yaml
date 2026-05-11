@@ -308,6 +308,9 @@ importers:
       '@betternotify/mjml':
         specifier: workspace:*
         version: link:../../../../packages/mjml
+      '@betternotify/onesignal':
+        specifier: workspace:*
+        version: link:../../../../packages/onesignal
       '@betternotify/push':
         specifier: workspace:*
         version: link:../../../../packages/push

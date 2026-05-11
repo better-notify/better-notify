@@ -61,22 +61,22 @@ const notify = createClient({
 
 All three transports share `OneSignalTransportOptions`. The SMS transport also accepts an optional `from` field for `sms_from`.
 
-| Field     | Type     | Description                                                            |
-| --------- | -------- | ---------------------------------------------------------------------- |
-| `appId`   | `string` | OneSignal App ID (UUID v4). Required.                                  |
+| Field     | Type     | Description                                                               |
+| --------- | -------- | ------------------------------------------------------------------------- |
+| `appId`   | `string` | OneSignal App ID (UUID v4). Required.                                     |
 | `apiKey`  | `string` | OneSignal REST API key (sent as `Authorization: Key <apiKey>`). Required. |
-| `baseUrl` | `string` | Override the API base URL. Defaults to `https://api.onesignal.com`.    |
-| `logger`  | `object` | Optional `LoggerLike`. Defaults to `consoleLogger()`.                  |
-| `http`    | `object` | HTTP behavior options (retry, timeout, hooks).                         |
-| `from`    | `string` | SMS only — phone number or Messaging Service SID for `sms_from`.       |
+| `baseUrl` | `string` | Override the API base URL. Defaults to `https://api.onesignal.com`.       |
+| `logger`  | `object` | Optional `LoggerLike`. Defaults to `consoleLogger()`.                     |
+| `http`    | `object` | HTTP behavior options (retry, timeout, hooks).                            |
+| `from`    | `string` | SMS only — phone number or Messaging Service SID for `sms_from`.          |
 
 ## Endpoints
 
-| Transport                  | OneSignal endpoint                              |
-| -------------------------- | ----------------------------------------------- |
-| `onesignalPushTransport`   | `POST /notifications?c=push`                    |
-| `onesignalEmailTransport`  | `POST /notifications?c=email`                   |
-| `onesignalSmsTransport`    | `POST /notifications?c=sms`                     |
+| Transport                 | OneSignal endpoint            |
+| ------------------------- | ----------------------------- |
+| `onesignalPushTransport`  | `POST /notifications?c=push`  |
+| `onesignalEmailTransport` | `POST /notifications?c=email` |
+| `onesignalSmsTransport`   | `POST /notifications?c=sms`   |
 
 ## Caveats
 
