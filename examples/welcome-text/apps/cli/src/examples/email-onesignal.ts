@@ -3,6 +3,8 @@ import { emailChannel } from '@betternotify/email';
 import { onesignalEmailTransport } from '@betternotify/onesignal';
 import { z } from 'zod';
 import { env } from '../env';
+import { reactEmail } from '@betternotify/react-email';
+import { Welcome } from '../templates/welcome';
 
 const ch = emailChannel({
   defaults: { from: { name: 'Better-Notify', email: env.ONESIGNAL_FROM_EMAIL } },
@@ -16,10 +18,8 @@ const catalog = rpc.catalog({
     .input(z.object({ name: z.string(), verifyUrl: z.string().url() }))
     .subject(({ input }) => `Welcome, ${input.name}!`)
     .template({
-      render: async ({ input }) => ({
-        text: `Welcome, ${input.name}! Verify here: ${input.verifyUrl}`,
-        html: `<p>Welcome, ${input.name}! <a href="${input.verifyUrl}">Verify</a></p>`,
-      }),
+      render: async ({ input }) =>
+        reactEmail(Welcome, { name: input.name, verifyUrl: input.verifyUrl }),
     }),
 });
 
@@ -31,9 +31,15 @@ export const runEmailOnesignal = async (): Promise<void> => {
       email: onesignalEmailTransport<typeof catalog>({
         appId: env.ONESIGNAL_APP_ID,
         apiKey: env.ONESIGNAL_API_KEY,
-        body: { template_id: 'default-template' },
+        /**
+         * You can override the content of every request
+         */
+        body: { idempotency_key: '1234567890' },
+        /**
+         * You can override the content of every request for a specific route
+         */
         bodyFor: {
-          welcome: { template_id: 'welcome-template' },
+          welcome: { idempotency_key: '1234567890' },
         },
       }),
     },
@@ -43,6 +49,10 @@ export const runEmailOnesignal = async (): Promise<void> => {
   const result = await mail.welcome.send({
     to: env.ONESIGNAL_DESTINATION_EMAIL,
     input: { name: 'John Doe', verifyUrl: 'https://example.com/verify?token=abc123' },
+    /**
+     * You can override the content of every request for a specific send
+     * by overriding the value by channel
+     */
     transport: {
       onesignal: {
         send_after: '2026-05-11T12:00:00Z',
