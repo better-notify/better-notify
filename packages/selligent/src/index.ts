@@ -99,7 +99,8 @@ const createTokenManager = (opts: SelligentTransportOptions) => {
     });
 
     if (!res.ok) {
-      const [, body] = await handlePromise(res.text());
+      const textResult = await handlePromise(res.text());
+      const body = textResult[1];
       throw new NotifyRpcProviderError({
         message: `Selligent transport: OAuth token request failed [${res.status}]${body ? `: ${body}` : ''}`,
         code: 'CONFIG',
@@ -168,13 +169,11 @@ export const selligentTransport = (opts: SelligentTransportOptions) => {
     name: 'selligent',
 
     async verify() {
-      const [err, token] = await handlePromise(tokenManager.getToken());
-
-      if (err) {
-        return { ok: false, details: err.message };
+      const verifyResult = await handlePromise(tokenManager.getToken());
+      if (verifyResult[0]) {
+        return { ok: false, details: verifyResult[0].message };
       }
-
-      return { ok: true, details: { tokenLength: token.length } };
+      return { ok: true, details: { tokenLength: verifyResult[1].length } };
     },
 
     async send(message, ctx) {
@@ -188,21 +187,21 @@ export const selligentTransport = (opts: SelligentTransportOptions) => {
         });
       }
 
-      const [tokenErr, token] = await handlePromise(tokenManager.getToken());
-      if (tokenErr) {
-        if (tokenErr instanceof NotifyRpcProviderError) {
-          return { ok: false, error: tokenErr };
+      const tokenResult = await handlePromise(tokenManager.getToken());
+      if (tokenResult[0]) {
+        if (tokenResult[0] instanceof NotifyRpcProviderError) {
+          return { ok: false, error: tokenResult[0] };
         }
         return {
           ok: false,
           error: new NotifyRpcProviderError({
-            message: `Selligent transport: failed to obtain access token: ${tokenErr.message}`,
+            message: `Selligent transport: failed to obtain access token: ${tokenResult[0].message}`,
             code: 'CONFIG',
             provider: 'selligent',
             retriable: true,
             route: ctx.route,
             messageId: ctx.messageId,
-            cause: tokenErr,
+            cause: tokenResult[0],
           }),
         };
       }
@@ -213,7 +212,7 @@ export const selligentTransport = (opts: SelligentTransportOptions) => {
       const result = await http.request<unknown, SelligentErrorResponse>(url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${tokenResult[1]}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(items),

@@ -17,7 +17,7 @@ Unlike API-key-based transports, Selligent uses **OAuth 2.0 client credentials**
 2. Navigate to **Admin Config → Access Management → Service Accounts**.
 3. Add a new Service Account — enter an account name, select type **Custom**, and click **Save**.
 4. Copy the generated **client ID**, **client secret**, and **account ID**.
-5. Provide the correct endpoint access to the credentials.
+5. Under the service account's endpoint access, enable the **SDC transactional email** (`/email/v1/messages/send`) and **OAuth token** (`/oauth/token`) endpoints.
 
 Store them as environment variables:
 
