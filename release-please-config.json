@@ -105,6 +105,12 @@
       "component": "@betternotify/web",
       "prerelease-type": "beta",
       "bootstrap-sha": "4edb9f254f0a3987a2a3026e1a9e03ed14485ed3"
+    },
+    "packages/selligent": {
+      "release-type": "node",
+      "component": "@betternotify/selligent",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "718f957fc28af4840ad33ebf0f9fe45dccfdd544"
     }
   }
 }

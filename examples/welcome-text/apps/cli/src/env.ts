@@ -95,6 +95,35 @@ export const env = createEnv({
       .describe('Resend destination email'),
 
     /**
+     * Selligent cluster
+     */
+    SELLIGENT_CLIENT_ID: z
+      .string()
+      .optional()
+      .default('12345')
+      .describe('Selligent OAuth client ID'),
+    SELLIGENT_CLIENT_SECRET: z
+      .string()
+      .optional()
+      .default('secret123')
+      .describe('Selligent OAuth client secret'),
+    SELLIGENT_ACCOUNT_ID: z
+      .string()
+      .optional()
+      .default('ACCT_ABC')
+      .describe('Selligent account ID'),
+    SELLIGENT_FROM_EMAIL: z
+      .string()
+      .optional()
+      .default('noreply@example.com')
+      .describe('Selligent from email'),
+    SELLIGENT_DESTINATION_EMAIL: z
+      .string()
+      .optional()
+      .default('example@email.com')
+      .describe('Selligent destination email'),
+
+    /**
      * Slack cluster
      */
     SLACK_BOT_TOKEN: z.string().optional().default('xoxb-test').describe('Slack bot token'),

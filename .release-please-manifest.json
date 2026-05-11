@@ -17,5 +17,6 @@
   "packages/twilio": "1.0.0-beta.2",
   "packages/autosend": "1.0.0-beta.2",
   "packages/create-better-notify": "1.0.0-beta.2",
-  "apps/web": "1.1.0-beta.3"
+  "apps/web": "1.1.0-beta.3",
+  "packages/selligent": "1.0.0-beta.1"
 }

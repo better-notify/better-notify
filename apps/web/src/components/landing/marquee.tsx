@@ -202,6 +202,10 @@ const providers: { name: string; icon: ReactNode }[] = [
       </svg>
     ),
   },
+  {
+    name: 'Selligent',
+    icon: <AtIcon size={20} weight="fill" className="text-[#E4002B]" />,
+  },
   { name: 'Zapier', icon: <LightningIcon size={20} weight="fill" className="text-[#FF4A00]" /> },
   { name: 'SMTP', icon: <AtIcon size={20} weight="fill" className="text-[#999]" /> },
   { name: 'SMS', icon: <PhoneIcon size={20} weight="fill" className="text-[#999]" /> },

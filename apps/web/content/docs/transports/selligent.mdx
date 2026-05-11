@@ -1,0 +1,221 @@
+---
+title: Selligent
+icon: Envelope
+description: Send transactional emails via the Selligent (Marigold Engage) SDC API
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The Selligent transport is an official Better-Notify package that sends transactional email through the [Selligent Delivery Cloud (SDC)](https://www.marigold.com/products/marigold-engage) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+
+Unlike API-key-based transports, Selligent uses **OAuth 2.0 client credentials**. The transport handles token management automatically — fetching, caching, and refreshing tokens as needed.
+
+## Getting your credentials
+
+1. Contact your Selligent / Marigold Engage account manager to obtain OAuth credentials.
+2. You will receive a **client ID** (number), **client secret**, and **account ID**.
+
+Store them as environment variables:
+
+```sh
+SELLIGENT_CLIENT_ID=12345
+SELLIGENT_CLIENT_SECRET=your_client_secret
+SELLIGENT_ACCOUNT_ID=your_account_id
+```
+
+## Install
+
+```package-install
+@betternotify/selligent @betternotify/core @betternotify/email
+```
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { selligentTransport } from '@betternotify/selligent';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const mail = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: selligentTransport({
+      clientId: Number(process.env.SELLIGENT_CLIENT_ID!),
+      clientSecret: process.env.SELLIGENT_CLIENT_SECRET!,
+      accountId: process.env.SELLIGENT_ACCOUNT_ID!,
+    }),
+  },
+});
+```
+
+### Custom token provider
+
+If you already manage OAuth tokens externally, pass `getAccessToken` instead of credentials:
+
+```ts
+selligentTransport({
+  getAccessToken: () => myTokenManager.getToken(),
+});
+```
+
+### Verifying credentials
+
+Use `verify()` to test credentials without sending an email. It attempts to fetch an OAuth token and returns `{ ok: true }` on success:
+
+```ts
+const transport = selligentTransport({ /* ... */ });
+const result = await transport.verify();
+if (!result.ok) {
+  console.error('Credential check failed:', result.details);
+}
+```
+
+## Options
+
+<TypeTable
+  type={{
+    clientId: {
+      description: 'Selligent OAuth client ID (number). Required unless using `getAccessToken`.',
+      type: 'number',
+    },
+    clientSecret: {
+      description: 'Selligent OAuth client secret. Required unless using `getAccessToken`.',
+      type: 'string',
+    },
+    accountId: {
+      description: 'Selligent account ID. Required unless using `getAccessToken`.',
+      type: 'string',
+    },
+    getAccessToken: {
+      description: 'Provide your own token manager. Mutually exclusive with OAuth credentials.',
+      type: '() => Promise<string>',
+    },
+    baseUrl: {
+      description: 'Override the SDC API base URL. Change this for non-EU regions.',
+      type: 'string',
+      default: '"https://sdc.slgnt.eu"',
+    },
+    authUrl: {
+      description: 'Override the OAuth token endpoint.',
+      type: 'string',
+      default: '"https://auth.slgnt.eu/oauth/token"',
+    },
+    audience: {
+      description: 'Override the OAuth audience. Should match the SDC base URL.',
+      type: 'string',
+      default: '"https://sdc.slgnt.eu"',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+  }}
+/>
+
+## Per-send overrides
+
+Pass Selligent-specific fields per-send via the `transport` key in `.send()`:
+
+```ts
+await mail.welcome.send({
+  to: 'user@example.com',
+  input: { name: 'Jane' },
+  transport: {
+    selligent: {
+      profile: 'crm-id-123',
+      tags: ['campaign-spring'],
+      metadata: '{"ref": 123}',
+      list_unsubscribe: '<https://example.com/unsub>',
+      custom_send_time: '2025-09-02T12:00:00',
+      time_to_live: 'P2D',
+    },
+  },
+});
+```
+
+<TypeTable
+  type={{
+    profile: {
+      description: 'Recipient identifier in your CRM. Defaults to the recipient email address.',
+      type: 'string',
+    },
+    tags: {
+      description: 'Tags for message categorization and reporting.',
+      type: 'string[]',
+    },
+    metadata: {
+      description: 'Custom JSON-serialized metadata attached to the message.',
+      type: 'string',
+    },
+    reference: {
+      description: 'Unique tracking reference echoed in webhooks. Defaults to `messageId-index`.',
+      type: 'string',
+    },
+    list_unsubscribe: {
+      description: 'RFC 2369 List-Unsubscribe header value.',
+      type: 'string',
+    },
+    custom_send_time: {
+      description: 'Schedule send time (UTC datetime), max 24 hours in the future.',
+      type: 'string',
+    },
+    time_to_live: {
+      description: 'Message TTL as ISO 8601 duration, max 2 days (`P2D`).',
+      type: 'string',
+    },
+  }}
+/>
+
+## Multiple recipients
+
+When you send to multiple `to` addresses, the transport creates one SDC message item per recipient in a single HTTP request (SDC accepts a JSON array). Each item gets its own `reference` (`messageId-0`, `messageId-1`, etc.) and `context.profile` (defaults to the recipient email).
+
+## Authentication flow
+
+The transport uses the **OAuth 2.0 client credentials** grant:
+
+1. Before the first send, it `POST`s to the token endpoint with your `clientId`, `clientSecret`, `accountId`, and `audience`.
+2. The returned JWT is cached in-process and reused for subsequent sends.
+3. When the token is within 60 seconds of expiry, the next send triggers a fresh token fetch.
+
+Token endpoint failures during send return a `CONFIG` error (non-retriable for 4xx, retriable for 5xx).
+
+<Callout type="info">
+SDC sends message content without any modifications — it does not inject tracking pixels or rewrite links. Open/click tracking must be implemented by the sender.
+</Callout>
+
+## Error handling
+
+The transport maps HTTP status codes to Better-Notify error codes using the shared `mapHttpStatus` utility:
+
+| HTTP status | Better-Notify code | Retriable |
+| --- | --- | --- |
+| 400 | `VALIDATION` | No |
+| 422 | `VALIDATION` | No |
+| 401 | `CONFIG` | No |
+| 403 | `CONFIG` | No |
+| 429 | `RATE_LIMITED` | Yes |
+| 5xx | `PROVIDER` | Yes |
+
+Network failures are wrapped as `PROVIDER` errors and timeouts as `TIMEOUT` errors.
+
+OAuth token failures are surfaced as `CONFIG` errors with the HTTP status from the token endpoint.
+
+## Dropped fields
+
+The following `RenderedMessage` fields are not part of SDC's send schema and are silently dropped: `cc`, `bcc`, custom `headers`, `tags`, `priority`, and `inlineAssets`. If you need them, prefer a dedicated email provider transport (e.g. [Resend](/docs/transports/resend), [SMTP](/docs/transports/smtp)).

@@ -320,6 +320,9 @@ importers:
       '@betternotify/resend':
         specifier: workspace:*
         version: link:../../../../packages/resend
+      '@betternotify/selligent':
+        specifier: workspace:*
+        version: link:../../../../packages/selligent
       '@betternotify/slack':
         specifier: workspace:*
         version: link:../../../../packages/slack
@@ -798,6 +801,31 @@ importers:
         version: 4.3.6
 
   packages/resend:
+    dependencies:
+      '@betternotify/core':
+        specifier: workspace:*
+        version: link:../core
+      '@betternotify/email':
+        specifier: workspace:*
+        version: link:../email
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.0.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@25.6.0)(lightningcss@1.32.0)(msw@2.14.2(@types/node@25.6.0)(typescript@6.0.3))
+
+  packages/selligent:
     dependencies:
       '@betternotify/core':
         specifier: workspace:*
