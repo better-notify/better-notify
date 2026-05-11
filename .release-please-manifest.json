@@ -1,6 +1,6 @@
 {
-  "packages/core": "1.0.0-beta.3",
-  "packages/email": "1.0.0-beta.1",
+  "packages/core": "1.0.0-beta.4",
+  "packages/email": "1.0.0-beta.2",
   "packages/sms": "1.0.0-beta.1",
   "packages/push": "1.0.0-beta.1",
   "packages/react-email": "1.0.0-beta.1",
@@ -16,8 +16,8 @@
   "packages/mailchimp": "1.0.0-beta.1",
   "packages/twilio": "1.0.0-beta.2",
   "packages/autosend": "1.0.0-beta.2",
-  "packages/onesignal": "1.0.0-beta.0",
+  "packages/onesignal": "1.0.0-beta.1",
   "packages/create-better-notify": "1.0.0-beta.2",
-  "packages/selligent": "1.0.0-beta.0",
-  "apps/web": "1.1.0-beta.3"
+  "packages/selligent": "1.0.0-beta.1",
+  "apps/web": "1.1.0-beta.4"
 }

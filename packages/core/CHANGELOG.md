@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.4](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.3...@betternotify/core-v1.0.0-beta.4) (2026-05-11)
+
+
+### Features
+
+* **onesignal:** add OneSignal transport ([#111](https://github.com/better-notify/better-notify/issues/111)) ([718f957](https://github.com/better-notify/better-notify/commit/718f957fc28af4840ad33ebf0f9fe45dccfdd544))
+
 ## [1.0.0-beta.3](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.2...@betternotify/core-v1.0.0-beta.3) (2026-05-10)
 
 
