@@ -41,7 +41,7 @@ export type SendContext = {
   route: string;
   messageId: string;
   attempt: number;
-  transport?: Record<string, unknown>;
+  transport?: Record<string, Record<string, unknown>>;
 };
 
 export type RawSendArgs = {
