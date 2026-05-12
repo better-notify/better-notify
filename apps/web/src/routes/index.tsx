@@ -4,6 +4,7 @@ import { createServerFn } from '@tanstack/react-start';
 
 import { LandingHeader } from '@/components/landing/header';
 import { Hero } from '@/components/landing/hero';
+import { TrustedBy } from '@/components/landing/trusted-by';
 import { Features } from '@/components/landing/features';
 import { Channels } from '@/components/landing/channels';
 import { Pipeline } from '@/components/landing/pipeline';
@@ -72,6 +73,7 @@ function LandingPage() {
       <LandingHeader />
       <main>
         <Hero />
+        <TrustedBy />
         <Marquee />
         <Features />
         <Channels />
