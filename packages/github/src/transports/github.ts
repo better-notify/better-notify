@@ -72,7 +72,11 @@ export const githubTransport = (opts: GithubTransportOptions): Transport => {
         return { ok: false, details: detail };
       }
 
-      return { ok: true, details: { login: result.data?.login } };
+      const login = result.data?.login;
+      if (!login) {
+        return { ok: false, details: 'invalid GitHub verify response: missing login' };
+      }
+      return { ok: true, details: { login } };
     },
   });
 };

@@ -1,4 +1,4 @@
-import type { NotifyRpcProviderError } from '@betternotify/core';
+import { NotifyRpcProviderError } from '@betternotify/core';
 import type {
   RenderedGithubIssue,
   RenderedGithubIssueComment,
@@ -15,6 +15,16 @@ type ActionResult =
   | { ok: false; error: NotifyRpcProviderError };
 
 type SendCtx = { route: string; messageId: string };
+
+const malformedResponse = (method: string, fields: string, ctx: SendCtx): NotifyRpcProviderError =>
+  new NotifyRpcProviderError({
+    message: `GitHub ${method}: malformed response — missing ${fields}`,
+    code: 'PROVIDER',
+    provider: 'github',
+    retriable: false,
+    route: ctx.route,
+    messageId: ctx.messageId,
+  });
 
 type GithubIssueResponse = {
   number: number;
@@ -59,13 +69,14 @@ export const createIssue = async (
   }
 
   const data = result.data;
+
+  if (!data?.number || !data.html_url) {
+    return { ok: false, error: malformedResponse('POST /issues', 'number/html_url', ctx) };
+  }
+
   return {
     ok: true as const,
-    data: {
-      action: 'issue',
-      number: data?.number ?? 0,
-      url: data?.html_url ?? '',
-    },
+    data: { action: 'issue', number: data.number, url: data.html_url },
   };
 };
 
@@ -93,13 +104,12 @@ export const createIssueComment = async (
   }
 
   const data = result.data;
+  if (!data?.id || !data.html_url) {
+    return { ok: false, error: malformedResponse('POST /issues/comments', 'id/html_url', ctx) };
+  }
   return {
     ok: true as const,
-    data: {
-      action: 'comment',
-      id: data?.id ?? 0,
-      url: data?.html_url ?? '',
-    },
+    data: { action: 'comment', id: data.id, url: data.html_url },
   };
 };
 
@@ -116,6 +126,7 @@ export const createPrComment = async (
     repo: `${owner}/${name}`,
     prNumber: rendered.prNumber,
   });
+
   const result = await client.http.request<GithubCommentResponse, GithubErrorResponse>(url, {
     method: 'POST',
     headers: client.headers,
@@ -127,13 +138,14 @@ export const createPrComment = async (
   }
 
   const data = result.data;
+
+  if (!data?.id || !data.html_url) {
+    return { ok: false, error: malformedResponse('POST /issues/comments', 'id/html_url', ctx) };
+  }
+
   return {
     ok: true as const,
-    data: {
-      action: 'pr-comment' as const,
-      id: data?.id ?? 0,
-      url: data?.html_url ?? '',
-    },
+    data: { action: 'pr-comment' as const, id: data.id, url: data.html_url },
   };
 };
 
@@ -145,11 +157,13 @@ export const createPrLineComment = async (
   ctx: SendCtx,
 ): Promise<ActionResult> => {
   const url = `${client.baseUrl}/repos/${owner}/${name}/pulls/${rendered.prNumber}/comments`;
+
   const body: Record<string, unknown> = {
     body: rendered.body,
     commit_id: rendered.commitId,
     path: rendered.path,
   };
+
   if (rendered.line !== undefined) body.line = rendered.line;
   if (rendered.startLine !== undefined) body.start_line = rendered.startLine;
   if (rendered.side !== undefined) body.side = rendered.side;
@@ -161,6 +175,7 @@ export const createPrLineComment = async (
     prNumber: rendered.prNumber,
     path: rendered.path,
   });
+
   const result = await client.http.request<GithubCommentResponse, GithubErrorResponse>(url, {
     method: 'POST',
     headers: client.headers,
@@ -172,13 +187,14 @@ export const createPrLineComment = async (
   }
 
   const data = result.data;
+
+  if (!data?.id || !data.html_url) {
+    return { ok: false, error: malformedResponse('POST /pulls/comments', 'id/html_url', ctx) };
+  }
+
   return {
     ok: true as const,
-    data: {
-      action: 'pr-line-comment' as const,
-      id: data?.id ?? 0,
-      url: data?.html_url ?? '',
-    },
+    data: { action: 'pr-line-comment' as const, id: data.id, url: data.html_url },
   };
 };
 
@@ -196,6 +212,7 @@ export const createPrReview = async (
     prNumber: rendered.prNumber,
     event: rendered.event,
   });
+
   const result = await client.http.request<GithubPrReviewResponse, GithubErrorResponse>(url, {
     method: 'POST',
     headers: client.headers,
@@ -207,12 +224,13 @@ export const createPrReview = async (
   }
 
   const data = result.data;
+
+  if (!data?.id || !data.html_url) {
+    return { ok: false, error: malformedResponse('POST /reviews', 'id/html_url', ctx) };
+  }
+
   return {
     ok: true as const,
-    data: {
-      action: 'pr-review',
-      id: data?.id ?? 0,
-      url: data?.html_url ?? '',
-    },
+    data: { action: 'pr-review', id: data.id, url: data.html_url },
   };
 };

@@ -19,12 +19,16 @@ import {
   permissiveArgsSchema,
 } from './channel.schemas.js';
 
+/** Resolves a GitHub issue title from a static string or a function of input and context. */
 export type TitleResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
 
+/** Resolves a GitHub issue/comment body from a static string or a function of input and context. */
 export type BodyResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
 
+/** Options for the GitHub channel factory. */
 export type GithubChannelOptions = {
   defaults?: {
+    /** Default `owner/repo` applied to all actions when not overridden per-send. */
     repo?: string;
   };
 };
@@ -159,6 +163,7 @@ type PrReviewBuilder = ReturnType<InternalChannels['pr-review']['createBuilder']
 
 type PublicBuilder<B> = Omit<B, '_action' | '_args' | '_rendered' | '_state'>;
 
+/** Builder returned by `githubChannel()` — pick an action, then configure slots. */
 export type GithubActionPicker = {
   issue(): PublicBuilder<IssueBuilder>;
   issueComment(): PublicBuilder<IssueCommentBuilder>;
@@ -167,6 +172,7 @@ export type GithubActionPicker = {
   prReview(): PublicBuilder<PrReviewBuilder>;
 };
 
+/** Fully-typed GitHub channel definition for use in `createNotify`. */
 export type GithubChannel = Channel<
   'github',
   GithubActionPicker,
@@ -175,6 +181,7 @@ export type GithubChannel = Channel<
   Transport<RenderedGithub, unknown>
 >;
 
+/** Creates a GitHub channel that dispatches to issue, comment, or review actions. */
 export const githubChannel = (options: GithubChannelOptions = {}): GithubChannel => {
   const channels = createInternalChannels(options);
 

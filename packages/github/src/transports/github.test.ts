@@ -343,7 +343,7 @@ describe('githubTransport', () => {
   });
 
   describe('repo from rendered', () => {
-    it('uses repo from rendered object', async () => {
+    it('builds URL from repo field in rendered payload', async () => {
       const fetchMock = vi
         .fn()
         .mockResolvedValue(
@@ -603,8 +603,8 @@ describe('githubTransport', () => {
     });
   });
 
-  describe('null response data fallbacks', () => {
-    it('falls back to defaults when issue response body is empty', async () => {
+  describe('malformed response handling', () => {
+    it('returns PROVIDER error when issue response body is empty', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -620,13 +620,15 @@ describe('githubTransport', () => {
         ctx,
       );
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual({ action: 'issue', number: 0, url: '' });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcProviderError;
+        expect(err.code).toBe('PROVIDER');
+        expect(err.message).toContain('malformed response');
       }
     });
 
-    it('falls back to defaults when issue comment response body is empty', async () => {
+    it('returns PROVIDER error when issue comment response body is empty', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -642,13 +644,15 @@ describe('githubTransport', () => {
         ctx,
       );
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual({ action: 'comment', id: 0, url: '' });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcProviderError;
+        expect(err.code).toBe('PROVIDER');
+        expect(err.message).toContain('malformed response');
       }
     });
 
-    it('falls back to defaults when pr-comment response body is empty', async () => {
+    it('returns PROVIDER error when pr-comment response body is empty', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -669,13 +673,15 @@ describe('githubTransport', () => {
         ctx,
       );
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual({ action: 'pr-comment', id: 0, url: '' });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcProviderError;
+        expect(err.code).toBe('PROVIDER');
+        expect(err.message).toContain('malformed response');
       }
     });
 
-    it('falls back to defaults when pr-line-comment response body is empty', async () => {
+    it('returns PROVIDER error when pr-line-comment response body is empty', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -698,13 +704,15 @@ describe('githubTransport', () => {
         ctx,
       );
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual({ action: 'pr-line-comment', id: 0, url: '' });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcProviderError;
+        expect(err.code).toBe('PROVIDER');
+        expect(err.message).toContain('malformed response');
       }
     });
 
-    it('falls back to defaults when pr-review response body is empty', async () => {
+    it('returns PROVIDER error when pr-review response body is empty', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -726,9 +734,11 @@ describe('githubTransport', () => {
         ctx,
       );
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toEqual({ action: 'pr-review', id: 0, url: '' });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcProviderError;
+        expect(err.code).toBe('PROVIDER');
+        expect(err.message).toContain('malformed response');
       }
     });
   });
@@ -787,6 +797,18 @@ describe('githubTransport', () => {
       const result = await t.verify?.();
 
       expect(result).toEqual({ ok: false, details: 'unknown error' });
+    });
+
+    it('returns not ok when login is missing from response', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({})));
+
+      const t = githubTransport({ token: 'ghp_test' });
+      const result = await t.verify?.();
+
+      expect(result).toEqual({
+        ok: false,
+        details: 'invalid GitHub verify response: missing login',
+      });
     });
 
     it('returns not ok on network error', async () => {

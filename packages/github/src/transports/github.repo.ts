@@ -3,8 +3,11 @@ import type { RenderedGithub } from '../types.js';
 
 export const parseRepo = (repo: string): { owner: string; name: string } | null => {
   const parts = repo.split('/');
-  if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
-  return { owner: parts[0], name: parts[1] };
+  if (parts.length !== 2) return null;
+  const owner = parts[0]?.trim();
+  const name = parts[1]?.trim();
+  if (!owner || !name) return null;
+  return { owner, name };
 };
 
 export const resolveRepo = (
