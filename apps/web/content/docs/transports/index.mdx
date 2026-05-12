@@ -133,6 +133,11 @@ Return `{ ok: true, data }` on success with whatever provider-specific data you 
     <Badge variant="outline">provider</Badge>
     <Badge variant="secondary">sms</Badge>
   </a>
+  <a href="/docs/transports/github" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
+    <span className="text-fd-foreground flex-1 text-sm font-medium">GitHub</span>
+    <Badge variant="outline">provider</Badge>
+    <Badge variant="secondary">github</Badge>
+  </a>
   <a href="/docs/transports/zapier" className="hover:bg-fd-accent/50 flex items-center gap-2 px-4 py-3 no-underline transition-colors">
     <span className="text-fd-foreground flex-1 text-sm font-medium">Zapier</span>
     <Badge variant="outline">provider</Badge>
@@ -242,7 +247,7 @@ Both `verify` and `close` propagate through [multi-transport](/docs/transports/m
 
 ## HTTP configuration
 
-All HTTP-backed transports (Slack, Telegram, Discord, Resend, Cloudflare Email, Twilio, Zapier) accept an optional `http` object for low-level HTTP tuning — timeouts, retry, and request lifecycle hooks:
+All HTTP-backed transports (Slack, Telegram, Discord, Resend, Cloudflare Email, GitHub, Twilio, Zapier) accept an optional `http` object for low-level HTTP tuning — timeouts, retry, and request lifecycle hooks:
 
 ```ts
 import { slackTransport } from '@betternotify/slack';
