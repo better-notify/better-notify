@@ -44,6 +44,17 @@ export const env = createEnv({
       .describe('Discord webhook URL'),
 
     /**
+     * GitHub cluster
+     */
+    GITHUB_TOKEN: z
+      .string()
+      .optional()
+      .default('ghp_test')
+      .describe('GitHub personal access token'),
+    GITHUB_REPO: z.string().optional().default('owner/repo').describe('GitHub repo (owner/repo)'),
+    GITHUB_PR_NUMBER: z.coerce.number().optional().default(1).describe('GitHub PR number'),
+
+    /**
      * Mandrill cluster
      */
     MANDRILL_API_KEY: z.string().optional().default('md-test-123').describe('Mandrill API key'),

@@ -15,6 +15,7 @@
     "@betternotify/core": "workspace:*",
     "@betternotify/discord": "workspace:*",
     "@betternotify/email": "workspace:*",
+    "@betternotify/github": "workspace:*",
     "@betternotify/handlebars": "workspace:*",
     "@betternotify/mailchimp": "workspace:*",
     "@betternotify/mjml": "workspace:*",

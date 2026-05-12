@@ -1,0 +1,371 @@
+---
+title: GitHub
+icon: GithubLogo
+description: Create GitHub issues, comments, and PR reviews
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The GitHub channel is provided by `@betternotify/github`. It creates issues, posts issue comments, and submits pull request reviews through the [GitHub REST API](https://docs.github.com/en/rest).
+
+## When to use GitHub
+
+GitHub is the right channel when your notifications are GitHub actions — filing bug reports, commenting on issues, or approving pull requests. Use it for automated triage, CI/CD feedback, release approvals, or any workflow that should produce a GitHub artifact rather than a message in a chat or inbox.
+
+```package-install
+@betternotify/github
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { githubChannel } from '@betternotify/github';
+
+const github = githubChannel({ defaults: { repo: 'acme/api' } });
+
+const rpc = createNotify({ channels: { github } });
+```
+
+## Actions
+
+Unlike other channels that expose a flat builder (`rpc.email()`, `rpc.slack()`), the GitHub channel exposes three distinct actions through a picker:
+
+```ts
+rpc.github().issue()     // create an issue
+rpc.github().comment()   // comment on an issue or PR
+rpc.github().prReview()  // submit a PR review
+```
+
+Each action has its own slots and send arguments. You can mix all three in a single catalog.
+
+## Issue
+
+Creates a new GitHub issue. Requires `title` and `body` slots.
+
+### Slots
+
+<TypeTable
+  type={{
+    title: {
+      description: 'The issue title. Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    body: {
+      description: 'The issue body (Markdown). Accepts a static string or a resolver function.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Send arguments
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated input matching the procedure schema. Required.',
+      type: 'TInput',
+    },
+    repo: {
+      description: 'Target repository in `owner/repo` format. Overrides the channel default.',
+      type: 'string',
+    },
+    labels: {
+      description: 'Labels to apply to the new issue.',
+      type: 'string[]',
+    },
+    assignees: {
+      description: 'GitHub usernames to assign.',
+      type: 'string[]',
+    },
+    milestone: {
+      description: 'Milestone number to associate with the issue.',
+      type: 'number',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  bugReport: rpc
+    .github()
+    .issue()
+    .input(z.object({ summary: z.string(), severity: z.string() }))
+    .title(({ input }) => `[${input.severity}] ${input.summary}`)
+    .body(({ input }) => `**Severity:** ${input.severity}\n\n${input.summary}`),
+});
+
+await notify.bugReport.send({
+  input: { summary: 'Login 500 error', severity: 'critical' },
+  labels: ['bug', 'critical'],
+  assignees: ['octocat'],
+});
+```
+
+**Endpoint:** `POST /repos/{owner}/{repo}/issues`
+
+## Comment
+
+Posts a comment on an existing issue or pull request. Requires a `body` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The comment body (Markdown). Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Send arguments
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated input matching the procedure schema. Required.',
+      type: 'TInput',
+    },
+    issueNumber: {
+      description: 'The issue or pull request number to comment on. Required.',
+      type: 'number',
+    },
+    repo: {
+      description: 'Target repository in `owner/repo` format. Overrides the channel default.',
+      type: 'string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  reviewAck: rpc
+    .github()
+    .comment()
+    .input(z.object({ reviewer: z.string(), message: z.string() }))
+    .body(({ input }) => `**${input.reviewer}:** ${input.message}`),
+});
+
+await notify.reviewAck.send({
+  input: { reviewer: 'octocat', message: 'Looking into this now.' },
+  issueNumber: 42,
+});
+```
+
+**Endpoint:** `POST /repos/{owner}/{repo}/issues/{issue_number}/comments`
+
+## PR Review
+
+Submits a pull request review. Requires a `body` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The review body (Markdown). Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Send arguments
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated input matching the procedure schema. Required.',
+      type: 'TInput',
+    },
+    prNumber: {
+      description: 'The pull request number. Required.',
+      type: 'number',
+    },
+    event: {
+      description: 'Review action. Required.',
+      type: "'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT'",
+    },
+    repo: {
+      description: 'Target repository in `owner/repo` format. Overrides the channel default.',
+      type: 'string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  releaseApproval: rpc
+    .github()
+    .prReview()
+    .input(z.object({ version: z.string(), notes: z.string() }))
+    .body(({ input }) => `Approved for **${input.version}**.\n\n${input.notes}`),
+});
+
+await notify.releaseApproval.send({
+  input: { version: 'v2.0.0', notes: 'New auth flow, SSO fix.' },
+  prNumber: 123,
+  event: 'APPROVE',
+});
+```
+
+**Endpoint:** `POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews`
+
+## Full example
+
+All three actions in a single catalog:
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { githubChannel, githubTransport } from '@betternotify/github';
+import { z } from 'zod';
+
+const github = githubChannel({ defaults: { repo: 'acme/api' } });
+const rpc = createNotify({ channels: { github } });
+
+const catalog = rpc.catalog({
+  bugReport: rpc
+    .github()
+    .issue()
+    .input(z.object({ summary: z.string(), details: z.string() }))
+    .title(({ input }) => `[Bug] ${input.summary}`)
+    .body(({ input }) => input.details),
+
+  reviewAck: rpc
+    .github()
+    .comment()
+    .input(z.object({ message: z.string() }))
+    .body(({ input }) => input.message),
+
+  releaseApproval: rpc
+    .github()
+    .prReview()
+    .input(z.object({ version: z.string() }))
+    .body(({ input }) => `Approved for release **${input.version}**.`),
+});
+
+const notify = createClient({
+  catalog,
+  channels: { github },
+  transportsByChannel: {
+    github: githubTransport({ token: process.env.GITHUB_TOKEN! }),
+  },
+});
+
+await notify.bugReport.send({
+  input: { summary: 'Login 500 error', details: 'Users see 500 on SSO login.' },
+  labels: ['bug'],
+});
+
+await notify.reviewAck.send({
+  input: { message: 'On it.' },
+  issueNumber: 42,
+});
+
+await notify.releaseApproval.send({
+  input: { version: 'v2.0.0' },
+  prNumber: 100,
+  event: 'APPROVE',
+});
+```
+
+## Channel options
+
+<TypeTable
+  type={{
+    'defaults.repo': {
+      description: 'Default repository in `owner/repo` format. Applied to all sends unless overridden per-send.',
+      type: 'string',
+    },
+  }}
+/>
+
+## Repository resolution
+
+The `repo` field follows a fallback chain: per-send `repo` arg → `defaults.repo` from `githubChannel()`. If neither is set, the transport returns a `VALIDATION` error.
+
+The format must be `owner/repo` (e.g. `acme/api`). Invalid formats also return a `VALIDATION` error.
+
+## Using with Handlebars
+
+The `title` and `body` slots accept resolver functions, so you can plug in any template engine:
+
+```ts
+import Handlebars from 'handlebars';
+
+const titleTpl = Handlebars.compile('[{{severity}}] {{summary}}');
+const bodyTpl = Handlebars.compile('**Severity:** {{severity}}\n\n{{details}}');
+
+const catalog = rpc.catalog({
+  bugReport: rpc
+    .github()
+    .issue()
+    .input(z.object({ summary: z.string(), details: z.string(), severity: z.string() }))
+    .title(({ input }) => titleTpl(input))
+    .body(({ input }) => bodyTpl(input)),
+});
+```
+
+## Transport
+
+### Built-in: `githubTransport`
+
+The package includes a ready-to-use transport that calls the GitHub REST API via `fetch`:
+
+```ts
+import { githubTransport } from '@betternotify/github';
+
+const transport = githubTransport({
+  token: process.env.GITHUB_TOKEN!,
+});
+```
+
+For GitHub Enterprise, set `baseUrl`:
+
+```ts
+const transport = githubTransport({
+  token: process.env.GHE_TOKEN!,
+  baseUrl: 'https://github.example.com/api/v3',
+});
+```
+
+Call `transport.verify()` to validate your token at startup via `GET /user`.
+
+See [GitHub transport](/docs/transports/github) for full transport options, error handling, and per-send overrides.
+
+### Mock transport
+
+Use `mockGithubTransport()` in tests:
+
+```ts
+import { mockGithubTransport } from '@betternotify/github';
+
+const transport = mockGithubTransport();
+
+// after sending...
+console.log(transport.messages); // [{ action: 'issue', title: '...', body: '...', id: 'github-mock-1' }]
+```
+
+### Multi-transport
+
+Use `multiTransport` from core for failover across multiple GitHub tokens or instances:
+
+```ts
+import { githubTransport } from '@betternotify/github';
+import { multiTransport } from '@betternotify/core/transports';
+
+const transport = multiTransport({
+  strategy: 'failover',
+  transports: [
+    { transport: githubTransport({ token: process.env.GITHUB_TOKEN_PRIMARY! }) },
+    { transport: githubTransport({ token: process.env.GITHUB_TOKEN_FALLBACK! }) },
+  ],
+});
+```

@@ -48,6 +48,10 @@ import { runPushOnesignal } from './examples/push-onesignal';
 import { runEmailOnesignal } from './examples/email-onesignal';
 import { runSmsOnesignal } from './examples/sms-onesignal';
 import { runEmailSelligent } from './examples/email-selligent';
+import { runGithubIssue } from './examples/github-issue';
+import { runGithubComment } from './examples/github-comment';
+import { runGithubPrReview } from './examples/github-pr-review';
+import { runGithubIssueHandlebars } from './examples/github-issue-handlebars';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -100,6 +104,10 @@ const examples: Record<string, () => Promise<void>> = {
   'email-onesignal': runEmailOnesignal,
   'sms-onesignal': runSmsOnesignal,
   'email-selligent': runEmailSelligent,
+  'github-issue': runGithubIssue,
+  'github-comment': runGithubComment,
+  'github-pr-review': runGithubPrReview,
+  'github-issue-handlebars': runGithubIssueHandlebars,
 };
 
 const main = async (): Promise<void> => {
