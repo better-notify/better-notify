@@ -14,6 +14,7 @@ const ctx = { route: 'test.route', messageId: 'msg-1', attempt: 1 };
 describe('githubTransport', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   describe('issue', () => {
