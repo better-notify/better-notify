@@ -1,0 +1,41 @@
+name: Add your company
+description: Get your company featured on the Better-Notify landing page
+labels: ['landing-page']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Using Better-Notify in production? We'd love to feature you on the landing page.
+
+  - type: input
+    id: company
+    attributes:
+      label: Company name
+      placeholder: Acme Corp
+    validations:
+      required: true
+
+  - type: input
+    id: website
+    attributes:
+      label: Website URL
+      placeholder: https://example.com
+    validations:
+      required: true
+
+  - type: textarea
+    id: usage
+    attributes:
+      label: How are you using Better-Notify?
+      description: Which packages and channels are you using? A sentence or two is enough.
+      placeholder: 'We use @betternotify/core with the SMTP transport to send transactional emails.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: logo
+    attributes:
+      label: Logo
+      description: Paste an SVG or attach an image file. Square logos work best.
+    validations:
+      required: true
