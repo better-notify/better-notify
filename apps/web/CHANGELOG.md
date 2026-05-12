@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-beta.6](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.5...@betternotify/web-v1.1.0-beta.6) (2026-05-12)
+
+
+### Features
+
+* **web:** add customer logo section to landing page ([#119](https://github.com/better-notify/better-notify/issues/119)) ([6f52240](https://github.com/better-notify/better-notify/commit/6f52240b7539b7f741ffda4ae6c60979ecaf1c0f))
+
 ## [1.1.0-beta.5](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.4...@betternotify/web-v1.1.0-beta.5) (2026-05-12)
 
 
