@@ -1,11 +1,12 @@
 import type { InferInput, InferOutput } from './schema.js';
-import type { ChannelDefinition } from './channel/types.js';
+import type { ChannelDefinition, ChannelMap } from './channel/types.js';
 
 const CATALOG_BRAND = 'Catalog' as const;
 
-export type Catalog<M, Ctx = unknown> = {
+export type Catalog<M, Ctx = unknown, Channels extends ChannelMap = ChannelMap> = {
   readonly _brand: typeof CATALOG_BRAND;
   readonly _ctx: Ctx;
+  readonly _channels: Channels;
   readonly definitions: { readonly [k: string]: ChannelDefinition<any, any> };
   readonly nested: { readonly [K in keyof M]: NestedValue<M[K]> };
   readonly routes: ReadonlyArray<string>;
@@ -14,6 +15,7 @@ export type Catalog<M, Ctx = unknown> = {
 export type AnyCatalog = {
   readonly _brand: typeof CATALOG_BRAND;
   readonly _ctx: any;
+  readonly _channels: any;
   readonly definitions: Record<string, ChannelDefinition<any, any>>;
   readonly nested: Record<string, unknown>;
   readonly routes: ReadonlyArray<string>;
@@ -86,6 +88,7 @@ export const createCatalog = <const M extends Record<string, unknown>, Ctx = unk
   return {
     _brand: CATALOG_BRAND,
     _ctx: undefined as never,
+    _channels: undefined as never,
     definitions,
     nested: nested as Catalog<M, Ctx>['nested'],
     routes,
@@ -97,6 +100,8 @@ type SchemaOf<B> = B extends { readonly schema: infer S } ? S : never;
 type CatalogOf<R> = R extends Catalog<infer M, any> ? M : never;
 
 export type CtxOf<R> = R extends Catalog<any, infer Ctx> ? Ctx : unknown;
+
+export type ChannelsOf<R> = R extends Catalog<any, any, infer C> ? C : ChannelMap;
 
 export type InputOf<R extends AnyCatalog, K extends keyof CatalogOf<R> & string> =
   InferInput<SchemaOf<CatalogOf<R>[K]>> extends never

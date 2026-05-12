@@ -9,6 +9,7 @@ describe('worker stubs', () => {
     const catalog: AnyCatalog = {
       _brand: 'Catalog',
       _ctx: undefined as never,
+      _channels: undefined as never,
       definitions: {},
       nested: {},
       routes: [],

@@ -7,6 +7,7 @@ export type ChannelDefinition<TArgs, TRendered> = {
   readonly schema: AnyStandardSchema;
   readonly middleware: ReadonlyArray<AnyMiddleware>;
   readonly runtime: unknown;
+  readonly channelRef?: AnyChannel;
   readonly _args: TArgs;
   readonly _rendered: TRendered;
 };

@@ -12,7 +12,7 @@ export type RootBuilder<M extends ChannelMap, Ctx> = {
   ): RootBuilder<M, TCtxOut>;
   catalog<const Map extends Record<string, unknown>>(
     map: Map & ValidateCatalog<Map>,
-  ): Catalog<Map, Ctx>;
+  ): Catalog<Map, Ctx, M>;
 } & {
   [K in keyof M & string]: () => BuilderFor<M[K]>;
 };
@@ -26,7 +26,7 @@ const buildRoot = <M extends ChannelMap, Ctx>(
       return buildRoot<M, TCtxOut>(channels, [...rootMiddleware, middleware as AnyMiddleware]);
     },
     catalog<const Map extends Record<string, unknown>>(map: Map & ValidateCatalog<Map>) {
-      return createCatalog(map as never) as Catalog<Map, Ctx>;
+      return createCatalog(map as never) as unknown as Catalog<Map, Ctx, M>;
     },
   };
   for (const name of Object.keys(channels)) {
