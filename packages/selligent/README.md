@@ -54,17 +54,17 @@ selligentTransport({
 
 ## Options
 
-| Field          | Type       | Description                                                                          |
-| -------------- | ---------- | ------------------------------------------------------------------------------------ |
-| `clientId`     | `number`   | Selligent OAuth client ID. Required (unless using `getAccessToken`).                 |
-| `clientSecret` | `string`   | Selligent OAuth client secret. Required (unless using `getAccessToken`).             |
-| `accountId`    | `string`   | Selligent account ID. Required (unless using `getAccessToken`).                      |
-| `getAccessToken` | `() => Promise<string>` | Provide your own token. Mutually exclusive with OAuth credentials.   |
-| `baseUrl`      | `string`   | Override the SDC API base URL. Defaults to `https://sdc.slgnt.eu`.                   |
-| `authUrl`      | `string`   | Override the OAuth token endpoint. Defaults to `https://auth.slgnt.eu/oauth/token`.  |
-| `audience`     | `string`   | Override the OAuth audience. Defaults to `https://sdc.slgnt.eu`.                     |
-| `logger`       | `object`   | Optional `LoggerLike`. Defaults to `consoleLogger()`.                                |
-| `http`         | `object`   | HTTP behavior options (retry, timeout, hooks).                                       |
+| Field            | Type                    | Description                                                                         |
+| ---------------- | ----------------------- | ----------------------------------------------------------------------------------- |
+| `clientId`       | `number`                | Selligent OAuth client ID. Required (unless using `getAccessToken`).                |
+| `clientSecret`   | `string`                | Selligent OAuth client secret. Required (unless using `getAccessToken`).            |
+| `accountId`      | `string`                | Selligent account ID. Required (unless using `getAccessToken`).                     |
+| `getAccessToken` | `() => Promise<string>` | Provide your own token. Mutually exclusive with OAuth credentials.                  |
+| `baseUrl`        | `string`                | Override the SDC API base URL. Defaults to `https://sdc.slgnt.eu`.                  |
+| `authUrl`        | `string`                | Override the OAuth token endpoint. Defaults to `https://auth.slgnt.eu/oauth/token`. |
+| `audience`       | `string`                | Override the OAuth audience. Defaults to `https://sdc.slgnt.eu`.                    |
+| `logger`         | `object`                | Optional `LoggerLike`. Defaults to `consoleLogger()`.                               |
+| `http`           | `object`                | HTTP behavior options (retry, timeout, hooks).                                      |
 
 ## Authentication
 

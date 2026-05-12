@@ -1,15 +1,15 @@
 ---
-title: OneSignal
+title: OneSignal Push
 icon: OneSignalLogo
-description: Send push, email, and SMS via the OneSignal HTTP API
+description: Send push notifications via the OneSignal HTTP API
+channels: [push]
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
-import { Callout } from 'fumadocs-ui/components/callout';
 
-The OneSignal transport is an official Better-Notify package that delivers push notifications, emails, and SMS through the [OneSignal](https://onesignal.com) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+The OneSignal Push transport is part of `@betternotify/onesignal`. It delivers push notifications through the [OneSignal](https://onesignal.com) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
 
-The package ships three transports — one per channel. Pick only the one you need.
+The package also ships [email](/docs/transports/onesignal-email) and [SMS](/docs/transports/onesignal-sms) transports — each is independent, pick only what you need.
 
 ## Getting your API key
 
@@ -24,15 +24,13 @@ ONESIGNAL_APP_ID=00000000-0000-0000-0000-000000000000
 ONESIGNAL_API_KEY=os_v2_app_xxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-## Push notifications
-
-### Install
+## Install
 
 ```package-install
 @betternotify/onesignal @betternotify/core @betternotify/push
 ```
 
-### Usage
+## Usage
 
 ```ts
 import { createNotify, createClient } from '@betternotify/core';
@@ -58,7 +56,7 @@ const notify = createClient({
 });
 ```
 
-### Targeting
+## Targeting
 
 Push delivery uses OneSignal **subscription IDs** (formerly player IDs) via the `include_subscription_ids` field. Pass them through the `to` field on `RenderedPush`.
 
@@ -66,107 +64,7 @@ If you store user external IDs instead, you'll want to add an alias-targeting la
 
 **Endpoint:** `POST /notifications?c=push`
 
-## Email
-
-### Install
-
-```package-install
-@betternotify/onesignal @betternotify/core @betternotify/email
-```
-
-### Usage
-
-```ts
-import { createNotify, createClient } from '@betternotify/core';
-import { emailChannel } from '@betternotify/email';
-import { onesignalEmailTransport } from '@betternotify/onesignal';
-
-const email = emailChannel({
-  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
-});
-
-const rpc = createNotify({ channels: { email } });
-const catalog = rpc.catalog({
-  /* routes */
-});
-
-const notify = createClient({
-  catalog,
-  channels: { email },
-  transportsByChannel: {
-    email: onesignalEmailTransport({
-      appId: process.env.ONESIGNAL_APP_ID!,
-      apiKey: process.env.ONESIGNAL_API_KEY!,
-    }),
-  },
-});
-```
-
-### Targeting
-
-Email addresses are passed through the `to` field on `RenderedMessage` and mapped to OneSignal's `email_to` field.
-
-**Endpoint:** `POST /notifications?c=email`
-
-<Callout type="info">
-OneSignal is a notification platform first — its email API is oriented toward broadcast and campaigns, not deep transactional metadata. The following `RenderedMessage` fields are silently dropped: `cc`, `bcc`, custom `headers`, `attachments`, `inlineAssets`, `tags`, and `priority`. If you need them, prefer a dedicated email provider transport (e.g. [Resend](/docs/transports/resend), [Mailchimp](/docs/transports/mailchimp)).
-</Callout>
-
-## SMS
-
-### Install
-
-```package-install
-@betternotify/onesignal @betternotify/core @betternotify/sms
-```
-
-### Usage
-
-```ts
-import { createNotify, createClient } from '@betternotify/core';
-import { smsChannel } from '@betternotify/sms';
-import { onesignalSmsTransport } from '@betternotify/onesignal';
-
-const sms = smsChannel();
-
-const rpc = createNotify({ channels: { sms } });
-const catalog = rpc.catalog({
-  /* routes */
-});
-
-const notify = createClient({
-  catalog,
-  channels: { sms },
-  transportsByChannel: {
-    sms: onesignalSmsTransport({
-      appId: process.env.ONESIGNAL_APP_ID!,
-      apiKey: process.env.ONESIGNAL_API_KEY!,
-      from: '+15555550000',
-    }),
-  },
-});
-```
-
-### Targeting
-
-Phone numbers (E.164 format) are passed through the `to` field on `RenderedSms` and mapped to OneSignal's `include_phone_numbers` field.
-
-**Endpoint:** `POST /notifications?c=sms`
-
-### SMS-specific options
-
-<TypeTable
-  type={{
-    from: {
-      description: 'Phone number (E.164) or Messaging Service SID used for `sms_from`.',
-      type: 'string',
-    },
-  }}
-/>
-
-## Shared options
-
-All three transports accept `OneSignalTransportOptions`:
+## Options
 
 <TypeTable
   type={{
@@ -202,11 +100,9 @@ All three transports accept `OneSignalTransportOptions`:
   }}
 />
 
-You can use any combination of the three — pair `onesignalPushTransport` with a different email provider, for example. Each transport is independent.
-
 ## Custom OneSignal fields
 
-The transport maps `RenderedPush`, `RenderedMessage`, and `RenderedSms` fields to the OneSignal API automatically. For any OneSignal-specific field not covered by the rendered message, use `body` (applied to every send) and `bodyFor` (per-route overrides).
+The transport maps `RenderedPush` fields to the OneSignal API automatically. For any OneSignal-specific field not covered by the rendered message, use `body` (applied to every send) and `bodyFor` (per-route overrides).
 
 Pass `<typeof catalog>` as a type parameter to get autocomplete on route names:
 
@@ -241,19 +137,13 @@ await notify.orderReady.send({
 });
 ```
 
-The `transport.onesignal` object is fully typed and automatically narrows to the correct channel — push routes autocomplete with push fields (`priority`, `ios_sound`, `ttl`, etc.), email routes with email fields (`email_preheader`, etc.), and SMS routes with SMS fields (`sms_media_urls`, etc.).
-
 ### Merge order
 
 `body` (global) → `bodyFor[route]` (per-route) → `transport.onesignal` (per-send) → mapped rendered fields (always win).
 
-### Common fields by channel
+### Common push fields
 
-**Push:** `ttl`, `priority`, `collapse_id`, `ios_sound`, `ios_interruption_level`, `ios_badgeType`, `buttons`, `web_buttons`, `url`, `app_url`, `web_url`, `big_picture`, `chrome_web_image`, `android_channel_id`, `included_segments`, `filters`, `include_aliases`, `send_after`, `idempotency_key`
-
-**Email:** `template_id`, `included_segments`, `filters`, `include_aliases`, `send_after`, `idempotency_key`
-
-**SMS:** `sms_media_urls`, `template_id`, `custom_data`, `included_segments`, `filters`, `include_aliases`, `send_after`, `idempotency_key`
+`ttl`, `priority`, `collapse_id`, `ios_sound`, `ios_interruption_level`, `ios_badgeType`, `buttons`, `web_buttons`, `url`, `app_url`, `web_url`, `big_picture`, `chrome_web_image`, `android_channel_id`, `included_segments`, `filters`, `include_aliases`, `send_after`, `idempotency_key`
 
 See the [OneSignal API reference](https://documentation.onesignal.com/reference/create-message) for the full list of supported fields.
 

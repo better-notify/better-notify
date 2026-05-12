@@ -1,0 +1,153 @@
+---
+title: OneSignal Email
+icon: OneSignalLogo
+description: Send emails via the OneSignal HTTP API
+channels: [email]
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The OneSignal Email transport is part of `@betternotify/onesignal`. It delivers email through the [OneSignal](https://onesignal.com) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+
+The package also ships [push](/docs/transports/onesignal-push) and [SMS](/docs/transports/onesignal-sms) transports — each is independent, pick only what you need.
+
+## Getting your API key
+
+1. Sign up or log in at [onesignal.com](https://onesignal.com).
+2. Open your app in the dashboard and copy the **App ID** from **Settings → Keys & IDs**.
+3. From the same screen, copy the **REST API Key**.
+
+Store them as environment variables:
+
+```sh
+ONESIGNAL_APP_ID=00000000-0000-0000-0000-000000000000
+ONESIGNAL_API_KEY=os_v2_app_xxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Install
+
+```package-install
+@betternotify/onesignal @betternotify/core @betternotify/email
+```
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { onesignalEmailTransport } from '@betternotify/onesignal';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const notify = createClient({
+  catalog,
+  channels: { email },
+  transportsByChannel: {
+    email: onesignalEmailTransport({
+      appId: process.env.ONESIGNAL_APP_ID!,
+      apiKey: process.env.ONESIGNAL_API_KEY!,
+    }),
+  },
+});
+```
+
+## Targeting
+
+Email addresses are passed through the `to` field on `RenderedMessage` and mapped to OneSignal's `email_to` field.
+
+**Endpoint:** `POST /notifications?c=email`
+
+<Callout type="info">
+OneSignal is a notification platform first — its email API is oriented toward broadcast and campaigns, not deep transactional metadata. The following `RenderedMessage` fields are silently dropped: `cc`, `bcc`, custom `headers`, `attachments`, `inlineAssets`, `tags`, and `priority`. If you need them, prefer a dedicated email provider transport (e.g. [Resend](/docs/transports/resend), [Mailchimp](/docs/transports/mailchimp)).
+</Callout>
+
+## Options
+
+<TypeTable
+  type={{
+    appId: {
+      description: 'OneSignal App ID (UUID v4). Required.',
+      type: 'string',
+    },
+    apiKey: {
+      description: 'OneSignal REST API Key. Sent as `Authorization: Key <apiKey>`. Required.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Override the OneSignal API base URL. Useful for testing.',
+      type: 'string',
+      default: '"https://api.onesignal.com"',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+    body: {
+      description: 'Extra fields merged into every OneSignal request body. Useful for global defaults like `included_segments`.',
+      type: 'Record<string, unknown>',
+    },
+    bodyFor: {
+      description: 'Per-route overrides merged on top of `body` for matching routes. Pass `<typeof catalog>` as a type parameter for full route autocomplete.',
+      type: 'Partial<Record<string, Record<string, unknown>>>',
+    },
+  }}
+/>
+
+## Custom OneSignal fields
+
+The transport maps `RenderedMessage` fields to the OneSignal API automatically. For any OneSignal-specific field not covered by the rendered message, use `body` (applied to every send) and `bodyFor` (per-route overrides).
+
+### Per-send overrides
+
+You can also pass OneSignal fields per-send via the `transport` key in `.send()`:
+
+```ts
+await notify.welcome.send({
+  to: 'user@example.com',
+  input: { name: 'Alice' },
+  transport: {
+    onesignal: { email_preheader: 'Welcome aboard!' },
+  },
+});
+```
+
+### Merge order
+
+`body` (global) → `bodyFor[route]` (per-route) → `transport.onesignal` (per-send) → mapped rendered fields (always win).
+
+### Common email fields
+
+`template_id`, `email_preheader`, `included_segments`, `filters`, `include_aliases`, `send_after`, `idempotency_key`
+
+See the [OneSignal API reference](https://documentation.onesignal.com/reference/create-message) for the full list of supported fields.
+
+## Error handling
+
+The transport maps HTTP status codes to Better-Notify error codes using the shared `mapHttpStatus` utility:
+
+| HTTP status | Better-Notify code | Retriable |
+| --- | --- | --- |
+| 400 | `VALIDATION` | No |
+| 422 | `VALIDATION` | No |
+| 401 | `CONFIG` | No |
+| 403 | `CONFIG` | No |
+| 429 | `RATE_LIMITED` | Yes |
+| 5xx | `PROVIDER` | Yes |
+
+Network failures are wrapped as `PROVIDER` errors and timeouts as `TIMEOUT` errors.
+
+### Empty-id responses
+
+OneSignal returns `HTTP 200` with `id: ""` when every targeted subscription, address, or phone number is invalid or unsubscribed. The transport surfaces this as a non-retriable `VALIDATION` error so failover (via `multiTransport`) and queue retry layers don't waste attempts on impossible sends.
