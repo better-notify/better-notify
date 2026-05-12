@@ -30,6 +30,18 @@ export const mockGithubTransport = (): MockGithubTransport => {
             id: counter,
             url: `https://github.com/mock/repo/issues/${rendered.issueNumber}#issuecomment-${counter}`,
           };
+        case 'pr-comment':
+          return {
+            action: 'pr-comment',
+            id: counter,
+            url: `https://github.com/mock/repo/pull/${rendered.prNumber}#issuecomment-${counter}`,
+          };
+        case 'pr-line-comment':
+          return {
+            action: 'pr-line-comment',
+            id: counter,
+            url: `https://github.com/mock/repo/pull/${rendered.prNumber}#discussion_r${counter}`,
+          };
         case 'pr-review':
           return {
             action: 'pr-review',

@@ -17,8 +17,18 @@ describe('githubChannel', () => {
       expect((b as unknown as { _channel: string })._channel).toBe('github');
     });
 
-    it('comment() returns a builder with _channel="github"', () => {
-      const b = issuePicker().comment();
+    it('issueComment() returns a builder with _channel="github"', () => {
+      const b = issuePicker().issueComment();
+      expect((b as unknown as { _channel: string })._channel).toBe('github');
+    });
+
+    it('prComment() returns a builder with _channel="github"', () => {
+      const b = issuePicker().prComment();
+      expect((b as unknown as { _channel: string })._channel).toBe('github');
+    });
+
+    it('prLineComment() returns a builder with _channel="github"', () => {
+      const b = issuePicker().prLineComment();
       expect((b as unknown as { _channel: string })._channel).toBe('github');
     });
 
@@ -114,10 +124,10 @@ describe('githubChannel', () => {
     });
   });
 
-  describe('comment builder', () => {
-    it('renders comment with body', async () => {
+  describe('issueComment builder', () => {
+    it('renders issue comment with body', async () => {
       const builder = issuePicker()
-        .comment()
+        .issueComment()
         .input(z.object({ msg: z.string() }))
         .body(({ input }) => input.msg);
       const def = ch.finalize(builder, 'ack');
@@ -134,9 +144,9 @@ describe('githubChannel', () => {
       });
     });
 
-    it('renders comment without optional repo', async () => {
+    it('renders issue comment without optional repo', async () => {
       const builder = issuePicker()
-        .comment()
+        .issueComment()
         .input(z.object({ msg: z.string() }))
         .body('Static comment');
       const def = ch.finalize(builder, 'note');
@@ -150,7 +160,182 @@ describe('githubChannel', () => {
 
     it('finalize throws when body is missing', () => {
       const builder = issuePicker()
-        .comment()
+        .issueComment()
+        .input(z.object({ x: z.string() }));
+      expect(() => ch.finalize(builder, 'r')).toThrow(/missing required slot: body/);
+    });
+  });
+
+  describe('prComment builder', () => {
+    it('renders with required fields', async () => {
+      const builder = issuePicker()
+        .prComment()
+        .input(z.object({ msg: z.string() }))
+        .body(({ input }) => input.msg);
+      const def = ch.finalize(builder, 'pr-note');
+      const out = await ch.render(
+        def,
+        {
+          input: { msg: 'Nice work!' },
+          repo: 'org/repo',
+          prNumber: 42,
+        },
+        {},
+      );
+      expect(out).toEqual({
+        action: 'pr-comment',
+        body: 'Nice work!',
+        repo: 'org/repo',
+        prNumber: 42,
+      });
+    });
+
+    it('uses default repo when not provided', async () => {
+      const chWithDefaults = githubChannel({ defaults: { repo: 'default/repo' } });
+      const builder = chWithDefaults
+        .createBuilder({ ctx: undefined, rootMiddleware: [] })
+        .prComment()
+        .input(z.object({ x: z.string() }))
+        .body('B');
+      const def = chWithDefaults.finalize(builder, 'r');
+      const out = await chWithDefaults.render(def, { input: { x: 'val' }, prNumber: 5 }, {});
+      expect(out).toMatchObject({ action: 'pr-comment', repo: 'default/repo' });
+    });
+
+    it('overrides default repo with send arg', async () => {
+      const chWithDefaults = githubChannel({ defaults: { repo: 'default/repo' } });
+      const builder = chWithDefaults
+        .createBuilder({ ctx: undefined, rootMiddleware: [] })
+        .prComment()
+        .input(z.object({ x: z.string() }))
+        .body('B');
+      const def = chWithDefaults.finalize(builder, 'r');
+      const out = await chWithDefaults.render(
+        def,
+        {
+          input: { x: 'val' },
+          repo: 'override/repo',
+          prNumber: 5,
+        },
+        {},
+      );
+      expect(out).toMatchObject({ action: 'pr-comment', repo: 'override/repo' });
+    });
+
+    it('finalize throws when body is missing', () => {
+      const builder = issuePicker()
+        .prComment()
+        .input(z.object({ x: z.string() }));
+      expect(() => ch.finalize(builder, 'r')).toThrow(/missing required slot: body/);
+    });
+  });
+
+  describe('prLineComment builder', () => {
+    it('renders with required fields', async () => {
+      const builder = issuePicker()
+        .prLineComment()
+        .input(z.object({ msg: z.string() }))
+        .body(({ input }) => input.msg);
+      const def = ch.finalize(builder, 'pr-line-note');
+      const out = await ch.render(
+        def,
+        {
+          input: { msg: 'Needs fix' },
+          repo: 'org/repo',
+          prNumber: 42,
+          commitId: 'abc123',
+          path: 'src/index.ts',
+        },
+        {},
+      );
+      expect(out).toEqual({
+        action: 'pr-line-comment',
+        body: 'Needs fix',
+        repo: 'org/repo',
+        prNumber: 42,
+        commitId: 'abc123',
+        path: 'src/index.ts',
+      });
+    });
+
+    it('renders with optional fields', async () => {
+      const builder = issuePicker()
+        .prLineComment()
+        .input(z.object({ msg: z.string() }))
+        .body(({ input }) => input.msg);
+      const def = ch.finalize(builder, 'pr-line-note-full');
+      const out = await ch.render(
+        def,
+        {
+          input: { msg: 'Line comment' },
+          repo: 'org/repo',
+          prNumber: 42,
+          commitId: 'abc123',
+          path: 'src/index.ts',
+          line: 10,
+          startLine: 5,
+          side: 'RIGHT',
+          startSide: 'LEFT',
+          subjectType: 'line',
+        },
+        {},
+      );
+      expect(out).toEqual({
+        action: 'pr-line-comment',
+        body: 'Line comment',
+        repo: 'org/repo',
+        prNumber: 42,
+        commitId: 'abc123',
+        path: 'src/index.ts',
+        line: 10,
+        startLine: 5,
+        side: 'RIGHT',
+        startSide: 'LEFT',
+        subjectType: 'line',
+      });
+    });
+
+    it('uses default repo when not provided', async () => {
+      const chWithDefaults = githubChannel({ defaults: { repo: 'default/repo' } });
+      const builder = chWithDefaults
+        .createBuilder({ ctx: undefined, rootMiddleware: [] })
+        .prLineComment()
+        .input(z.object({ x: z.string() }))
+        .body('B');
+      const def = chWithDefaults.finalize(builder, 'r');
+      const out = await chWithDefaults.render(
+        def,
+        { input: { x: 'val' }, prNumber: 5, commitId: 'sha1', path: 'file.ts' },
+        {},
+      );
+      expect(out).toMatchObject({ action: 'pr-line-comment', repo: 'default/repo' });
+    });
+
+    it('overrides default repo with send arg', async () => {
+      const chWithDefaults = githubChannel({ defaults: { repo: 'default/repo' } });
+      const builder = chWithDefaults
+        .createBuilder({ ctx: undefined, rootMiddleware: [] })
+        .prLineComment()
+        .input(z.object({ x: z.string() }))
+        .body('B');
+      const def = chWithDefaults.finalize(builder, 'r');
+      const out = await chWithDefaults.render(
+        def,
+        {
+          input: { x: 'val' },
+          repo: 'override/repo',
+          prNumber: 5,
+          commitId: 'sha1',
+          path: 'file.ts',
+        },
+        {},
+      );
+      expect(out).toMatchObject({ action: 'pr-line-comment', repo: 'override/repo' });
+    });
+
+    it('finalize throws when body is missing', () => {
+      const builder = issuePicker()
+        .prLineComment()
         .input(z.object({ x: z.string() }));
       expect(() => ch.finalize(builder, 'r')).toThrow(/missing required slot: body/);
     });
@@ -219,13 +404,45 @@ describe('githubChannel', () => {
       expect(result).toMatchObject({ repo: 'org/repo', labels: ['bug'] });
     });
 
-    it('accepts comment args', async () => {
+    it('accepts issue comment args', async () => {
       const result = await ch.validateArgs({
         input: { x: 1 },
         repo: 'org/repo',
         issueNumber: 42,
       });
       expect(result).toMatchObject({ repo: 'org/repo', issueNumber: 42 });
+    });
+
+    it('accepts pr comment args', async () => {
+      const result = await ch.validateArgs({
+        input: { x: 1 },
+        repo: 'org/repo',
+        prNumber: 42,
+      });
+      expect(result).toMatchObject({
+        repo: 'org/repo',
+        prNumber: 42,
+      });
+    });
+
+    it('accepts pr line comment args', async () => {
+      const result = await ch.validateArgs({
+        input: { x: 1 },
+        repo: 'org/repo',
+        prNumber: 42,
+        commitId: 'abc123',
+        path: 'src/index.ts',
+        startLine: 5,
+        startSide: 'LEFT',
+      });
+      expect(result).toMatchObject({
+        repo: 'org/repo',
+        prNumber: 42,
+        commitId: 'abc123',
+        path: 'src/index.ts',
+        startLine: 5,
+        startSide: 'LEFT',
+      });
     });
 
     it('accepts pr review args', async () => {
@@ -279,16 +496,44 @@ describe('githubChannel', () => {
       expect(out).toMatchObject({ action: 'issue', repo: 'override/repo' });
     });
 
-    it('defaults.repo applies to comment action', async () => {
+    it('defaults.repo applies to issueComment action', async () => {
       const chWithDefaults = githubChannel({ defaults: { repo: 'default/repo' } });
       const builder = chWithDefaults
         .createBuilder({ ctx: undefined, rootMiddleware: [] })
-        .comment()
+        .issueComment()
         .input(z.object({ x: z.string() }))
         .body('B');
       const def = chWithDefaults.finalize(builder, 'r');
       const out = await chWithDefaults.render(def, { input: { x: 'val' }, issueNumber: 1 }, {});
       expect(out).toMatchObject({ action: 'comment', repo: 'default/repo' });
+    });
+
+    it('defaults.repo applies to prComment action', async () => {
+      const chWithDefaults = githubChannel({ defaults: { repo: 'default/repo' } });
+      const builder = chWithDefaults
+        .createBuilder({ ctx: undefined, rootMiddleware: [] })
+        .prComment()
+        .input(z.object({ x: z.string() }))
+        .body('B');
+      const def = chWithDefaults.finalize(builder, 'r');
+      const out = await chWithDefaults.render(def, { input: { x: 'val' }, prNumber: 1 }, {});
+      expect(out).toMatchObject({ action: 'pr-comment', repo: 'default/repo' });
+    });
+
+    it('defaults.repo applies to prLineComment action', async () => {
+      const chWithDefaults = githubChannel({ defaults: { repo: 'default/repo' } });
+      const builder = chWithDefaults
+        .createBuilder({ ctx: undefined, rootMiddleware: [] })
+        .prLineComment()
+        .input(z.object({ x: z.string() }))
+        .body('B');
+      const def = chWithDefaults.finalize(builder, 'r');
+      const out = await chWithDefaults.render(
+        def,
+        { input: { x: 'val' }, prNumber: 1, commitId: 'sha1', path: 'file.ts' },
+        {},
+      );
+      expect(out).toMatchObject({ action: 'pr-line-comment', repo: 'default/repo' });
     });
 
     it('defaults.repo applies to prReview action', async () => {
@@ -329,10 +574,28 @@ describe('githubChannel', () => {
       );
     });
 
-    it('seeds rootMiddleware into comment builder', () => {
+    it('seeds rootMiddleware into issueComment builder', () => {
       const mw = async () => undefined as never;
       const picker = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
-      const b = picker.comment();
+      const b = picker.issueComment();
+      expect((b as unknown as { _state: { middleware: unknown[] } })._state.middleware).toContain(
+        mw,
+      );
+    });
+
+    it('seeds rootMiddleware into prComment builder', () => {
+      const mw = async () => undefined as never;
+      const picker = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
+      const b = picker.prComment();
+      expect((b as unknown as { _state: { middleware: unknown[] } })._state.middleware).toContain(
+        mw,
+      );
+    });
+
+    it('seeds rootMiddleware into prLineComment builder', () => {
+      const mw = async () => undefined as never;
+      const picker = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
+      const b = picker.prLineComment();
       expect((b as unknown as { _state: { middleware: unknown[] } })._state.middleware).toContain(
         mw,
       );

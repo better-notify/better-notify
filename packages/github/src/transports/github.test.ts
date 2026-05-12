@@ -77,8 +77,8 @@ describe('githubTransport', () => {
     });
   });
 
-  describe('comment', () => {
-    it('creates a comment via POST /repos/{owner}/{repo}/issues/{number}/comments', async () => {
+  describe('issue comment', () => {
+    it('creates an issue comment via POST /repos/{owner}/{repo}/issues/{number}/comments', async () => {
       const fetchMock = vi.fn().mockResolvedValue(
         jsonResponse({
           id: 999,
@@ -105,6 +105,175 @@ describe('githubTransport', () => {
           url: 'https://github.com/org/repo/issues/42#issuecomment-999',
         },
       });
+    });
+  });
+
+  describe('pr-comment', () => {
+    it('creates a PR comment via POST /repos/{owner}/{repo}/issues/{prNumber}/comments', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        jsonResponse({
+          id: 777,
+          html_url: 'https://github.com/org/repo/pull/42#issuecomment-777',
+        }),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+
+      const t = githubTransport({ token: 'ghp_test' });
+      const result = await t.send(
+        {
+          action: 'pr-comment',
+          body: 'Nice work!',
+          repo: 'org/repo',
+          prNumber: 42,
+        },
+        ctx,
+      );
+
+      const call = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(String(call[0])).toBe('https://api.github.com/repos/org/repo/issues/42/comments');
+      const body = JSON.parse(call[1].body as string);
+      expect(body).toEqual({ body: 'Nice work!' });
+      expect(result).toEqual({
+        ok: true,
+        data: {
+          action: 'pr-comment',
+          id: 777,
+          url: 'https://github.com/org/repo/pull/42#issuecomment-777',
+        },
+      });
+    });
+
+    it('returns error on API failure', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(jsonResponse({ message: 'Not Found' }, 404)),
+      );
+
+      const t = githubTransport({ token: 'ghp_test' });
+      const result = await t.send(
+        {
+          action: 'pr-comment',
+          body: 'comment',
+          repo: 'org/repo',
+          prNumber: 999,
+        },
+        ctx,
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcProviderError;
+        expect(err.code).toBe('CONFIG');
+      }
+    });
+  });
+
+  describe('pr-line-comment', () => {
+    it('creates a PR line comment via POST /repos/{owner}/{repo}/pulls/{prNumber}/comments', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        jsonResponse({
+          id: 123,
+          html_url: 'https://github.com/org/repo/pull/42#discussion_r123',
+        }),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+
+      const t = githubTransport({ token: 'ghp_test' });
+      const result = await t.send(
+        {
+          action: 'pr-line-comment',
+          body: 'Needs fix here',
+          repo: 'org/repo',
+          prNumber: 42,
+          commitId: 'abc123',
+          path: 'src/index.ts',
+        },
+        ctx,
+      );
+
+      const call = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(String(call[0])).toBe('https://api.github.com/repos/org/repo/pulls/42/comments');
+      const body = JSON.parse(call[1].body as string);
+      expect(body).toEqual({
+        body: 'Needs fix here',
+        commit_id: 'abc123',
+        path: 'src/index.ts',
+      });
+      expect(result).toEqual({
+        ok: true,
+        data: {
+          action: 'pr-line-comment',
+          id: 123,
+          url: 'https://github.com/org/repo/pull/42#discussion_r123',
+        },
+      });
+    });
+
+    it('includes optional fields in the request body', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        jsonResponse({
+          id: 456,
+          html_url: 'https://github.com/org/repo/pull/42#discussion_r456',
+        }),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+
+      const t = githubTransport({ token: 'ghp_test' });
+      await t.send(
+        {
+          action: 'pr-line-comment',
+          body: 'Line comment',
+          repo: 'org/repo',
+          prNumber: 42,
+          commitId: 'abc123',
+          path: 'src/index.ts',
+          line: 10,
+          startLine: 5,
+          side: 'RIGHT',
+          startSide: 'LEFT',
+          subjectType: 'line',
+        },
+        ctx,
+      );
+
+      const call = fetchMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(call[1].body as string);
+      expect(body).toEqual({
+        body: 'Line comment',
+        commit_id: 'abc123',
+        path: 'src/index.ts',
+        line: 10,
+        start_line: 5,
+        side: 'RIGHT',
+        start_side: 'LEFT',
+        subject_type: 'line',
+      });
+    });
+
+    it('returns error on API failure', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(jsonResponse({ message: 'Not Found' }, 404)),
+      );
+
+      const t = githubTransport({ token: 'ghp_test' });
+      const result = await t.send(
+        {
+          action: 'pr-line-comment',
+          body: 'comment',
+          repo: 'org/repo',
+          prNumber: 999,
+          commitId: 'abc123',
+          path: 'src/index.ts',
+        },
+        ctx,
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcProviderError;
+        expect(err.code).toBe('CONFIG');
+      }
     });
   });
 
@@ -457,7 +626,7 @@ describe('githubTransport', () => {
       }
     });
 
-    it('falls back to defaults when comment response body is empty', async () => {
+    it('falls back to defaults when issue comment response body is empty', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -476,6 +645,62 @@ describe('githubTransport', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual({ action: 'comment', id: 0, url: '' });
+      }
+    });
+
+    it('falls back to defaults when pr-comment response body is empty', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response('', { status: 201, headers: { 'Content-Type': 'application/json' } }),
+          ),
+      );
+
+      const t = githubTransport({ token: 'ghp_test' });
+      const result = await t.send(
+        {
+          action: 'pr-comment',
+          body: 'note',
+          repo: 'org/repo',
+          prNumber: 1,
+        },
+        ctx,
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual({ action: 'pr-comment', id: 0, url: '' });
+      }
+    });
+
+    it('falls back to defaults when pr-line-comment response body is empty', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response('', { status: 201, headers: { 'Content-Type': 'application/json' } }),
+          ),
+      );
+
+      const t = githubTransport({ token: 'ghp_test' });
+      const result = await t.send(
+        {
+          action: 'pr-line-comment',
+          body: 'note',
+          repo: 'org/repo',
+          prNumber: 1,
+          commitId: 'sha1',
+          path: 'file.ts',
+        },
+        ctx,
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual({ action: 'pr-line-comment', id: 0, url: '' });
       }
     });
 
@@ -592,7 +817,7 @@ describe('mockGithubTransport', () => {
     expect(t.messages[0]).toMatchObject({ action: 'issue', title: 'T', body: 'B' });
   });
 
-  it('records comment messages', async () => {
+  it('records issue comment messages', async () => {
     const t = mockGithubTransport();
     const result = await t.send(
       { action: 'comment', body: 'hi', repo: 'org/repo', issueNumber: 5 },
@@ -604,6 +829,47 @@ describe('mockGithubTransport', () => {
       expect(result.data.action).toBe('comment');
     }
     expect(t.messages[0]).toMatchObject({ action: 'comment', body: 'hi' });
+  });
+
+  it('records pr-comment messages', async () => {
+    const t = mockGithubTransport();
+    const result = await t.send(
+      {
+        action: 'pr-comment',
+        body: 'Nice',
+        repo: 'org/repo',
+        prNumber: 5,
+      },
+      ctx,
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.action).toBe('pr-comment');
+      expect(result.data.url).toContain('#issuecomment-');
+    }
+    expect(t.messages[0]).toMatchObject({ action: 'pr-comment', body: 'Nice' });
+  });
+
+  it('records pr-line-comment messages', async () => {
+    const t = mockGithubTransport();
+    const result = await t.send(
+      {
+        action: 'pr-line-comment',
+        body: 'Fix this',
+        repo: 'org/repo',
+        prNumber: 42,
+        commitId: 'abc123',
+        path: 'src/index.ts',
+      },
+      ctx,
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.action).toBe('pr-line-comment');
+    }
+    expect(t.messages[0]).toMatchObject({ action: 'pr-line-comment', body: 'Fix this' });
   });
 
   it('records pr-review messages', async () => {

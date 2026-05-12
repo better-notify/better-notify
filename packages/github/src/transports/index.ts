@@ -1,4 +1,11 @@
-export type { Transport, GithubTransportData, GithubTransportResult } from './types.js';
+export type {
+  Transport,
+  GithubTransportData,
+  GithubTransportResult,
+  GithubIssueCommentData,
+  GithubPrCommentData,
+  GithubPrLineCommentData,
+} from './types.js';
 export { mockGithubTransport } from './mock.js';
 export type { MockGithubTransport } from './mock.js';
 export { githubTransport } from './github.js';

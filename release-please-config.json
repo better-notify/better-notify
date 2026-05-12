@@ -116,6 +116,12 @@
       "component": "@betternotify/selligent",
       "prerelease-type": "beta",
       "bootstrap-sha": "718f957fc28af4840ad33ebf0f9fe45dccfdd544"
+    },
+    "packages/github": {
+      "release-type": "node",
+      "component": "@betternotify/github",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "507281c4488bd22835677be0d5e010a7165c5307"
     }
   }
 }

@@ -38,9 +38,21 @@ const catalog = rpc.catalog({
 
   reviewAck: rpc
     .github()
-    .comment()
+    .issueComment()
     .input(z.object({ message: z.string() }))
     .body(({ input }) => input.message),
+
+  prNote: rpc
+    .github()
+    .prComment()
+    .input(z.object({ note: z.string() }))
+    .body(({ input }) => input.note),
+
+  codeNote: rpc
+    .github()
+    .prLineComment()
+    .input(z.object({ note: z.string() }))
+    .body(({ input }) => input.note),
 
   releaseApproval: rpc
     .github()
@@ -68,10 +80,25 @@ await notify.bugReport.send({
   assignees: ['octocat'],
 });
 
-// Comment on an issue or PR
+// Comment on an issue
 await notify.reviewAck.send({
   input: { message: 'Looking into this.' },
   issueNumber: 42,
+});
+
+// Comment on a PR thread
+await notify.prNote.send({
+  input: { note: 'Nice work!' },
+  prNumber: 10,
+});
+
+// Leave an inline comment on a PR diff
+await notify.codeNote.send({
+  input: { note: 'This needs a null check.' },
+  prNumber: 10,
+  commitId: 'abc123def',
+  path: 'src/index.ts',
+  line: 42,
 });
 
 // Submit a PR review
@@ -84,7 +111,7 @@ await notify.releaseApproval.send({
 
 ## Actions
 
-`githubChannel()` exposes three actions via the builder. Each narrows the available slots and send-time args.
+`githubChannel()` exposes five actions via the builder. Each narrows the available slots and send-time args.
 
 ### `.issue()`
 
@@ -94,14 +121,14 @@ Creates a GitHub issue.
 
 **Send args:**
 
-| Field       | Type       | Required | Description                                             |
-| ----------- | ---------- | -------- | ------------------------------------------------------- |
+| Field       | Type       | Required | Description                                                     |
+| ----------- | ---------- | -------- | --------------------------------------------------------------- |
 | `repo`      | `string`   | No       | `owner/repo` — falls back to `defaults.repo` on channel options |
-| `labels`    | `string[]` | No       | Labels to apply                                         |
-| `assignees` | `string[]` | No       | GitHub usernames to assign                              |
-| `milestone` | `number`   | No       | Milestone number (not title)                            |
+| `labels`    | `string[]` | No       | Labels to apply                                                 |
+| `assignees` | `string[]` | No       | GitHub usernames to assign                                      |
+| `milestone` | `number`   | No       | Milestone number (not title)                                    |
 
-### `.comment()`
+### `.issueComment()`
 
 Posts a comment on an issue or pull request.
 
@@ -109,10 +136,43 @@ Posts a comment on an issue or pull request.
 
 **Send args:**
 
-| Field         | Type     | Required | Description                 |
-| ------------- | -------- | -------- | --------------------------- |
+| Field         | Type     | Required | Description                   |
+| ------------- | -------- | -------- | ----------------------------- |
 | `repo`        | `string` | No       | Falls back to `defaults.repo` |
-| `issueNumber` | `number` | Yes      | Issue or PR number          |
+| `issueNumber` | `number` | Yes      | Issue or PR number            |
+
+### `.prComment()`
+
+Posts a comment on a pull request thread.
+
+**Slots:** `body` (required)
+
+**Send args:**
+
+| Field      | Type     | Required | Description                   |
+| ---------- | -------- | -------- | ----------------------------- |
+| `repo`     | `string` | No       | Falls back to `defaults.repo` |
+| `prNumber` | `number` | Yes      | PR number                     |
+
+### `.prLineComment()`
+
+Leaves an inline comment on a pull request diff. Supports single-line and multi-line ranges.
+
+**Slots:** `body` (required)
+
+**Send args:**
+
+| Field         | Type     | Required | Description                           |
+| ------------- | -------- | -------- | ------------------------------------- |
+| `repo`        | `string` | No       | Falls back to `defaults.repo`         |
+| `prNumber`    | `number` | Yes      | PR number                             |
+| `commitId`    | `string` | Yes      | SHA of the commit to comment on       |
+| `path`        | `string` | Yes      | Relative file path in the diff        |
+| `line`        | `number` | No       | End line (or single line) in the diff |
+| `startLine`   | `number` | No       | Start line for multi-line comments    |
+| `side`        | `string` | No       | `'LEFT'` or `'RIGHT'`                 |
+| `startSide`   | `string` | No       | Start side for multi-line comments    |
+| `subjectType` | `string` | No       | `'line'` or `'file'`                  |
 
 ### `.prReview()`
 
@@ -145,11 +205,13 @@ Submits a pull request review.
 
 ## Endpoints
 
-| Action      | GitHub API                                            |
-| ----------- | ----------------------------------------------------- |
-| `issue`     | `POST /repos/{owner}/{repo}/issues`                   |
-| `comment`   | `POST /repos/{owner}/{repo}/issues/{number}/comments` |
-| `pr-review` | `POST /repos/{owner}/{repo}/pulls/{number}/reviews`   |
+| Action            | GitHub API                                            |
+| ----------------- | ----------------------------------------------------- |
+| `issue`           | `POST /repos/{owner}/{repo}/issues`                   |
+| `comment`         | `POST /repos/{owner}/{repo}/issues/{number}/comments` |
+| `pr-comment`      | `POST /repos/{owner}/{repo}/issues/{number}/comments` |
+| `pr-line-comment` | `POST /repos/{owner}/{repo}/pulls/{number}/comments`  |
+| `pr-review`       | `POST /repos/{owner}/{repo}/pulls/{number}/reviews`   |
 
 ## License
 

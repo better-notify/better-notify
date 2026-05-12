@@ -1,14 +1,23 @@
 import { defineChannel, slot } from '@betternotify/core';
 import type { ChannelBuilderCtx, ChannelDefinition, Channel } from '@betternotify/core';
 import type { Transport } from '@betternotify/core';
-import { z } from 'zod';
 import type {
   RenderedGithub,
   RenderedGithubIssue,
-  RenderedGithubComment,
+  RenderedGithubIssueComment,
+  RenderedGithubPrComment,
+  RenderedGithubPrLineComment,
   RenderedGithubPrReview,
   GithubAction,
 } from './types.js';
+import {
+  issueArgsSchema,
+  issueCommentArgsSchema,
+  prCommentArgsSchema,
+  prLineCommentArgsSchema,
+  prReviewArgsSchema,
+  permissiveArgsSchema,
+} from './channel.schemas.js';
 
 export type TitleResolver<TInput> = string | ((args: { input: TInput; ctx: unknown }) => string);
 
@@ -19,40 +28,6 @@ export type GithubChannelOptions = {
     repo?: string;
   };
 };
-
-const issueArgsSchema = z.object({
-  repo: z.string().optional(),
-  labels: z.array(z.string()).optional(),
-  assignees: z.array(z.string()).optional(),
-  milestone: z.number().optional(),
-  input: z.unknown(),
-});
-
-const commentArgsSchema = z.object({
-  repo: z.string().optional(),
-  issueNumber: z.number(),
-  input: z.unknown(),
-});
-
-const prReviewArgsSchema = z.object({
-  repo: z.string().optional(),
-  prNumber: z.number(),
-  event: z.enum(['APPROVE', 'REQUEST_CHANGES', 'COMMENT']),
-  input: z.unknown(),
-});
-
-const permissiveArgsSchema = z
-  .object({
-    repo: z.string().optional(),
-    labels: z.array(z.string()).optional(),
-    assignees: z.array(z.string()).optional(),
-    milestone: z.number().optional(),
-    issueNumber: z.number().optional(),
-    prNumber: z.number().optional(),
-    event: z.enum(['APPROVE', 'REQUEST_CHANGES', 'COMMENT']).optional(),
-    input: z.unknown(),
-  })
-  .passthrough();
 
 const createInternalChannels = (options: GithubChannelOptions) => {
   const defaultRepo = options.defaults?.repo;
@@ -86,15 +61,62 @@ const createInternalChannels = (options: GithubChannelOptions) => {
       _action: slot.value<'comment'>(),
       body: slot.resolver<string>(),
     },
-    validateArgs: commentArgsSchema,
-    render: ({ runtime, args }): RenderedGithubComment => {
+    validateArgs: issueCommentArgsSchema,
+    render: ({ runtime, args }): RenderedGithubIssueComment => {
       const repo = args.repo ?? defaultRepo;
-      const result: RenderedGithubComment = {
+
+      const result: RenderedGithubIssueComment = {
         action: 'comment',
         body: runtime.body,
         issueNumber: args.issueNumber,
       };
+
       if (repo !== undefined) result.repo = repo;
+      return result;
+    },
+  });
+
+  const prComment = defineChannel({
+    name: 'github' as const,
+    slots: {
+      _action: slot.value<'pr-comment'>(),
+      body: slot.resolver<string>(),
+    },
+    validateArgs: prCommentArgsSchema,
+    render: ({ runtime, args }): RenderedGithubPrComment => {
+      const repo = args.repo ?? defaultRepo;
+      const result: RenderedGithubPrComment = {
+        action: 'pr-comment',
+        body: runtime.body,
+        prNumber: args.prNumber,
+      };
+      if (repo !== undefined) result.repo = repo;
+      return result;
+    },
+  });
+
+  const prLineComment = defineChannel({
+    name: 'github' as const,
+    slots: {
+      _action: slot.value<'pr-line-comment'>(),
+      body: slot.resolver<string>(),
+    },
+    validateArgs: prLineCommentArgsSchema,
+    render: ({ runtime, args }): RenderedGithubPrLineComment => {
+      const repo = args.repo ?? defaultRepo;
+      const result: RenderedGithubPrLineComment = {
+        action: 'pr-line-comment',
+        body: runtime.body,
+        prNumber: args.prNumber,
+        commitId: args.commitId,
+        path: args.path,
+      };
+      if (repo !== undefined) result.repo = repo;
+      if (args.line !== undefined) result.line = args.line;
+      if (args.startLine !== undefined) result.startLine = args.startLine;
+      if (args.side !== undefined) result.side = args.side;
+      if (args.startSide !== undefined) result.startSide = args.startSide;
+      if (args.subjectType !== undefined) result.subjectType = args.subjectType;
       return result;
     },
   });
@@ -119,19 +141,29 @@ const createInternalChannels = (options: GithubChannelOptions) => {
     },
   });
 
-  return { issue, comment, 'pr-review': prReview };
+  return {
+    issue,
+    comment,
+    'pr-comment': prComment,
+    'pr-line-comment': prLineComment,
+    'pr-review': prReview,
+  };
 };
 
 type InternalChannels = ReturnType<typeof createInternalChannels>;
 type IssueBuilder = ReturnType<InternalChannels['issue']['createBuilder']>;
-type CommentBuilder = ReturnType<InternalChannels['comment']['createBuilder']>;
+type IssueCommentBuilder = ReturnType<InternalChannels['comment']['createBuilder']>;
+type PrCommentBuilder = ReturnType<InternalChannels['pr-comment']['createBuilder']>;
+type PrLineCommentBuilder = ReturnType<InternalChannels['pr-line-comment']['createBuilder']>;
 type PrReviewBuilder = ReturnType<InternalChannels['pr-review']['createBuilder']>;
 
 type PublicBuilder<B> = Omit<B, '_action' | '_args' | '_rendered' | '_state'>;
 
 export type GithubActionPicker = {
   issue(): PublicBuilder<IssueBuilder>;
-  comment(): PublicBuilder<CommentBuilder>;
+  issueComment(): PublicBuilder<IssueCommentBuilder>;
+  prComment(): PublicBuilder<PrCommentBuilder>;
+  prLineComment(): PublicBuilder<PrLineCommentBuilder>;
   prReview(): PublicBuilder<PrReviewBuilder>;
 };
 
@@ -154,9 +186,17 @@ export const githubChannel = (options: GithubChannelOptions = {}): GithubChannel
         const builder = channels.issue.createBuilder(ctx);
         return builder._action('issue' as never) as PublicBuilder<IssueBuilder>;
       },
-      comment: () => {
+      issueComment: () => {
         const builder = channels.comment.createBuilder(ctx);
-        return builder._action('comment' as never) as PublicBuilder<CommentBuilder>;
+        return builder._action('comment' as never) as PublicBuilder<IssueCommentBuilder>;
+      },
+      prComment: () => {
+        const builder = channels['pr-comment'].createBuilder(ctx);
+        return builder._action('pr-comment' as never) as PublicBuilder<PrCommentBuilder>;
+      },
+      prLineComment: () => {
+        const builder = channels['pr-line-comment'].createBuilder(ctx);
+        return builder._action('pr-line-comment' as never) as PublicBuilder<PrLineCommentBuilder>;
       },
       prReview: () => {
         const builder = channels['pr-review'].createBuilder(ctx);

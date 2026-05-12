@@ -3,17 +3,17 @@ import { githubChannel, githubTransport } from '@betternotify/github';
 import { z } from 'zod';
 import { env } from '../env';
 
-export const runGithubComment = async (): Promise<void> => {
+export const runGithubPrComment = async (): Promise<void> => {
   const rpc = createNotify({
     channels: { github: githubChannel({ defaults: { repo: env.GITHUB_REPO } }) },
   });
 
   const catalog = rpc.catalog({
-    reviewAck: rpc
+    ciFeedback: rpc
       .github()
-      .comment()
-      .input(z.object({ reviewer: z.string(), message: z.string() }))
-      .body(({ input }) => `**${input.reviewer}** commented:\n\n${input.message}`),
+      .prComment()
+      .input(z.object({ message: z.string() }))
+      .body(({ input }) => input.message),
   });
 
   const transport = githubTransport({ token: env.GITHUB_TOKEN });
@@ -24,10 +24,10 @@ export const runGithubComment = async (): Promise<void> => {
     transportsByChannel: { github: transport },
   });
 
-  const result = await notify.reviewAck.send({
-    input: { reviewer: 'octocat', message: 'Looking into this now.' },
-    issueNumber: 1,
+  const result = await notify.ciFeedback.send({
+    input: { message: 'All checks passed. Ready to merge.' },
+    prNumber: env.GITHUB_PR_NUMBER,
   });
 
-  console.log('comment posted:', { messageId: result.messageId, data: result.data });
+  console.log('PR comment posted:', { messageId: result.messageId, data: result.data });
 };

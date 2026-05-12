@@ -2,11 +2,15 @@ export type {
   GithubReviewEvent,
   GithubAction,
   RenderedGithubIssue,
-  RenderedGithubComment,
+  RenderedGithubIssueComment,
+  RenderedGithubPrComment,
+  RenderedGithubPrLineComment,
   RenderedGithubPrReview,
   RenderedGithub,
   GithubIssueSendArgs,
-  GithubCommentSendArgs,
+  GithubIssueCommentSendArgs,
+  GithubPrCommentSendArgs,
+  GithubPrLineCommentSendArgs,
   GithubPrReviewSendArgs,
 } from './types.js';
 export { githubChannel } from './channel.js';
@@ -23,6 +27,9 @@ export type {
   Transport,
   GithubTransportData,
   GithubTransportResult,
+  GithubIssueCommentData,
+  GithubPrCommentData,
+  GithubPrLineCommentData,
   MockGithubTransport,
   GithubTransportOptions,
 } from './transports/index.js';

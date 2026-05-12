@@ -49,7 +49,9 @@ import { runEmailOnesignal } from './examples/email-onesignal';
 import { runSmsOnesignal } from './examples/sms-onesignal';
 import { runEmailSelligent } from './examples/email-selligent';
 import { runGithubIssue } from './examples/github-issue';
-import { runGithubComment } from './examples/github-comment';
+import { runGithubIssueComment } from './examples/github-issue-comment';
+import { runGithubPrComment } from './examples/github-pr-comment';
+import { runGithubPrLineComment } from './examples/github-pr-line-comment';
 import { runGithubPrReview } from './examples/github-pr-review';
 import { runGithubIssueHandlebars } from './examples/github-issue-handlebars';
 
@@ -105,7 +107,9 @@ const examples: Record<string, () => Promise<void>> = {
   'sms-onesignal': runSmsOnesignal,
   'email-selligent': runEmailSelligent,
   'github-issue': runGithubIssue,
-  'github-comment': runGithubComment,
+  'github-issue-comment': runGithubIssueComment,
+  'github-pr-comment': runGithubPrComment,
+  'github-pr-line-comment': runGithubPrLineComment,
   'github-pr-review': runGithubPrReview,
   'github-issue-handlebars': runGithubIssueHandlebars,
 };

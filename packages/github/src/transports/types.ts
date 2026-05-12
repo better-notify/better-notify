@@ -7,8 +7,20 @@ export type GithubIssueData = {
   url: string;
 };
 
-export type GithubCommentData = {
+export type GithubIssueCommentData = {
   action: 'comment';
+  id: number;
+  url: string;
+};
+
+export type GithubPrCommentData = {
+  action: 'pr-comment';
+  id: number;
+  url: string;
+};
+
+export type GithubPrLineCommentData = {
+  action: 'pr-line-comment';
   id: number;
   url: string;
 };
@@ -19,7 +31,12 @@ export type GithubPrReviewData = {
   url: string;
 };
 
-export type GithubTransportData = GithubIssueData | GithubCommentData | GithubPrReviewData;
+export type GithubTransportData =
+  | GithubIssueData
+  | GithubIssueCommentData
+  | GithubPrCommentData
+  | GithubPrLineCommentData
+  | GithubPrReviewData;
 
 export type GithubTransportResult = GithubTransportData;
 

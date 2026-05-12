@@ -1,17 +1,16 @@
 ---
 title: GitHub
 icon: GithubLogo
-description: Create GitHub issues, comments, and PR reviews
+description: Create issues, post comments, leave inline diff comments, and submit PR reviews on GitHub
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
-import { Callout } from 'fumadocs-ui/components/callout';
 
-The GitHub channel is provided by `@betternotify/github`. It creates issues, posts issue comments, and submits pull request reviews through the [GitHub REST API](https://docs.github.com/en/rest).
+The GitHub channel is provided by `@betternotify/github`. It creates issues, posts issue comments, leaves simple PR thread comments, posts inline diff comments with line range support, and submits pull request reviews through the [GitHub REST API](https://docs.github.com/en/rest).
 
 ## When to use GitHub
 
-GitHub is the right channel when your notifications are GitHub actions — filing bug reports, commenting on issues, or approving pull requests. Use it for automated triage, CI/CD feedback, release approvals, or any workflow that should produce a GitHub artifact rather than a message in a chat or inbox.
+GitHub is the right channel when your notifications are GitHub actions — filing bug reports, commenting on issues, leaving inline code review notes, or approving pull requests. Use it for automated triage, CI/CD feedback, release approvals, or any workflow that should produce a GitHub artifact rather than a message in a chat or inbox.
 
 ```package-install
 @betternotify/github
@@ -30,15 +29,17 @@ const rpc = createNotify({ channels: { github } });
 
 ## Actions
 
-Unlike other channels that expose a flat builder (`rpc.email()`, `rpc.slack()`), the GitHub channel exposes three distinct actions through a picker:
+Unlike other channels that expose a flat builder (`rpc.email()`, `rpc.slack()`), the GitHub channel exposes five distinct actions through a picker:
 
 ```ts
-rpc.github().issue()     // create an issue
-rpc.github().comment()   // comment on an issue or PR
-rpc.github().prReview()  // submit a PR review
+rpc.github().issue()           // create an issue
+rpc.github().issueComment()    // comment on an issue or PR
+rpc.github().prComment()       // simple PR thread comment
+rpc.github().prLineComment()   // inline comment on a PR diff with line range support
+rpc.github().prReview()        // submit a PR review
 ```
 
-Each action has its own slots and send arguments. You can mix all three in a single catalog.
+Each action has its own slots and send arguments. You can mix all five in a single catalog.
 
 ## Issue
 
@@ -107,7 +108,7 @@ await notify.bugReport.send({
 
 **Endpoint:** `POST /repos/{owner}/{repo}/issues`
 
-## Comment
+## Issue Comment
 
 Posts a comment on an existing issue or pull request. Requires a `body` slot.
 
@@ -147,7 +148,7 @@ Posts a comment on an existing issue or pull request. Requires a `body` slot.
 const catalog = rpc.catalog({
   reviewAck: rpc
     .github()
-    .comment()
+    .issueComment()
     .input(z.object({ reviewer: z.string(), message: z.string() }))
     .body(({ input }) => `**${input.reviewer}:** ${input.message}`),
 });
@@ -159,6 +160,143 @@ await notify.reviewAck.send({
 ```
 
 **Endpoint:** `POST /repos/{owner}/{repo}/issues/{issue_number}/comments`
+
+## PR Comment
+
+Posts a simple thread comment on a pull request. Requires a `body` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The comment body (Markdown). Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Send arguments
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated input matching the procedure schema. Required.',
+      type: 'TInput',
+    },
+    prNumber: {
+      description: 'The pull request number. Required.',
+      type: 'number',
+    },
+    repo: {
+      description: 'Target repository in `owner/repo` format. Overrides the channel default.',
+      type: 'string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  ciFeedback: rpc
+    .github()
+    .prComment()
+    .input(z.object({ message: z.string() }))
+    .body(({ input }) => input.message),
+});
+
+await notify.ciFeedback.send({
+  input: { message: 'All checks passed. Ready to merge.' },
+  prNumber: 42,
+});
+```
+
+**Endpoint:** `POST /repos/{owner}/{repo}/issues/{issue_number}/comments`
+
+## PR Line Comment
+
+Leaves an inline comment on a pull request diff with optional line range support. Requires a `body` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The comment body (Markdown). Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Send arguments
+
+<TypeTable
+  type={{
+    input: {
+      description: 'Validated input matching the procedure schema. Required.',
+      type: 'TInput',
+    },
+    prNumber: {
+      description: 'The pull request number. Required.',
+      type: 'number',
+    },
+    commitId: {
+      description: 'SHA of the commit to comment on. Required.',
+      type: 'string',
+    },
+    path: {
+      description: 'Relative file path in the diff. Required.',
+      type: 'string',
+    },
+    line: {
+      description: 'Line number in the diff to attach the comment to.',
+      type: 'number',
+    },
+    startLine: {
+      description: 'Start line for a multi-line comment range. Used with `line` to highlight a range.',
+      type: 'number',
+    },
+    side: {
+      description: 'Which side of the diff to comment on.',
+      type: "'LEFT' | 'RIGHT'",
+    },
+    startSide: {
+      description: 'Which side of the diff `startLine` refers to. Only meaningful with `startLine`.',
+      type: "'LEFT' | 'RIGHT'",
+    },
+    subjectType: {
+      description: 'Whether the comment targets a line or an entire file.',
+      type: "'line' | 'file'",
+    },
+    repo: {
+      description: 'Target repository in `owner/repo` format. Overrides the channel default.',
+      type: 'string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  codeNote: rpc
+    .github()
+    .prLineComment()
+    .input(z.object({ note: z.string() }))
+    .body(({ input }) => input.note),
+});
+
+await notify.codeNote.send({
+  input: { note: 'This needs a null check.' },
+  prNumber: 42,
+  commitId: 'abc123def456',
+  path: 'src/index.ts',
+  line: 15,
+});
+```
+
+**Endpoint:** `POST /repos/{owner}/{repo}/pulls/{pull_number}/comments`
 
 ## PR Review
 
@@ -220,7 +358,7 @@ await notify.releaseApproval.send({
 
 ## Full example
 
-All three actions in a single catalog:
+All five actions in a single catalog:
 
 ```ts
 import { createNotify, createClient } from '@betternotify/core';
@@ -240,9 +378,21 @@ const catalog = rpc.catalog({
 
   reviewAck: rpc
     .github()
-    .comment()
+    .issueComment()
     .input(z.object({ message: z.string() }))
     .body(({ input }) => input.message),
+
+  ciFeedback: rpc
+    .github()
+    .prComment()
+    .input(z.object({ message: z.string() }))
+    .body(({ input }) => input.message),
+
+  codeNote: rpc
+    .github()
+    .prLineComment()
+    .input(z.object({ note: z.string() }))
+    .body(({ input }) => input.note),
 
   releaseApproval: rpc
     .github()
@@ -267,6 +417,19 @@ await notify.bugReport.send({
 await notify.reviewAck.send({
   input: { message: 'On it.' },
   issueNumber: 42,
+});
+
+await notify.ciFeedback.send({
+  input: { message: 'All checks passed.' },
+  prNumber: 100,
+});
+
+await notify.codeNote.send({
+  input: { note: 'Missing null check here.' },
+  prNumber: 100,
+  commitId: 'abc123',
+  path: 'src/auth.ts',
+  line: 42,
 });
 
 await notify.releaseApproval.send({
