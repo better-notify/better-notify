@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.6...@betternotify/web-v1.1.0-beta.7) (2026-05-12)
+
+
+### Features
+
+* **github:** add @betternotify/github transport ([#122](https://github.com/better-notify/better-notify/issues/122)) ([66657f9](https://github.com/better-notify/better-notify/commit/66657f9aad9684f9414f83f660b7b67be656e38d))
+
 ## [1.1.0-beta.6](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.5...@betternotify/web-v1.1.0-beta.6) (2026-05-12)
 
 

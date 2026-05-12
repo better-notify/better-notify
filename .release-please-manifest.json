@@ -1,5 +1,5 @@
 {
-  "packages/core": "1.0.0-beta.4",
+  "packages/core": "1.0.0-beta.5",
   "packages/email": "1.0.0-beta.2",
   "packages/sms": "1.0.0-beta.1",
   "packages/push": "1.0.0-beta.1",
@@ -19,6 +19,6 @@
   "packages/onesignal": "1.0.0-beta.1",
   "packages/create-better-notify": "1.0.0-beta.2",
   "packages/selligent": "1.0.0-beta.1",
-  "apps/web": "1.1.0-beta.6",
-  "packages/github": "1.0.0-beta.0"
+  "apps/web": "1.1.0-beta.7",
+  "packages/github": "1.0.0-beta.1"
 }

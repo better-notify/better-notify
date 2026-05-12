@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.5](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.4...@betternotify/core-v1.0.0-beta.5) (2026-05-12)
+
+
+### Features
+
+* **core:** infer channels from catalog ([#124](https://github.com/better-notify/better-notify/issues/124)) ([7007863](https://github.com/better-notify/better-notify/commit/700786391bb1784330c9504ec4f7ede07f1528b2))
+
 ## [1.0.0-beta.4](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.3...@betternotify/core-v1.0.0-beta.4) (2026-05-11)
 
 
