@@ -23,15 +23,15 @@ describe('isGithubRetriable', () => {
     expect(isGithubRetriable(nonRetriable)).toBe(false);
   });
 
-  it('returns true for unknown errors', () => {
-    expect(isGithubRetriable(new Error('something'))).toBe(true);
+  it('returns false for unknown errors', () => {
+    expect(isGithubRetriable(new Error('something'))).toBe(false);
   });
 
-  it('returns true for non-Error values', () => {
-    expect(isGithubRetriable('string error')).toBe(true);
+  it('returns false for non-Error values', () => {
+    expect(isGithubRetriable('string error')).toBe(false);
   });
 
-  it('returns true for null', () => {
-    expect(isGithubRetriable(null)).toBe(true);
+  it('returns false for null', () => {
+    expect(isGithubRetriable(null)).toBe(false);
   });
 });

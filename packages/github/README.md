@@ -96,7 +96,7 @@ Creates a GitHub issue.
 
 | Field       | Type       | Required | Description                                             |
 | ----------- | ---------- | -------- | ------------------------------------------------------- |
-| `repo`      | `string`   | No       | `owner/repo` — falls back to `defaultRepo` on transport |
+| `repo`      | `string`   | No       | `owner/repo` — falls back to `defaults.repo` on channel options |
 | `labels`    | `string[]` | No       | Labels to apply                                         |
 | `assignees` | `string[]` | No       | GitHub usernames to assign                              |
 | `milestone` | `number`   | No       | Milestone number (not title)                            |
@@ -111,7 +111,7 @@ Posts a comment on an issue or pull request.
 
 | Field         | Type     | Required | Description                 |
 | ------------- | -------- | -------- | --------------------------- |
-| `repo`        | `string` | No       | Falls back to `defaultRepo` |
+| `repo`        | `string` | No       | Falls back to `defaults.repo` |
 | `issueNumber` | `number` | Yes      | Issue or PR number          |
 
 ### `.prReview()`
@@ -124,7 +124,7 @@ Submits a pull request review.
 
 | Field      | Type     | Required | Description                                      |
 | ---------- | -------- | -------- | ------------------------------------------------ |
-| `repo`     | `string` | No       | Falls back to `defaultRepo`                      |
+| `repo`     | `string` | No       | Falls back to `defaults.repo`                    |
 | `prNumber` | `number` | Yes      | PR number                                        |
 | `event`    | `string` | Yes      | `'APPROVE'`, `'REQUEST_CHANGES'`, or `'COMMENT'` |
 

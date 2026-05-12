@@ -530,7 +530,7 @@ describe('githubTransport', () => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ login: 'bot-user' })));
 
       const t = githubTransport({ token: 'ghp_test' });
-      const result = await t.verify!();
+      const result = await t.verify?.();
 
       expect(result).toEqual({ ok: true, details: { login: 'bot-user' } });
     });
@@ -542,7 +542,7 @@ describe('githubTransport', () => {
       );
 
       const t = githubTransport({ token: 'ghp_bad' });
-      const result = await t.verify!();
+      const result = await t.verify?.();
 
       expect(result).toEqual({ ok: false, details: 'Bad credentials' });
     });
@@ -558,7 +558,7 @@ describe('githubTransport', () => {
       );
 
       const t = githubTransport({ token: 'ghp_bad' });
-      const result = await t.verify!();
+      const result = await t.verify?.();
 
       expect(result).toEqual({ ok: false, details: 'unknown error' });
     });
@@ -567,7 +567,7 @@ describe('githubTransport', () => {
       vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
 
       const t = githubTransport({ token: 'ghp_test' });
-      const result = await t.verify!();
+      const result = await t.verify?.();
 
       expect(result).toEqual({ ok: false, details: 'network error: fetch failed' });
     });
