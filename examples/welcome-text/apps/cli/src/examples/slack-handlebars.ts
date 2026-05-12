@@ -51,7 +51,6 @@ export const runSlackHandlebars = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { slack: slackChannel() },
     transportsByChannel: { slack: transport },
   });
 

@@ -50,7 +50,6 @@ export const runMultiRace = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: composite },
     logger: consoleLogger({ level: 'debug' }),
   });

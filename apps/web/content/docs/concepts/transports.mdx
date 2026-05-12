@@ -33,7 +33,6 @@ import { smtpTransport } from '@betternotify/smtp';
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: smtpTransport({ host: 'smtp.example.com', port: 587 }),
   },

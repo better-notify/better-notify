@@ -35,7 +35,6 @@ export const runSmsOnesignal = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { sms },
     transportsByChannel: { sms: transport },
   });
 

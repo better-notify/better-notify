@@ -35,7 +35,6 @@ import { telegramChannel, telegramTransport } from '@betternotify/telegram';
 
 const notify = createClient({
   catalog,
-  channels: { telegram: telegramChannel() },
   transportsByChannel: {
     telegram: telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! }),
   },

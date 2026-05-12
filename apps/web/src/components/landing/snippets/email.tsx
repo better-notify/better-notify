@@ -68,8 +68,6 @@ export function EmailSnippet() {
       {'\n'}
       {'  '}catalog<P>,</P>
       {'\n'}
-      {'  '}channels<P>: {'{ '}</P>email<P>:</P> ch<P>{' }'},</P>
-      {'\n'}
       {'  '}transportsByChannel<P>: {'{'}</P>
       {'\n'}
       {'    '}email<P>:</P> <F>smtpTransport</F>

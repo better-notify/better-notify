@@ -37,7 +37,6 @@ export const runCloudflareEmailLoggerEvlog = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email: channel },
     transportsByChannel: {
       email: cloudflareEmailTransport({
         accountId: env.CF_ACCOUNT_ID,

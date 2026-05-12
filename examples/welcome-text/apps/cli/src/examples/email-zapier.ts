@@ -33,7 +33,6 @@ export const runEmailZapier = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { email: emailChannel() },
     transportsByChannel: { email: transport },
   });
 

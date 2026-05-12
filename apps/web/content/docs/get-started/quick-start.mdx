@@ -225,7 +225,6 @@ import { email } from './channel';
 
 export const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: smtpTransport({
       host: 'smtp.gmail.com',
@@ -335,7 +334,6 @@ const transport = createMockTransport();
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
 });
 

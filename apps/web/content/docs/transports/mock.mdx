@@ -27,7 +27,6 @@ const transport = createMockTransport();
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
 });
 

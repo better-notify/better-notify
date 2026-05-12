@@ -20,7 +20,6 @@ const transport = createMockTransport();
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
 });
 
@@ -96,7 +95,6 @@ const sink = inMemoryEventSink();
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: createMockTransport() },
   plugins: [{ name: 'test-events', middleware: [withEventLogger({ sink })] }],
 });
@@ -121,7 +119,6 @@ const tracer = inMemoryTracer();
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: createMockTransport() },
   plugins: [{ name: 'test-tracing', middleware: [withTracing({ tracer })] }],
 });

@@ -78,7 +78,6 @@ const auditPlugin: Plugin = {
 export const runPlugins = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: mockTransport('mock') },
     ctx: { tenantId: 'acme-corp' } as never,
     plugins: [requestIdPlugin, metricsPlugin, auditPlugin],

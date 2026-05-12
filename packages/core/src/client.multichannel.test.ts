@@ -1121,7 +1121,10 @@ describe('createClient multi-channel', () => {
       const sent: Array<{ rendered: unknown; route: string }> = [];
       const transport = {
         name: 'mem',
-        send: async (rendered: unknown, ctx: { route: string; messageId: string; attempt: number }) => {
+        send: async (
+          rendered: unknown,
+          ctx: { route: string; messageId: string; attempt: number },
+        ) => {
           sent.push({ rendered, route: ctx.route });
           return { ok: true as const, data: { id: ctx.messageId } };
         },
@@ -1164,7 +1167,10 @@ describe('createClient multi-channel', () => {
       const sent: Array<{ rendered: unknown }> = [];
       const transport = {
         name: 'mem',
-        send: async (rendered: unknown, ctx: { route: string; messageId: string; attempt: number }) => {
+        send: async (
+          rendered: unknown,
+          ctx: { route: string; messageId: string; attempt: number },
+        ) => {
           sent.push({ rendered });
           return { ok: true as const, data: { id: ctx.messageId } };
         },
@@ -1223,8 +1229,10 @@ describe('createClient multi-channel', () => {
 
       const transport = {
         name: 'mem',
-        send: async (_r: unknown, ctx: { messageId: string }) =>
-          ({ ok: true as const, data: { id: ctx.messageId } }),
+        send: async (_r: unknown, ctx: { messageId: string }) => ({
+          ok: true as const,
+          data: { id: ctx.messageId },
+        }),
       };
       const mail = createClient({
         catalog,
@@ -1242,9 +1250,9 @@ describe('createClient multi-channel', () => {
         transportsByChannel: { test: createTestTransport() },
       }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
 
-      await expect(
-        mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
-      ).rejects.toThrow(/No channel registered/);
+      await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toThrow(
+        /No channel registered/,
+      );
     });
   });
 });

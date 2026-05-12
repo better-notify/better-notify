@@ -91,7 +91,6 @@ const catalog = rpc.catalog({
 export const runEmailCustomHandlebars = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: mockTransport('mock') },
     logger: consoleLogger({ level: 'info' }),
   });

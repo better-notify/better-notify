@@ -52,7 +52,6 @@ const hooks: ClientHooks<typeof catalog> = {
 export const runHooks = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: mockTransport('mock') },
     hooks,
   });

@@ -78,7 +78,6 @@ export const runEmailSmtpFailover = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email, discord, telegram },
     transportsByChannel: {
       email: composite,
       discord: discordTransport({ webhookUrl: env.DISCORD_WEBHOOK_URL }),

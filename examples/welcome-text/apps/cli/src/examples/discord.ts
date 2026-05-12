@@ -42,7 +42,6 @@ export const runDiscord = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { discord: discordChannel() },
     transportsByChannel: { discord: transport },
   });
 

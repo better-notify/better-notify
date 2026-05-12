@@ -45,6 +45,5 @@ export const catalog = rpc.catalog({
 
 export const notificationService = createClient({
   catalog,
-  channels: { email: ch },
   transportsByChannel: { email: transport },
 });

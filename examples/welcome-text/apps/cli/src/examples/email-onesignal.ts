@@ -26,7 +26,6 @@ const catalog = rpc.catalog({
 export const runEmailOnesignal = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: onesignalEmailTransport<typeof catalog>({
         appId: env.ONESIGNAL_APP_ID,

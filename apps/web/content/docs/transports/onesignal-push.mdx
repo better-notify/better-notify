@@ -46,7 +46,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { push },
   transportsByChannel: {
     push: onesignalPushTransport({
       appId: process.env.ONESIGNAL_APP_ID!,

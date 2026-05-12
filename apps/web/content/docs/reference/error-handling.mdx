@@ -152,7 +152,6 @@ Use the `onError` hook on `createClient` to catch all errors in one place:
 ```ts
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
   hooks: {
     onError: ({ route, error, phase, messageId }) => {

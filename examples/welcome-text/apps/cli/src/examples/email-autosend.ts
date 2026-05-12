@@ -23,7 +23,6 @@ const catalog = rpc.catalog({
 export const runEmailAutosend = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: autosendTransport({
         apiKey: env.AUTOSEND_API_KEY,

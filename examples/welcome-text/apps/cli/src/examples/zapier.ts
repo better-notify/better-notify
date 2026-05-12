@@ -55,7 +55,6 @@ export const runZapier = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { zapier },
     transportsByChannel: { zapier: transport },
   });
 

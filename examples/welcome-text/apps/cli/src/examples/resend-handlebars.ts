@@ -57,7 +57,6 @@ const catalog = rpc.catalog({
 export const runResendHandlebars = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: resendTransport({ apiKey: env.RESEND_API_KEY }),
     },

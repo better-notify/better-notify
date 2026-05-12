@@ -51,8 +51,6 @@ export function SmsSnippet() {
       {'\n'}
       {'  '}catalog<P>,</P>
       {'\n'}
-      {'  '}channels<P>: {'{ '}</P>sms<P>:</P> ch<P>{' }'},</P>
-      {'\n'}
       {'  '}transportsByChannel<P>: {'{'}</P>
       {'\n'}
       {'    '}sms<P>:</P> <F>twilioTransport</F>

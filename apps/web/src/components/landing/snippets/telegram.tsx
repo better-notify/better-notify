@@ -58,8 +58,6 @@ export function TelegramSnippet() {
       {'\n'}
       {'  '}catalog<P>,</P>
       {'\n'}
-      {'  '}channels<P>: {'{ '}</P>telegram<P>:</P> ch<P>{' }'},</P>
-      {'\n'}
       {'  '}transportsByChannel<P>: {'{'}</P>
       {'\n'}
       {'    '}telegram<P>:</P> <F>telegramTransport</F>

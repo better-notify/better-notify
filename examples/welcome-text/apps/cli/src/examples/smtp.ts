@@ -24,7 +24,6 @@ const catalog = rpc.catalog({
 export const runSmtp = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: smtpTransport({
         host: env.SMTP_HOST,

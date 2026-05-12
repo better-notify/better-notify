@@ -26,7 +26,6 @@ export const runRateLimited = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: mockTransport('mock') },
   });
 

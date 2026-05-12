@@ -76,7 +76,6 @@ export const runCustomChannel = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { slack: slackChannel },
     transportsByChannel: { slack: mock },
   });
 

@@ -36,7 +36,6 @@ export const runPushOnesignal = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { push },
     transportsByChannel: { push: transport },
   });
 
