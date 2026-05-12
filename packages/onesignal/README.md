@@ -48,7 +48,6 @@ const shared = {
 
 const notify = createClient({
   catalog,
-  channels: { email, push, sms },
   transportsByChannel: {
     email: onesignalEmailTransport(shared),
     push: onesignalPushTransport(shared),

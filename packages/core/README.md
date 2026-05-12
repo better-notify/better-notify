@@ -18,7 +18,7 @@ npm install @betternotify/core
 ## What's in here
 
 - **`createNotify({ channels })`** — root builder factory. Returns a typed `rpc` with `.use(mw)`, `.catalog(...)`, and one method per registered channel.
-- **`createClient({ catalog, channels, transportsByChannel, ... })`** — typed client. `mail.<route>.send()`, `.batch()`, `.queue()`, `.render()`.
+- **`createClient({ catalog, transportsByChannel, ... })`** — typed client. `mail.<route>.send()`, `.batch()`, `.queue()`, `.render()`.
 - **`createCatalog(map)`** — aggregates channel routes (and sub-catalogs) into one typed `Catalog<M, Ctx>`.
 - **`Channel<TName, TBuilder, TArgs, TRendered, TTransport>`** — channel contract. Exposes `createBuilder`, `validateArgs`, `render`, optional `previewRender`, `finalize`.
 - **`defineChannel({ name, slots, validateArgs, render })`** — factory that generates the entire `Channel<>` plus a chained slot-setter builder. See custom-channel example.

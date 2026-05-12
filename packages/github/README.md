@@ -63,7 +63,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { github },
   transportsByChannel: {
     github: githubTransport({ token: process.env.GITHUB_TOKEN! }),
   },

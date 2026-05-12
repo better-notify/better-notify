@@ -199,7 +199,6 @@ import { catalog, ch } from './notify';
 
 export const mail = createClient({
   catalog,
-  channels: { email: ch },
   transportsByChannel: {
     email: smtpTransport({
       host: process.env.SMTP_HOST!,
@@ -291,7 +290,6 @@ import { catalog, ch } from './notify';
 const mock = mockTransport();
 const mail = createClient({
   catalog,
-  channels: { email: ch },
   transportsByChannel: { email: mock },
 });
 

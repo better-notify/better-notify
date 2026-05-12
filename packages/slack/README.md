@@ -44,7 +44,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { slack },
   transportsByChannel: { slack: mockSlackTransport() },
 });
 
