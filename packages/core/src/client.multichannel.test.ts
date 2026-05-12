@@ -1202,6 +1202,39 @@ describe('createClient multi-channel', () => {
       expect(def!.channelRef!.name).toBe('infer');
     });
 
+    it('.render() falls back to channelRef when channels is omitted', async () => {
+      const ch = defineChannel({
+        name: 'prev' as const,
+        slots: { body: slot.resolver<string>() },
+        validateArgs: (args: unknown) => args as { to: string; input: unknown },
+        render: ({ runtime, args }): { body: string; to: string } => ({
+          body: runtime.body,
+          to: (args as { to: string }).to,
+        }),
+        previewRender: ({ runtime }) => ({ body: runtime.body }),
+      });
+      const rpc = createNotify({ channels: { prev: ch } });
+      const catalog = rpc.catalog({
+        msg: rpc
+          .prev()
+          .input(z.object({ name: z.string() }))
+          .body(({ input }: { input: { name: string } }) => `Hi ${input.name}`),
+      });
+
+      const transport = {
+        name: 'mem',
+        send: async (_r: unknown, ctx: { messageId: string }) =>
+          ({ ok: true as const, data: { id: ctx.messageId } }),
+      };
+      const mail = createClient({
+        catalog,
+        transportsByChannel: { prev: transport },
+      }) as unknown as { msg: { render: (input: unknown) => Promise<unknown> } };
+
+      const result = await mail.msg.render({ name: 'Ada' });
+      expect(result).toEqual({ body: 'Hi Ada' });
+    });
+
     it('hand-built definitions without channelRef still require explicit channels', async () => {
       const catalog = buildTestCatalog();
       const mail = createClient({
