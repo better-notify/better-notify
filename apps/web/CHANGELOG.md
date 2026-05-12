@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-beta.5](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.4...@betternotify/web-v1.1.0-beta.5) (2026-05-12)
+
+
+### Bug Fixes
+
+* **web:** correct punctuation in OneSignal SMS transport documentation ([3e43be2](https://github.com/better-notify/better-notify/commit/3e43be2e7fb0ec7c6ef95f90ed0d38232282e0d2))
+
 ## [1.1.0-beta.4](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.3...@betternotify/web-v1.1.0-beta.4) (2026-05-11)
 
 
