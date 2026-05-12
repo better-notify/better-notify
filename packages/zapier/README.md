@@ -35,7 +35,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { zapier },
   transportsByChannel: { zapier: mockZapierTransport() },
 });
 
@@ -74,7 +73,6 @@ import { zapierTransport } from '@betternotify/zapier';
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: zapierTransport({ webhookUrl: 'https://hooks.zapier.com/hooks/catch/...' }),
   },

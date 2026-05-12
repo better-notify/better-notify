@@ -42,7 +42,6 @@ const catalog = rpc.catalog({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: mockTransport() },
 });
 

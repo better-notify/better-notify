@@ -20,15 +20,15 @@ description: Quick reference for Better Notify configuration, patterns, and comm
 
 ## Core API
 
-| Function                                                   | Import               | Purpose                                         |
-| ---------------------------------------------------------- | -------------------- | ----------------------------------------------- |
-| `createNotify({ channels })`                               | `@betternotify/core` | Root builder with channel map                   |
-| `createClient({ catalog, channels, transportsByChannel })` | `@betternotify/core` | Type-safe send client                           |
-| `createCatalog(map)`                                       | `@betternotify/core` | Standalone catalog (without builder)            |
-| `defineChannel({ name, slots, validateArgs, render })`     | `@betternotify/core` | Custom channel definition                       |
-| `slot.resolver<T>()` / `slot.value<T>()`                   | `@betternotify/core` | Template slot declarations                      |
-| `consoleLogger({ level })`                                 | `@betternotify/core` | Built-in console logger                         |
-| `handlePromise(promise)`                                   | `@betternotify/core` | Tuple-returning async wrapper `[error, result]` |
+| Function                                               | Import               | Purpose                                         |
+| ------------------------------------------------------ | -------------------- | ----------------------------------------------- |
+| `createNotify({ channels })`                           | `@betternotify/core` | Root builder with channel map                   |
+| `createClient({ catalog, transportsByChannel })`       | `@betternotify/core` | Type-safe send client                           |
+| `createCatalog(map)`                                   | `@betternotify/core` | Standalone catalog (without builder)            |
+| `defineChannel({ name, slots, validateArgs, render })` | `@betternotify/core` | Custom channel definition                       |
+| `slot.resolver<T>()` / `slot.value<T>()`               | `@betternotify/core` | Template slot declarations                      |
+| `consoleLogger({ level })`                             | `@betternotify/core` | Built-in console logger                         |
+| `handlePromise(promise)`                               | `@betternotify/core` | Tuple-returning async wrapper `[error, result]` |
 
 ---
 
@@ -163,7 +163,6 @@ Hooks observe but don't mutate. Set on `createClient`:
 ```typescript
 const mail = createClient({
   catalog,
-  channels: { email: ch },
   transportsByChannel: { email: transport },
   hooks: {
     onBeforeSend: ({ route, messageId, args }) => { ... },

@@ -43,7 +43,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { discord },
   transportsByChannel: { discord: mockDiscordTransport() },
 });
 

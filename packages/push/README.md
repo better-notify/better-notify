@@ -36,7 +36,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { push },
   transportsByChannel: { push: mockPushTransport() },
 });
 

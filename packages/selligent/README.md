@@ -33,7 +33,6 @@ const catalog = rpc.catalog({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: selligentTransport({
       clientId: Number(process.env.SELLIGENT_CLIENT_ID!),

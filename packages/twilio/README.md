@@ -35,7 +35,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { sms },
   transportsByChannel: {
     sms: twilioSmsTransport({
       accountSid: process.env.TWILIO_ACCOUNT_SID!,

@@ -32,7 +32,6 @@ const catalog = rpc.catalog({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: smtpTransport({
       host: 'smtp.example.com',

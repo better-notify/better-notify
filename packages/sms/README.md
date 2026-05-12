@@ -34,7 +34,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { sms },
   transportsByChannel: { sms: mockSmsTransport() },
 });
 
