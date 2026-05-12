@@ -7,6 +7,7 @@ export type {
   InputOf,
   OutputOf,
   CtxOf,
+  ChannelsOf,
 } from './catalog.js';
 
 export { createClient } from './client.js';

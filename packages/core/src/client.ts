@@ -1,6 +1,6 @@
 import { validate } from './schema.js';
 import { NotifyRpcError } from './errors.js';
-import type { AnyCatalog, CtxOf, Catalog, InputOf } from './catalog.js';
+import type { AnyCatalog, CtxOf, ChannelsOf, Catalog, InputOf } from './catalog.js';
 import { isCatalog } from './catalog.js';
 import type { Plugin } from './plugins/types.js';
 import type { AnyMiddleware } from './middlewares/types.js';
@@ -112,10 +112,11 @@ export type ClientHooks<R extends AnyCatalog = AnyCatalog> = {
   onError?: HookFn<ErrorCtx<R>> | HookFn<ErrorCtx<R>>[];
 };
 
-export type CreateClientOptions<R extends AnyCatalog, Channels extends ChannelMap = ChannelMap> = {
+export type CreateClientOptions<R extends AnyCatalog> = {
   catalog: R;
-  channels: Channels;
-  transportsByChannel: Partial<TransportsFor<Channels>>;
+  /** @deprecated Channels are now inferred from the catalog. Only needed to override a channel at runtime. */
+  channels?: Partial<ChannelsOf<R>>;
+  transportsByChannel: Partial<TransportsFor<ChannelsOf<R>>>;
   ctx?: CtxOf<R>;
   hooks?: ClientHooks<R>;
   logger?: LoggerLike;
@@ -262,11 +263,11 @@ const composeMiddleware = (
   return (ctx) => chain(ctx);
 };
 
-export const createClient = <R extends AnyCatalog, Channels extends ChannelMap = ChannelMap>(
-  options: CreateClientOptions<R, Channels>,
+export const createClient = <R extends AnyCatalog>(
+  options: CreateClientOptions<R>,
 ): Client<R> & { close: () => Promise<void> } => {
   const { catalog } = options;
-  const channels = options.channels as Record<string, AnyChannel>;
+  const channels = (options.channels ?? {}) as Record<string, AnyChannel>;
   const transportsByChannel = options.transportsByChannel as Record<
     string,
     Transport<unknown, unknown>
@@ -311,7 +312,7 @@ export const createClient = <R extends AnyCatalog, Channels extends ChannelMap =
     rawArgs: unknown,
     flatKey: string,
   ): Promise<ChannelSendResult> => {
-    const channel = channels[channelDef.channel];
+    const channel = channels[channelDef.channel] ?? channelDef.channelRef;
     if (!channel) {
       throw new NotifyRpcError({
         message: `No channel registered for "${channelDef.channel}".`,
@@ -560,7 +561,7 @@ export const createClient = <R extends AnyCatalog, Channels extends ChannelMap =
           }),
         ),
       render: async (input: unknown, renderOpts?: { ctx?: unknown }) => {
-        const channel = channels[channelDef.channel];
+        const channel = channels[channelDef.channel] ?? channelDef.channelRef;
         if (!channel?.previewRender) {
           throw new NotifyRpcError({
             message: `Channel "${channelDef.channel}" does not support .render().`,

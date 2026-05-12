@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createClient } from './client.js';
+import { defineChannel, slot } from './channel/define-channel.js';
+import { createNotify } from './notify.js';
 import { NotifyRpcError } from './errors.js';
 import type { AnyChannel, AnyCatalog, ChannelDefinition } from './index.js';
 
@@ -88,6 +90,7 @@ const buildTestCatalog = (): AnyCatalog => {
   return {
     _brand: 'Catalog' as const,
     _ctx: undefined as never,
+    _channels: undefined as never,
     definitions: { ping: def },
     nested: { ping: def as unknown as Record<string, unknown> },
     routes: ['ping'],
@@ -854,6 +857,7 @@ describe('createClient multi-channel', () => {
     const outerCatalog = {
       _brand: 'Catalog' as const,
       _ctx: undefined as never,
+      _channels: undefined as never,
       definitions: { 'ns.ping': inner.definitions.ping! },
       nested: { ns: inner },
       routes: ['ns.ping'],
@@ -975,6 +979,7 @@ describe('createClient multi-channel', () => {
     const orphan: AnyCatalog = {
       _brand: 'Catalog' as const,
       _ctx: undefined as never,
+      _channels: undefined as never,
       definitions: {},
       nested: { ghost: def as unknown as Record<string, unknown> },
       routes: ['ghost'],
@@ -1083,5 +1088,130 @@ describe('createClient multi-channel', () => {
     }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
     await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toBeTruthy();
     expect(logs.filter((l) => l.msg === 'hook failed').length).toBeGreaterThanOrEqual(2);
+  });
+
+  describe('channel inference from catalog', () => {
+    const inferChannel = () =>
+      defineChannel({
+        name: 'infer' as const,
+        slots: {
+          body: slot.resolver<string>(),
+        },
+        validateArgs: (args: unknown): { to: string; input: unknown } => {
+          const a = args as Record<string, unknown>;
+          if (typeof a.to !== 'string') throw new Error('to required');
+          return a as { to: string; input: unknown };
+        },
+        render: ({ runtime, args }): { body: string; to: string } => ({
+          body: runtime.body,
+          to: (args as { to: string }).to,
+        }),
+      });
+
+    it('works without explicit channels when catalog has channelRef', async () => {
+      const ch = inferChannel();
+      const rpc = createNotify({ channels: { infer: ch } });
+      const catalog = rpc.catalog({
+        greeting: rpc
+          .infer()
+          .input(z.object({ name: z.string() }))
+          .body(({ input }: { input: { name: string } }) => `Hi ${input.name}`),
+      });
+
+      const sent: Array<{ rendered: unknown; route: string }> = [];
+      const transport = {
+        name: 'mem',
+        send: async (rendered: unknown, ctx: { route: string; messageId: string; attempt: number }) => {
+          sent.push({ rendered, route: ctx.route });
+          return { ok: true as const, data: { id: ctx.messageId } };
+        },
+      };
+
+      const mail = createClient({
+        catalog,
+        transportsByChannel: { infer: transport },
+      }) as unknown as {
+        greeting: {
+          send: (a: { to: string; input: { name: string } }) => Promise<{ messageId: string }>;
+        };
+      };
+
+      const result = await mail.greeting.send({ to: 'bob@x.com', input: { name: 'Bob' } });
+      expect(result.messageId).toBeTruthy();
+      expect(sent).toHaveLength(1);
+      expect(sent[0]?.rendered).toEqual({ body: 'Hi Bob', to: 'bob@x.com' });
+    });
+
+    it('explicit channels takes precedence over channelRef', async () => {
+      const ch = inferChannel();
+      const rpc = createNotify({ channels: { infer: ch } });
+      const catalog = rpc.catalog({
+        greeting: rpc
+          .infer()
+          .input(z.object({ name: z.string() }))
+          .body(({ input }: { input: { name: string } }) => `Hi ${input.name}`),
+      });
+
+      const overrideChannel = {
+        ...ch,
+        validateArgs: (args: unknown) => {
+          const a = args as Record<string, unknown>;
+          (a as Record<string, unknown>).wasOverridden = true;
+          return a as { to: string; input: unknown };
+        },
+      } as unknown as AnyChannel;
+
+      const sent: Array<{ rendered: unknown }> = [];
+      const transport = {
+        name: 'mem',
+        send: async (rendered: unknown, ctx: { route: string; messageId: string; attempt: number }) => {
+          sent.push({ rendered });
+          return { ok: true as const, data: { id: ctx.messageId } };
+        },
+      };
+
+      const mail = createClient({
+        catalog,
+        channels: { infer: overrideChannel } as never,
+        transportsByChannel: { infer: transport },
+      }) as unknown as {
+        greeting: {
+          send: (a: { to: string; input: { name: string } }) => Promise<{ messageId: string }>;
+        };
+      };
+
+      await mail.greeting.send({ to: 'bob@x.com', input: { name: 'Bob' } });
+      expect(sent).toHaveLength(1);
+      const rendered = sent[0]?.rendered as Record<string, unknown>;
+      expect(rendered.body).toBe('Hi Bob');
+    });
+
+    it('channelRef is embedded in definitions created via createCatalog', () => {
+      const ch = inferChannel();
+      const rpc = createNotify({ channels: { infer: ch } });
+      const catalog = rpc.catalog({
+        greeting: rpc
+          .infer()
+          .input(z.object({ name: z.string() }))
+          .body(({ input }: { input: { name: string } }) => `Hi ${input.name}`),
+      });
+
+      const def = catalog.definitions.greeting;
+      expect(def).toBeDefined();
+      expect(def!.channelRef).toBeDefined();
+      expect(def!.channelRef!.name).toBe('infer');
+    });
+
+    it('hand-built definitions without channelRef still require explicit channels', async () => {
+      const catalog = buildTestCatalog();
+      const mail = createClient({
+        catalog,
+        transportsByChannel: { test: createTestTransport() },
+      }) as unknown as { ping: { send: (a: TestArgs) => Promise<unknown> } };
+
+      await expect(
+        mail.ping.send({ to: 'a@x.com', input: { name: 'A' } }),
+      ).rejects.toThrow(/No channel registered/);
+    });
   });
 });

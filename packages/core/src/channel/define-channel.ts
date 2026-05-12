@@ -2,7 +2,7 @@ import type { AnyStandardSchema, InferOutput } from '../schema.js';
 import { validate } from '../schema.js';
 import type { AnyMiddleware, Middleware } from '../middlewares/types.js';
 import type { Transport } from '../transport.js';
-import type { Channel, ChannelBuilderCtx, ChannelDefinition } from './types.js';
+import type { AnyChannel, Channel, ChannelBuilderCtx, ChannelDefinition } from './types.js';
 
 export type ResolverSlot<TValue> = TValue | ((args: { input: any; ctx: unknown }) => TValue);
 
@@ -116,6 +116,7 @@ const buildBuilder = <
   channelName: TChannel,
   slots: TSlotConfig,
   state: BuilderState,
+  getChannelRef: () => AnyChannel,
 ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel> => {
   const next = (
     patch: Partial<BuilderState>,
@@ -128,6 +129,7 @@ const buildBuilder = <
         ...patch,
         runtime: { ...state.runtime, ...patch.runtime },
       },
+      getChannelRef,
     );
 
   const builder: Record<string | symbol, unknown> = {
@@ -157,6 +159,7 @@ const buildBuilder = <
         schema: state.schema,
         middleware: state.middleware,
         runtime: state.runtime,
+        channelRef: getChannelRef(),
         _args: undefined as never,
         _rendered: undefined as never,
       };
@@ -202,68 +205,90 @@ export const defineChannel = <
   ArgsFromValidator<TValidator>,
   TRendered,
   Transport<TRendered, unknown>
-> => ({
-  name: opts.name,
-  createBuilder: (ctx: ChannelBuilderCtx) =>
-    buildBuilder<
+> => {
+  const channel: Channel<
+    TName,
+    ChannelBuilder<
       unknown,
       SlotValuesOf<TSlotConfig>,
       TSlotConfig,
       ArgsBase<ArgsFromValidator<TValidator>>,
       TRendered,
       TName
-    >(opts.name, opts.slots, {
-      schema: undefined,
-      middleware: [...ctx.rootMiddleware],
-      runtime: {},
-    }),
-  finalize: (state, id) =>
-    (
-      state as ChannelBuilder<
+    >,
+    ArgsFromValidator<TValidator>,
+    TRendered,
+    Transport<TRendered, unknown>
+  > = {
+    name: opts.name,
+    createBuilder: (ctx: ChannelBuilderCtx) =>
+      buildBuilder<
         unknown,
         SlotValuesOf<TSlotConfig>,
         TSlotConfig,
         ArgsBase<ArgsFromValidator<TValidator>>,
         TRendered,
         TName
-      >
-    )._finalize(id) as ChannelDefinition<ArgsFromValidator<TValidator>, TRendered>,
-  validateArgs: isStandardSchema(opts.validateArgs)
-    ? async (args: unknown) => {
-        const validated = (await validate(opts.validateArgs as AnyStandardSchema, args, {
-          route: opts.name,
-        })) as Record<string, unknown>;
-        const inputField =
-          args && typeof args === 'object' && 'input' in args
-            ? (args as { input: unknown }).input
-            : undefined;
-        return { input: inputField, ...validated } as ArgsFromValidator<TValidator>;
-      }
-    : (opts.validateArgs as (
-        args: unknown,
-      ) => ArgsFromValidator<TValidator> | Promise<ArgsFromValidator<TValidator>>),
-  render: async (def, args, ctx) => {
-    const runtime = resolveRuntime(
-      def.runtime as Record<string, unknown>,
-      opts.slots,
-      (args as { input: unknown }).input,
-      ctx,
-    ) as { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>> };
-    return opts.render({ runtime, args: args as WithInput<ArgsFromValidator<TValidator>>, ctx });
-  },
-  previewRender: opts.previewRender
-    ? ((_fn) => async (def: ChannelDefinition<unknown, unknown>, input: unknown, ctx: unknown) => {
-        const runtime = resolveRuntime(
-          def.runtime as Record<string, unknown>,
-          opts.slots,
-          input,
-          ctx,
-        ) as never;
-        return _fn({ runtime, input, ctx });
-      })(opts.previewRender)
-    : undefined,
-  _transport: undefined as never,
-});
+      >(
+        opts.name,
+        opts.slots,
+        {
+          schema: undefined,
+          middleware: [...ctx.rootMiddleware],
+          runtime: {},
+        },
+        () => channel as unknown as AnyChannel,
+      ),
+    finalize: (state, id) =>
+      (
+        state as ChannelBuilder<
+          unknown,
+          SlotValuesOf<TSlotConfig>,
+          TSlotConfig,
+          ArgsBase<ArgsFromValidator<TValidator>>,
+          TRendered,
+          TName
+        >
+      )._finalize(id) as ChannelDefinition<ArgsFromValidator<TValidator>, TRendered>,
+    validateArgs: isStandardSchema(opts.validateArgs)
+      ? async (args: unknown) => {
+          const validated = (await validate(opts.validateArgs as AnyStandardSchema, args, {
+            route: opts.name,
+          })) as Record<string, unknown>;
+          const inputField =
+            args && typeof args === 'object' && 'input' in args
+              ? (args as { input: unknown }).input
+              : undefined;
+          return { input: inputField, ...validated } as ArgsFromValidator<TValidator>;
+        }
+      : (opts.validateArgs as (
+          args: unknown,
+        ) => ArgsFromValidator<TValidator> | Promise<ArgsFromValidator<TValidator>>),
+    render: async (def, args, ctx) => {
+      const runtime = resolveRuntime(
+        def.runtime as Record<string, unknown>,
+        opts.slots,
+        (args as { input: unknown }).input,
+        ctx,
+      ) as { [K in keyof TSlotConfig]: SlotRuntimeType<TSlotConfig[K], ValueOf<TSlotConfig[K]>> };
+      return opts.render({ runtime, args: args as WithInput<ArgsFromValidator<TValidator>>, ctx });
+    },
+    previewRender: opts.previewRender
+      ? ((_fn) =>
+          async (def: ChannelDefinition<unknown, unknown>, input: unknown, ctx: unknown) => {
+            const runtime = resolveRuntime(
+              def.runtime as Record<string, unknown>,
+              opts.slots,
+              input,
+              ctx,
+            ) as never;
+            return _fn({ runtime, input, ctx });
+          })(opts.previewRender)
+      : undefined,
+    _transport: undefined as never,
+  };
+  return channel;
+};
 
 type ResolverSlotSpec<TValue, R extends boolean> = SlotConfig<'resolver'> & {
   required: R;
