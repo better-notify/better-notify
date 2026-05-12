@@ -81,7 +81,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { telegram },
   transportsByChannel: {
     telegram: telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! }),
   },

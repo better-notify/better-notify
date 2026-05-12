@@ -40,7 +40,6 @@ export const runMultiChannel = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { email: emailChannel(), sms: smsChannel(), push: pushChannel() },
     transportsByChannel: {
       email: emailMock,
       sms: smsMock,

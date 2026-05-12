@@ -26,7 +26,6 @@ const catalog = rpc.catalog({
 export const runEmailMailchimp = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: mailchimpTransport({
         apiKey: env.MANDRILL_API_KEY,

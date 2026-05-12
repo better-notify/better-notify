@@ -93,7 +93,6 @@ export const runHttpTransport = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: httpTransport({
         url: targetUrl,

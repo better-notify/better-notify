@@ -59,7 +59,6 @@ export const runGithubIssueHandlebars = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { github: githubChannel({ defaults: { repo: env.GITHUB_REPO } }) },
     transportsByChannel: { github: transport },
   });
 

@@ -47,7 +47,6 @@ import { discordChannel, discordTransport } from '@betternotify/discord';
 
 const notify = createClient({
   catalog,
-  channels: { discord: discordChannel() },
   transportsByChannel: {
     discord: discordTransport({ webhookUrl: process.env.DISCORD_WEBHOOK_URL! }),
   },

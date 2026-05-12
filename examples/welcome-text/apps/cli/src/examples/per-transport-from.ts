@@ -51,7 +51,6 @@ export const runPerTransportFrom = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: composite },
   });
 

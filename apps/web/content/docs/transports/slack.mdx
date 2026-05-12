@@ -36,7 +36,6 @@ import { slackChannel, slackTransport } from '@betternotify/slack';
 
 const notify = createClient({
   catalog,
-  channels: { slack: slackChannel() },
   transportsByChannel: {
     slack: slackTransport({ token: process.env.SLACK_BOT_TOKEN! }),
   },

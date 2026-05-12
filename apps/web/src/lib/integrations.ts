@@ -27,12 +27,10 @@ export const integrations: Integration[] = [
     importStatement: "import { smtpTransport } from '@betternotify/smtp';",
     installCmd: 'pnpm add @betternotify/smtp',
     codeExample: `import { createClient } from '@betternotify/core';
-import { emailChannel } from '@betternotify/email';
 import { smtpTransport } from '@betternotify/smtp';
 
 const mail = createClient({
   catalog,
-  channels: { email: emailChannel({ defaults: { from: 'hello@example.com' } }) },
   transportsByChannel: {
     email: smtpTransport({
       host: 'smtp.example.com',
@@ -65,12 +63,10 @@ await mail.welcome.send({ to: 'user@example.com', input: { name: 'Alice' } });`,
     importStatement: "import { resendTransport } from '@betternotify/resend';",
     installCmd: 'pnpm add @betternotify/resend',
     codeExample: `import { createClient } from '@betternotify/core';
-import { emailChannel } from '@betternotify/email';
 import { resendTransport } from '@betternotify/resend';
 
 const mail = createClient({
   catalog,
-  channels: { email: emailChannel({ defaults: { from: 'hello@example.com' } }) },
   transportsByChannel: {
     email: resendTransport({ apiKey: process.env.RESEND_API_KEY }),
   },
@@ -99,12 +95,10 @@ await mail.welcome.send({ to: 'user@example.com', input: { name: 'Alice' } });`,
     importStatement: "import { cloudflareEmailTransport } from '@betternotify/cloudflare-email';",
     installCmd: 'pnpm add @betternotify/cloudflare-email',
     codeExample: `import { createClient } from '@betternotify/core';
-import { emailChannel } from '@betternotify/email';
 import { cloudflareEmailTransport } from '@betternotify/cloudflare-email';
 
 const mail = createClient({
   catalog,
-  channels: { email: emailChannel({ defaults: { from: 'hello@example.com' } }) },
   transportsByChannel: {
     email: cloudflareEmailTransport({
       accountId: process.env.CF_ACCOUNT_ID,
@@ -136,12 +130,10 @@ await mail.welcome.send({ to: 'user@example.com', input: { name: 'Alice' } });`,
     importStatement: "import { mailchimpTransport } from '@betternotify/mailchimp';",
     installCmd: 'pnpm add @betternotify/mailchimp',
     codeExample: `import { createClient } from '@betternotify/core';
-import { emailChannel } from '@betternotify/email';
 import { mailchimpTransport } from '@betternotify/mailchimp';
 
 const mail = createClient({
   catalog,
-  channels: { email: emailChannel({ defaults: { from: 'hello@example.com' } }) },
   transportsByChannel: {
     email: mailchimpTransport({ apiKey: process.env.MANDRILL_API_KEY }),
   },
@@ -170,12 +162,10 @@ await mail.welcome.send({ to: 'user@example.com', input: { name: 'Alice' } });`,
     importStatement: "import { twilioSmsTransport } from '@betternotify/twilio';",
     installCmd: 'pnpm add @betternotify/twilio',
     codeExample: `import { createClient } from '@betternotify/core';
-import { smsChannel } from '@betternotify/sms';
 import { twilioSmsTransport } from '@betternotify/twilio';
 
 const mail = createClient({
   catalog,
-  channels: { sms: smsChannel() },
   transportsByChannel: {
     sms: twilioSmsTransport({
       accountSid: process.env.TWILIO_SID,
@@ -208,11 +198,10 @@ await mail.verification.send({ to: '+15559876543', input: { code: '123456' } });
     importStatement: "import { slackChannel, slackTransport } from '@betternotify/slack';",
     installCmd: 'pnpm add @betternotify/slack',
     codeExample: `import { createClient } from '@betternotify/core';
-import { slackChannel, slackTransport } from '@betternotify/slack';
+import { slackTransport } from '@betternotify/slack';
 
 const mail = createClient({
   catalog,
-  channels: { slack: slackChannel() },
   transportsByChannel: {
     slack: slackTransport({ token: process.env.SLACK_BOT_TOKEN }),
   },
@@ -244,11 +233,10 @@ await mail.deployNotice.send({
     importStatement: "import { discordChannel, discordTransport } from '@betternotify/discord';",
     installCmd: 'pnpm add @betternotify/discord',
     codeExample: `import { createClient } from '@betternotify/core';
-import { discordChannel, discordTransport } from '@betternotify/discord';
+import { discordTransport } from '@betternotify/discord';
 
 const mail = createClient({
   catalog,
-  channels: { discord: discordChannel() },
   transportsByChannel: {
     discord: discordTransport({
       webhookUrl: process.env.DISCORD_WEBHOOK_URL,
@@ -282,11 +270,10 @@ await mail.alert.send({
     importStatement: "import { telegramChannel, telegramTransport } from '@betternotify/telegram';",
     installCmd: 'pnpm add @betternotify/telegram',
     codeExample: `import { createClient } from '@betternotify/core';
-import { telegramChannel, telegramTransport } from '@betternotify/telegram';
+import { telegramTransport } from '@betternotify/telegram';
 
 const mail = createClient({
   catalog,
-  channels: { telegram: telegramChannel() },
   transportsByChannel: {
     telegram: telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN }),
   },

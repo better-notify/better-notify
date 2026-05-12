@@ -57,8 +57,6 @@ export function PushSnippet() {
       {'\n'}
       {'  '}catalog<P>,</P>
       {'\n'}
-      {'  '}channels<P>: {'{ '}</P>push<P>:</P> ch<P>{' }'},</P>
-      {'\n'}
       {'  '}transportsByChannel<P>: {'{'}</P>
       {'\n'}
       {'    '}push<P>:</P> <F>fcmTransport</F>

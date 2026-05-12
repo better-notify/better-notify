@@ -56,7 +56,6 @@ The client infers every route from the catalog type. Autocomplete guides you; ty
 ```ts
 const mail = createClient({
   catalog,
-  channels: { email: emailChannel() },
   transportsByChannel: {
     email: smtpTransport({ host: 'smtp.gmail.com', port: 465 }),
   },

@@ -30,7 +30,6 @@ export const runTwilio = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { sms },
     transportsByChannel: { sms: transport },
   });
 

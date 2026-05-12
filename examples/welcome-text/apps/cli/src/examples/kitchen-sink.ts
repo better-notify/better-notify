@@ -106,7 +106,6 @@ const catalog = rpc.catalog({ transactional, marketing });
 export const runKitchenSink = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: mockTransport('mock') },
     logger: consoleLogger({ level: 'warn' }),
   });

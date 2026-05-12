@@ -39,7 +39,6 @@ export const runTelegram = async (): Promise<void> => {
   const transport = telegramTransport({ token: env.TELEGRAM_BOT_TOKEN });
   const notify = createClient({
     catalog,
-    channels: { telegram: telegramChannel() },
     transportsByChannel: { telegram: transport },
   });
 

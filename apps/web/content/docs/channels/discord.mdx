@@ -90,7 +90,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { discord },
   transportsByChannel: {
     discord: discordTransport({ webhookUrl: process.env.DISCORD_WEBHOOK_URL! }),
   },

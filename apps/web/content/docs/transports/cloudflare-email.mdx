@@ -70,7 +70,6 @@ const catalog = rpc.catalog({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: cloudflareEmailTransport({
       accountId: process.env.CF_ACCOUNT_ID!,

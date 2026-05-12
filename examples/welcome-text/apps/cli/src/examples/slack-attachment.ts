@@ -89,7 +89,6 @@ export const runSlackAttachment = async (): Promise<void> => {
   const transport = slackTransport({ token: env.SLACK_BOT_TOKEN });
   const notify = createClient({
     catalog,
-    channels: { slack: slackChannel() },
     transportsByChannel: { slack: transport },
   });
 

@@ -50,7 +50,6 @@ const catalog = rpc.catalog({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: resendTransport({
       apiKey: process.env.RESEND_API_KEY!,

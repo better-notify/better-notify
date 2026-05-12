@@ -27,7 +27,6 @@ const observability = createPlugin({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
   plugins: [observability],
 });
@@ -153,7 +152,6 @@ Pass multiple plugins as an array. They compose in order — first plugin wraps 
 ```ts
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
   plugins: [observability, rateLimitPlugin(store), auditPlugin],
 });

@@ -172,7 +172,6 @@ import { smtpTransport } from '@betternotify/smtp';
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: smtpTransport({
       host: 'smtp.example.com',
@@ -204,7 +203,6 @@ const transport =
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
 });
 ```

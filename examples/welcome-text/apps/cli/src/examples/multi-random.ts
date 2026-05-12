@@ -32,7 +32,6 @@ const stub = (label: string, accountFrom: string) =>
 export const runMultiRandom = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: multiTransport({
         name: 'random',

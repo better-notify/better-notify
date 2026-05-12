@@ -157,7 +157,6 @@ const catalog = rpc.catalog({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: smtpTransport({ host: 'smtp.gmail.com', port: 587, auth: { user: '...', pass: '...' } }),
   },

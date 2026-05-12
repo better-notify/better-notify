@@ -37,7 +37,6 @@ export const runEmailSelligent = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: { email: transport },
     logger: consoleLogger({ level: 'debug' }),
   });

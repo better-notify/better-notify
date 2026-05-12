@@ -95,7 +95,6 @@ const emailTransport = multiTransport({
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: emailTransport },
 });
 

@@ -80,7 +80,6 @@ Pass hooks to `createClient`. Each hook accepts a single handler or an array of 
 ```ts
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: smtpTransport({ host: '...' }) },
   hooks: {
     onBeforeSend: ({ route, messageId }) => {

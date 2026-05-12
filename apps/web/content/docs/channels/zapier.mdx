@@ -104,7 +104,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { zapier },
   transportsByChannel: {
     zapier: zapierChannelTransport({ webhookUrl: process.env.ZAPIER_WEBHOOK_URL! }),
   },
@@ -178,7 +177,6 @@ const catalog = rpc.catalog({
 
 const notify = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: {
     email: zapierTransport({ webhookUrl: process.env.ZAPIER_EMAIL_WEBHOOK_URL! }),
   },

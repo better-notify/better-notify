@@ -274,7 +274,8 @@ export const defineChannel = <
       return opts.render({ runtime, args: args as WithInput<ArgsFromValidator<TValidator>>, ctx });
     },
     previewRender: opts.previewRender
-      ? ((_fn) =>
+      ? (
+          (_fn) =>
           async (def: ChannelDefinition<unknown, unknown>, input: unknown, ctx: unknown) => {
             const runtime = resolveRuntime(
               def.runtime as Record<string, unknown>,
@@ -283,7 +284,8 @@ export const defineChannel = <
               ctx,
             ) as never;
             return _fn({ runtime, input, ctx });
-          })(opts.previewRender)
+          }
+        )(opts.previewRender)
       : undefined,
     _transport: undefined as never,
   };

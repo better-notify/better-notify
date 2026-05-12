@@ -65,7 +65,6 @@ export const runEmailMultiOnesignalSmtp = async (): Promise<void> => {
 
   const mail = createClient({
     catalog,
-    channels: { email },
     transportsByChannel: { email: composite },
     logger,
   });

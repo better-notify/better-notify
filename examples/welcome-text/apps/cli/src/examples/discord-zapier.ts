@@ -53,7 +53,6 @@ export const runDiscordZapier = async (): Promise<void> => {
 
   const notify = createClient({
     catalog,
-    channels: { zapier: zapierChannel(), discord: discordChannel() },
     transportsByChannel: {
       zapier: zapierTransportInstance,
       discord: mockDiscordTransport(),

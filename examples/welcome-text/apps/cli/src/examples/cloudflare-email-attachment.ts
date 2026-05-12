@@ -30,7 +30,6 @@ const catalog = rpc.catalog({
 export const runCloudflareEmailAttachment = async (): Promise<void> => {
   const mail = createClient({
     catalog,
-    channels: { email: ch },
     transportsByChannel: {
       email: cloudflareEmailTransport({
         accountId: env.CF_ACCOUNT_ID,

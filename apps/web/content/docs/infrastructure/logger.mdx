@@ -13,7 +13,6 @@ import { createClient, consoleLogger } from '@betternotify/core';
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
   logger: consoleLogger({ level: 'debug' }),
 });
@@ -80,7 +79,6 @@ const logger = fromPino(pino({ level: 'info' }));
 
 const mail = createClient({
   catalog,
-  channels: { email },
   transportsByChannel: { email: transport },
   logger,
 });

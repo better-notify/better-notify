@@ -65,7 +65,6 @@ const transport = multiTransport({
 export const runTelegramCrossTransport = async (): Promise<void> => {
   const notify = createClient({
     catalog,
-    channels: { telegram },
     transportsByChannel: { telegram: transport },
     logger: consoleLogger({ level: 'debug' }),
   });
