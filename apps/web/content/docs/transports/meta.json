@@ -17,6 +17,7 @@
     "smtp",
     "---Push---",
     "onesignal-push",
+    "---Web Push---",
     "vapid",
     "---SMS---",
     "onesignal-sms",
