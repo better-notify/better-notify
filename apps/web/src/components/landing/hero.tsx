@@ -4,6 +4,8 @@ import { useAnalytics } from '@/hooks/use-analytics';
 
 import { appConfig } from '@/lib/shared';
 import { CliPreview } from '@/components/landing/cli-preview';
+import { RuntimeBadges } from '@/components/landing/runtime-badges';
+import { TrustedBy } from '@/components/landing/trusted-by';
 import { EmailSnippet } from '@/components/landing/snippets/email';
 import { TelegramSnippet } from '@/components/landing/snippets/telegram';
 import { CrossTransportSnippet } from '@/components/landing/snippets/cross-transport';
@@ -46,7 +48,7 @@ export function Hero() {
               className="hero-anim text-foreground mb-6 font-bold tracking-bn-snug text-balance"
               style={{ fontSize: 'clamp(2.25rem, 5vw, 3.5rem)', lineHeight: 1.08 }}
             >
-              Type-safe notification infrastructure for Node
+              Typed notifications for Node.js and Bun
             </h1>
 
             <p
@@ -105,14 +107,19 @@ export function Hero() {
             </div>
 
             <div
-              className="hero-anim text-muted-foreground/60 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-[12px] lg:justify-start"
+              className="hero-anim flex flex-wrap items-end justify-center gap-x-8 gap-y-3 lg:justify-start"
               style={{ animationDelay: '280ms' }}
             >
-              <span>ESM · Node ≥ 22</span>
-              <span className="text-muted-foreground/30 hidden sm:inline">|</span>
-              <span>Open source</span>
-              <span className="text-muted-foreground/30 hidden sm:inline">|</span>
-              <span>Zero vendor lock-in</span>
+              <RuntimeBadges />
+              <div className="text-muted-foreground/40 flex items-center gap-3 font-mono text-[12px]">
+                <span>ESM-only</span>
+                <span className="text-muted-foreground/20 text-[10px]">·</span>
+                <span>Open source</span>
+              </div>
+            </div>
+
+            <div className="hero-anim mt-8" style={{ animationDelay: '320ms' }}>
+              <TrustedBy />
             </div>
           </div>
 

@@ -40,7 +40,7 @@ const supporting = [
   {
     icon: LightningIcon,
     title: 'Plays well with everything',
-    body: 'Express, Hono, tRPC, queue workers. ESM-only, Node 22+, zero opinions.',
+    body: 'Express, Hono, tRPC, queue workers. ESM-only, Node 22+ & Bun, zero opinions.',
   },
 ] as const;
 

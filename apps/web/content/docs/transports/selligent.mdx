@@ -8,7 +8,7 @@ channels: [email]
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import { Callout } from 'fumadocs-ui/components/callout';
 
-The Selligent transport is an official Better-Notify package that sends transactional email through the [Selligent Delivery Cloud (SDC)](https://www.marigold.com/products/marigold-engage) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+The Selligent transport is an official Better-Notify package that sends transactional email through the [Selligent Delivery Cloud (SDC)](https://www.marigold.com/products/marigold-engage) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Bun, Cloudflare Workers, and any runtime with a global `fetch`.
 
 Unlike API-key-based transports, Selligent uses **OAuth 2.0 client credentials**. The transport handles token management automatically — fetching, caching, and refreshing tokens as needed.
 

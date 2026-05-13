@@ -215,7 +215,7 @@ const providers: { name: string; icon: ReactNode }[] = [
 export function Marquee() {
   return (
     <section className="hero-anim py-8" style={{ animationDelay: '300ms' }}>
-      <p className="mb-5 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground/50">
+      <p className="text-muted-foreground/40 mb-5 text-center font-mono text-[11px] uppercase tracking-bn-widest">
         Works with
       </p>
       <div

@@ -7,7 +7,7 @@ channels: [telegram]
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The Telegram transport is included in `@betternotify/telegram`. It calls the [Telegram Bot API](https://core.telegram.org/bots/api) via `fetch` — no external HTTP dependencies required (Node 22+ built-in).
+The Telegram transport is included in `@betternotify/telegram`. It calls the [Telegram Bot API](https://core.telegram.org/bots/api) via `fetch` — no external HTTP dependencies required (Node 22+ / Bun built-in).
 
 It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `telegramTransport()` picks the correct Bot API method based on the rendered message shape and sends it.
 

@@ -170,7 +170,7 @@ export function BlogAndAuthor({ posts }: { posts: BlogPreviewPost[] }) {
               <div className="border-border mt-6 border-t pt-5 text-center md:mt-8">
                 <p className="text-foreground mb-1.5 text-sm font-semibold">{appConfig.name}</p>
                 <p className="text-muted-foreground mb-3 text-[13px] leading-relaxed">
-                  Type-safe notification infrastructure for Node. Open source, MIT licensed.
+                  Typed notifications for Node.js & Bun. Open source, MIT licensed.
                 </p>
                 <nav aria-label={`${appConfig.name} social links`}>
                   <ul className="flex list-none items-center justify-center gap-1.5 p-0">

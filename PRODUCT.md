@@ -6,11 +6,11 @@ product
 
 ## Users
 
-Backend and fullstack engineers building notification infrastructure in Node.js applications. They know what they want, scan for specifics, and judge a tool by how quickly they can understand its behavior. They read docs on a laptop, often with an IDE open beside the browser.
+Backend and fullstack engineers building notification infrastructure in Node.js and Bun applications. They know what they want, scan for specifics, and judge a tool by how quickly they can understand its behavior. They read docs on a laptop, often with an IDE open beside the browser.
 
 ## Product Purpose
 
-Better-Notify is an end-to-end typed notification infrastructure for Node.js. The documentation site teaches engineers how to configure and compose the library's primitives (transports, middleware, queues, webhooks) through interactive examples that show behavior, not just API signatures.
+Better-Notify is an end-to-end typed notification infrastructure for Node.js and Bun. The documentation site teaches engineers how to configure and compose the library's primitives (transports, middleware, queues, webhooks) through interactive examples that show behavior, not just API signatures.
 
 ## Brand Personality
 

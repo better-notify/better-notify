@@ -7,7 +7,7 @@ channels: [sms]
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The Twilio transport is provided by `@betternotify/twilio`. It calls the [Twilio Messages API](https://www.twilio.com/docs/messaging/api/message-resource) via `fetch` with HTTP Basic Auth — no Twilio SDK required (Node 22+ built-in).
+The Twilio transport is provided by `@betternotify/twilio`. It calls the [Twilio Messages API](https://www.twilio.com/docs/messaging/api/message-resource) via `fetch` with HTTP Basic Auth — no Twilio SDK required (Node 22+ / Bun built-in).
 
 It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `twilioSmsTransport()` posts the rendered SMS to Twilio's Messages endpoint.
 

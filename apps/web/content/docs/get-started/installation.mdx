@@ -6,7 +6,7 @@ description: Install Better-Notify and its dependencies
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Better-Notify is ESM-only and requires Node `>= 22`.
+Better-Notify is ESM-only and requires Node `>= 22` or Bun.
 
 ## Scaffold with the CLI
 
@@ -48,7 +48,7 @@ To install manually, follow the steps below.
 
 ### Confirm your runtime
 
-Use Node `22` or newer.
+Use Node `22` or newer, or Bun.
 
 For new projects, set ESM in `package.json`:
 
@@ -165,7 +165,7 @@ Start with the email path above.
 
 You can now write notification routes:
 
-- Node `>= 22` and ESM are in place.
+- Node `>= 22` (or Bun) and ESM are in place.
 - Better-Notify core, a channel adapter, and a transport are installed.
 - Your app knows where to read provider credentials.
 

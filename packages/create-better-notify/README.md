@@ -103,7 +103,7 @@ More templates are on the roadmap.
 
 ## Requirements
 
-- Node.js >= 22
+- Node.js >= 22 or Bun
 
 ## License
 

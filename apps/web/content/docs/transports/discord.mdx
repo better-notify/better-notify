@@ -7,7 +7,7 @@ channels: [discord]
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The Discord transport is included in `@betternotify/discord`. It calls the [Discord Webhook API](https://discord.com/developers/docs/resources/webhook#execute-webhook) via `fetch` — no external HTTP dependencies required (Node 22+ built-in).
+The Discord transport is included in `@betternotify/discord`. It calls the [Discord Webhook API](https://discord.com/developers/docs/resources/webhook#execute-webhook) via `fetch` — no external HTTP dependencies required (Node 22+ / Bun built-in).
 
 It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `discordTransport()` POSTs the rendered message to the configured webhook URL.
 

@@ -4,7 +4,6 @@ import { createServerFn } from '@tanstack/react-start';
 
 import { LandingHeader } from '@/components/landing/header';
 import { Hero } from '@/components/landing/hero';
-import { TrustedBy } from '@/components/landing/trusted-by';
 import { Features } from '@/components/landing/features';
 import { Channels } from '@/components/landing/channels';
 import { Pipeline } from '@/components/landing/pipeline';
@@ -25,9 +24,9 @@ export const Route = createFileRoute('/')({
   },
   head: () => {
     const { meta, links } = seo({
-      title: `${appConfig.name}: Typed Notifications for Node.js`,
+      title: `${appConfig.name}: Typed Notifications for Node.js and Bun`,
       description:
-        'Type-safe notification infrastructure for Node.js. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
+        'Typed notifications for Node.js and Bun. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       url: appConfig.baseUrl,
       canonicalUrl: appConfig.baseUrl,
     });
@@ -43,9 +42,9 @@ export const Route = createFileRoute('/')({
             name: appConfig.name,
             url: appConfig.baseUrl,
             applicationCategory: 'DeveloperApplication',
-            operatingSystem: 'Node.js',
+            operatingSystem: 'Node.js, Bun',
             description:
-              'Type-safe notification infrastructure for Node.js. Define once, send everywhere with full TypeScript support.',
+              'Typed notifications for Node.js and Bun. Define once, send everywhere with full TypeScript support.',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
             author: {
               '@type': 'Organization',
@@ -73,7 +72,6 @@ function LandingPage() {
       <LandingHeader />
       <main>
         <Hero />
-        <TrustedBy />
         <Marquee />
         <Features />
         <Channels />
