@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: ./.github/actions/prepare
-      - uses: oven-sh/setup-bun@735343b667d3e6f658f3b0a10814c7a54b167d33 # v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: latest
       - run: pnpm build
