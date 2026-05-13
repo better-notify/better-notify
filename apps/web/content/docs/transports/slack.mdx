@@ -7,7 +7,7 @@ channels: [slack]
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The Slack transport is included in `@betternotify/slack`. It calls the [Slack Web API](https://api.slack.com/methods/chat.postMessage) via `fetch` — no external HTTP dependencies required (Node 22+ built-in).
+The Slack transport is included in `@betternotify/slack`. It calls the [Slack Web API](https://api.slack.com/methods/chat.postMessage) via `fetch` — no external HTTP dependencies required (Node 22+ / Bun built-in).
 
 It is a thin delivery adapter. Better-Notify handles rendering and validation upstream; `slackTransport()` posts the rendered message to `chat.postMessage`.
 

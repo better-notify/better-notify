@@ -6,7 +6,7 @@
   </picture>
 </p>
 
-<p align="center">End-to-end typed notification infrastructure for Node.js.</p>
+<p align="center">End-to-end typed notification infrastructure for Node.js and Bun.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@betternotify/core"><img src="https://img.shields.io/npm/v/@betternotify/core?label=npm&color=3a5a8c" alt="npm version"></a>

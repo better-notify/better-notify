@@ -41,7 +41,7 @@ export function Footer() {
               </p>
             </div>
             <p className="text-muted-foreground max-w-[280px] text-[13px] leading-relaxed">
-              Type-safe notification infrastructure for Node. Open source, MIT licensed.
+              Type-safe notification infrastructure for Node.js & Bun. Open source, MIT licensed.
             </p>
             <div className="mt-4 flex items-center gap-3">
               <a

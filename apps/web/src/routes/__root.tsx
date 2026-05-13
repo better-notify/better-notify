@@ -15,11 +15,11 @@ function Providers({ children }: { children: ReactNode }) {
 export const Route = createRootRoute({
   head: () => {
     const { meta: seoMeta, links: seoLinks } = seo({
-      title: `${appConfig.name}: Typed Notifications for Node.js`,
+      title: `${appConfig.name}: Typed Notifications for Node.js and Bun`,
       description:
-        'Type-safe notification infrastructure for Node.js. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
+        'Type-safe notification infrastructure for Node.js and Bun. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       keywords:
-        'better-notify, betternotify, typed notifications, notification library nodejs, notification infrastructure, transactional email nodejs, send email nodejs, sms nodejs, telegram bot nodejs, slack notifications, discord webhooks, multi-channel notifications, typescript notifications, notification sdk, smtp nodejs, resend, cloudflare email, twilio sms, mailchimp transactional, type-safe api, notification catalog',
+        'better-notify, betternotify, typed notifications, notification library nodejs, notification library bun, notification infrastructure, transactional email nodejs, transactional email bun, send email nodejs, send email bun, sms nodejs, telegram bot nodejs, slack notifications, discord webhooks, multi-channel notifications, typescript notifications, notification sdk, smtp nodejs, resend, cloudflare email, twilio sms, mailchimp transactional, type-safe api, notification catalog',
       image: `${appConfig.baseUrl}/og/image.png`,
     });
 

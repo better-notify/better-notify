@@ -7,7 +7,7 @@ channels: [github]
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The GitHub transport is included in `@betternotify/github`. It delivers notifications through the [GitHub REST API](https://docs.github.com/en/rest) as issues, issue comments, PR thread comments, inline diff comments, or pull request reviews. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Cloudflare Workers, and any runtime with a global `fetch`.
+The GitHub transport is included in `@betternotify/github`. It delivers notifications through the [GitHub REST API](https://docs.github.com/en/rest) as issues, issue comments, PR thread comments, inline diff comments, or pull request reviews. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Bun, Cloudflare Workers, and any runtime with a global `fetch`.
 
 The package ships a single polymorphic channel — `githubChannel()` — with five actions: [issues](#creating-issues), [issue comments](#commenting-on-issues), [PR comments](#commenting-on-pull-requests), [PR line comments](#inline-pr-line-comments), and [PR reviews](#reviewing-pull-requests).
 

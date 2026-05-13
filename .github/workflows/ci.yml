@@ -46,6 +46,19 @@ jobs:
       - run: pnpm test:coverage
       - run: pnpm lint
 
+  ci-bun:
+    name: Bun compatibility
+    runs-on: ubuntu-latest
+    needs: [prepare]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: ./.github/actions/prepare
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f3b0a10814c7a54b167d33 # v2
+        with:
+          bun-version: latest
+      - run: pnpm build
+      - run: bunx vitest run --config vitest.config.ts
+
   bundle-projects:
     name: Bundle and analyze affected projects
     runs-on: ubuntu-latest
@@ -166,7 +179,7 @@ jobs:
 
   pr-validation:
     name: PR validation
-    needs: [ci, bundle-projects]
+    needs: [ci, ci-bun, bundle-projects]
     if: ${{ always() && !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
