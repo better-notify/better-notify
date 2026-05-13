@@ -17,18 +17,27 @@ The VAPID transport ships with `@betternotify/webpush`. It encrypts and delivers
 
 ## Generating VAPID keys
 
+VAPID uses a P-256 ECDSA key pair to identify your application server to push services. The **public key** is shared with the browser when subscribing (`applicationServerKey` in `PushManager.subscribe()`). The **private key** stays on your server and signs each push request so the push service can verify it came from you.
+
+Generate a key pair with `generateVapidKeys()`:
+
 ```ts
 import { generateVapidKeys } from '@betternotify/webpush';
 
 const { publicKey, privateKey } = await generateVapidKeys();
+console.log({ publicKey, privateKey });
 ```
 
-Store these in environment variables. Regenerating keys invalidates all existing browser subscriptions.
+Both values are base64url-encoded strings. Store them as environment variables and reuse across deploys:
 
 ```sh
 VAPID_PUBLIC_KEY=BNq9r...base64url...
 VAPID_PRIVATE_KEY=abc12...base64url...
 ```
+
+<Callout type="warn">
+  Regenerating keys invalidates every existing browser subscription. Users would need to re-subscribe through your app.
+</Callout>
 
 ## Usage
 
