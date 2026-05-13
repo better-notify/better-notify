@@ -26,7 +26,7 @@ export const Route = createFileRoute('/')({
     const { meta, links } = seo({
       title: `${appConfig.name}: Typed Notifications for Node.js and Bun`,
       description:
-        'Type-safe notification infrastructure for Node.js and Bun. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
+        'Typed notifications for Node.js and Bun. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       url: appConfig.baseUrl,
       canonicalUrl: appConfig.baseUrl,
     });
@@ -44,7 +44,7 @@ export const Route = createFileRoute('/')({
             applicationCategory: 'DeveloperApplication',
             operatingSystem: 'Node.js, Bun',
             description:
-              'Type-safe notification infrastructure for Node.js and Bun. Define once, send everywhere with full TypeScript support.',
+              'Typed notifications for Node.js and Bun. Define once, send everywhere with full TypeScript support.',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
             author: {
               '@type': 'Organization',

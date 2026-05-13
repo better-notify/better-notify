@@ -227,7 +227,7 @@ export const Route = createFileRoute('/og/$')({
         const prefix = 'docs/';
 
         if (raw === 'image.png') {
-          return renderOG(appConfig.name, 'Typed notification infrastructure for Node.js and Bun');
+          return renderOG(appConfig.name, 'Typed notifications for Node.js and Bun');
         }
 
         if (!raw.startsWith(prefix)) {

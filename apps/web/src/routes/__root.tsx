@@ -17,7 +17,7 @@ export const Route = createRootRoute({
     const { meta: seoMeta, links: seoLinks } = seo({
       title: `${appConfig.name}: Typed Notifications for Node.js and Bun`,
       description:
-        'Type-safe notification infrastructure for Node.js and Bun. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
+        'Typed notifications for Node.js and Bun. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       keywords:
         'better-notify, betternotify, typed notifications, notification library nodejs, notification library bun, notification infrastructure, transactional email nodejs, transactional email bun, send email nodejs, send email bun, sms nodejs, telegram bot nodejs, slack notifications, discord webhooks, multi-channel notifications, typescript notifications, notification sdk, smtp nodejs, resend, cloudflare email, twilio sms, mailchimp transactional, type-safe api, notification catalog',
       image: `${appConfig.baseUrl}/og/image.png`,
