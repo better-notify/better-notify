@@ -1,0 +1,13 @@
+{
+  "name": "@example/web-push",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "turbo run start --filter=@web-push/server",
+    "dev": "turbo run dev --filter=@web-push/server"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

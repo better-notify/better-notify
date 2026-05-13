@@ -1,0 +1,27 @@
+{
+  "name": "@web-push/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx --watch src/index.ts",
+    "fmt": "oxfmt src"
+  },
+  "dependencies": {
+    "@betternotify/core": "workspace:*",
+    "@betternotify/webpush": "workspace:*",
+    "@hono/node-server": "1.14.1",
+    "hono": "4.7.6",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@internal/tsconfig": "workspace:*",
+    "@types/node": "25.6.0",
+    "tsx": "4.21.0",
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

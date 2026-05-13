@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BetterNotify — Web Push Demo</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 480px;
+        margin: 40px auto;
+        padding: 0 16px;
+        color: #1a1a1a;
+        background: #fafafa;
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin-bottom: 0.25rem;
+      }
+      p.subtitle {
+        color: #666;
+        margin-top: 0;
+      }
+      button {
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #fff;
+        background: #111;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: #333;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      #send-section {
+        display: none;
+        margin-top: 24px;
+      }
+      label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 4px;
+        font-size: 0.9rem;
+      }
+      input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+      }
+      #status {
+        margin-top: 12px;
+        font-size: 0.9rem;
+        color: #555;
+      }
+      #result {
+        margin-top: 12px;
+        font-size: 0.9rem;
+        color: #555;
+      }
+
+      #feed {
+        display: none;
+        margin-top: 32px;
+      }
+      #feed h2 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      #feed-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 10px;
+        background: #111;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      #feed-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .feed-card {
+        background: #fff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 12px 14px;
+        animation: slide-in 0.3s ease-out;
+        transition: background 0.6s ease;
+      }
+      .feed-card.clicked {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+      }
+      .feed-card-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+      }
+      .feed-card-body {
+        font-size: 0.88rem;
+        color: #555;
+        margin-bottom: 6px;
+      }
+      .feed-card-time {
+        font-size: 0.75rem;
+        color: #999;
+      }
+      .feed-card-clicked-label {
+        display: none;
+        font-size: 0.75rem;
+        color: #16a34a;
+        font-weight: 500;
+        margin-top: 4px;
+      }
+      .feed-card.clicked .feed-card-clicked-label {
+        display: block;
+      }
+      #feed-empty {
+        font-size: 0.88rem;
+        color: #999;
+      }
+      @keyframes slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Web Push Demo</h1>
+    <p class="subtitle">@betternotify/webpush + Hono</p>
+
+    <button id="subscribe-btn" onclick="subscribe()">Subscribe to push</button>
+    <div id="status"></div>
+
+    <div id="send-section">
+      <label for="title">Title</label>
+      <input id="title" value="Hello from BetterNotify" />
+
+      <label for="body">Body</label>
+      <input id="body" value="This is a test push notification." />
+
+      <button onclick="sendPush()">Send to all subscribers</button>
+      <div id="result"></div>
+    </div>
+
+    <div id="feed">
+      <h2>Received <span id="feed-count">0</span></h2>
+      <div id="feed-list">
+        <div id="feed-empty">Waiting for notifications…</div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -36,6 +36,7 @@ const transportChannels: Record<string, string | string[]> = {
   'onesignal-push': 'push',
   'onesignal-email': 'email',
   'onesignal-sms': 'sms',
+  vapid: 'web-push',
   zapier: 'zapier',
   mock: 'any',
   'multi-transport': 'any',
@@ -45,6 +46,7 @@ const transportChannels: Record<string, string | string[]> = {
 const channelBadges: Record<string, ChannelBadge> = {
   email: { tooltip: 'Email', icon: Envelope },
   push: { tooltip: 'Push', icon: Bell },
+  'web-push': { tooltip: 'Web Push', icon: Bell },
   discord: { tooltip: 'Discord', icon: DiscordLogo },
   slack: { tooltip: 'Slack', icon: SlackLogo },
   telegram: { tooltip: 'Telegram', icon: TelegramLogo },
