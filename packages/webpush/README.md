@@ -1,6 +1,6 @@
 # @betternotify/webpush
 
-Web Push notification channel and VAPID transport for [Better-Notify](https://github.com/better-notify/better-notify). Delivers encrypted push messages to any browser supporting the [Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API) via the vendor-neutral VAPID protocol (RFC 8291 + RFC 8292).
+Web Push channel and VAPID transport for [Better-Notify](https://github.com/better-notify/better-notify). Send push notifications to any browser via the [VAPID protocol](https://developer.mozilla.org/en-US/docs/Web/API/Push_API) (RFC 8291 + RFC 8292).
 
 <p>
   <a href="https://better-notify.com">Website</a> ·
@@ -64,7 +64,7 @@ import { generateVapidKeys } from '@betternotify/webpush';
 const { publicKey, privateKey } = await generateVapidKeys();
 ```
 
-Store the keys in environment variables. Regenerating keys invalidates all existing browser subscriptions.
+Store these in environment variables. Regenerating keys invalidates all existing subscriptions.
 
 ## Builder slots
 
@@ -115,15 +115,19 @@ import {
 } from '@betternotify/webpush/transports';
 ```
 
-- `vapidTransport(opts)` — vendor-neutral VAPID transport (RFC 8291 + RFC 8292). Uses WebCrypto for encryption and signing — no native dependencies, works in Node 22+ and Cloudflare Workers.
+- `vapidTransport(opts)` — VAPID transport (RFC 8291 + RFC 8292). Uses WebCrypto for encryption and signing; no native dependencies. Works in Node 22+ and Cloudflare Workers.
 - `mockWebPushTransport()` — records sent messages for tests.
-- `multiTransport(opts)` / `createTransport(opts)` — composition factories pre-parameterized for `RenderedWebPush`.
+- `multiTransport(opts)` / `createTransport(opts)` — transport factories typed to `RenderedWebPush`.
+
+## Example
+
+See [`examples/web-push`](../../examples/web-push) for a working Hono server that sends push notifications with VAPID.
 
 ## Caveats
 
-VAPID keys are generated as an ECDSA P-256 key pair. The `publicKey` is the 65-byte uncompressed point encoded as base64url; the `privateKey` is the 32-byte `d` parameter encoded as base64url. Regenerating keys invalidates all existing browser subscriptions — store them in environment variables and reuse across server restarts.
+VAPID keys are generated as an ECDSA P-256 key pair. The `publicKey` is the 65-byte uncompressed point encoded as base64url; the `privateKey` is the 32-byte `d` parameter encoded as base64url. Regenerating keys invalidates all existing browser subscriptions. Reuse the same key pair across deploys.
 
-When a push service returns `404` or `410`, the transport marks the subscription as `gone`. Your application should remove these subscriptions from storage to avoid repeated delivery failures.
+When a push service returns `404` or `410`, the transport marks the subscription as `gone`. Remove these subscriptions from storage to avoid repeated delivery failures.
 
 The transport sends to all subscriptions in parallel via `Promise.all`. If every subscription fails, the result is a non-retriable error. Partial success (some subscriptions delivered, some failed) is reported as `ok: true` with per-subscription results in `data.results`.
 

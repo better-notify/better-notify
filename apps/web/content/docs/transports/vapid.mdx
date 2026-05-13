@@ -1,0 +1,117 @@
+---
+title: VAPID
+icon: Lock
+description: Send web push notifications via the VAPID protocol
+channels: [web-push]
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The VAPID transport ships with `@betternotify/webpush`. It encrypts and delivers push messages directly to browser push services (RFC 8291 + RFC 8292). Uses WebCrypto for encryption and signing; no native dependencies. Works in Node 22+ and Cloudflare Workers.
+
+## Install
+
+```package-install
+@betternotify/webpush @betternotify/core
+```
+
+## Generating VAPID keys
+
+```ts
+import { generateVapidKeys } from '@betternotify/webpush';
+
+const { publicKey, privateKey } = await generateVapidKeys();
+```
+
+Store these in environment variables. Regenerating keys invalidates all existing browser subscriptions.
+
+```sh
+VAPID_PUBLIC_KEY=BNq9r...base64url...
+VAPID_PRIVATE_KEY=abc12...base64url...
+```
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { webPushChannel } from '@betternotify/webpush';
+import { vapidTransport } from '@betternotify/webpush/transports';
+
+const webpush = webPushChannel();
+
+const rpc = createNotify({ channels: { webpush } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const notify = createClient({
+  catalog,
+  transportsByChannel: {
+    webpush: vapidTransport({
+      publicKey: process.env.VAPID_PUBLIC_KEY,
+      privateKey: process.env.VAPID_PRIVATE_KEY,
+      subject: 'mailto:hello@example.com',
+    }),
+  },
+});
+```
+
+For a working Hono server with subscription management and a browser client, see the [web-push example](https://github.com/better-notify/better-notify/tree/main/examples/web-push).
+
+## Options
+
+<TypeTable
+  type={{
+    publicKey: {
+      description: 'Base64url-encoded VAPID public key (from generateVapidKeys()). Required.',
+      type: 'string',
+    },
+    privateKey: {
+      description: 'Base64url-encoded VAPID private key (from generateVapidKeys()). Required.',
+      type: 'string',
+    },
+    subject: {
+      description: 'Contact URI for the application server (mailto: or https://). Required.',
+      type: 'string',
+    },
+    ttl: {
+      description: 'Time-to-live in seconds for the push message.',
+      type: 'number',
+      default: '2419200',
+    },
+    urgency: {
+      description: 'Push message urgency.',
+      type: "'very-low' | 'low' | 'normal' | 'high'",
+      default: "'normal'",
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+  }}
+/>
+
+## Subscription lifecycle
+
+When a push service returns `404` or `410`, the transport marks that subscription as `gone` in the per-subscription results. Remove these subscriptions from storage to avoid repeated delivery failures.
+
+## Batch delivery
+
+The transport sends to all subscriptions in parallel. If every subscription fails, the result is a non-retriable error. Partial success is reported as `ok: true` with per-subscription details in `data.results`:
+
+```ts
+const result = await notify.alert.send({
+  to: [subscription1, subscription2],
+  input: { title: 'Heads up', body: 'New deploy incoming' },
+});
+
+// result.data.results: Array<{ endpoint, ok, statusCode?, gone? }>
+```
+
+## Key format
+
+VAPID keys are an ECDSA P-256 key pair. The `publicKey` is the 65-byte uncompressed point encoded as base64url; the `privateKey` is the 32-byte `d` parameter encoded as base64url. Reuse the same key pair across deploys.

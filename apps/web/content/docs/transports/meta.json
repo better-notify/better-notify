@@ -17,6 +17,7 @@
     "smtp",
     "---Push---",
     "onesignal-push",
+    "vapid",
     "---SMS---",
     "onesignal-sms",
     "twilio",

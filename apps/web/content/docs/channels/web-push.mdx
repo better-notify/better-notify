@@ -1,0 +1,144 @@
+---
+title: Web Push
+icon: Globe
+description: Send push notifications to browsers via VAPID
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The web push channel is provided by `@betternotify/webpush`. It defines slots for title, body, icon, badge, image, tag, data payload, and action buttons. Notifications are delivered through the [Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API) using the VAPID protocol (RFC 8291 + RFC 8292).
+
+## When to use web push
+
+Web push is the right channel when you need to reach users in the browser without a native app. Notifications appear at the OS level even when the tab is closed, as long as the service worker is registered. Use it for time-sensitive alerts, new messages, price drops, or activity updates where the value is in the immediate interruption.
+
+For native mobile push (FCM, APNs), use the [push](/docs/channels/push) channel instead.
+
+```package-install
+@betternotify/webpush
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { webPushChannel } from '@betternotify/webpush';
+
+const webpush = webPushChannel();
+
+const rpc = createNotify({ channels: { webpush } });
+```
+
+## Slots
+
+<TypeTable
+  type={{
+    title: {
+      description: 'The notification title. Required.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    body: {
+      description: 'The notification body text. Required.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    icon: {
+      description: 'URL of the notification icon. Optional.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    badge: {
+      description: 'URL of the badge image for small-screen or notification-bar display. Optional.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    image: {
+      description: 'URL of a large image shown in the notification body. Optional.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    tag: {
+      description: 'Groups notifications so new ones replace older ones with the same tag. Optional.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    data: {
+      description: 'Arbitrary key-value payload delivered with the notification. Optional.',
+      type: 'Record<string, unknown> | (args: { input, ctx }) => Record<string, unknown>',
+    },
+    actions: {
+      description: 'Action buttons shown on the notification. Optional.',
+      type: 'WebPushAction[] | (args: { input, ctx }) => WebPushAction[]',
+    },
+  }}
+/>
+
+## Send arguments
+
+<TypeTable
+  type={{
+    to: {
+      description: 'A browser subscription or array of subscriptions. Each subscription has an endpoint URL and encryption keys (p256dh, auth) from PushManager.subscribe().',
+      type: 'WebPushSubscription | ReadonlyArray<WebPushSubscription>',
+    },
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+## Full example
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { webPushChannel } from '@betternotify/webpush';
+import { vapidTransport } from '@betternotify/webpush/transports';
+import { z } from 'zod';
+
+const webpush = webPushChannel();
+const rpc = createNotify({ channels: { webpush } });
+
+const catalog = rpc.catalog({
+  newMessage: rpc
+    .webpush()
+    .input(z.object({ from: z.string(), preview: z.string() }))
+    .title(({ input }) => `New message from ${input.from}`)
+    .body(({ input }) => input.preview)
+    .icon('/icons/message.png')
+    .tag('new-message'),
+});
+
+const notify = createClient({
+  catalog,
+  transportsByChannel: {
+    webpush: vapidTransport({
+      publicKey: process.env.VAPID_PUBLIC_KEY,
+      privateKey: process.env.VAPID_PRIVATE_KEY,
+      subject: 'mailto:hello@example.com',
+    }),
+  },
+});
+
+await notify.newMessage.send({
+  to: {
+    endpoint: 'https://fcm.googleapis.com/fcm/send/...',
+    keys: { p256dh: '...', auth: '...' },
+  },
+  input: { from: 'Alice', preview: 'See you tomorrow' },
+});
+```
+
+For a working Hono server with subscription management and a browser client, see the [web-push example](https://github.com/better-notify/better-notify/tree/main/examples/web-push).
+
+## Transport
+
+The web push channel produces a `RenderedWebPush` with all resolved slots plus the `to` field. Use [`vapidTransport`](/docs/transports/vapid) for direct delivery via the VAPID protocol, or build a custom transport with `createTransport`:
+
+```ts
+import { createTransport } from '@betternotify/webpush/transports';
+import type { RenderedWebPush } from '@betternotify/webpush';
+
+const myTransport = createTransport({
+  name: 'my-push-provider',
+  send: async (rendered) => {
+    // rendered.title, rendered.body, rendered.to, etc.
+    return { ok: true, data: { results: [] } };
+  },
+});
+```
