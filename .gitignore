@@ -18,3 +18,4 @@ plan/
 .superpowers/
 .playwright-mcp/
 .context/
+.claude/worktrees/
