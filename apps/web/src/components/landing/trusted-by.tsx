@@ -16,7 +16,9 @@ export function TrustedBy() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 max-lg:justify-center">
-        <span className="text-muted-foreground/40 font-mono text-[11px] uppercase tracking-bn-widest">In production at</span>
+        <span className="text-muted-foreground/40 font-mono text-[11px] uppercase tracking-bn-widest">
+          In production at
+        </span>
         {companies.map((c) => (
           <a
             key={c.name}
