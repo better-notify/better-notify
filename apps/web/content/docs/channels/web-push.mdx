@@ -83,6 +83,20 @@ const rpc = createNotify({ channels: { webpush } });
   }}
 />
 
+## Generating VAPID keys
+
+The VAPID protocol requires a P-256 ECDSA key pair to sign requests to push services. Generate one with `generateVapidKeys()` and store both values as environment variables:
+
+```ts
+import { generateVapidKeys } from '@betternotify/webpush';
+
+const { publicKey, privateKey } = await generateVapidKeys();
+// publicKey  → 65-byte uncompressed point, base64url-encoded
+// privateKey → 32-byte d parameter, base64url-encoded
+```
+
+The public key is also needed on the client side when calling `PushManager.subscribe()` as the `applicationServerKey`. Regenerating keys invalidates all existing subscriptions.
+
 ## Full example
 
 ```ts
