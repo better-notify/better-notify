@@ -19,6 +19,11 @@ export function CliPreview() {
     skill: 'npx skills add better-notify/better-notify',
   } as const;
 
+  const hints = {
+    cli: 'Scaffolds a new project with routing, transports, and templates.',
+    skill: 'Adds the Better-Notify skill to your AI coding assistant.',
+  } as const;
+
   async function handleCopy() {
     const ok = await navigator.clipboard?.writeText(commands[active]).then(
       () => true,
@@ -62,26 +67,31 @@ export function CliPreview() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3 px-4 py-3 text-left">
-        <span className="select-none font-mono text-[13px] text-bn-slate-400 dark:text-bn-slate-600">
-          $
-        </span>
-        <code className="flex-1 font-mono text-[13px] text-bn-slate-700 dark:text-bn-slate-300">
-          <span className="font-medium text-bn-navy-700 dark:text-bn-navy-300">npx</span>{' '}
-          {commands[active].replace(/^npx\s+/, '')}
-        </code>
-        <button
-          type="button"
-          aria-label={copied ? 'Copied' : 'Copy command'}
-          onClick={handleCopy}
-          className={`flex-shrink-0 border-0 bg-transparent transition-colors ${
-            copied
-              ? 'text-bn-success-700 dark:text-bn-success-300'
-              : 'text-bn-slate-400 hover:text-bn-slate-600 dark:text-bn-slate-500 dark:hover:text-bn-slate-300'
-          }`}
-        >
-          {copied ? <Check size={14} /> : <Copy size={14} />}
-        </button>
+      <div className="px-4 py-3 text-left">
+        <div className="flex items-center gap-3">
+          <span className="select-none font-mono text-[13px] text-bn-slate-400 dark:text-bn-slate-600">
+            $
+          </span>
+          <code className="flex-1 font-mono text-[13px] text-bn-slate-700 dark:text-bn-slate-300">
+            <span className="font-medium text-bn-navy-700 dark:text-bn-navy-300">npx</span>{' '}
+            {commands[active].replace(/^npx\s+/, '')}
+          </code>
+          <button
+            type="button"
+            aria-label={copied ? 'Copied' : 'Copy command'}
+            onClick={handleCopy}
+            className={`flex-shrink-0 border-0 bg-transparent transition-colors ${
+              copied
+                ? 'text-bn-success-700 dark:text-bn-success-300'
+                : 'text-bn-slate-400 hover:text-bn-slate-600 dark:text-bn-slate-500 dark:hover:text-bn-slate-300'
+            }`}
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+          </button>
+        </div>
+        <p className="mt-2 pl-[22px] text-[12px] leading-snug text-bn-slate-400 dark:text-bn-slate-500">
+          {hints[active]}
+        </p>
       </div>
     </div>
   );

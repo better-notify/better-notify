@@ -10,10 +10,14 @@ export const F = ({ children }: { children: React.ReactNode }) => {
 
 export const S = ({ children }: { children: React.ReactNode }) => {
   return (
-    <span className="text-[oklch(40%_0.14_155)] dark:text-[oklch(75%_0.14_155)]">{children}</span>
+    <span className="text-[oklch(40%_0.14_155)] dark:text-[oklch(72%_0.14_155)]">{children}</span>
   );
 };
 
 export const P = ({ children }: { children: React.ReactNode }) => {
   return <span className="text-bn-slate-400 dark:text-bn-slate-500">{children}</span>;
+};
+
+export const C = ({ children }: { children: React.ReactNode }) => {
+  return <span className="italic text-bn-slate-400 dark:text-bn-slate-500">{children}</span>;
 };
