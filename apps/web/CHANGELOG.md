@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0-beta.8](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.7...@betternotify/web-v1.1.0-beta.8) (2026-05-13)
+
+
+### Features
+
+* **ci,web:** add Bun runtime support and CI check ([#129](https://github.com/better-notify/better-notify/issues/129)) ([d5bbd67](https://github.com/better-notify/better-notify/commit/d5bbd67789909bd0c0bfd850dec135800f2de1bd))
+* **webpush:** add @betternotify/webpush channel and VAPID transport ([#128](https://github.com/better-notify/better-notify/issues/128)) ([98fad02](https://github.com/better-notify/better-notify/commit/98fad029a4621a2401b6b2de008f54e656ec7c91))
+* **web:** redesign hero code snippet and CLI preview ([#135](https://github.com/better-notify/better-notify/issues/135)) ([264e6ed](https://github.com/better-notify/better-notify/commit/264e6ed07953970176718d4449c220e7db28dbd5))
+
+
+### Bug Fixes
+
+* **web:** use correct Manrope Variable font-family name ([#134](https://github.com/better-notify/better-notify/issues/134)) ([c29f9ce](https://github.com/better-notify/better-notify/commit/c29f9ce835cb3100c08fc810e987cce6e7eb6558))
+
 ## [1.1.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.6...@betternotify/web-v1.1.0-beta.7) (2026-05-12)
 
 

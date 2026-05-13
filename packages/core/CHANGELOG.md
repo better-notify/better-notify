@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.6](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.5...@betternotify/core-v1.0.0-beta.6) (2026-05-13)
+
+
+### Features
+
+* **ci,web:** add Bun runtime support and CI check ([#129](https://github.com/better-notify/better-notify/issues/129)) ([d5bbd67](https://github.com/better-notify/better-notify/commit/d5bbd67789909bd0c0bfd850dec135800f2de1bd))
+
 ## [1.0.0-beta.5](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.4...@betternotify/core-v1.0.0-beta.5) (2026-05-12)
 
 
