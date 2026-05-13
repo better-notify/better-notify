@@ -49,7 +49,7 @@ const notify = createClient({
 
 await notify.newMessage.send({
   to: {
-    endpoint: 'https://fcm.googleapis.com/fcm/send/...',
+    endpoint: 'https://push.example.com/v1/...',
     keys: { p256dh: '...', auth: '...' },
   },
   input: { from: 'Alice', preview: 'See you tomorrow' },
