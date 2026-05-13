@@ -15,6 +15,7 @@
     "build": "turbo run build",
     "ci": "turbo run build typecheck test //#oxlint",
     "dev": "turbo run dev --filter=@welcome-text/cli",
+    "dev:web-push": "turbo run dev --filter=@web-push/server",
     "all:deploy": "turbo run deploy",
     "fmt": "turbo run //#oxfmt",
     "format": "pnpm fmt",

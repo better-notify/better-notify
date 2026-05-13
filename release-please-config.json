@@ -122,6 +122,12 @@
       "component": "@betternotify/github",
       "prerelease-type": "beta",
       "bootstrap-sha": "507281c4488bd22835677be0d5e010a7165c5307"
+    },
+    "packages/webpush": {
+      "release-type": "node",
+      "component": "@betternotify/webpush",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "ccb5682694e4450094f3e6737112db2ca49bb5c4"
     }
   }
 }
