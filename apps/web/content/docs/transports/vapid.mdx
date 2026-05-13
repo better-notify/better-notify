@@ -19,24 +19,63 @@ The VAPID transport ships with `@betternotify/webpush`. It encrypts and delivers
 
 VAPID uses a P-256 ECDSA key pair to identify your application server to push services. The **public key** is shared with the browser when subscribing (`applicationServerKey` in `PushManager.subscribe()`). The **private key** stays on your server and signs each push request so the push service can verify it came from you.
 
-Generate a key pair with `generateVapidKeys()`:
+### 1. Generate the key pair
 
-```ts
+Run this once to create your keys. `generateVapidKeys()` uses the Web Crypto API internally, so it works in Node.js and Cloudflare Workers without extra dependencies.
+
+```ts title="scripts/generate-vapid-keys.ts"
 import { generateVapidKeys } from '@betternotify/webpush';
 
 const { publicKey, privateKey } = await generateVapidKeys();
-console.log({ publicKey, privateKey });
+
+console.log('VAPID_PUBLIC_KEY=' + publicKey);
+console.log('VAPID_PRIVATE_KEY=' + privateKey);
 ```
 
-Both values are base64url-encoded strings. Store them as environment variables and reuse across deploys:
-
 ```sh
+npx tsx scripts/generate-vapid-keys.ts
+```
+
+### 2. Store the keys
+
+Copy the output into your `.env` file (or your hosting provider's environment settings):
+
+```sh title=".env"
 VAPID_PUBLIC_KEY=BNq9r...base64url...
 VAPID_PRIVATE_KEY=abc12...base64url...
 ```
 
+Both values are base64url-encoded strings. The public key is 88 characters long; the private key is 43.
+
+### 3. Pass them to the transport
+
+```ts
+vapidTransport({
+  publicKey: process.env.VAPID_PUBLIC_KEY,
+  privateKey: process.env.VAPID_PRIVATE_KEY,
+  subject: 'mailto:hello@example.com',
+});
+```
+
+The `subject` field is a contact URI (either `mailto:` or `https://`) that push services can use to reach you if something goes wrong.
+
+### 4. Use the public key on the client
+
+When subscribing a browser, pass the same public key as `applicationServerKey`:
+
+```ts title="client.js"
+const registration = await navigator.serviceWorker.ready;
+
+const subscription = await registration.pushManager.subscribe({
+  userVisibleOnly: true,
+  applicationServerKey: 'BNq9r...same public key...',
+});
+```
+
+The returned `subscription` object contains the `endpoint` and `keys` your server needs in the `to` field when sending.
+
 <Callout type="warn">
-  Regenerating keys invalidates every existing browser subscription. Users would need to re-subscribe through your app.
+  Regenerating keys invalidates every existing browser subscription. Users would need to re-subscribe through your app. Generate once, reuse across deploys.
 </Callout>
 
 ## Usage
