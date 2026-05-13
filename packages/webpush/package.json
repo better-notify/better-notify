@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/webpush",
-  "version": "0.0.0",
+  "version": "1.0.0-beta.1",
   "description": "Web Push notification channel and VAPID transport for betternotify.",
   "license": "MIT",
   "repository": {
