@@ -9,22 +9,25 @@ export function CrossTransportSnippet() {
       <F>createTransport</F>
       <P>{' } '}</P>
       <K>from</K> <S>'@betternotify/core/transports'</S>
+      <P>;</P>
       {'\n'}
       <K>import</K> <P>{'{ '}</P>
       <F>telegramTransport</F>
       <P>{' } '}</P>
       <K>from</K> <S>'@betternotify/telegram'</S>
+      <P>;</P>
       {'\n'}
       <K>import</K> <P>{'{ '}</P>
       <F>smtpTransport</F>
       <P>{' } '}</P>
       <K>from</K> <S>'@betternotify/smtp'</S>
+      <P>;</P>
       {'\n'}
       {'\n'}
       <K>const</K> smtp = <F>smtpTransport</F>
       <P>({'{ '}</P>host<P>:</P> <S>'...'</S>
       <P>{' }'}</P>
-      <P>)</P>
+      <P>);</P>
       {'\n'}
       {'\n'}
       <K>const</K> smtpMirror = <F>createTransport</F>
@@ -43,7 +46,8 @@ export function CrossTransportSnippet() {
       <P>,</P>
       {'\n'}
       {'      '}to<P>: [{'{ '}</P>email<P>:</P> <S>'team@example.com'</S>
-      <P>{' }'}],</P>
+      <P>{' }'}]</P>
+      <P>,</P>
       {'\n'}
       {'      '}subject<P>:</P> <S>{'`[${'}</S>ctx.route<S>{'}] Mirror`'}</S>
       <P>,</P>
@@ -51,17 +55,18 @@ export function CrossTransportSnippet() {
       {'      '}html<P>:</P> <S>{'`<p>${'}</S>rendered.body<S>{'}</p>`'}</S>
       {'\n'}
       {'    '}
-      <P>{'}'}, </P>ctx<P>)</P>
+      <P>{'}'}</P>
+      <P>,</P> ctx<P>);</P>
       {'\n'}
       {'    '}
       <K>return</K> <P>{'{ '}</P>messageId<P>:</P> 0<P>,</P> chatId<P>:</P> rendered.to ?? 0
-      <P>{' }'}</P>
+      <P>{' }'};</P>
       {'\n'}
       {'  '}
       <P>{'}'}</P>
       {'\n'}
       <P>{'}'}</P>
-      <P>)</P>
+      <P>);</P>
       {'\n'}
       {'\n'}
       <K>const</K> transport = <F>multiTransport</F>
@@ -75,9 +80,9 @@ export function CrossTransportSnippet() {
       {'    '}
       <P>{'{ '}</P>transport<P>:</P> <F>telegramTransport</F>
       <P>({'{ '}</P>token<P>:</P> <S>'...'</S>
-      <P>
-        {' }'}){' }'},
-      </P>
+      <P>{' }'}</P>
+      <P>){' }'}</P>
+      <P>,</P>
       {'\n'}
       {'    '}
       <P>{'{ '}</P>transport<P>:</P> smtpMirror<P>{' }'}</P>
@@ -86,7 +91,7 @@ export function CrossTransportSnippet() {
       <P>]</P>
       {'\n'}
       <P>{'}'}</P>
-      <P>)</P>
+      <P>);</P>
     </>
   );
 }

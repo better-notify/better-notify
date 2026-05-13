@@ -9,39 +9,45 @@ export function TelegramSnippet() {
       <F>createClient</F>
       <P>{' } '}</P>
       <K>from</K> <S>'@betternotify/core'</S>
+      <P>;</P>
       {'\n'}
       <K>import</K> <P>{'{ '}</P>
       <F>telegramChannel</F>
-      <P>, </P>
+      <P>{' } '}</P>
+      <K>from</K> <S>'@betternotify/telegram'</S>
+      <P>;</P>
+      {'\n'}
+      <K>import</K> <P>{'{ '}</P>
       <F>telegramTransport</F>
       <P>{' } '}</P>
       <K>from</K> <S>'@betternotify/telegram'</S>
+      <P>;</P>
       {'\n'}
       {'\n'}
-      <K>const</K> ch = <F>telegramChannel</F>
-      <P>()</P>
-      {'\n'}
-      <K>const</K> rpc = <F>createNotify</F>
-      <P>({'{ '}</P>channels<P>: {'{ '}</P>telegram<P>:</P> ch<P>{' } }'}</P>
-      <P>)</P>
-      {'\n'}
-      {'\n'}
-      <K>const</K> catalog = rpc.<F>catalog</F>
+      <K>const</K> notify = <F>createNotify</F>
       <P>({'{'}</P>
       {'\n'}
-      {'  '}alert<P>:</P> rpc.<F>telegram</F>
+      {'  '}channels<P>: {'{ '}</P>telegram<P>:</P> <F>telegramChannel</F>
+      <P>(){' }'}</P>
+      {'\n'}
+      <P>{'}'}</P>
+      <P>);</P>
+      {'\n'}
+      {'\n'}
+      <K>const</K> catalog = notify.<F>catalog</F>
+      <P>({'{'}</P>
+      {'\n'}
+      {'  '}alert<P>:</P> notify.<F>telegram</F>
       <P>()</P>
       {'\n'}
       {'    '}.<F>input</F>
       <P>(</P>z.<F>object</F>
       <P>({'{ '}</P>msg<P>:</P> z.<F>string</F>
       <P>(){' }'})</P>
+      <P>)</P>
       {'\n'}
       {'    '}.<F>body</F>
-      <P>(({'{ '}</P>input<P>{' }'}) =&gt;</P>
-      {'\n'}
-      {'      '}
-      <S>{'`<b>Alert</b> ${'}</S>input.msg<S>{'}`'}</S>
+      <P>(({'{ '}</P>input<P>{' }'}) =&gt;</P> <S>{'`Alert: ${'}</S>input.msg<S>{'}`'}</S>
       <P>)</P>
       {'\n'}
       {'    '}.<F>parseMode</F>
@@ -50,10 +56,10 @@ export function TelegramSnippet() {
       <P>)</P>
       {'\n'}
       <P>{'}'}</P>
-      <P>)</P>
+      <P>);</P>
       {'\n'}
       {'\n'}
-      <K>const</K> notify = <F>createClient</F>
+      <K>const</K> client = <F>createClient</F>
       <P>({'{'}</P>
       {'\n'}
       {'  '}catalog<P>,</P>
@@ -69,20 +75,20 @@ export function TelegramSnippet() {
       <P>{'}'}</P>
       {'\n'}
       <P>{'}'}</P>
-      <P>)</P>
+      <P>);</P>
       {'\n'}
       {'\n'}
-      <K>await</K> notify.alert.<F>send</F>
+      <K>await</K> client.alert.<F>send</F>
       <P>({'{'}</P>
       {'\n'}
       {'  '}to<P>:</P> <S>'-1001234567890'</S>
       <P>,</P>
       {'\n'}
-      {'  '}input<P>:</P> <P>{'{ '}</P>msg<P>:</P> <S>'Disk 92%'</S>
+      {'  '}input<P>:</P> <P>{'{ '}</P>msg<P>:</P> <S>'Disk at 92%'</S>
       <P>{' }'}</P>
       {'\n'}
       <P>{'}'}</P>
-      <P>)</P>
+      <P>);</P>
     </>
   );
 }

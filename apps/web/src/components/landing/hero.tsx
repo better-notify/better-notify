@@ -42,7 +42,7 @@ export function Hero() {
     <section className="relative">
       <BgGrid />
       <div className="relative mx-auto max-w-[1200px] px-5 pb-20 pt-14 md:px-8 md:pb-28 md:pt-20 lg:pb-32 lg:pt-24">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="text-center lg:text-left">
             <h1
               className="hero-anim text-foreground mb-6 font-bold tracking-bn-snug text-balance"
@@ -107,32 +107,19 @@ export function Hero() {
             </div>
 
             <div
-              className="hero-anim flex flex-wrap items-end justify-center gap-x-8 gap-y-3 lg:justify-start"
+              className="hero-anim flex flex-col items-center gap-5 lg:items-start"
               style={{ animationDelay: '280ms' }}
             >
               <RuntimeBadges />
-              <div className="text-muted-foreground/40 flex items-center gap-3 font-mono text-[12px]">
-                <span>ESM-only</span>
-                <span className="text-muted-foreground/20 text-[10px]">·</span>
-                <span>Open source</span>
-              </div>
-            </div>
-
-            <div className="hero-anim mt-8" style={{ animationDelay: '320ms' }}>
               <TrustedBy />
             </div>
           </div>
 
           <div
-            className="hero-anim min-w-0 overflow-hidden rounded-xl border border-bn-slate-200 bg-white shadow-bn-lg dark:border-bn-slate-800 dark:bg-bn-slate-950"
+            className="hero-anim min-w-0 overflow-hidden rounded-xl border border-bn-slate-200 bg-white shadow-bn-lg dark:border-white/[0.08] dark:bg-[oklch(8%_0.02_260)]"
             style={{ animationDelay: '120ms' }}
           >
-            <div className="flex items-center border-b border-bn-slate-200 px-4 py-2.5 dark:border-bn-slate-800">
-              <div className="mr-3 hidden items-center gap-[6px] sm:flex">
-                <span className="block size-[10px] rounded-full bg-[#ff5f57]" />
-                <span className="block size-[10px] rounded-full bg-[#febc2e]" />
-                <span className="block size-[10px] rounded-full bg-[#28c840]" />
-              </div>
+            <div className="flex items-center border-b border-bn-slate-200 px-3 py-2 dark:border-white/[0.06]">
               <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {tabs.map((tab) => (
                   <button
@@ -141,13 +128,16 @@ export function Hero() {
                       setActive(tab);
                       analytics.track('snippet').action('change', { tab });
                     }}
-                    className={`cursor-pointer whitespace-nowrap rounded-md border-0 px-3 py-1 font-mono text-[12px] font-medium transition-colors ${
+                    className={`relative cursor-pointer whitespace-nowrap rounded-md border-0 px-3 py-1.5 font-mono text-[12px] font-medium transition-colors ${
                       active === tab
-                        ? 'bg-bn-slate-100 text-bn-slate-800 dark:bg-bn-slate-800 dark:text-bn-slate-200'
-                        : 'bg-transparent text-bn-slate-400 hover:text-bn-slate-600 dark:text-bn-slate-500 dark:hover:text-bn-slate-300'
+                        ? 'bg-bn-slate-100 text-bn-slate-800 dark:bg-white/[0.07] dark:text-white/80'
+                        : 'bg-transparent text-bn-slate-400 hover:text-bn-slate-600 dark:text-white/30 dark:hover:text-white/50'
                     }`}
                   >
                     {tab}
+                    {active === tab && (
+                      <span className="absolute bottom-0 left-1/2 h-[2px] w-4/5 -translate-x-1/2 rounded-full bg-bn-navy-600 dark:bg-bn-navy-400" />
+                    )}
                   </button>
                 ))}
               </div>
