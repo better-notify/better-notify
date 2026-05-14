@@ -1,5 +1,9 @@
 # @betternotify/smtp
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/smtp)](https://www.npmjs.com/package/@betternotify/smtp)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/smtp)](https://www.npmjs.com/package/@betternotify/smtp)
+[![license](https://img.shields.io/npm/l/@betternotify/smtp)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Nodemailer-backed SMTP transport for [Better-Notify](https://github.com/better-notify/better-notify).
 
 <p>
@@ -153,3 +157,7 @@ These scenarios need live credentials and cannot be fully automated:
 - **Large attachments**: send a message with a 10 MB+ attachment; confirm the provider doesn't silently truncate or reject.
 - **Connection pool reconnect**: enable `pool: true`, send a message, wait 10+ minutes (beyond server idle timeout), then send another. Verify the pool recovers without error.
 - **TLS modes**: test both `secure: false` (STARTTLS on 587) and `secure: true` (implicit TLS on 465) against your provider.
+
+## License
+
+MIT

@@ -1,5 +1,9 @@
 # @betternotify/selligent
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/selligent)](https://www.npmjs.com/package/@betternotify/selligent)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/selligent)](https://www.npmjs.com/package/@betternotify/selligent)
+[![license](https://img.shields.io/npm/l/@betternotify/selligent)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 [Selligent (Marigold Engage)](https://www.marigold.com/products/marigold-engage) transactional email transport for [Better-Notify](https://github.com/better-notify/better-notify). Delivers rendered emails through the Selligent Delivery Cloud (SDC) `POST /email/v1/messages/send` API.
 
 <p>

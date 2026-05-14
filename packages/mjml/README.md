@@ -1,5 +1,9 @@
 # @betternotify/mjml
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/mjml)](https://www.npmjs.com/package/@betternotify/mjml)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/mjml)](https://www.npmjs.com/package/@betternotify/mjml)
+[![license](https://img.shields.io/npm/l/@betternotify/mjml)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 MJML + Handlebars template adapter for [Better-Notify](https://github.com/better-notify/better-notify).
 
 <p>
@@ -84,3 +88,7 @@ Returns a `TemplateAdapter<TInput>`. Two-phase rendering:
 ## Node.js only
 
 MJML requires a Node.js runtime (it depends on `htmlnano`, `cheerio`, etc.). For Cloudflare Workers or edge runtimes, use `@betternotify/react-email` or `@betternotify/handlebars` instead.
+
+## License
+
+MIT

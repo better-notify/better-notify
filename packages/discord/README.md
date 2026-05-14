@@ -1,5 +1,9 @@
 # @betternotify/discord
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/discord)](https://www.npmjs.com/package/@betternotify/discord)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/discord)](https://www.npmjs.com/package/@betternotify/discord)
+[![license](https://img.shields.io/npm/l/@betternotify/discord)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Discord channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `discordChannel()`, a `mockDiscordTransport` for tests, and a `discordTransport` that posts to Discord webhooks.
 
 <p>

@@ -1,5 +1,9 @@
 # @betternotify/mailchimp
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/mailchimp)](https://www.npmjs.com/package/@betternotify/mailchimp)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/mailchimp)](https://www.npmjs.com/package/@betternotify/mailchimp)
+[![license](https://img.shields.io/npm/l/@betternotify/mailchimp)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Mailchimp Transactional (Mandrill) email transport for [Better-Notify](https://github.com/better-notify/better-notify). Sends rendered emails through the Mandrill `/messages/send` API.
 
 <p>

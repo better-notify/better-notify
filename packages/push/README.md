@@ -1,5 +1,9 @@
 # @betternotify/push
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/push)](https://www.npmjs.com/package/@betternotify/push)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/push)](https://www.npmjs.com/package/@betternotify/push)
+[![license](https://img.shields.io/npm/l/@betternotify/push)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Push notification channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `pushChannel()`, a `mockPushTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedPush`.
 
 <p>

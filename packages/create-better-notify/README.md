@@ -1,5 +1,9 @@
 # create-better-notify
 
+[![npm version](https://img.shields.io/npm/v/create-better-notify)](https://www.npmjs.com/package/create-better-notify)
+[![npm downloads](https://img.shields.io/npm/dm/create-better-notify)](https://www.npmjs.com/package/create-better-notify)
+[![license](https://img.shields.io/npm/l/create-better-notify)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Scaffold a [Better Notify](https://github.com/better-notify/better-notify) project with your preferred framework and RPC layer. One command gives you a working server with typed notifications, OpenAPI playground, and email templates ready to go.
 
 <p>

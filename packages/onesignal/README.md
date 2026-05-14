@@ -1,5 +1,9 @@
 # @betternotify/onesignal
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/onesignal)](https://www.npmjs.com/package/@betternotify/onesignal)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/onesignal)](https://www.npmjs.com/package/@betternotify/onesignal)
+[![license](https://img.shields.io/npm/l/@betternotify/onesignal)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 [OneSignal](https://onesignal.com) push, email, and SMS transports for [Better-Notify](https://github.com/better-notify/better-notify). Delivers rendered messages through the OneSignal `POST /notifications` API across all three channels.
 
 <p>

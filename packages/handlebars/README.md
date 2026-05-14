@@ -1,5 +1,9 @@
 # @betternotify/handlebars
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/handlebars)](https://www.npmjs.com/package/@betternotify/handlebars)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/handlebars)](https://www.npmjs.com/package/@betternotify/handlebars)
+[![license](https://img.shields.io/npm/l/@betternotify/handlebars)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Handlebars template adapter for [Better-Notify](https://github.com/better-notify/better-notify).
 
 <p>
@@ -67,3 +71,7 @@ Returns a `TemplateAdapter<TInput>`. Each `render({ input })` call executes the 
 - Pre-compiled at creation time for fast renders
 - Isolated instance per adapter (helpers/partials don't leak between templates)
 - Subject and text templates share the same helpers and partials
+
+## License
+
+MIT

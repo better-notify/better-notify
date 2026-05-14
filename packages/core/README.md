@@ -1,5 +1,9 @@
 # @betternotify/core
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/core)](https://www.npmjs.com/package/@betternotify/core)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/core)](https://www.npmjs.com/package/@betternotify/core)
+[![license](https://img.shields.io/npm/l/@betternotify/core)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Channel-agnostic notification infrastructure: contracts, client pipeline, transport factories, middleware, hooks, plugins, and observability primitives.
 
 <p>

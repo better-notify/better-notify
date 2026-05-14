@@ -1,5 +1,9 @@
 # @betternotify/webpush
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/webpush)](https://www.npmjs.com/package/@betternotify/webpush)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/webpush)](https://www.npmjs.com/package/@betternotify/webpush)
+[![license](https://img.shields.io/npm/l/@betternotify/webpush)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Web Push channel and VAPID transport for [Better-Notify](https://github.com/better-notify/better-notify). Send push notifications to any browser via the [VAPID protocol](https://developer.mozilla.org/en-US/docs/Web/API/Push_API) (RFC 8291 + RFC 8292).
 
 <p>

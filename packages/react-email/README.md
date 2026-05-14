@@ -1,5 +1,9 @@
 # @betternotify/react-email
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/react-email)](https://www.npmjs.com/package/@betternotify/react-email)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/react-email)](https://www.npmjs.com/package/@betternotify/react-email)
+[![license](https://img.shields.io/npm/l/@betternotify/react-email)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 React Email render helper for [Better-Notify](https://github.com/better-notify/better-notify).
 
 <p>
@@ -95,3 +99,7 @@ These scenarios go beyond unit tests and need visual inspection:
 - **Dark mode**: verify the template renders correctly in dark-mode email clients (Outlook dark, Gmail dark).
 - **Mobile responsiveness**: check the rendered email on a mobile viewport — React Email components should be responsive by default, but custom styles may break.
 - **Plain-text quality**: enable `plainText: true` and review the generated text for readability — check that links are visible, headings are clear, and no HTML artifacts leak through.
+
+## License
+
+MIT
