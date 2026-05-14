@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-beta.9](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.8...@betternotify/web-v1.1.0-beta.9) (2026-05-14)
+
+
+### Features
+
+* **web:** add Cloudflare Workers and Vercel to hero Runs on ([#136](https://github.com/better-notify/better-notify/issues/136)) ([7add359](https://github.com/better-notify/better-notify/commit/7add359731a4e0b752ec5cc2bef505d436853dd7))
+
 ## [1.1.0-beta.8](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.7...@betternotify/web-v1.1.0-beta.8) (2026-05-13)
 
 
