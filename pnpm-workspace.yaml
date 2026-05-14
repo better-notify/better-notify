@@ -31,10 +31,10 @@ catalog:
   '@vitest/coverage-v8': 2.1.9
   'bullmq': 5.0.0
   'evlog': 2.16.0
-  'fumadocs-core': 16.8.8
+  'fumadocs-core': 16.8.10
   'fumadocs-mdx': 14.3.2
-  'fumadocs-openapi': 10.8.1
-  'fumadocs-ui': 16.8.8
+  'fumadocs-openapi': 10.8.2
+  'fumadocs-ui': 16.8.10
   'handlebars': 4.7.9
   'ioredis': 5.0.0
   'mjml': 4.15.0
@@ -53,7 +53,7 @@ catalog:
   'tsx': 4.21.0
   'turbo': 2.9.12
   'typescript': 6.0.3
-  'vite': 8.0.11
+  'vite': 8.0.12
   'vitest': 2.1.9
   'wrangler': 4.86.0
   'zod': 4.3.6
