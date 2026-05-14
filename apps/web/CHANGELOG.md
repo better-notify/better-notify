@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0-beta.12](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.11...@betternotify/web-v1.1.0-beta.12) (2026-05-14)
+
+
+### Bug Fixes
+
+* **web:** align blog page titles with home page format ([#147](https://github.com/better-notify/better-notify/issues/147)) ([53f7b82](https://github.com/better-notify/better-notify/commit/53f7b82afc30d2da7c438b27913e7193a1ad7dc1))
+* **web:** correct Autosend link in blog article ([#149](https://github.com/better-notify/better-notify/issues/149)) ([e0dcf69](https://github.com/better-notify/better-notify/commit/e0dcf690b2ce6ff3c4a0b6c094d55435130bc745))
+
 ## [1.1.0-beta.11](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.10...@betternotify/web-v1.1.0-beta.11) (2026-05-14)
 
 
