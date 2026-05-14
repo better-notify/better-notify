@@ -24,9 +24,9 @@ export const Route = createFileRoute('/')({
   },
   head: () => {
     const { meta, links } = seo({
-      title: `${appConfig.name}: Typed Notifications for Node.js and Bun`,
+      title: `${appConfig.name}: Typed Notifications for Node.js, Bun, Cloudflare Workers, and Vercel`,
       description:
-        'Typed notifications for Node.js and Bun. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
+        'Typed notifications for Node.js, Bun, Cloudflare Workers, and Vercel. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
       url: appConfig.baseUrl,
       canonicalUrl: appConfig.baseUrl,
     });
@@ -42,9 +42,9 @@ export const Route = createFileRoute('/')({
             name: appConfig.name,
             url: appConfig.baseUrl,
             applicationCategory: 'DeveloperApplication',
-            operatingSystem: 'Node.js, Bun',
+            operatingSystem: 'Node.js, Bun, Cloudflare Workers, Vercel',
             description:
-              'Typed notifications for Node.js and Bun. Define once, send everywhere with full TypeScript support.',
+              'Typed notifications for Node.js, Bun, Cloudflare Workers, and Vercel. Define once, send everywhere with full TypeScript support.',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
             author: {
               '@type': 'Organization',

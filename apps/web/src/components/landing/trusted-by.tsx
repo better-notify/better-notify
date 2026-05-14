@@ -15,7 +15,7 @@ const companies: Company[] = [
 export function TrustedBy() {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-muted-foreground/40 font-mono text-[11px] uppercase tracking-bn-widest">
+      <span className="text-muted-foreground/80 font-mono text-[11px] uppercase tracking-bn-widest">
         In production at
       </span>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -35,7 +35,7 @@ export function TrustedBy() {
           href="https://github.com/better-notify/better-notify/issues/new?template=add_your_company.yml"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-muted-foreground/40 text-[13px] no-underline transition-colors hover:text-muted-foreground"
+          className="text-muted-foreground/80 text-[13px] no-underline transition-colors hover:text-muted-foreground"
         >
           Add yours
         </a>
