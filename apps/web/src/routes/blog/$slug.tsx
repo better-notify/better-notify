@@ -22,7 +22,7 @@ export const Route = createFileRoute('/blog/$slug')({
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [], links: [] };
 
-    const title = `${loaderData.pageTitle} — ${appConfig.name} Blog`;
+    const title = `${appConfig.name}: ${loaderData.pageTitle}`;
     const description = loaderData.pageDescription ?? 'Better-Notify blog.';
     const url = `${appConfig.baseUrl}/blog/${loaderData.slug}`;
     const image = loaderData.pageImage ?? `${appConfig.baseUrl}/og/image.png`;

@@ -23,7 +23,7 @@ export const Route = createFileRoute('/blog/')({
     return await serverLoader();
   },
   head: () => {
-    const title = `Blog — ${appConfig.name}`;
+    const title = `${appConfig.name}: Blog`;
     const description = 'Articles, guides, and updates from the Better-Notify team.';
     const url = `${appConfig.baseUrl}/blog`;
 
