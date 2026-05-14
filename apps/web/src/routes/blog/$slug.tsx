@@ -1,8 +1,8 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useAnalytics } from '@/hooks/use-analytics';
-import { CaretRightIcon } from '@phosphor-icons/react';
+import { CaretRightIcon, XLogoIcon, GithubLogoIcon, LinkSimpleIcon } from '@phosphor-icons/react';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import browserCollections from 'collections/browser';
 import { blogSource, mapPageToPost } from '@/lib/blog-source';
@@ -74,15 +74,89 @@ const serverLoader = createServerFn({
 const clientLoader = browserCollections.blogPosts.createClientLoader({
   component({ toc, default: MDX }, _props: undefined) {
     return (
-      <>
+      <div className="mx-auto max-w-3xl">
         {toc.length >= 2 && <InlineTOC items={toc} className="mb-8" />}
         <div className="prose prose-neutral dark:prose-invert max-w-none">
           <MDX components={useMDXComponents()} />
         </div>
-      </>
+      </div>
     );
   },
 });
+
+function ArticleFooter({ title, slug }: { title: string; slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const articleUrl = `${appConfig.baseUrl}/blog/${slug}/`;
+
+  const shareOnX = useCallback(() => {
+    const text = encodeURIComponent(`${title} ${appConfig.twitterHandle}`);
+    const url = encodeURIComponent(articleUrl);
+    window.open(`https://x.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
+  }, [title, articleUrl]);
+
+  const copyLink = useCallback(() => {
+    void navigator.clipboard.writeText(articleUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [articleUrl]);
+
+  const githubUrl = `https://github.com/${appConfig.git.user}/${appConfig.git.repo}`;
+  const xUrl = `https://x.com/${appConfig.twitterHandle.replace('@', '')}`;
+
+  return (
+    <div className="mx-auto mt-16 max-w-3xl">
+      <div className="border-border border-t pt-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-foreground mb-2 text-sm font-semibold">Share this post</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={shareOnX}
+                className="border-border text-muted-foreground hover:text-foreground hover:border-bn-slate-300 dark:hover:border-bn-slate-700 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors"
+              >
+                <XLogoIcon size={14} />
+                Post on X
+              </button>
+              <button
+                type="button"
+                onClick={copyLink}
+                className="border-border text-muted-foreground hover:text-foreground hover:border-bn-slate-300 dark:hover:border-bn-slate-700 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors"
+              >
+                <LinkSimpleIcon size={14} />
+                {copied ? 'Copied!' : 'Copy link'}
+              </button>
+            </div>
+          </div>
+          <div>
+            <p className="text-foreground mb-2 text-sm font-semibold">Follow {appConfig.name}</p>
+            <div className="flex items-center gap-2">
+              <a
+                href={githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-border text-muted-foreground hover:text-foreground hover:border-bn-slate-300 dark:hover:border-bn-slate-700 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs no-underline transition-colors"
+              >
+                <GithubLogoIcon size={14} />
+                GitHub
+              </a>
+              <a
+                href={xUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-border text-muted-foreground hover:text-foreground hover:border-bn-slate-300 dark:hover:border-bn-slate-700 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs no-underline transition-colors"
+              >
+                <XLogoIcon size={14} />
+                {appConfig.twitterHandle}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function BlogArticlePage() {
   const loaderData = Route.useLoaderData();
@@ -169,6 +243,13 @@ function BlogArticlePage() {
               </div>
             )}
           </header>
+          {loaderData.pageImage && (
+            <img
+              src={loaderData.pageImage}
+              alt={loaderData.pageTitle}
+              className="mx-auto mb-10 block w-full rounded-lg md:w-3/4 lg:w-2/3"
+            />
+          )}
           <Suspense
             fallback={
               <div className="animate-pulse space-y-4">
@@ -182,6 +263,7 @@ function BlogArticlePage() {
           >
             {clientLoader.useContent(loaderData.path)}
           </Suspense>
+          <ArticleFooter title={loaderData.pageTitle} slug={loaderData.slug} />
         </article>
       </main>
       <Footer />
