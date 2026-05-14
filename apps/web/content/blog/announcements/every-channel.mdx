@@ -17,7 +17,7 @@ This week we shipped **5 new transport packages**, **2 new channel types**, Bun 
 
 ### Web Push
 
-`@betternotify/webpush` adds browser push notifications with VAPID transport. Define a push route in your catalog and your client gets a typed `.send()` that delivers through the Web Push protocol. No third-party service required.
+`@betternotify/webpush` adds browser push notifications with VAPID transport. Define a push route in your catalog and your client gets a typed `.send()` that delivers through the Web Push protocol. No third-party service required. See the [Web Push channel](/docs/channels/web-push) and [VAPID transport](/docs/transports/vapid) docs.
 
 ```package-install
 @betternotify/webpush
@@ -34,7 +34,7 @@ const rpc = createNotify({
 
 ### GitHub
 
-`@betternotify/github` makes GitHub a first-class notification channel. Create issues, post discussion comments, or trigger repository dispatch events through the same typed pipeline your emails and SMS use.
+`@betternotify/github` makes GitHub a first-class notification channel. Create issues, post discussion comments, or trigger repository dispatch events through the same typed pipeline your emails and SMS use. See the [GitHub channel](/docs/channels/github) and [GitHub transport](/docs/transports/github) docs.
 
 ```package-install
 @betternotify/github
@@ -44,7 +44,7 @@ const rpc = createNotify({
 
 ### Autosend
 
-`@betternotify/autosend` adds [Autosend](https://autosend.io) as an email transport. Use it standalone or pair it with `multiTransport` for failover alongside SMTP or Resend.
+`@betternotify/autosend` adds [Autosend](https://autosend.io) as an email transport. Use it standalone or pair it with `multiTransport` for failover alongside SMTP or Resend. See the [Autosend transport](/docs/transports/autosend) docs.
 
 ```package-install
 @betternotify/autosend
@@ -52,7 +52,7 @@ const rpc = createNotify({
 
 ### Selligent (Marigold Engage)
 
-`@betternotify/selligent` connects to Selligent's transactional email API (now Marigold Engage). If your organization already uses Selligent for marketing automation, you can route transactional emails through the same platform with full type safety.
+`@betternotify/selligent` connects to Selligent's transactional email API (now Marigold Engage). If your organization already uses Selligent for marketing automation, you can route transactional emails through the same platform with full type safety. See the [Selligent transport](/docs/transports/selligent) docs.
 
 ```package-install
 @betternotify/selligent
@@ -62,7 +62,7 @@ const rpc = createNotify({
 
 ### OneSignal
 
-`@betternotify/onesignal` is our first multi-channel transport package. One install gives you push, email, and SMS delivery through OneSignal's unified API. Each channel registers its own transport key (`onesignal-push`, `onesignal-email`, `onesignal-sms`), so you can mix OneSignal with other providers per channel.
+`@betternotify/onesignal` is our first multi-channel transport package. One install gives you push, email, and SMS delivery through OneSignal's unified API. Each channel registers its own transport key (`onesignal-push`, `onesignal-email`, `onesignal-sms`), so you can mix OneSignal with other providers per channel. See the [OneSignal push](/docs/transports/onesignal-push), [email](/docs/transports/onesignal-email), and [SMS](/docs/transports/onesignal-sms) transport docs.
 
 ```package-install
 @betternotify/onesignal
