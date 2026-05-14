@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { CalendarIcon, TagIcon, FunnelIcon } from '@phosphor-icons/react';
 import { z } from 'zod';
+import { useAnalytics } from '@/hooks/use-analytics';
 import { getAllBlogPosts } from '@/lib/blog-source';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
@@ -48,8 +49,10 @@ function BlogIndexPage() {
   const { category: activeCategory } = Route.useSearch();
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const navigate = Route.useNavigate();
+  const analytics = useAnalytics('blog');
 
   const setActiveCategory = (cat: string | null) => {
+    analytics.track('filter').action('click', { type: 'category', value: cat ?? 'all' });
     void navigate({ search: { category: cat ?? undefined } });
   };
 
@@ -60,7 +63,11 @@ function BlogIndexPage() {
   });
 
   const toggleTag = (tag: string) => {
-    setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+    const active = activeTags.includes(tag);
+    analytics
+      .track('filter')
+      .action('click', { type: 'tag', value: tag, toggled: active ? 'off' : 'on' });
+    setActiveTags((prev) => (active ? prev.filter((t) => t !== tag) : [...prev, tag]));
   };
 
   return (
@@ -124,48 +131,73 @@ function BlogIndexPage() {
                 </p>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {filtered.map((post, i) => (
-                    <Link
-                      key={post.slug}
-                      to="/blog/$slug"
-                      params={{ slug: post.slug }}
-                      className={`border-border bg-card group block rounded-xl border p-5 no-underline transition-colors hover:bg-bn-slate-50 dark:hover:bg-bn-slate-900 ${
-                        i === 0 ? 'sm:col-span-2' : ''
-                      }`}
-                    >
-                      <div className="mb-3 flex items-center gap-2">
-                        {post.category && (
-                          <Badge variant="default" className="capitalize">
-                            {post.category}
-                          </Badge>
+                  {filtered.map((post, i) => {
+                    const isFeatured = i === 0;
+                    return (
+                      <Link
+                        key={post.slug}
+                        to="/blog/$slug"
+                        params={{ slug: post.slug }}
+                        onClick={() =>
+                          analytics.track('article').action('click', {
+                            slug: post.slug,
+                            title: post.title,
+                            position: i,
+                          })
+                        }
+                        className={`border-border bg-card group flex overflow-hidden rounded-xl border no-underline transition-all duration-200 hover:border-bn-slate-300 hover:shadow-sm dark:hover:border-bn-slate-700 ${
+                          isFeatured ? 'sm:col-span-2' : ''
+                        }`}
+                      >
+                        {post.image && (
+                          <div
+                            className={`relative hidden shrink-0 sm:block ${isFeatured ? 'w-56 md:w-72' : 'w-40 md:w-48'}`}
+                          >
+                            <img
+                              src={post.image}
+                              alt={post.title}
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          </div>
                         )}
-                        <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                          <CalendarIcon size={12} />
-                          {new Date(post.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            timeZone: 'UTC',
-                          })}
-                        </span>
-                      </div>
-                      <h2 className="text-foreground group-hover:text-primary mb-2 text-lg font-semibold tracking-tight transition-colors">
-                        {post.title}
-                      </h2>
-                      <p className="text-muted-foreground mb-3 text-sm leading-relaxed line-clamp-2">
-                        {post.description}
-                      </p>
-                      {post.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {post.tags.map((tag) => (
-                            <Badge key={tag} variant="outline">
-                              {tag}
-                            </Badge>
-                          ))}
+                        <div className="flex min-w-0 flex-1 flex-col justify-center p-4 md:p-5">
+                          <div className="mb-2 flex items-center gap-2">
+                            {post.category && (
+                              <Badge variant="default" className="capitalize">
+                                {post.category}
+                              </Badge>
+                            )}
+                            <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                              <CalendarIcon size={12} />
+                              {new Date(post.date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                timeZone: 'UTC',
+                              })}
+                            </span>
+                          </div>
+                          <h2
+                            className={`text-foreground group-hover:text-primary mb-1.5 font-semibold tracking-tight transition-colors ${isFeatured ? 'text-xl' : 'text-lg'}`}
+                          >
+                            {post.title}
+                          </h2>
+                          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
+                            {post.description}
+                          </p>
+                          {post.tags.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {post.tags.map((tag) => (
+                                <Badge key={tag} variant="outline">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>

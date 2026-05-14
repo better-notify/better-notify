@@ -15,6 +15,7 @@ export type BlogPost = {
   author: string;
   tags: string[];
   category: string | null;
+  image: string | null;
 };
 
 const toEpoch = (date: string): number => {
@@ -47,6 +48,7 @@ export const mapPageToPost = (page: (typeof blogSource)['$inferPage']): BlogPost
     author: (data.author as string) ?? 'Lucas Reis',
     tags: (data.tags as string[]) ?? [],
     category: page.slugs.length > 1 ? (page.slugs[0] ?? null) : null,
+    image: (data.image as string) ?? null,
   };
 };
 
