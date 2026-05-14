@@ -94,7 +94,7 @@ function ArticleFooter({ title, slug }: { title: string; slug: string }) {
     const text = encodeURIComponent(`${title} ${appConfig.twitterHandle}`);
     const url = encodeURIComponent(articleUrl);
     window.open(`https://x.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
-  }, [title, articleUrl, slug]);
+  }, [analytics, title, articleUrl, slug]);
 
   const copyLink = useCallback(() => {
     analytics.track('share').action('click', { slug, platform: 'copy_link' });
@@ -102,7 +102,7 @@ function ArticleFooter({ title, slug }: { title: string; slug: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  }, [articleUrl, slug]);
+  }, [analytics, articleUrl, slug]);
 
   const githubUrl = `https://github.com/${appConfig.git.user}/${appConfig.git.repo}`;
   const xUrl = `https://x.com/${appConfig.twitterHandle.replace('@', '')}`;
@@ -166,6 +166,7 @@ function ArticleFooter({ title, slug }: { title: string; slug: string }) {
 }
 
 function BlogArticlePage() {
+  const [imageError, setImageError] = useState(false);
   const loaderData = Route.useLoaderData();
   const analytics = useAnalytics('blog');
 
@@ -250,10 +251,11 @@ function BlogArticlePage() {
               </div>
             )}
           </header>
-          {loaderData.pageImage && (
+          {loaderData.pageImage && !imageError && (
             <img
               src={loaderData.pageImage}
               alt={loaderData.pageTitle}
+              onError={() => setImageError(true)}
               className="mx-auto mb-10 block w-full rounded-lg md:w-3/4 lg:w-2/3"
             />
           )}
