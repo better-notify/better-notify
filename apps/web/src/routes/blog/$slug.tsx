@@ -86,20 +86,23 @@ const clientLoader = browserCollections.blogPosts.createClientLoader({
 
 function ArticleFooter({ title, slug }: { title: string; slug: string }) {
   const [copied, setCopied] = useState(false);
+  const analytics = useAnalytics('blog');
   const articleUrl = `${appConfig.baseUrl}/blog/${slug}/`;
 
   const shareOnX = useCallback(() => {
+    analytics.track('share').action('click', { slug, platform: 'x' });
     const text = encodeURIComponent(`${title} ${appConfig.twitterHandle}`);
     const url = encodeURIComponent(articleUrl);
     window.open(`https://x.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
-  }, [title, articleUrl]);
+  }, [title, articleUrl, slug]);
 
   const copyLink = useCallback(() => {
+    analytics.track('share').action('click', { slug, platform: 'copy_link' });
     void navigator.clipboard.writeText(articleUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  }, [articleUrl]);
+  }, [articleUrl, slug]);
 
   const githubUrl = `https://github.com/${appConfig.git.user}/${appConfig.git.repo}`;
   const xUrl = `https://x.com/${appConfig.twitterHandle.replace('@', '')}`;
@@ -136,6 +139,9 @@ function ArticleFooter({ title, slug }: { title: string; slug: string }) {
                 href={githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() =>
+                  analytics.track('follow').action('click', { slug, platform: 'github' })
+                }
                 className="border-border text-muted-foreground hover:text-foreground hover:border-bn-slate-300 dark:hover:border-bn-slate-700 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs no-underline transition-colors"
               >
                 <GithubLogoIcon size={14} />
@@ -145,6 +151,7 @@ function ArticleFooter({ title, slug }: { title: string; slug: string }) {
                 href={xUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => analytics.track('follow').action('click', { slug, platform: 'x' })}
                 className="border-border text-muted-foreground hover:text-foreground hover:border-bn-slate-300 dark:hover:border-bn-slate-700 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs no-underline transition-colors"
               >
                 <XLogoIcon size={14} />

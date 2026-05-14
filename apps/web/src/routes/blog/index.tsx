@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { CalendarIcon, TagIcon, FunnelIcon } from '@phosphor-icons/react';
 import { z } from 'zod';
+import { useAnalytics } from '@/hooks/use-analytics';
 import { getAllBlogPosts } from '@/lib/blog-source';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
@@ -48,8 +49,10 @@ function BlogIndexPage() {
   const { category: activeCategory } = Route.useSearch();
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const navigate = Route.useNavigate();
+  const analytics = useAnalytics('blog');
 
   const setActiveCategory = (cat: string | null) => {
+    analytics.track('filter').action('click', { type: 'category', value: cat ?? 'all' });
     void navigate({ search: { category: cat ?? undefined } });
   };
 
@@ -60,7 +63,11 @@ function BlogIndexPage() {
   });
 
   const toggleTag = (tag: string) => {
-    setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+    const active = activeTags.includes(tag);
+    analytics
+      .track('filter')
+      .action('click', { type: 'tag', value: tag, toggled: active ? 'off' : 'on' });
+    setActiveTags((prev) => (active ? prev.filter((t) => t !== tag) : [...prev, tag]));
   };
 
   return (
@@ -131,6 +138,13 @@ function BlogIndexPage() {
                         key={post.slug}
                         to="/blog/$slug"
                         params={{ slug: post.slug }}
+                        onClick={() =>
+                          analytics.track('article').action('click', {
+                            slug: post.slug,
+                            title: post.title,
+                            position: i,
+                          })
+                        }
                         className={`border-border bg-card group flex overflow-hidden rounded-xl border no-underline transition-all duration-200 hover:border-bn-slate-300 hover:shadow-sm dark:hover:border-bn-slate-700 ${
                           isFeatured ? 'sm:col-span-2' : ''
                         }`}
