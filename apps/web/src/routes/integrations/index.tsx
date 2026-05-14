@@ -8,7 +8,7 @@ import { integrations } from '@/lib/integrations';
 export const Route = createFileRoute('/integrations/')({
   component: IntegrationsPage,
   head: () => {
-    const url = `${appConfig.baseUrl}/integrations/`;
+    const url = `${appConfig.baseUrl}/integrations`;
     const { meta, links } = seo({
       title: `Integrations — ${appConfig.name}`,
       description:

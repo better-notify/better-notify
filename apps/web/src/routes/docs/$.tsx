@@ -27,7 +27,7 @@ export const Route = createFileRoute('/docs/$')({
 
     const title = `${loaderData.pageTitle} — ${appConfig.name} Docs`;
     const description = loaderData.pageDescription ?? 'Better-Notify documentation and guides.';
-    const url = `${appConfig.baseUrl}/docs/${loaderData.slugs.join('/')}/`;
+    const url = `${appConfig.baseUrl}/docs/${loaderData.slugs.join('/')}`;
     const image = `${appConfig.baseUrl}/og/docs/${loaderData.slugs.join('/')}/image.png`;
 
     const { meta, links } = seo({

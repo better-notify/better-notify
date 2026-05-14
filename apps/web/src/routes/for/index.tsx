@@ -8,7 +8,7 @@ import { personas } from '@/lib/personas';
 export const Route = createFileRoute('/for/')({
   component: PersonasPage,
   head: () => {
-    const url = `${appConfig.baseUrl}/for/`;
+    const url = `${appConfig.baseUrl}/for`;
     const { meta, links } = seo({
       title: `Better-Notify for your stack — ${appConfig.name}`,
       description:

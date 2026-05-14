@@ -18,7 +18,7 @@ export const Route = createFileRoute('/for/$slug')({
   },
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [], links: [] };
-    const url = `${appConfig.baseUrl}/for/${loaderData.slug}/`;
+    const url = `${appConfig.baseUrl}/for/${loaderData.slug}`;
     const { meta, links } = seo({
       title: `${appConfig.name} for ${loaderData.name} — Type-safe Notifications`,
       description: loaderData.tagline,
