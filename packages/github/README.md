@@ -1,5 +1,9 @@
 # @betternotify/github
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/github)](https://www.npmjs.com/package/@betternotify/github)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/github)](https://www.npmjs.com/package/@betternotify/github)
+[![license](https://img.shields.io/npm/l/@betternotify/github)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 [GitHub](https://github.com) channel for [Better-Notify](https://github.com/better-notify/better-notify). Creates issues, posts comments, and submits PR reviews through the GitHub REST API using a single channel with discriminated builder actions.
 
 <p>

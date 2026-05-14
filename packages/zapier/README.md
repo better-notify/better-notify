@@ -1,5 +1,9 @@
 # @betternotify/zapier
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/zapier)](https://www.npmjs.com/package/@betternotify/zapier)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/zapier)](https://www.npmjs.com/package/@betternotify/zapier)
+[![license](https://img.shields.io/npm/l/@betternotify/zapier)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Zapier channel and email transport for [Better-Notify](https://github.com/better-notify/better-notify). Provides `zapierChannel()` for sending structured events to Zapier webhooks, plus `zapierTransport()` as an email transport that forwards rendered emails to Zapier for downstream processing.
 
 <p>

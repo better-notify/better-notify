@@ -1,5 +1,9 @@
 # @betternotify/slack
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/slack)](https://www.npmjs.com/package/@betternotify/slack)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/slack)](https://www.npmjs.com/package/@betternotify/slack)
+[![license](https://img.shields.io/npm/l/@betternotify/slack)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Slack channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `slackChannel()`, a `mockSlackTransport` for tests, and a `slackTransport` that posts to Slack via incoming webhooks or the Web API.
 
 <p>
@@ -78,12 +82,12 @@ notify.deployAlert.send({
 import { slackTransport, mockSlackTransport } from '@betternotify/slack';
 
 const transport = slackTransport({
-  botToken: process.env.SLACK_BOT_TOKEN!,
+  token: process.env.SLACK_BOT_TOKEN!,
 });
 ```
 
 - `mockSlackTransport()` — records sent messages for tests.
-- `slackTransport({ botToken })` — sends via Slack Web API / incoming webhooks.
+- `slackTransport({ token })` — sends via Slack Web API / incoming webhooks.
 
 Custom transport contract: `Transport<RenderedSlack, SlackTransportData>`.
 

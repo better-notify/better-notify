@@ -1,5 +1,9 @@
 # @betternotify/telegram
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/telegram)](https://www.npmjs.com/package/@betternotify/telegram)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/telegram)](https://www.npmjs.com/package/@betternotify/telegram)
+[![license](https://img.shields.io/npm/l/@betternotify/telegram)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Telegram channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `telegramChannel()`, a `mockTelegramTransport` for tests, a `telegramTransport` that sends via the Telegram Bot API, and markdown escape utilities.
 
 <p>
@@ -78,12 +82,12 @@ const bold = md.bold('important');
 import { telegramTransport, mockTelegramTransport } from '@betternotify/telegram';
 
 const transport = telegramTransport({
-  botToken: process.env.TELEGRAM_BOT_TOKEN!,
+  token: process.env.TELEGRAM_BOT_TOKEN!,
 });
 ```
 
 - `mockTelegramTransport()` — records sent messages for tests.
-- `telegramTransport({ botToken })` — sends via the Telegram Bot API.
+- `telegramTransport({ token })` — sends via the Telegram Bot API.
 
 Custom transport contract: `Transport<RenderedTelegram, TelegramTransportData>`.
 

@@ -1,5 +1,9 @@
 # @betternotify/autosend
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/autosend)](https://www.npmjs.com/package/@betternotify/autosend)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/autosend)](https://www.npmjs.com/package/@betternotify/autosend)
+[![license](https://img.shields.io/npm/l/@betternotify/autosend)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 [Autosend](https://autosend.com) email transport for [Better-Notify](https://github.com/better-notify/better-notify). Sends rendered emails through the Autosend `POST /v1/mails/send` API.
 
 <p>

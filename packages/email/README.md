@@ -1,5 +1,9 @@
 # @betternotify/email
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/email)](https://www.npmjs.com/package/@betternotify/email)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/email)](https://www.npmjs.com/package/@betternotify/email)
+[![license](https://img.shields.io/npm/l/@betternotify/email)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 Email channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `emailChannel()`, a `mockTransport` for tests, address helpers, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedMessage`.
 
 <p>

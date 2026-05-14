@@ -1,5 +1,9 @@
 # @betternotify/sms
 
+[![npm version](https://img.shields.io/npm/v/@betternotify/sms)](https://www.npmjs.com/package/@betternotify/sms)
+[![npm downloads](https://img.shields.io/npm/dm/@betternotify/sms)](https://www.npmjs.com/package/@betternotify/sms)
+[![license](https://img.shields.io/npm/l/@betternotify/sms)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
+
 SMS channel for [Better-Notify](https://github.com/better-notify/better-notify). Provides `smsChannel()`, a `mockSmsTransport` for tests, and `multiTransport` / `createTransport` factories pre-parameterized for `RenderedSms`.
 
 <p>
