@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-beta.11](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.10...@betternotify/web-v1.1.0-beta.11) (2026-05-14)
+
+
+### Bug Fixes
+
+* **web:** rename blog article slug and metadata for SEO ([#145](https://github.com/better-notify/better-notify/issues/145)) ([824f00f](https://github.com/better-notify/better-notify/commit/824f00f9bdf9f068364daf3c639347a6fca65f62))
+
 ## [1.1.0-beta.10](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.9...@betternotify/web-v1.1.0-beta.10) (2026-05-14)
 
 

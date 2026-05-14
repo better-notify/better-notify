@@ -19,7 +19,7 @@
   "packages/onesignal": "1.0.0-beta.1",
   "packages/create-better-notify": "1.0.0-beta.3",
   "packages/selligent": "1.0.0-beta.1",
-  "apps/web": "1.1.0-beta.10",
+  "apps/web": "1.1.0-beta.11",
   "packages/github": "1.0.0-beta.1",
   "packages/webpush": "1.0.0-beta.2"
 }
