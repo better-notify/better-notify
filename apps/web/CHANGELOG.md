@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0-beta.10](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.9...@betternotify/web-v1.1.0-beta.10) (2026-05-14)
+
+
+### Features
+
+* **web:** add changelog summary blog post and improve blog layout ([#142](https://github.com/better-notify/better-notify/issues/142)) ([d0e1a79](https://github.com/better-notify/better-notify/commit/d0e1a79ae11fe2ced2e02be0497c4c45619df5be))
+
+
+### Bug Fixes
+
+* **web:** remove trailing slashes from canonical URLs and sitemap ([#144](https://github.com/better-notify/better-notify/issues/144)) ([026123e](https://github.com/better-notify/better-notify/commit/026123eaf1b1f27ad14121391aa1287a114b0b6c))
+
 ## [1.1.0-beta.9](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.8...@betternotify/web-v1.1.0-beta.9) (2026-05-14)
 
 
