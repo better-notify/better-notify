@@ -25,7 +25,7 @@ export const Route = createFileRoute('/blog/')({
   head: () => {
     const title = `Blog — ${appConfig.name}`;
     const description = 'Articles, guides, and updates from the Better-Notify team.';
-    const url = `${appConfig.baseUrl}/blog/`;
+    const url = `${appConfig.baseUrl}/blog`;
 
     const { meta, links } = seo({
       title,
