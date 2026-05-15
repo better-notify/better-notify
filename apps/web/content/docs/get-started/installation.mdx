@@ -40,7 +40,7 @@ The [Your First Email](/docs/get-started/quick-start) walkthrough explains what 
 
 To install manually, follow the steps below.
 
-<Tabs items={['Email', 'SMS', 'Push']} defaultIndex={0}>
+<Tabs items={['Email', 'Telegram', 'Discord', 'Slack', 'SMS', 'Push']} defaultIndex={0}>
   <Tab value="email">
 
 <Steps>
@@ -145,6 +145,275 @@ A delivered email confirms your setup.
 </Steps>
 
   </Tab>
+  <Tab value="telegram">
+
+<Steps>
+  <Step>
+
+### Confirm your runtime
+
+Use Node `22` or newer, or Bun.
+
+For new projects, set ESM in `package.json`:
+
+```json
+{
+  "type": "module"
+}
+```
+
+  </Step>
+  <Step>
+
+### Install the packages
+
+```package-install
+@betternotify/core @betternotify/telegram zod
+```
+
+`@betternotify/core` exports `createNotify()` and `createClient()`. `@betternotify/telegram` adds the Telegram channel and Bot API transport. `zod` defines route input schemas used throughout these docs.
+
+  </Step>
+  <Step>
+
+### Add Telegram credentials
+
+Create a bot with [@BotFather](https://t.me/BotFather), then add the token to `.env`:
+
+```sh title=".env"
+TELEGRAM_BOT_TOKEN=123456789:your-bot-token
+TELEGRAM_CHAT_ID=-1001234567890
+```
+
+Use a user, group, or channel chat ID for `TELEGRAM_CHAT_ID`. Your bot must be able to post to that chat.
+
+  </Step>
+  <Step>
+
+### Define a channel and send
+
+Create a minimal setup to verify that the bot can deliver:
+
+```ts title="src/index.ts"
+import { createNotify, createClient } from '@betternotify/core';
+import { telegramChannel, telegramTransport } from '@betternotify/telegram';
+import { z } from 'zod';
+
+const telegram = telegramChannel();
+const rpc = createNotify({ channels: { telegram } });
+
+const catalog = rpc.catalog({
+  deployAlert: rpc
+    .telegram()
+    .input(z.object({ service: z.string(), version: z.string(), status: z.string() }))
+    .body(({ input }) => `<b>${input.service}</b> deployed ${input.version}\nStatus: ${input.status}`)
+    .parseMode('HTML'),
+});
+
+const notify = createClient({
+  catalog,
+  transportsByChannel: {
+    telegram: telegramTransport({ token: process.env.TELEGRAM_BOT_TOKEN! }),
+  },
+});
+
+const result = await notify.deployAlert.send({
+  to: process.env.TELEGRAM_CHAT_ID!,
+  input: { service: 'api', version: 'v2.4.0', status: 'healthy' },
+});
+
+console.log('sent!', result.messageId);
+```
+
+A delivered Telegram message confirms your setup.
+
+  </Step>
+</Steps>
+
+  </Tab>
+  <Tab value="discord">
+
+<Steps>
+  <Step>
+
+### Confirm your runtime
+
+Use Node `22` or newer, or Bun.
+
+For new projects, set ESM in `package.json`:
+
+```json
+{
+  "type": "module"
+}
+```
+
+  </Step>
+  <Step>
+
+### Install the packages
+
+```package-install
+@betternotify/core @betternotify/discord zod
+```
+
+`@betternotify/core` exports `createNotify()` and `createClient()`. `@betternotify/discord` adds the Discord channel and Webhook API transport. `zod` defines route input schemas used throughout these docs.
+
+  </Step>
+  <Step>
+
+### Add a Discord webhook
+
+Create an incoming webhook in the Discord channel you want to notify, then add it to `.env`:
+
+```sh title=".env"
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+```
+
+Discord destinations are configured on the transport, so sends do not need a `to` field.
+
+  </Step>
+  <Step>
+
+### Define a channel and send
+
+Create a minimal setup to verify that the webhook can deliver:
+
+```ts title="src/index.ts"
+import { createNotify, createClient } from '@betternotify/core';
+import { discordChannel, discordTransport } from '@betternotify/discord';
+import { z } from 'zod';
+
+const discord = discordChannel();
+const rpc = createNotify({ channels: { discord } });
+
+const catalog = rpc.catalog({
+  deployAlert: rpc
+    .discord()
+    .input(z.object({ service: z.string(), version: z.string(), status: z.string() }))
+    .body(({ input }) => `Deployed **${input.service}** ${input.version}`)
+    .embeds(({ input }) => [
+      {
+        title: `${input.service} ${input.version}`,
+        description: `Status: ${input.status}`,
+        color: input.status === 'healthy' ? 0x57f287 : 0xed4245,
+        timestamp: new Date().toISOString(),
+      },
+    ]),
+});
+
+const notify = createClient({
+  catalog,
+  transportsByChannel: {
+    discord: discordTransport({ webhookUrl: process.env.DISCORD_WEBHOOK_URL! }),
+  },
+});
+
+const result = await notify.deployAlert.send({
+  input: { service: 'api', version: 'v2.4.0', status: 'healthy' },
+});
+
+console.log('sent!', result.messageId);
+```
+
+A delivered Discord message confirms your setup.
+
+  </Step>
+</Steps>
+
+  </Tab>
+  <Tab value="slack">
+
+<Steps>
+  <Step>
+
+### Confirm your runtime
+
+Use Node `22` or newer, or Bun.
+
+For new projects, set ESM in `package.json`:
+
+```json
+{
+  "type": "module"
+}
+```
+
+  </Step>
+  <Step>
+
+### Install the packages
+
+```package-install
+@betternotify/core @betternotify/slack zod
+```
+
+`@betternotify/core` exports `createNotify()` and `createClient()`. `@betternotify/slack` adds the Slack channel and Web API transport. `zod` defines route input schemas used throughout these docs.
+
+  </Step>
+  <Step>
+
+### Add Slack credentials
+
+Create a Slack app with the `chat:write` bot scope, install it to your workspace, then add the bot token and destination channel to `.env`:
+
+```sh title=".env"
+SLACK_BOT_TOKEN=xoxb-your-bot-token
+SLACK_CHANNEL=#releases
+```
+
+Your bot must be installed in the workspace and allowed to post to `SLACK_CHANNEL`.
+
+  </Step>
+  <Step>
+
+### Define a channel and send
+
+Create a minimal setup to verify that the bot can deliver:
+
+```ts title="src/index.ts"
+import { createNotify, createClient } from '@betternotify/core';
+import { slackChannel, slackTransport } from '@betternotify/slack';
+import { z } from 'zod';
+
+const slack = slackChannel();
+const rpc = createNotify({ channels: { slack } });
+
+const catalog = rpc.catalog({
+  deployAlert: rpc
+    .slack()
+    .input(z.object({ service: z.string(), version: z.string(), status: z.string() }))
+    .text(({ input }) => `${input.service} deployed ${input.version}`)
+    .blocks(({ input }) => [
+      { type: 'header', text: { type: 'plain_text', text: `Deploy: ${input.service}` } },
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: `Version *${input.version}* is now ${input.status}.` },
+      },
+    ]),
+});
+
+const notify = createClient({
+  catalog,
+  transportsByChannel: {
+    slack: slackTransport({ token: process.env.SLACK_BOT_TOKEN! }),
+  },
+});
+
+const result = await notify.deployAlert.send({
+  to: process.env.SLACK_CHANNEL!,
+  input: { service: 'api', version: 'v2.4.0', status: 'live' },
+});
+
+console.log('sent!', result.messageId);
+```
+
+A delivered Slack message confirms your setup.
+
+  </Step>
+</Steps>
+
+  </Tab>
   <Tab value="sms">
 
 SMS installation docs are `TBD`.
@@ -181,5 +450,8 @@ These are the next common additions after the email + SMTP example:
 
 - `@betternotify/sms` for SMS routes.
 - `@betternotify/push` for push notification routes.
+- `@betternotify/telegram` for Telegram bot notifications.
+- `@betternotify/discord` for Discord webhook notifications.
+- `@betternotify/slack` for Slack Web API notifications.
 - `@betternotify/react-email` for React Email templates.
 - `@betternotify/resend` for Resend as a transport instead of SMTP.
