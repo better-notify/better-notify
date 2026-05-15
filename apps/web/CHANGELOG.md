@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0-beta.13](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.12...@betternotify/web-v1.1.0-beta.13) (2026-05-15)
+
+
+### Features
+
+* add logo brand asset menu ([#153](https://github.com/better-notify/better-notify/issues/153)) ([b3515bb](https://github.com/better-notify/better-notify/commit/b3515bba9853c14827d4e04e6f2a4aaa7f4d1423))
+* **web:** add manual chat setup examples ([#151](https://github.com/better-notify/better-notify/issues/151)) ([f65d11f](https://github.com/better-notify/better-notify/commit/f65d11fe51b9f88b6f5120c592da9b8f622fc87b))
+
 ## [1.1.0-beta.12](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.11...@betternotify/web-v1.1.0-beta.12) (2026-05-14)
 
 
