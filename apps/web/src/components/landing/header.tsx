@@ -8,13 +8,18 @@ import {
   StarIcon,
   ListIcon,
   XLogoIcon,
+  CopyIcon,
+  DownloadSimpleIcon,
 } from '@phosphor-icons/react';
 import { useTheme } from 'fumadocs-ui/provider/base';
+import type { MouseEvent, ReactNode } from 'react';
 import { useRef, useEffect, useState } from 'react';
 import { useAnalytics } from '@/hooks/use-analytics';
 
 import { LogoShort } from '@libs/ui';
 import { appConfig } from '@/lib/shared';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { logoSvg, wordmarkSvg } from '@/lib/brand-assets';
 
 const navLinks = [
   { label: 'Docs', href: '/docs' },
@@ -22,10 +27,60 @@ const navLinks = [
   { label: 'Changelog', href: '/docs/changelog' },
 ] as const;
 
+const writeClipboardText = async (text: string) => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '-999px';
+  document.body.append(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  textarea.remove();
+};
+
+const downloadBrandAssets = () => {
+  const link = document.createElement('a');
+  link.href = '/brand-assets.zip';
+  link.download = 'better-notify-brand-assets.zip';
+  document.body.append(link);
+  link.click();
+  link.remove();
+};
+
+function BrandAssetAction({
+  children,
+  icon,
+  onSelect,
+}: {
+  children: ReactNode;
+  icon: ReactNode;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="group flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-2 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-bn-slate-100 focus-visible:bg-bn-slate-100 focus-visible:outline-none dark:hover:bg-bn-slate-800 dark:focus-visible:bg-bn-slate-800"
+    >
+      <span className="border-border bg-card text-muted-foreground group-hover:text-foreground flex size-7 shrink-0 items-center justify-center rounded-md border transition-colors [&_svg]:size-3.5">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{children}</span>
+    </button>
+  );
+}
+
 export function LandingHeader() {
   const search = useSearchContext();
   const { setTheme, resolvedTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const analytics = useAnalytics('header');
   const isDark = resolvedTheme === 'dark';
@@ -44,19 +99,77 @@ export function LandingHeader() {
     return () => ro.disconnect();
   }, []);
 
+  const handleBrandContextMenu = (event: MouseEvent) => {
+    event.preventDefault();
+    setBrandMenuOpen(true);
+  };
+
   return (
     <header
       ref={headerRef}
       className="sticky top-0 z-30 border-b border-bn-slate-200 bg-[color-mix(in_oklch,var(--background)_88%,transparent)] backdrop-blur-md backdrop-saturate-[1.4] dark:border-bn-slate-800"
     >
       <div className="mx-auto flex max-w-[1200px] items-center gap-8 px-5 py-3 md:px-8">
-        <Link
-          to="/"
-          className="flex items-center gap-2.5 text-base font-bold tracking-tight text-foreground no-underline"
+        <Popover
+          open={brandMenuOpen}
+          onOpenChange={(open) => setBrandMenuOpen(open)}
+          triggerId="brand-assets-trigger"
         >
-          <LogoShort className="size-6" />
-          {appConfig.name}
-        </Link>
+          <PopoverTrigger
+            id="brand-assets-trigger"
+            nativeButton={false}
+            onClick={(event) => event.preventBaseUIHandler()}
+            onContextMenu={handleBrandContextMenu}
+            render={
+              <span className="inline-flex">
+                <Link
+                  to="/"
+                  className="flex items-center gap-2.5 rounded-md text-base font-bold tracking-tight text-foreground no-underline outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/30"
+                >
+                  <LogoShort className="size-6" />
+                  {appConfig.name}
+                </Link>
+              </span>
+            }
+          />
+          <PopoverContent
+            align="start"
+            side="bottom"
+            sideOffset={16}
+            className="w-64 gap-1 rounded-md p-1.5 shadow-lg ring-1 ring-foreground/10"
+          >
+            <BrandAssetAction
+              icon={<CopyIcon />}
+              onSelect={() => {
+                void writeClipboardText(logoSvg);
+                setBrandMenuOpen(false);
+                analytics.track('brand_assets').action('export', { asset: 'logo_svg' });
+              }}
+            >
+              Copy logo as SVG
+            </BrandAssetAction>
+            <BrandAssetAction
+              icon={<CopyIcon />}
+              onSelect={() => {
+                void writeClipboardText(wordmarkSvg);
+                setBrandMenuOpen(false);
+                analytics.track('brand_assets').action('export', { asset: 'wordmark_svg' });
+              }}
+            >
+              Copy wordmark as SVG
+            </BrandAssetAction>
+            <BrandAssetAction
+              icon={<DownloadSimpleIcon />}
+              onSelect={() => {
+                downloadBrandAssets();
+                setBrandMenuOpen(false);
+                analytics.track('brand_assets').action('export', { asset: 'brand_assets_zip' });
+              }}
+            >
+              Download brand assets
+            </BrandAssetAction>
+          </PopoverContent>
+        </Popover>
 
         <nav className="hidden items-center gap-5 md:flex">
           {visibleLinks.map((link) => {
