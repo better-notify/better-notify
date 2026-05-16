@@ -711,19 +711,25 @@ describe('whatsappMetaTransport', () => {
       });
     });
 
-    it('falls back to empty link when media has no url property', async () => {
+    it('returns VALIDATION error when media has no url property', async () => {
       const fetchMock = vi.fn().mockResolvedValue(jsonResponse(successResponse()));
       vi.stubGlobal('fetch', fetchMock);
 
       const t = whatsappMetaTransport(opts);
       const rendered = { action: 'audio', to: '+5511999999999' } as RenderedWhatsApp;
-      await t.send(rendered, ctx);
+      const result = await t.send(rendered, ctx);
 
-      const body = parseBody(fetchMock.mock.calls[0] as [string, RequestInit]);
-      expect(body.audio).toEqual({ link: '' });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcError;
+        expect(err).toBeInstanceOf(NotifyRpcError);
+        expect(err.code).toBe('VALIDATION');
+        expect(err.message).toContain('audio');
+      }
     });
 
-    it('falls back to empty link when media url is undefined', async () => {
+    it('returns VALIDATION error when media url is undefined', async () => {
       const fetchMock = vi.fn().mockResolvedValue(jsonResponse(successResponse()));
       vi.stubGlobal('fetch', fetchMock);
 
@@ -733,10 +739,15 @@ describe('whatsappMetaTransport', () => {
         to: '+5511999999999',
         url: undefined,
       } as unknown as RenderedWhatsApp;
-      await t.send(rendered, ctx);
+      const result = await t.send(rendered, ctx);
 
-      const body = parseBody(fetchMock.mock.calls[0] as [string, RequestInit]);
-      expect(body.audio).toEqual({ link: '' });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        const err = result.error as NotifyRpcError;
+        expect(err).toBeInstanceOf(NotifyRpcError);
+        expect(err.code).toBe('VALIDATION');
+      }
     });
 
     it('skips upload for URL-based media', async () => {
@@ -856,7 +867,7 @@ describe('whatsappMetaTransport', () => {
       }
     });
 
-    it('returns retriable PROVIDER error for throughput rate limit (code 130429)', async () => {
+    it('returns retriable RATE_LIMITED error for throughput rate limit (code 130429)', async () => {
       const fetchMock = vi
         .fn()
         .mockResolvedValue(
@@ -870,13 +881,13 @@ describe('whatsappMetaTransport', () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         const err = result.error as NotifyRpcProviderError;
-        expect(err.code).toBe('PROVIDER');
+        expect(err.code).toBe('RATE_LIMITED');
         expect(err.providerCode).toBe('130429');
         expect(err.retriable).toBe(true);
       }
     });
 
-    it('returns retriable PROVIDER error for per-user rate limit (code 131056)', async () => {
+    it('returns retriable RATE_LIMITED error for per-user rate limit (code 131056)', async () => {
       const fetchMock = vi
         .fn()
         .mockResolvedValue(
@@ -890,7 +901,7 @@ describe('whatsappMetaTransport', () => {
       expect(result.ok).toBe(false);
       if (!result.ok) {
         const err = result.error as NotifyRpcProviderError;
-        expect(err.code).toBe('PROVIDER');
+        expect(err.code).toBe('RATE_LIMITED');
         expect(err.providerCode).toBe('131056');
         expect(err.retriable).toBe(true);
       }

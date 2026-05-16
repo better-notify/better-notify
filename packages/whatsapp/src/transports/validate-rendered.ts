@@ -2,6 +2,8 @@ import { NotifyRpcError } from '@betternotify/core';
 import type { SendContext } from '@betternotify/core';
 import type { RenderedWhatsApp } from '../types.js';
 
+const MEDIA_ACTIONS = new Set<RenderedWhatsApp['action']>(['image', 'video', 'audio', 'document']);
+
 /**
  * Provider-agnostic validation for a rendered WhatsApp message.
  *
@@ -9,6 +11,7 @@ import type { RenderedWhatsApp } from '../types.js';
  * provider (Meta Cloud API, Bird, WaMessenger, etc.):
  *
  * - `to` must be non-empty.
+ * - Media messages (image/video/audio/document) must carry either `url` or `data`.
  * - Interactive messages must carry exactly one of `buttons` or `sections`.
  *
  * Returns a `NotifyRpcError` to surface via `{ ok: false, error }`, or
@@ -25,6 +28,20 @@ export const validateRenderedWhatsApp = (
       route: ctx.route,
       messageId: ctx.messageId,
     });
+  }
+
+  if (MEDIA_ACTIONS.has(rendered.action)) {
+    const hasUrl = 'url' in rendered && typeof rendered.url === 'string' && rendered.url.length > 0;
+    const hasData = 'data' in rendered && rendered.data !== undefined;
+
+    if (!hasUrl && !hasData) {
+      return new NotifyRpcError({
+        message: `${rendered.action} message must have either "url" or "data" set`,
+        code: 'VALIDATION',
+        route: ctx.route,
+        messageId: ctx.messageId,
+      });
+    }
   }
 
   if (rendered.action === 'interactive') {

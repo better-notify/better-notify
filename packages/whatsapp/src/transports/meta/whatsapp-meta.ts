@@ -44,6 +44,7 @@ const mapMetaErrorCode = (
     if (RATE_LIMIT_ERROR_CODES.has(code)) return { code: 'RATE_LIMITED', retriable: true };
     if (VALIDATION_ERROR_CODES.has(code)) return { code: 'VALIDATION', retriable: false };
   }
+
   return { code: 'PROVIDER', retriable: true };
 };
 
@@ -85,9 +86,8 @@ const buildPayload = (rendered: RenderedWhatsApp, mediaId?: string): Record<stri
     case 'video':
     case 'audio':
     case 'document': {
-      const source = mediaId
-        ? { id: mediaId }
-        : { link: 'url' in rendered ? (rendered.url ?? '') : '' };
+      const link = 'url' in rendered && rendered.url !== undefined ? rendered.url : '';
+      const source = mediaId !== undefined ? { id: mediaId } : { link };
       return { ...base, type: rendered.action, [rendered.action]: buildMediaRef(source, rendered) };
     }
 
@@ -342,7 +342,7 @@ export const whatsappMetaTransport = (opts: WhatsappMetaTransportOptions): Trans
           ok: false,
           error: new NotifyRpcProviderError({
             message: `WhatsApp Cloud API: ${metaMessage}`,
-            code: mapped.code === 'RATE_LIMITED' ? 'PROVIDER' : mapped.code,
+            code: mapped.code,
             provider: 'whatsapp-meta',
             httpStatus: result.status,
             providerCode: metaCode !== undefined ? String(metaCode) : undefined,

@@ -142,9 +142,11 @@ Meta API errors are mapped to BetterNotify error codes:
 | Meta code | BetterNotify code | Retriable | Meaning |
 |-----------|------------------|-----------|---------|
 | 190, 200, 4 | `CONFIG` | No | Authentication / permission failure |
-| 130429, 131056 | `PROVIDER` | Yes | Rate limit (throughput or per-user) |
+| 130429, 131056 | `RATE_LIMITED` | Yes | Rate limit (throughput or per-user) |
 | 131026, 131047, 131051, 131009, 100 | `VALIDATION` | No | Invalid message parameter |
 | Other | `PROVIDER` | Yes | Unknown provider error |
+
+A pre-flight `VALIDATION` error is also returned (without contacting Meta) when a media message is sent with neither `url` nor `data`, or when an interactive message has both buttons and sections or neither.
 
 ```ts
 import { NotifyRpcProviderError } from '@betternotify/core';

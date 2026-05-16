@@ -87,4 +87,46 @@ describe('validateRenderedWhatsApp', () => {
     );
     expect(result).toBeUndefined();
   });
+
+  describe('media source validation', () => {
+    const mediaActions = ['image', 'video', 'audio', 'document'] as const;
+
+    for (const action of mediaActions) {
+      it(`returns VALIDATION error when ${action} has neither url nor data`, () => {
+        const rendered = { action, to: '+5511999999999' } as unknown as RenderedWhatsApp;
+        const result = validateRenderedWhatsApp(rendered, ctx);
+        expect(result).toBeInstanceOf(NotifyRpcError);
+        expect(result?.code).toBe('VALIDATION');
+        expect(result?.message).toContain(action);
+        expect(result?.message).toContain('url');
+        expect(result?.message).toContain('data');
+      });
+
+      it(`returns VALIDATION error when ${action} url is empty string`, () => {
+        const rendered = { action, to: '+5511999999999', url: '' } as unknown as RenderedWhatsApp;
+        const result = validateRenderedWhatsApp(rendered, ctx);
+        expect(result).toBeInstanceOf(NotifyRpcError);
+        expect(result?.code).toBe('VALIDATION');
+      });
+
+      it(`returns undefined for ${action} with url`, () => {
+        const rendered = {
+          action,
+          to: '+5511999999999',
+          url: 'https://example.com/file',
+        } as unknown as RenderedWhatsApp;
+        expect(validateRenderedWhatsApp(rendered, ctx)).toBeUndefined();
+      });
+
+      it(`returns undefined for ${action} with data`, () => {
+        const rendered = {
+          action,
+          to: '+5511999999999',
+          data: Buffer.from('x'),
+          mimeType: 'application/octet-stream',
+        } as unknown as RenderedWhatsApp;
+        expect(validateRenderedWhatsApp(rendered, ctx)).toBeUndefined();
+      });
+    }
+  });
 });
