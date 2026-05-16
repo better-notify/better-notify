@@ -5,12 +5,18 @@ export function WhatsappSnippet() {
     <>
       <K>import</K> <P>{'{ '}</P>
       <F>createNotify</F>
+      <P>, </P>
+      <F>createClient</F>
       <P>{' } '}</P>
       <K>from</K> <S>'@betternotify/core'</S>
       <P>;</P>
       {'\n'}
       <K>import</K> <P>{'{ '}</P>
       <F>whatsappChannel</F>
+      <P>,</P>
+      {'\n'}
+      {'  '}
+      <F>whatsappMetaTransport</F>
       <P>{' } '}</P>
       <K>from</K> <S>'@betternotify/whatsapp'</S>
       <P>;</P>
@@ -76,6 +82,32 @@ export function WhatsappSnippet() {
       {'\n'}
       {'    '}
       <P>])</P>
+      {'\n'}
+      <P>{'}'}</P>
+      <P>);</P>
+      {'\n'}
+      {'\n'}
+      <K>const</K> client = <F>createClient</F>
+      <P>({'{'}</P>
+      {'\n'}
+      {'  '}catalog<P>,</P>
+      {'\n'}
+      {'  '}transportsByChannel<P>: {'{'}</P>
+      {'\n'}
+      {'    '}whatsapp<P>:</P> <F>whatsappMetaTransport</F>
+      <P>({'{'}</P>
+      {'\n'}
+      {'      '}accessToken<P>:</P> <S>'...'</S>
+      <P>,</P>
+      {'\n'}
+      {'      '}phoneNumberId<P>:</P> <S>'...'</S>
+      {'\n'}
+      {'    '}
+      <P>{'}'}</P>
+      <P>)</P>
+      {'\n'}
+      {'  '}
+      <P>{'}'}</P>
       {'\n'}
       <P>{'}'}</P>
       <P>);</P>
