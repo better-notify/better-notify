@@ -484,6 +484,70 @@ describe('whatsappMetaTransport', () => {
     });
   });
 
+  describe('template', () => {
+    it('sends template with name, language, and components', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse(successResponse()));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const t = whatsappMetaTransport(opts);
+      const rendered: RenderedWhatsApp = {
+        action: 'template',
+        to: '+5511999999999',
+        templateName: 'order_shipped',
+        language: 'pt_BR',
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: 'ORD-1234' },
+              { type: 'text', text: 'BR987654321' },
+            ],
+          },
+          {
+            type: 'button',
+            sub_type: 'url',
+            index: '0',
+            parameters: [{ type: 'text', text: 'BR987654321' }],
+          },
+        ],
+      };
+      await t.send(rendered, ctx);
+
+      const body = parseBody(fetchMock.mock.calls[0] as [string, RequestInit]);
+      expect(body).toEqual({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: '+5511999999999',
+        type: 'template',
+        template: {
+          name: 'order_shipped',
+          language: { code: 'pt_BR' },
+          components: rendered.components,
+        },
+      });
+    });
+
+    it('sends template without components', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse(successResponse()));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const t = whatsappMetaTransport(opts);
+      await t.send(
+        {
+          action: 'template',
+          to: '+5511999999999',
+          templateName: 'hello_world',
+          language: 'en_US',
+        },
+        ctx,
+      );
+
+      const body = parseBody(fetchMock.mock.calls[0] as [string, RequestInit]);
+      expect(body.template).toEqual({ name: 'hello_world', language: { code: 'en_US' } });
+      expect(body.template.components).toBeUndefined();
+    });
+  });
+
   describe('buffer upload', () => {
     const mediaUploadResponse = (id = 'media-123') => jsonResponse({ id });
 
@@ -946,6 +1010,37 @@ describe('whatsappMetaTransport', () => {
         expect(err.retriable).toBe(false);
       }
     });
+
+    it.each([132000, 132001, 132005, 132007, 132012])(
+      'returns VALIDATION error for template error code %i',
+      async (metaCode) => {
+        const fetchMock = vi
+          .fn()
+          .mockResolvedValue(
+            jsonResponse({ error: { message: 'template error', code: metaCode } }, 400),
+          );
+        vi.stubGlobal('fetch', fetchMock);
+
+        const t = whatsappMetaTransport(opts);
+        const result = await t.send(
+          {
+            action: 'template',
+            to: '+5511999999999',
+            templateName: 'order_shipped',
+            language: 'pt_BR',
+          },
+          ctx,
+        );
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          const err = result.error as NotifyRpcProviderError;
+          expect(err.code).toBe('VALIDATION');
+          expect(err.providerCode).toBe(String(metaCode));
+          expect(err.retriable).toBe(false);
+        }
+      },
+    );
 
     it('returns retriable PROVIDER error for unknown error codes', async () => {
       const fetchMock = vi

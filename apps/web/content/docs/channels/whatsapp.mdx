@@ -6,7 +6,7 @@ description: Send text, media, location, interactive, contact, and reaction mess
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The WhatsApp channel ships in `@betternotify/whatsapp`. It exposes nine actions: text, image, video, document, audio, location, reaction, interactive, and contacts.
+The WhatsApp channel ships in `@betternotify/whatsapp`. It exposes ten actions: text, image, video, document, audio, location, reaction, interactive, contacts, and template.
 
 ```package-install
 @betternotify/whatsapp
@@ -35,6 +35,7 @@ rpc.whatsapp().location()      // location pin
 rpc.whatsapp().reaction()      // emoji reaction to an existing message
 rpc.whatsapp().interactive()   // buttons or list menus
 rpc.whatsapp().contacts()      // contact cards
+rpc.whatsapp().template()      // Meta-approved business template
 ```
 
 Each action has its own slots and send arguments. A single catalog can mix any of them.
@@ -462,6 +463,64 @@ await notify.shareAgent.send({
 });
 ```
 
+## Template
+
+Sends a Meta-approved business template. This is the only message type allowed for business-initiated conversations outside the 24-hour customer-service window. The template must be registered and approved in the Meta Business Manager before use.
+
+### Slots
+
+<TypeTable
+  type={{
+    name: {
+      description: 'The template name as registered in the Meta Business Manager.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    language: {
+      description: 'BCP-47 language code matching one of the registered template translations (e.g. `pt_BR`, `en_US`).',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    components: {
+      description: 'Optional array of header, body, and button components, each carrying its own `parameters` array. Matches Meta\'s wire shape verbatim — see the Meta transport docs for the full type. Omit for templates with no parameters.',
+      type: 'WhatsAppTemplateComponent[] | (args: { input, ctx }) => WhatsAppTemplateComponent[]',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  orderShipped: rpc
+    .whatsapp()
+    .template()
+    .input(z.object({ orderId: z.string(), trackingCode: z.string() }))
+    .name('order_shipped')
+    .language('pt_BR')
+    .components(({ input }) => [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: input.orderId },
+          { type: 'text', text: input.trackingCode },
+        ],
+      },
+      {
+        type: 'button',
+        sub_type: 'url',
+        index: '0',
+        parameters: [{ type: 'text', text: input.trackingCode }],
+      },
+    ]),
+});
+
+await notify.orderShipped.send({
+  to: '+5511999999999',
+  input: { orderId: 'ORD-1234', trackingCode: 'BR987654321' },
+});
+```
+
+Meta enforces that `components` parameter counts and types match the registered template at send time. Mismatches surface as `VALIDATION` provider errors (codes 132000–132012).
+
 ## Full example
 
 All nine actions in a single catalog:
@@ -579,12 +638,6 @@ The `to` field is an opaque string. The channel does not enforce a format. It ca
 - A provider-specific identifier (e.g. Baileys internal ID)
 
 Format validation, if needed, is the transport's responsibility.
-
-## WhatsApp Business templates
-
-Meta's pre-approved message templates (required for business-initiated conversations outside the 24-hour window) are a **transport-level concern**, not a channel action. The channel defines abstract message shapes; the Meta transport maps them to templates via `TransportDataMap` per-send overrides.
-
-See the transport package documentation for details on template mapping.
 
 ## Transports
 

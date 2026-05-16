@@ -6,6 +6,16 @@ export type {
   WhatsAppSectionRow,
   WhatsAppSection,
   WhatsAppContact,
+  WhatsAppTemplateTextParam,
+  WhatsAppTemplateMediaParam,
+  WhatsAppTemplateCurrencyParam,
+  WhatsAppTemplateDateTimeParam,
+  WhatsAppTemplateLocationParam,
+  WhatsAppTemplateHeaderParam,
+  WhatsAppTemplateBodyParam,
+  WhatsAppTemplateButtonSubType,
+  WhatsAppTemplateButtonParam,
+  WhatsAppTemplateComponent,
   RenderedWhatsAppText,
   RenderedWhatsAppImage,
   RenderedWhatsAppVideo,
@@ -15,6 +25,7 @@ export type {
   RenderedWhatsAppReaction,
   RenderedWhatsAppInteractive,
   RenderedWhatsAppContacts,
+  RenderedWhatsAppTemplate,
   RenderedWhatsApp,
   WhatsAppTextSendArgs,
   WhatsAppImageSendArgs,
@@ -25,6 +36,7 @@ export type {
   WhatsAppReactionSendArgs,
   WhatsAppInteractiveSendArgs,
   WhatsAppContactsSendArgs,
+  WhatsAppTemplateSendArgs,
 } from './types.js';
 export { whatsappChannel } from './channel.js';
 export type {

@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@betternotify/whatsapp)](https://www.npmjs.com/package/@betternotify/whatsapp)
 [![license](https://img.shields.io/npm/l/@betternotify/whatsapp)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
 
-[WhatsApp](https://www.whatsapp.com) channel for [Better-Notify](https://github.com/better-notify/better-notify). Sends text, media, location, interactive, contact, and reaction messages through nine action builders. Ships with the official Meta Cloud API transport under `@betternotify/whatsapp/transports`; pair with a custom transport for other providers.
+[WhatsApp](https://www.whatsapp.com) channel for [Better-Notify](https://github.com/better-notify/better-notify). Sends text, media, location, interactive, contact, reaction, and Meta-approved template messages through ten action builders. Ships with the official Meta Cloud API transport under `@betternotify/whatsapp/transports`; pair with a custom transport for other providers.
 
 <p>
   <a href="https://better-notify.com">Website</a> ·
@@ -81,7 +81,7 @@ await notify.feedback.send({
 
 ## Actions
 
-`whatsappChannel()` exposes nine actions via the builder. Each narrows the available slots and send-time args.
+`whatsappChannel()` exposes ten actions via the builder. Each narrows the available slots and send-time args.
 
 ### `.text()`
 
@@ -143,6 +143,38 @@ Shares one or more contact cards.
 
 **Slots:** `contacts` (required)
 
+### `.template()`
+
+Sends a Meta-approved business template. Required for business-initiated conversations outside the 24-hour customer-service window. The template must be registered and approved in the Meta Business Manager before use.
+
+**Slots:** `name` (required), `language` (required), `components` (optional)
+
+`components` is an array matching Meta's wire shape — header, body, and button entries each with their own `parameters` array. Meta enforces parameter counts and types against the registered template; mismatches surface as `VALIDATION` provider errors (codes 132000–132012).
+
+```ts
+const orderShipped = rpc
+  .whatsapp()
+  .template()
+  .input(z.object({ orderId: z.string(), trackingCode: z.string() }))
+  .name('order_shipped')
+  .language('pt_BR')
+  .components(({ input }) => [
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: input.orderId },
+        { type: 'text', text: input.trackingCode },
+      ],
+    },
+    {
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [{ type: 'text', text: input.trackingCode }],
+    },
+  ]);
+```
+
 ## Send Args
 
 All actions share a common base:
@@ -171,10 +203,6 @@ import { mockWhatsappTransport } from '@betternotify/whatsapp/transports';
 
 const mock = mockWhatsappTransport();
 ```
-
-## Templates
-
-WhatsApp Business templates (Meta-approved pre-registered messages) are a transport-level concern, not a channel action. See the Meta transport documentation for details.
 
 ## License
 

@@ -7,7 +7,8 @@ export type WhatsAppAction =
   | 'location'
   | 'reaction'
   | 'interactive'
-  | 'contacts';
+  | 'contacts'
+  | 'template';
 
 export type WhatsAppMimeType =
   | 'image/jpeg'
@@ -119,6 +120,72 @@ export type RenderedWhatsAppContacts = {
   contacts: Array<WhatsAppContact>;
 };
 
+export type WhatsAppTemplateTextParam = { type: 'text'; text: string };
+
+export type WhatsAppTemplateMediaParam =
+  | { type: 'image'; image: { link: string } | { id: string } }
+  | { type: 'video'; video: { link: string } | { id: string } }
+  | {
+      type: 'document';
+      document: { link: string } | { id: string };
+      filename?: string;
+    };
+
+export type WhatsAppTemplateCurrencyParam = {
+  type: 'currency';
+  currency: { fallback_value: string; code: string; amount_1000: number };
+};
+
+export type WhatsAppTemplateDateTimeParam = {
+  type: 'date_time';
+  date_time: { fallback_value: string };
+};
+
+export type WhatsAppTemplateLocationParam = {
+  type: 'location';
+  location: { latitude: number; longitude: number; name?: string; address?: string };
+};
+
+export type WhatsAppTemplateHeaderParam =
+  | WhatsAppTemplateTextParam
+  | WhatsAppTemplateMediaParam
+  | WhatsAppTemplateLocationParam;
+
+export type WhatsAppTemplateBodyParam =
+  | WhatsAppTemplateTextParam
+  | WhatsAppTemplateCurrencyParam
+  | WhatsAppTemplateDateTimeParam;
+
+export type WhatsAppTemplateButtonSubType =
+  | 'quick_reply'
+  | 'url'
+  | 'copy_code'
+  | 'catalog'
+  | 'mpm'
+  | 'flow';
+
+export type WhatsAppTemplateButtonParam =
+  | WhatsAppTemplateTextParam
+  | { type: 'payload'; payload: string };
+
+export type WhatsAppTemplateComponent =
+  | { type: 'header'; parameters: Array<WhatsAppTemplateHeaderParam> }
+  | { type: 'body'; parameters: Array<WhatsAppTemplateBodyParam> }
+  | {
+      type: 'button';
+      sub_type: WhatsAppTemplateButtonSubType;
+      index: string;
+      parameters: Array<WhatsAppTemplateButtonParam>;
+    };
+
+export type RenderedWhatsAppTemplate = {
+  action: 'template';
+  to: string;
+  templateName: string;
+  language: string;
+  components?: Array<WhatsAppTemplateComponent>;
+};
+
 export type RenderedWhatsApp =
   | RenderedWhatsAppText
   | RenderedWhatsAppImage
@@ -128,7 +195,8 @@ export type RenderedWhatsApp =
   | RenderedWhatsAppLocation
   | RenderedWhatsAppReaction
   | RenderedWhatsAppInteractive
-  | RenderedWhatsAppContacts;
+  | RenderedWhatsAppContacts
+  | RenderedWhatsAppTemplate;
 
 export type WhatsAppTextSendArgs<TInput = unknown> = {
   to: string;
@@ -172,6 +240,11 @@ export type WhatsAppInteractiveSendArgs<TInput = unknown> = {
 };
 
 export type WhatsAppContactsSendArgs<TInput = unknown> = {
+  to: string;
+  input: TInput;
+};
+
+export type WhatsAppTemplateSendArgs<TInput = unknown> = {
   to: string;
   input: TInput;
 };

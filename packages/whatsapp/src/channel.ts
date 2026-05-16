@@ -12,11 +12,13 @@ import type {
   RenderedWhatsAppReaction,
   RenderedWhatsAppInteractive,
   RenderedWhatsAppContacts,
+  RenderedWhatsAppTemplate,
   WhatsAppAction,
   WhatsAppMimeType,
   WhatsAppButton,
   WhatsAppSection,
   WhatsAppContact,
+  WhatsAppTemplateComponent,
 } from './types.js';
 import {
   textArgsSchema,
@@ -28,6 +30,7 @@ import {
   reactionArgsSchema,
   interactiveArgsSchema,
   contactsArgsSchema,
+  templateArgsSchema,
   permissiveArgsSchema,
 } from './channel.schemas.js';
 
@@ -219,6 +222,27 @@ const createInternalChannels = (_options: WhatsAppChannelOptions) => {
     }),
   });
 
+  const template = defineChannel({
+    name: 'whatsapp' as const,
+    slots: {
+      _action: slot.value<'template'>(),
+      name: slot.resolver<string>(),
+      language: slot.resolver<string>(),
+      components: slot.resolver<Array<WhatsAppTemplateComponent>>().optional(),
+    },
+    validateArgs: templateArgsSchema,
+    render: ({ runtime, args }): RenderedWhatsAppTemplate => {
+      const result: RenderedWhatsAppTemplate = {
+        action: 'template',
+        to: args.to,
+        templateName: runtime.name,
+        language: runtime.language,
+      };
+      if (runtime.components !== undefined) result.components = runtime.components;
+      return result;
+    },
+  });
+
   return {
     text,
     image,
@@ -229,6 +253,7 @@ const createInternalChannels = (_options: WhatsAppChannelOptions) => {
     reaction,
     interactive,
     contacts,
+    template,
   };
 };
 
@@ -242,6 +267,7 @@ type LocationBuilder = ReturnType<InternalChannels['location']['createBuilder']>
 type ReactionBuilder = ReturnType<InternalChannels['reaction']['createBuilder']>;
 type InteractiveBuilder = ReturnType<InternalChannels['interactive']['createBuilder']>;
 type ContactsBuilder = ReturnType<InternalChannels['contacts']['createBuilder']>;
+type TemplateBuilder = ReturnType<InternalChannels['template']['createBuilder']>;
 
 type PublicBuilder<B> = Omit<B, '_action' | '_args' | '_rendered' | '_state'>;
 
@@ -255,6 +281,7 @@ export type WhatsAppActionPicker = {
   reaction(): PublicBuilder<ReactionBuilder>;
   interactive(): PublicBuilder<InteractiveBuilder>;
   contacts(): PublicBuilder<ContactsBuilder>;
+  template(): PublicBuilder<TemplateBuilder>;
 };
 
 export type WhatsAppChannel = Channel<
@@ -307,6 +334,10 @@ export const whatsappChannel = (options: WhatsAppChannelOptions = {}): WhatsAppC
       contacts: () => {
         const builder = channels.contacts.createBuilder(ctx);
         return builder._action('contacts' as never) as PublicBuilder<ContactsBuilder>;
+      },
+      template: () => {
+        const builder = channels.template.createBuilder(ctx);
+        return builder._action('template' as never) as PublicBuilder<TemplateBuilder>;
       },
     }),
 

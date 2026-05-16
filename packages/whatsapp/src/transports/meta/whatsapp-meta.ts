@@ -34,7 +34,9 @@ const DEFAULT_BASE_URL = 'https://graph.facebook.com/v25.0';
 
 const CONFIG_ERROR_CODES = new Set([190, 200, 4]);
 const RATE_LIMIT_ERROR_CODES = new Set([130429, 131056]);
-const VALIDATION_ERROR_CODES = new Set([131026, 131047, 131051, 131009, 100]);
+const VALIDATION_ERROR_CODES = new Set([
+  131026, 131047, 131051, 131009, 100, 132000, 132001, 132005, 132007, 132012,
+]);
 
 const mapMetaErrorCode = (
   code: number | undefined,
@@ -147,6 +149,17 @@ const buildPayload = (rendered: RenderedWhatsApp, mediaId?: string): Record<stri
       }
 
       return { ...base, type: 'interactive', interactive };
+    }
+
+    case 'template': {
+      const template: Record<string, unknown> = {
+        name: rendered.templateName,
+        language: { code: rendered.language },
+      };
+
+      if (rendered.components !== undefined) template.components = rendered.components;
+
+      return { ...base, type: 'template', template };
     }
 
     case 'contacts':

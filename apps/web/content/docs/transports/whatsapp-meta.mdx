@@ -9,7 +9,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 The WhatsApp Meta transport ships in `@betternotify/whatsapp` and calls the [Meta WhatsApp Cloud API](https://developers.facebook.com/documentation/business-messaging/whatsapp/overview) via `fetch`. No SDK dependency, no setup beyond Node 22+ or Bun.
 
-It covers all nine WhatsApp message types and two media delivery modes: URL passthrough and binary upload.
+It covers all ten WhatsApp message types (including Meta-approved templates) and two media delivery modes: URL passthrough and binary upload.
 
 ## Install
 
@@ -115,6 +115,45 @@ rpc.whatsapp().document()
 
 The `mimeType` field provides autocomplete for all supported types via the `WhatsAppMimeType` type.
 
+## Templates
+
+Use `rpc.whatsapp().template()` for Meta-approved business templates. The transport maps the rendered shape to Meta's `type: 'template'` payload:
+
+```json
+{
+  "messaging_product": "whatsapp",
+  "to": "+5511999999999",
+  "type": "template",
+  "template": {
+    "name": "order_shipped",
+    "language": { "code": "pt_BR" },
+    "components": [
+      {
+        "type": "body",
+        "parameters": [
+          { "type": "text", "text": "ORD-1234" },
+          { "type": "text", "text": "BR987654321" }
+        ]
+      },
+      {
+        "type": "button",
+        "sub_type": "url",
+        "index": "0",
+        "parameters": [{ "type": "text", "text": "BR987654321" }]
+      }
+    ]
+  }
+}
+```
+
+The `components` array is passed through verbatim. Component shapes are typed via `WhatsAppTemplateComponent` and match Meta's wire format:
+
+- `header` parameters: `text`, `image`, `video`, `document`, `location`
+- `body` parameters: `text`, `currency`, `date_time`
+- `button` parameters: `text` (for `url` and `copy_code` sub_types) or `payload` (for `quick_reply`)
+
+Templates must be registered and approved in the [Meta Business Manager](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates) before use. Parameter mismatches against the registered template surface as `VALIDATION` provider errors with codes 132000–132012 (see [Error handling](#error-handling)).
+
 ## Verifying credentials
 
 Call `verify()` at startup to confirm the access token and phone number ID are valid:
@@ -144,6 +183,7 @@ Meta API errors are mapped to BetterNotify error codes:
 | 190, 200, 4 | `CONFIG` | No | Authentication / permission failure |
 | 130429, 131056 | `RATE_LIMITED` | Yes | Rate limit (throughput or per-user) |
 | 131026, 131047, 131051, 131009, 100 | `VALIDATION` | No | Invalid message parameter |
+| 132000, 132001, 132005, 132007, 132012 | `VALIDATION` | No | Template parameter mismatch, missing template, or policy violation |
 | Other | `PROVIDER` | Yes | Unknown provider error |
 
 A pre-flight `VALIDATION` error is also returned (without contacting Meta) when a media message is sent with neither `url` nor `data`, or when an interactive message has both buttons and sections or neither.

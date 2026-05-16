@@ -48,6 +48,11 @@ export const contactsArgsSchema = z.object({
   input: z.unknown(),
 });
 
+export const templateArgsSchema = z.object({
+  to,
+  input: z.unknown(),
+});
+
 export const permissiveArgsSchema = z
   .object({
     to: z.string().min(1),

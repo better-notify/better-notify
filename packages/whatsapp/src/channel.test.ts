@@ -55,6 +55,11 @@ describe('whatsappChannel', () => {
       const b = picker().contacts();
       expect((b as unknown as { _channel: string })._channel).toBe('whatsapp');
     });
+
+    it('template() returns a builder with _channel="whatsapp"', () => {
+      const b = picker().template();
+      expect((b as unknown as { _channel: string })._channel).toBe('whatsapp');
+    });
   });
 
   describe('text builder', () => {
@@ -930,6 +935,103 @@ describe('whatsappChannel', () => {
       expect((b as unknown as { _state: { middleware: unknown[] } })._state.middleware).toContain(
         mw,
       );
+    });
+
+    it('seeds rootMiddleware into template builder', () => {
+      const mw = async () => undefined as never;
+      const p = ch.createBuilder({ ctx: undefined, rootMiddleware: [mw as never] });
+      const b = p.template();
+      expect((b as unknown as { _state: { middleware: unknown[] } })._state.middleware).toContain(
+        mw,
+      );
+    });
+  });
+
+  describe('template builder', () => {
+    it('renders template with static name, language, and components', async () => {
+      const builder = picker()
+        .template()
+        .input(z.object({ orderId: z.string() }))
+        .name('order_shipped')
+        .language('pt_BR')
+        .components([
+          {
+            type: 'body',
+            parameters: [{ type: 'text', text: 'static-value' }],
+          },
+        ]);
+      const def = ch.finalize(builder, 'order_shipped');
+      const out = await ch.render(def, { to: '+5511999999999', input: { orderId: 'ORD-1' } }, {});
+      expect(out).toEqual({
+        action: 'template',
+        to: '+5511999999999',
+        templateName: 'order_shipped',
+        language: 'pt_BR',
+        components: [{ type: 'body', parameters: [{ type: 'text', text: 'static-value' }] }],
+      });
+    });
+
+    it('resolves components from input', async () => {
+      const builder = picker()
+        .template()
+        .input(z.object({ orderId: z.string(), trackingCode: z.string() }))
+        .name('order_shipped')
+        .language('en_US')
+        .components(({ input }) => [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: input.orderId },
+              { type: 'text', text: input.trackingCode },
+            ],
+          },
+          {
+            type: 'button',
+            sub_type: 'url',
+            index: '0',
+            parameters: [{ type: 'text', text: input.trackingCode }],
+          },
+        ]);
+      const def = ch.finalize(builder, 'order_shipped');
+      const out = await ch.render(
+        def,
+        { to: '+5511999999999', input: { orderId: 'ORD-7', trackingCode: 'BR42' } },
+        {},
+      );
+      expect(out).toEqual({
+        action: 'template',
+        to: '+5511999999999',
+        templateName: 'order_shipped',
+        language: 'en_US',
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: 'ORD-7' },
+              { type: 'text', text: 'BR42' },
+            ],
+          },
+          {
+            type: 'button',
+            sub_type: 'url',
+            index: '0',
+            parameters: [{ type: 'text', text: 'BR42' }],
+          },
+        ],
+      });
+    });
+
+    it('omits components field when slot is unset', async () => {
+      const builder = picker().template().input(z.object({})).name('hello_world').language('en_US');
+      const def = ch.finalize(builder, 'hello_world');
+      const out = await ch.render(def, { to: '+5511999999999', input: {} }, {});
+      expect(out).toEqual({
+        action: 'template',
+        to: '+5511999999999',
+        templateName: 'hello_world',
+        language: 'en_US',
+      });
+      expect((out as { components?: unknown }).components).toBeUndefined();
     });
   });
 });
