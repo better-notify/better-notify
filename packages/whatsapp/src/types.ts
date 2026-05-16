@@ -168,6 +168,14 @@ export type WhatsAppTemplateButtonParam =
   | WhatsAppTemplateTextParam
   | { type: 'payload'; payload: string };
 
+/**
+ * A single component on a Meta-approved business template. Matches Meta's
+ * `template.components[]` wire shape verbatim: header / body / button entries
+ * each carrying their own typed `parameters` array.
+ *
+ * @see https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates
+ */
 export type WhatsAppTemplateComponent =
   | { type: 'header'; parameters: Array<WhatsAppTemplateHeaderParam> }
   | { type: 'body'; parameters: Array<WhatsAppTemplateBodyParam> }
@@ -178,6 +186,13 @@ export type WhatsAppTemplateComponent =
       parameters: Array<WhatsAppTemplateButtonParam>;
     };
 
+/**
+ * Rendered shape for a Meta-approved business template send. Templates must
+ * be registered and approved in the Meta Business Manager before use.
+ *
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates
+ * @see https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates
+ */
 export type RenderedWhatsAppTemplate = {
   action: 'template';
   to: string;

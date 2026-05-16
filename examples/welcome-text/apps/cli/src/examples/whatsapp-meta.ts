@@ -95,6 +95,26 @@ export const runWhatsAppMeta = async (): Promise<void> => {
       .reaction()
       .input(z.object({ emoji: z.string() }))
       .emoji(({ input }) => input.emoji),
+
+    /**
+     * @see https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview/
+     */
+    helloTemplate: rpc
+      .whatsapp()
+      .template()
+      .input(
+        z.object({
+          name: z.string(),
+        }),
+      )
+      .name('hello_world')
+      .language('en_US')
+      .components(({ input }) => [
+        {
+          type: 'body',
+          parameters: [{ type: 'text', text: `Hello, ${input.name}!` }],
+        },
+      ]),
   });
 
   const transport = whatsappMetaTransport({
@@ -187,6 +207,10 @@ export const runWhatsAppMeta = async (): Promise<void> => {
   });
 
   console.log('contacts:', { messageId: contactResult.messageId, data: contactResult.data });
+
+  const templateResult = await notify.helloTemplate.send({ to, input: { name: 'John Doe' } });
+
+  console.log('template:', { messageId: templateResult.messageId, data: templateResult.data });
 
   const batchResult = await notify.orderConfirmation.batch([
     { to, input: { orderId: 'ORD-1001', total: 'R$ 50,00' } },

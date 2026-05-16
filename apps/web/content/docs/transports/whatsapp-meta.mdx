@@ -152,7 +152,15 @@ The `components` array is passed through verbatim. Component shapes are typed vi
 - `body` parameters: `text`, `currency`, `date_time`
 - `button` parameters: `text` (for `url` and `copy_code` sub_types) or `payload` (for `quick_reply`)
 
-Templates must be registered and approved in the [Meta Business Manager](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates) before use. Parameter mismatches against the registered template surface as `VALIDATION` provider errors with codes 132000–132012 (see [Error handling](#error-handling)).
+Templates must be registered and approved in the Meta Business Manager before use. Parameter mismatches against the registered template surface as `VALIDATION` provider errors with codes 132000–132012 (see [Error handling](#error-handling)).
+
+### Reference
+
+- [Send message templates guide](https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates) — Cloud API request shape and walkthrough.
+- [Template components reference](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components) — every header, body, and button parameter type.
+- [Manage message templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates) — create, edit, and submit templates for Meta approval.
+- [Cloud API messages reference](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages) — full `template` object schema.
+- [Error codes](https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes) — full Meta error code reference, including the 132000-series template errors.
 
 ## Verifying credentials
 

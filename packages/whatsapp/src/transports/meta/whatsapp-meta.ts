@@ -224,6 +224,19 @@ const buildPayload = (rendered: RenderedWhatsApp, mediaId?: string): Record<stri
  * Supported image: `image/jpeg`, `image/png`. Max 5 MB.
  *
  * Supported document: any valid MIME type. Max 100 MB.
+ *
+ * **Templates** — set `action: 'template'` with `templateName`, `language`,
+ * and an optional `components` array matching Meta's wire shape. Templates
+ * must be registered and approved in the Meta Business Manager before use.
+ * Parameter mismatches against the registered template surface as
+ * `VALIDATION` provider errors with codes 132000–132012.
+ *
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/overview
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates
+ * @see https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates
+ * @see https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes
  */
 export const whatsappMetaTransport = (opts: WhatsappMetaTransportOptions): Transport => {
   const baseUrl = opts.baseUrl ?? DEFAULT_BASE_URL;
