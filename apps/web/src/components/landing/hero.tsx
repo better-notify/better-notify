@@ -7,6 +7,7 @@ import { CliPreview } from '@/components/landing/cli-preview';
 import { RuntimeBadges } from '@/components/landing/runtime-badges';
 import { TrustedBy } from '@/components/landing/trusted-by';
 import { EmailSnippet } from '@/components/landing/snippets/email';
+import { WhatsappSnippet } from '@/components/landing/snippets/whatsapp';
 import { TelegramSnippet } from '@/components/landing/snippets/telegram';
 import { CrossTransportSnippet } from '@/components/landing/snippets/cross-transport';
 
@@ -26,10 +27,11 @@ function BgGrid() {
   );
 }
 
-const tabs = ['email.ts', 'telegram.ts', 'cross-transport.ts'] as const;
+const tabs = ['email.ts', 'whatsapp.ts', 'telegram.ts', 'cross-transport.ts'] as const;
 
 const snippets = {
   'email.ts': EmailSnippet,
+  'whatsapp.ts': WhatsappSnippet,
   'telegram.ts': TelegramSnippet,
   'cross-transport.ts': CrossTransportSnippet,
 } as const;
@@ -55,12 +57,12 @@ export function Hero() {
               className="hero-anim text-muted-foreground mb-10 max-w-[520px] text-[17px] leading-[1.6] text-pretty lg:mx-0"
               style={{ animationDelay: '80ms' }}
             >
-              One{' '}
+              Define one{' '}
               <code className="bg-muted text-foreground rounded border px-1.5 py-0.5 font-mono text-[0.85em]">
                 Catalog
-              </code>{' '}
-              drives typed sending across email, SMS, Telegram, Slack, and Discord — via SMTP,
-              Resend, Cloudflare, or your own transport.
+              </code>
+              , send typed notifications across email, WhatsApp, SMS, Telegram, Slack, and Discord.
+              Pick your transport: SMTP, Resend, Cloudflare, or your own.
             </p>
 
             <div
@@ -153,6 +155,9 @@ export function Hero() {
                     style={{
                       gridArea: '1 / 1',
                       opacity: visible ? 1 : 0,
+                      maxHeight: visible ? 'none' : '0',
+                      overflow: visible ? 'auto' : 'hidden',
+                      padding: visible ? undefined : '0 1.25rem',
                       transition: 'opacity 200ms var(--ease-out)',
                       pointerEvents: visible ? 'auto' : 'none',
                     }}
