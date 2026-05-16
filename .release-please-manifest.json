@@ -21,5 +21,6 @@
   "packages/selligent": "1.0.0-beta.1",
   "apps/web": "1.1.0-beta.13",
   "packages/github": "1.0.0-beta.1",
-  "packages/webpush": "1.0.0-beta.2"
+  "packages/webpush": "1.0.0-beta.2",
+  "packages/whatsapp": "1.0.0-beta.0"
 }

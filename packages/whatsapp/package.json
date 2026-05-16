@@ -1,0 +1,48 @@
+{
+  "name": "@betternotify/whatsapp",
+  "version": "1.0.0-beta.0",
+  "description": "WhatsApp channel plugin for betternotify.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/better-notify/better-notify",
+    "directory": "packages/whatsapp"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./transports": {
+      "types": "./dist/transports.d.ts",
+      "default": "./dist/transports.js"
+    }
+  },
+  "scripts": {
+    "build": "NODE_OPTIONS='--import tsx/esm' rolldown -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@betternotify/core": "workspace:*",
+    "@standard-schema/spec": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@internal/rolldown-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "rolldown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

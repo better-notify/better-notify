@@ -1,0 +1,8 @@
+import { baseConfig } from '@internal/rolldown-config';
+
+export default baseConfig({
+  entries: {
+    index: 'src/index.ts',
+    transports: 'src/transports/index.ts',
+  },
+});

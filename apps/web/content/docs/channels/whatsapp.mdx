@@ -1,0 +1,635 @@
+---
+title: WhatsApp
+icon: WhatsappLogo
+description: Send text, media, location, interactive, contact, and reaction messages on WhatsApp
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The WhatsApp channel is provided by `@betternotify/whatsapp`. It sends text messages, images, videos, documents, audio, location pins, interactive menus, contact cards, and emoji reactions through a single channel with discriminated builder actions.
+
+## When to use WhatsApp
+
+WhatsApp is the right channel when you need to reach users on the messaging platform they already use daily — especially in markets where WhatsApp is the dominant communication channel (Latin America, India, Southeast Asia, parts of Europe and Africa). Use it for order confirmations, delivery updates, appointment reminders, support replies, feedback collection, or any transactional notification that benefits from rich media and interactive elements.
+
+```package-install
+@betternotify/whatsapp
+```
+
+## Setup
+
+```ts
+import { createNotify } from '@betternotify/core';
+import { whatsappChannel } from '@betternotify/whatsapp';
+
+const rpc = createNotify({ channels: { whatsapp: whatsappChannel() } });
+```
+
+## Actions
+
+Like the GitHub channel, the WhatsApp channel exposes nine distinct actions through a picker:
+
+```ts
+rpc.whatsapp().text()          // plain text message
+rpc.whatsapp().image()         // image with optional caption
+rpc.whatsapp().video()         // video with optional caption
+rpc.whatsapp().document()      // file attachment
+rpc.whatsapp().audio()         // audio message
+rpc.whatsapp().location()      // location pin
+rpc.whatsapp().reaction()      // emoji reaction to an existing message
+rpc.whatsapp().interactive()   // buttons or list menus
+rpc.whatsapp().contacts()      // share contact cards
+```
+
+Each action has its own slots and send arguments. You can mix all nine in a single catalog.
+
+## Common send arguments
+
+All actions share these send arguments:
+
+<TypeTable
+  type={{
+    to: {
+      description: 'Recipient identifier. Can be a phone number (E.164), a WhatsApp LID, or any provider-specific identifier. No format validation is enforced.',
+      type: 'string',
+    },
+    input: {
+      description: 'Validated input matching the procedure schema.',
+      type: 'TInput',
+    },
+  }}
+/>
+
+## Text
+
+Sends a plain text message. Requires a `body` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The message text. Accepts a static string or a resolver function that receives { input, ctx }.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  orderConfirm: rpc
+    .whatsapp()
+    .text()
+    .input(z.object({ orderId: z.string(), total: z.string() }))
+    .body(({ input }) => `Order ${input.orderId} confirmed! Total: ${input.total}`),
+});
+
+await notify.orderConfirm.send({
+  to: '+5511999999999',
+  input: { orderId: 'ORD-1234', total: 'R$ 199,90' },
+});
+```
+
+## Image
+
+Sends an image with an optional caption. Provide either `url` or `data` + `mimeType`.
+
+### Slots
+
+<TypeTable
+  type={{
+    url: {
+      description: 'URL of the image. The transport fetches the file from this URL. Optional when `data` is provided.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    data: {
+      description: 'Binary content of the image. The transport uploads it to the provider. Optional when `url` is provided.',
+      type: 'Buffer | Uint8Array | (args: { input, ctx }) => Buffer | Uint8Array',
+    },
+    mimeType: {
+      description: 'MIME type of the binary data. Required when `data` is used. Provides autocomplete for supported types.',
+      type: 'WhatsAppMimeType | (args: { input, ctx }) => WhatsAppMimeType',
+    },
+    caption: {
+      description: 'Optional caption displayed below the image.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  shippingPhoto: rpc
+    .whatsapp()
+    .image()
+    .input(z.object({ orderId: z.string(), photoUrl: z.string() }))
+    .url(({ input }) => input.photoUrl)
+    .caption(({ input }) => `Order ${input.orderId} is packed and ready!`),
+});
+
+await notify.shippingPhoto.send({
+  to: '+5511999999999',
+  input: { orderId: 'ORD-1234', photoUrl: 'https://cdn.example.com/packages/ORD-1234.jpg' },
+});
+```
+
+## Video
+
+Sends a video with an optional caption. Requires a `url` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    url: {
+      description: 'URL of the video. Accepts a static string or a resolver.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    caption: {
+      description: 'Optional caption displayed with the video.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  tutorialClip: rpc
+    .whatsapp()
+    .video()
+    .input(z.object({ title: z.string(), videoUrl: z.string() }))
+    .url(({ input }) => input.videoUrl)
+    .caption(({ input }) => input.title),
+});
+
+await notify.tutorialClip.send({
+  to: '+5511999999999',
+  input: { title: 'How to use your new device', videoUrl: 'https://cdn.example.com/tutorials/setup.mp4' },
+});
+```
+
+## Document
+
+Sends a file attachment with optional caption and filename. Requires a `url` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    url: {
+      description: 'URL of the document. Accepts a static string or a resolver.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    caption: {
+      description: 'Optional caption displayed with the document.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    filename: {
+      description: 'Optional filename shown to the recipient. Without it, the provider uses the URL filename.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  invoice: rpc
+    .whatsapp()
+    .document()
+    .input(z.object({ orderId: z.string(), invoiceUrl: z.string() }))
+    .url(({ input }) => input.invoiceUrl)
+    .filename(({ input }) => `invoice-${input.orderId}.pdf`)
+    .caption('Here is your invoice.'),
+});
+
+await notify.invoice.send({
+  to: '+5511999999999',
+  input: { orderId: 'ORD-1234', invoiceUrl: 'https://cdn.example.com/invoices/ORD-1234.pdf' },
+});
+```
+
+## Audio
+
+Sends an audio message. Requires a `url` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    url: {
+      description: 'URL of the audio file. Accepts a static string or a resolver.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  voiceNote: rpc
+    .whatsapp()
+    .audio()
+    .input(z.object({ audioUrl: z.string() }))
+    .url(({ input }) => input.audioUrl),
+});
+
+await notify.voiceNote.send({
+  to: '+5511999999999',
+  input: { audioUrl: 'https://cdn.example.com/audio/welcome.ogg' },
+});
+```
+
+## Location
+
+Sends a location pin on the map. Requires `latitude` and `longitude` slots.
+
+### Slots
+
+<TypeTable
+  type={{
+    latitude: {
+      description: 'Latitude of the location. Accepts a static number or a resolver.',
+      type: 'number | (args: { input, ctx }) => number',
+    },
+    longitude: {
+      description: 'Longitude of the location. Accepts a static number or a resolver.',
+      type: 'number | (args: { input, ctx }) => number',
+    },
+    name: {
+      description: 'Optional venue or location name shown on the pin.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    address: {
+      description: 'Optional text address displayed below the name.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  storeLocation: rpc
+    .whatsapp()
+    .location()
+    .input(z.object({ storeName: z.string(), lat: z.number(), lng: z.number() }))
+    .latitude(({ input }) => input.lat)
+    .longitude(({ input }) => input.lng)
+    .name(({ input }) => input.storeName)
+    .address('123 Main St, São Paulo, SP'),
+});
+
+await notify.storeLocation.send({
+  to: '+5511999999999',
+  input: { storeName: 'Loja Centro', lat: -23.5505, lng: -46.6333 },
+});
+```
+
+## Reaction
+
+Reacts to an existing message with an emoji. Requires an `emoji` slot and a `messageId` send argument.
+
+### Slots
+
+<TypeTable
+  type={{
+    emoji: {
+      description: 'The emoji to react with. Accepts a static string or a resolver.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+  }}
+/>
+
+### Send arguments
+
+In addition to `to` and `input`, reactions require:
+
+<TypeTable
+  type={{
+    messageId: {
+      description: 'The ID of the message to react to (e.g. a WhatsApp message ID like `wamid.xxx`).',
+      type: 'string',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  ackReaction: rpc
+    .whatsapp()
+    .reaction()
+    .input(z.object({ emoji: z.string() }))
+    .emoji(({ input }) => input.emoji),
+});
+
+await notify.ackReaction.send({
+  to: '+5511999999999',
+  messageId: 'wamid.HBgNNTUx...',
+  input: { emoji: '👍' },
+});
+```
+
+## Interactive
+
+Sends an interactive message with reply buttons or list menus. Requires a `body` slot. Use either `buttons` or `sections`, not both.
+
+### Slots
+
+<TypeTable
+  type={{
+    body: {
+      description: 'The main message text. Accepts a static string or a resolver.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    header: {
+      description: 'Optional header text displayed above the body.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    footer: {
+      description: 'Optional footer text displayed below the body.',
+      type: 'string | (args: { input, ctx }) => string',
+    },
+    buttons: {
+      description: 'Up to 3 reply buttons. Each button has an `id` and a `title`.',
+      type: 'WhatsAppButton[] | (args: { input, ctx }) => WhatsAppButton[]',
+    },
+    sections: {
+      description: 'List menu sections. Each section has a `title` and `rows`, where each row has an `id`, `title`, and optional `description`.',
+      type: 'WhatsAppSection[] | (args: { input, ctx }) => WhatsAppSection[]',
+    },
+  }}
+/>
+
+### Buttons example
+
+```ts
+const catalog = rpc.catalog({
+  feedbackRequest: rpc
+    .whatsapp()
+    .interactive()
+    .input(z.object({ orderId: z.string() }))
+    .body(({ input }) => `How was your experience with order ${input.orderId}?`)
+    .header('We value your feedback')
+    .footer('Reply within 24h')
+    .buttons([
+      { id: 'great', title: 'Great!' },
+      { id: 'ok', title: 'It was OK' },
+      { id: 'bad', title: 'Not good' },
+    ]),
+});
+
+await notify.feedbackRequest.send({
+  to: '+5511999999999',
+  input: { orderId: 'ORD-1234' },
+});
+```
+
+### List menu example
+
+```ts
+const catalog = rpc.catalog({
+  productPicker: rpc
+    .whatsapp()
+    .interactive()
+    .input(z.object({ category: z.string() }))
+    .body(({ input }) => `Browse our ${input.category} collection:`)
+    .header('Shop Now')
+    .sections([
+      {
+        title: 'Popular',
+        rows: [
+          { id: 'prod-1', title: 'Classic T-Shirt', description: 'R$ 79,90' },
+          { id: 'prod-2', title: 'Slim Jeans', description: 'R$ 149,90' },
+        ],
+      },
+      {
+        title: 'New Arrivals',
+        rows: [
+          { id: 'prod-3', title: 'Summer Dress', description: 'R$ 199,90' },
+        ],
+      },
+    ]),
+});
+
+await notify.productPicker.send({
+  to: '+5511999999999',
+  input: { category: 'clothing' },
+});
+```
+
+## Contacts
+
+Shares one or more contact cards. Requires a `contacts` slot.
+
+### Slots
+
+<TypeTable
+  type={{
+    contacts: {
+      description: 'Array of contacts to share. Each contact requires a `name` with at least `formatted`, and optionally `phones` and `emails` arrays.',
+      type: 'WhatsAppContact[] | (args: { input, ctx }) => WhatsAppContact[]',
+    },
+  }}
+/>
+
+### Example
+
+```ts
+const catalog = rpc.catalog({
+  shareAgent: rpc
+    .whatsapp()
+    .contacts()
+    .input(z.object({ agentName: z.string(), agentPhone: z.string() }))
+    .contacts(({ input }) => [
+      {
+        name: { formatted: input.agentName },
+        phones: [{ phone: input.agentPhone, type: 'WORK' }],
+      },
+    ]),
+});
+
+await notify.shareAgent.send({
+  to: '+5511999999999',
+  input: { agentName: 'Maria Silva', agentPhone: '+5511988887777' },
+});
+```
+
+## Full example
+
+All nine actions in a single catalog:
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { createMockTransport } from '@betternotify/core/transports';
+import { whatsappChannel } from '@betternotify/whatsapp';
+import type { RenderedWhatsApp } from '@betternotify/whatsapp';
+import { z } from 'zod';
+
+const rpc = createNotify({ channels: { whatsapp: whatsappChannel() } });
+
+const catalog = rpc.catalog({
+  orderConfirm: rpc
+    .whatsapp()
+    .text()
+    .input(z.object({ orderId: z.string(), total: z.string() }))
+    .body(({ input }) => `Order ${input.orderId} confirmed! Total: ${input.total}`),
+
+  shippingPhoto: rpc
+    .whatsapp()
+    .image()
+    .input(z.object({ orderId: z.string(), photoUrl: z.string() }))
+    .url(({ input }) => input.photoUrl)
+    .caption(({ input }) => `Order ${input.orderId} is packed!`),
+
+  invoice: rpc
+    .whatsapp()
+    .document()
+    .input(z.object({ orderId: z.string(), invoiceUrl: z.string() }))
+    .url(({ input }) => input.invoiceUrl)
+    .filename(({ input }) => `invoice-${input.orderId}.pdf`),
+
+  voiceNote: rpc
+    .whatsapp()
+    .audio()
+    .input(z.object({ audioUrl: z.string() }))
+    .url(({ input }) => input.audioUrl),
+
+  storeLocation: rpc
+    .whatsapp()
+    .location()
+    .input(z.object({ lat: z.number(), lng: z.number() }))
+    .latitude(({ input }) => input.lat)
+    .longitude(({ input }) => input.lng)
+    .name('Pickup Point'),
+
+  ackReaction: rpc
+    .whatsapp()
+    .reaction()
+    .input(z.object({ emoji: z.string() }))
+    .emoji(({ input }) => input.emoji),
+
+  feedbackRequest: rpc
+    .whatsapp()
+    .interactive()
+    .input(z.object({ orderId: z.string() }))
+    .body(({ input }) => `How was order ${input.orderId}?`)
+    .buttons([
+      { id: 'great', title: 'Great!' },
+      { id: 'ok', title: 'OK' },
+      { id: 'bad', title: 'Not good' },
+    ]),
+
+  shareAgent: rpc
+    .whatsapp()
+    .contacts()
+    .input(z.object({ name: z.string(), phone: z.string() }))
+    .contacts(({ input }) => [
+      { name: { formatted: input.name }, phones: [{ phone: input.phone }] },
+    ]),
+
+  tutorialClip: rpc
+    .whatsapp()
+    .video()
+    .input(z.object({ videoUrl: z.string() }))
+    .url(({ input }) => input.videoUrl)
+    .caption('Watch the setup guide'),
+});
+
+const mock = createMockTransport<RenderedWhatsApp>({
+  name: 'mock-whatsapp',
+  reply: (rendered) => ({ messageId: `wamid.mock-${rendered.action}` }),
+});
+
+const notify = createClient({
+  catalog,
+  transportsByChannel: { whatsapp: mock },
+});
+
+await notify.orderConfirm.send({
+  to: '+5511999999999',
+  input: { orderId: 'ORD-1234', total: 'R$ 199,90' },
+});
+
+await notify.feedbackRequest.send({
+  to: '+5511999999999',
+  input: { orderId: 'ORD-1234' },
+});
+
+await notify.ackReaction.send({
+  to: '+5511999999999',
+  messageId: 'wamid.HBgNNTUx...',
+  input: { emoji: '👍' },
+});
+```
+
+## Recipient addressing
+
+The `to` field is an opaque string — no format is enforced at the channel level. It can be:
+
+- An E.164 phone number (`+5511999999999`)
+- A WhatsApp LID (Meta's new non-phone identifier, currently rolling out)
+- A provider-specific identifier (e.g. Baileys internal ID)
+
+Format validation, if needed, is the transport's responsibility.
+
+## WhatsApp Business templates
+
+Meta's pre-approved message templates (required for business-initiated conversations outside the 24-hour window) are a **transport-level concern**, not a channel action. The channel defines abstract message shapes; the Meta transport maps them to templates via `TransportDataMap` per-send overrides.
+
+See the transport package documentation for details on template mapping.
+
+## Transport
+
+This package defines the channel only — no built-in transport is included. Pair it with a transport package:
+
+| Package | Provider | Status |
+| --- | --- | --- |
+| [`@betternotify/whatsapp`](/docs/transports/whatsapp-meta) | Meta Cloud API (official) | Ready |
+| `@betternotify/whatsapp` (Baileys) | Baileys (unofficial) | Planned |
+| `@betternotify/whatsapp` (Bird) | Bird (MessageBird) | Planned |
+
+### Mock transport
+
+Use `createMockTransport` from core in tests:
+
+```ts
+import { createMockTransport } from '@betternotify/core/transports';
+import type { RenderedWhatsApp } from '@betternotify/whatsapp';
+
+const mock = createMockTransport<RenderedWhatsApp>({
+  name: 'mock-whatsapp',
+  reply: (rendered) => ({ messageId: `wamid.mock-${rendered.action}` }),
+});
+
+// after sending...
+console.log(mock.sent); // [{ rendered: { action: 'text', to: '...', body: '...' }, ctx: { ... } }]
+```
+
+### Custom transport
+
+Use `createTransport` to build a transport for any WhatsApp provider:
+
+```ts
+import { createTransport } from '@betternotify/core/transports';
+import type { RenderedWhatsApp } from '@betternotify/whatsapp';
+
+const myTransport = createTransport<RenderedWhatsApp>({
+  name: 'my-whatsapp',
+  send: async (rendered) => {
+    // Call your provider's API with rendered.to, rendered.action, and action-specific fields
+    return { ok: true, data: { messageId: '...' } };
+  },
+});
+```

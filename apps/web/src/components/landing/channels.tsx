@@ -5,6 +5,7 @@ import {
   TelegramLogo,
   DiscordLogo,
   SlackLogo,
+  WhatsappLogo,
   Lightning,
   WebhooksLogo,
 } from '@phosphor-icons/react';
@@ -53,6 +54,13 @@ const channels = [
     pkg: '@betternotify/slack',
     status: 'ready',
     detail: 'Bot API · Block Kit · Threads',
+  },
+  {
+    icon: WhatsappLogo,
+    name: 'WhatsApp',
+    pkg: '@betternotify/whatsapp',
+    status: 'ready',
+    detail: 'Meta Cloud API · Text · Media · Interactive',
   },
   {
     icon: Lightning,

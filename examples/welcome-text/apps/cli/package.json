@@ -29,6 +29,7 @@
     "@betternotify/smtp": "workspace:*",
     "@betternotify/telegram": "workspace:*",
     "@betternotify/twilio": "workspace:*",
+    "@betternotify/whatsapp": "workspace:*",
     "@betternotify/zapier": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "evlog": "catalog:",

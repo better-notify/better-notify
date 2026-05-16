@@ -5,6 +5,7 @@ import {
   TelegramLogoIcon,
   SlackLogoIcon,
   DiscordLogoIcon,
+  WhatsappLogoIcon,
   LightningIcon,
 } from '@phosphor-icons/react';
 
@@ -26,6 +27,10 @@ const providers: { name: string; icon: ReactNode }[] = [
         />
       </svg>
     ),
+  },
+  {
+    name: 'WhatsApp',
+    icon: <WhatsappLogoIcon size={20} weight="fill" className="text-[#25D366]" />,
   },
   {
     name: 'Telegram',

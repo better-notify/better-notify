@@ -128,6 +128,12 @@
       "component": "@betternotify/webpush",
       "prerelease-type": "beta",
       "bootstrap-sha": "ccb5682694e4450094f3e6737112db2ca49bb5c4"
+    },
+    "packages/whatsapp": {
+      "release-type": "node",
+      "component": "@betternotify/whatsapp",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "e934968fd054f32357d70ed15bd258df3664a05c"
     }
   }
 }

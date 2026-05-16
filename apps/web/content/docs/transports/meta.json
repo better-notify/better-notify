@@ -29,6 +29,8 @@
     "onesignal-sms",
     "twilio",
     "---Web Push---",
-    "vapid"
+    "vapid",
+    "---WhatsApp---",
+    "whatsapp-meta"
   ]
 }
