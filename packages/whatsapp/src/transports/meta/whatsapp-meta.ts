@@ -1,8 +1,9 @@
-import { consoleLogger, NotifyRpcError, NotifyRpcProviderError } from '@betternotify/core';
+import { consoleLogger, NotifyRpcProviderError } from '@betternotify/core';
 import { createTransport, createHttpClient } from '@betternotify/core/transports';
 import { handlePromise } from '@betternotify/core';
 import type { RenderedWhatsApp } from '../../types.js';
 import type { WhatsappTransportData, Transport } from '../types.js';
+import { validateRenderedWhatsApp } from '../validate-rendered.js';
 import type { WhatsappMetaTransportOptions } from './whatsapp-meta.types.js';
 
 type MetaApiSuccess = {
@@ -25,8 +26,6 @@ type MetaApiError = {
 type MetaMediaUploadResponse = {
   id: string;
 };
-
-type MediaAction = 'image' | 'video' | 'audio' | 'document';
 
 const MEDIA_ACTIONS = new Set<string>(['image', 'video', 'audio', 'document']);
 
@@ -279,46 +278,8 @@ export const whatsappMetaTransport = (opts: WhatsappMetaTransportOptions): Trans
     name: 'whatsapp-meta',
 
     async send(rendered, ctx) {
-      if (!rendered.to) {
-        return {
-          ok: false,
-          error: new NotifyRpcError({
-            message: 'No recipient: "to" must be set in send args',
-            code: 'VALIDATION',
-            route: ctx.route,
-            messageId: ctx.messageId,
-          }),
-        };
-      }
-
-      if (rendered.action === 'interactive') {
-        const hasButtons = rendered.buttons && rendered.buttons.length > 0;
-        const hasSections = rendered.sections && rendered.sections.length > 0;
-
-        if (hasButtons && hasSections) {
-          return {
-            ok: false,
-            error: new NotifyRpcError({
-              message: 'Interactive message cannot have both buttons and sections',
-              code: 'VALIDATION',
-              route: ctx.route,
-              messageId: ctx.messageId,
-            }),
-          };
-        }
-
-        if (!hasButtons && !hasSections) {
-          return {
-            ok: false,
-            error: new NotifyRpcError({
-              message: 'Interactive message must have either buttons or sections',
-              code: 'VALIDATION',
-              route: ctx.route,
-              messageId: ctx.messageId,
-            }),
-          };
-        }
-      }
+      const validationError = validateRenderedWhatsApp(rendered, ctx);
+      if (validationError) return { ok: false, error: validationError };
 
       let mediaId: string | undefined;
 

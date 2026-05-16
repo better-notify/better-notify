@@ -37,6 +37,7 @@ export type {
 export { isWhatsappRetriable } from './is-retriable.js';
 
 declare module '@betternotify/core' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires interface
   interface TransportDataMap {
     whatsapp: import('./transports/types.js').WhatsappTransportData;
   }
