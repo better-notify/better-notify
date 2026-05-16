@@ -434,9 +434,7 @@ describe('whatsappMetaTransport', () => {
       );
 
       const body = parseBody(fetchMock.mock.calls[0] as [string, RequestInit]);
-      expect(body.contacts).toEqual([
-        { name: { formatted_name: 'Jane', first_name: 'Jane' } },
-      ]);
+      expect(body.contacts).toEqual([{ name: { formatted_name: 'Jane', first_name: 'Jane' } }]);
     });
 
     it('derives first_name and last_name from formatted when not provided', async () => {
@@ -487,8 +485,7 @@ describe('whatsappMetaTransport', () => {
   });
 
   describe('buffer upload', () => {
-    const mediaUploadResponse = (id = 'media-123') =>
-      jsonResponse({ id });
+    const mediaUploadResponse = (id = 'media-123') => jsonResponse({ id });
 
     it('uploads buffer and sends image with media id', async () => {
       const fetchMock = vi
@@ -512,7 +509,9 @@ describe('whatsappMetaTransport', () => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
 
       const uploadCall = fetchMock.mock.calls[0] as [string, RequestInit];
-      expect(String(uploadCall[0])).toBe(`https://graph.facebook.com/v25.0/${opts.phoneNumberId}/media`);
+      expect(String(uploadCall[0])).toBe(
+        `https://graph.facebook.com/v25.0/${opts.phoneNumberId}/media`,
+      );
       const uploadHeaders = new Headers(uploadCall[1].headers as Record<string, string>);
       expect(uploadHeaders.get('Authorization')).toBe('Bearer test-token');
 
@@ -622,10 +621,7 @@ describe('whatsappMetaTransport', () => {
     });
 
     it('throws TIMEOUT when media upload times out', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new DOMException('aborted', 'AbortError')),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('aborted', 'AbortError')));
 
       const t = whatsappMetaTransport(opts);
       const promise = t.send(
@@ -648,9 +644,9 @@ describe('whatsappMetaTransport', () => {
     it('throws PROVIDER when media upload returns non-ok HTTP', async () => {
       vi.stubGlobal(
         'fetch',
-        vi.fn().mockResolvedValue(
-          jsonResponse({ error: { message: 'Invalid file', code: 100 } }, 400),
-        ),
+        vi
+          .fn()
+          .mockResolvedValue(jsonResponse({ error: { message: 'Invalid file', code: 100 } }, 400)),
       );
 
       const t = whatsappMetaTransport(opts);
@@ -672,6 +668,29 @@ describe('whatsappMetaTransport', () => {
       });
     });
 
+    it('throws PROVIDER with HTTP status fallback when upload error body has no message', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: {} }, 502)));
+
+      const t = whatsappMetaTransport(opts);
+      const promise = t.send(
+        {
+          action: 'image',
+          to: '+5511999999999',
+          data: Buffer.from('x'),
+          mimeType: 'image/png',
+        },
+        ctx,
+      );
+
+      await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+      await expect(promise).rejects.toMatchObject({
+        message: expect.stringContaining('HTTP 502'),
+        code: 'PROVIDER',
+        httpStatus: 502,
+        retriable: true,
+      });
+    });
+
     it('throws PROVIDER when media upload returns no id', async () => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({})));
 
@@ -690,6 +709,34 @@ describe('whatsappMetaTransport', () => {
       await expect(promise).rejects.toMatchObject({
         message: expect.stringContaining('missing media ID'),
       });
+    });
+
+    it('falls back to empty link when media has no url property', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse(successResponse()));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const t = whatsappMetaTransport(opts);
+      const rendered = { action: 'audio', to: '+5511999999999' } as RenderedWhatsApp;
+      await t.send(rendered, ctx);
+
+      const body = parseBody(fetchMock.mock.calls[0] as [string, RequestInit]);
+      expect(body.audio).toEqual({ link: '' });
+    });
+
+    it('falls back to empty link when media url is undefined', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse(successResponse()));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const t = whatsappMetaTransport(opts);
+      const rendered = {
+        action: 'audio',
+        to: '+5511999999999',
+        url: undefined,
+      } as unknown as RenderedWhatsApp;
+      await t.send(rendered, ctx);
+
+      const body = parseBody(fetchMock.mock.calls[0] as [string, RequestInit]);
+      expect(body.audio).toEqual({ link: '' });
     });
 
     it('skips upload for URL-based media', async () => {

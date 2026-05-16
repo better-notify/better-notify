@@ -51,9 +51,7 @@ const mapMetaErrorCode = (
 const hasMediaData = (
   rendered: RenderedWhatsApp,
 ): rendered is RenderedWhatsApp & { data: Buffer | Uint8Array; mimeType: string } =>
-  MEDIA_ACTIONS.has(rendered.action) &&
-  'data' in rendered &&
-  rendered.data !== undefined;
+  MEDIA_ACTIONS.has(rendered.action) && 'data' in rendered && rendered.data !== undefined;
 
 const buildMediaRef = (
   mediaIdOrUrl: { id: string } | { link: string },
@@ -73,10 +71,7 @@ const buildMediaRef = (
   return ref;
 };
 
-const buildPayload = (
-  rendered: RenderedWhatsApp,
-  mediaId?: string,
-): Record<string, unknown> => {
+const buildPayload = (rendered: RenderedWhatsApp, mediaId?: string): Record<string, unknown> => {
   const base = {
     messaging_product: 'whatsapp' as const,
     recipient_type: 'individual' as const,
@@ -161,7 +156,8 @@ const buildPayload = (
         type: 'contacts',
         contacts: rendered.contacts.map((c) => {
           const spaceIdx = c.name.formatted.indexOf(' ');
-          const derivedFirst = spaceIdx > 0 ? c.name.formatted.slice(0, spaceIdx) : c.name.formatted;
+          const derivedFirst =
+            spaceIdx > 0 ? c.name.formatted.slice(0, spaceIdx) : c.name.formatted;
           const derivedLast = spaceIdx > 0 ? c.name.formatted.slice(spaceIdx + 1) : undefined;
 
           const contact: Record<string, unknown> = {
@@ -226,10 +222,7 @@ export const whatsappMetaTransport = (opts: WhatsappMetaTransportOptions): Trans
   const messagesUrl = `${baseUrl}/${opts.phoneNumberId}/messages`;
   const mediaUrl = `${baseUrl}/${opts.phoneNumberId}/media`;
 
-  const uploadMedia = async (
-    data: Buffer | Uint8Array,
-    mimeType: string,
-  ): Promise<string> => {
+  const uploadMedia = async (data: Buffer | Uint8Array, mimeType: string): Promise<string> => {
     const form = new FormData();
     form.append('messaging_product', 'whatsapp');
     const ab = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;

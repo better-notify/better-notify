@@ -147,6 +147,50 @@ describe('whatsappChannel', () => {
       });
     });
 
+    it('renders image with empty url when neither url nor data are set', async () => {
+      const builder = picker()
+        .image()
+        .input(z.object({ x: z.string() }));
+      const def = ch.finalize(builder, 'img-empty');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'image',
+        to: '+1234567890',
+        url: '',
+      });
+    });
+
+    it('renders image with data and explicit mimeType', async () => {
+      const builder = picker()
+        .image()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('img-bytes'))
+        .mimeType('image/png');
+      const def = ch.finalize(builder, 'img-buf');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'image',
+        to: '+1234567890',
+        data: Buffer.from('img-bytes'),
+        mimeType: 'image/png',
+      });
+    });
+
+    it('renders image with data and default mimeType', async () => {
+      const builder = picker()
+        .image()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('img-bytes'));
+      const def = ch.finalize(builder, 'img-buf-def');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'image',
+        to: '+1234567890',
+        data: Buffer.from('img-bytes'),
+        mimeType: 'image/jpeg',
+      });
+    });
+
     it('finalizes without url when data is provided instead', () => {
       const builder = picker()
         .image()
@@ -186,6 +230,50 @@ describe('whatsappChannel', () => {
         to: '+1234567890',
         url: 'https://example.com/video.mp4',
         caption: 'A great video',
+      });
+    });
+
+    it('renders video with empty url when neither url nor data are set', async () => {
+      const builder = picker()
+        .video()
+        .input(z.object({ x: z.string() }));
+      const def = ch.finalize(builder, 'vid-empty');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'video',
+        to: '+1234567890',
+        url: '',
+      });
+    });
+
+    it('renders video with data and explicit mimeType', async () => {
+      const builder = picker()
+        .video()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('vid-bytes'))
+        .mimeType('video/mp4');
+      const def = ch.finalize(builder, 'vid-buf');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'video',
+        to: '+1234567890',
+        data: Buffer.from('vid-bytes'),
+        mimeType: 'video/mp4',
+      });
+    });
+
+    it('renders video with data and default mimeType', async () => {
+      const builder = picker()
+        .video()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('vid-bytes'));
+      const def = ch.finalize(builder, 'vid-buf-def');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'video',
+        to: '+1234567890',
+        data: Buffer.from('vid-bytes'),
+        mimeType: 'video/mp4',
       });
     });
 
@@ -268,6 +356,50 @@ describe('whatsappChannel', () => {
       expect(out).not.toHaveProperty('caption');
     });
 
+    it('renders document with empty url when neither url nor data are set', async () => {
+      const builder = picker()
+        .document()
+        .input(z.object({ x: z.string() }));
+      const def = ch.finalize(builder, 'doc-empty');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'document',
+        to: '+1234567890',
+        url: '',
+      });
+    });
+
+    it('renders document with data and explicit mimeType', async () => {
+      const builder = picker()
+        .document()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('doc-bytes'))
+        .mimeType('application/pdf');
+      const def = ch.finalize(builder, 'doc-buf');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'document',
+        to: '+1234567890',
+        data: Buffer.from('doc-bytes'),
+        mimeType: 'application/pdf',
+      });
+    });
+
+    it('renders document with data and default mimeType', async () => {
+      const builder = picker()
+        .document()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('doc-bytes'));
+      const def = ch.finalize(builder, 'doc-buf-def');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'document',
+        to: '+1234567890',
+        data: Buffer.from('doc-bytes'),
+        mimeType: 'application/octet-stream',
+      });
+    });
+
     it('finalizes without url when data is provided instead', () => {
       const builder = picker()
         .document()
@@ -304,6 +436,50 @@ describe('whatsappChannel', () => {
         action: 'audio',
         to: '+1234567890',
         url: 'https://cdn.example.com/song1.ogg',
+      });
+    });
+
+    it('renders audio with empty url when neither url nor data are set', async () => {
+      const builder = picker()
+        .audio()
+        .input(z.object({ x: z.string() }));
+      const def = ch.finalize(builder, 'aud-empty');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'audio',
+        to: '+1234567890',
+        url: '',
+      });
+    });
+
+    it('renders audio with data and explicit mimeType', async () => {
+      const builder = picker()
+        .audio()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('audio-bytes'))
+        .mimeType('audio/ogg');
+      const def = ch.finalize(builder, 'aud-buf');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'audio',
+        to: '+1234567890',
+        data: Buffer.from('audio-bytes'),
+        mimeType: 'audio/ogg',
+      });
+    });
+
+    it('renders audio with data and default mimeType', async () => {
+      const builder = picker()
+        .audio()
+        .input(z.object({ x: z.string() }))
+        .data(Buffer.from('audio-bytes'));
+      const def = ch.finalize(builder, 'aud-buf-def');
+      const out = await ch.render(def, { to: '+1234567890', input: { x: 'val' } }, {});
+      expect(out).toEqual({
+        action: 'audio',
+        to: '+1234567890',
+        data: Buffer.from('audio-bytes'),
+        mimeType: 'audio/mpeg',
       });
     });
 
