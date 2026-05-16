@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@betternotify/whatsapp)](https://www.npmjs.com/package/@betternotify/whatsapp)
 [![license](https://img.shields.io/npm/l/@betternotify/whatsapp)](https://github.com/better-notify/better-notify/blob/main/LICENSE)
 
-[WhatsApp](https://www.whatsapp.com) channel for [Better-Notify](https://github.com/better-notify/better-notify). Sends text, media, location, interactive, contact, and reaction messages through a single channel with discriminated builder actions. Transport-agnostic — pair with `@betternotify/whatsapp-meta`, `@betternotify/whatsapp-baileys`, or any custom transport.
+[WhatsApp](https://www.whatsapp.com) channel for [Better-Notify](https://github.com/better-notify/better-notify). Sends text, media, location, interactive, contact, and reaction messages through nine action builders. Ships with the official Meta Cloud API transport under `@betternotify/whatsapp/transports`; pair with a custom transport for other providers.
 
 <p>
   <a href="https://better-notify.com">Website</a> ·
@@ -91,27 +91,27 @@ Sends a plain text message.
 
 ### `.image()`
 
-Sends an image with an optional caption.
+Sends an image with an optional caption. Provide either `url` (Meta fetches it) or `data` + `mimeType` (uploaded as binary).
 
-**Slots:** `url` (required), `caption` (optional)
+**Slots:** `url` or `data` + `mimeType` (one required), `caption` (optional)
 
 ### `.video()`
 
 Sends a video with an optional caption.
 
-**Slots:** `url` (required), `caption` (optional)
+**Slots:** `url` or `data` + `mimeType` (one required), `caption` (optional)
 
 ### `.document()`
 
 Sends a document with optional caption and filename.
 
-**Slots:** `url` (required), `caption` (optional), `filename` (optional)
+**Slots:** `url` or `data` + `mimeType` (one required), `caption` (optional), `filename` (optional)
 
 ### `.audio()`
 
 Sends an audio message.
 
-**Slots:** `url` (required)
+**Slots:** `url` or `data` + `mimeType` (one required)
 
 ### `.location()`
 
@@ -156,29 +156,25 @@ The `to` field is an opaque string with no format validation — it can be an E.
 
 ## Transports
 
-This package defines the channel only. Pair it with a transport package:
+The package ships with the official Meta Cloud API transport. Pair the channel with any of:
 
-| Package                          | Provider                  |
-| -------------------------------- | ------------------------- |
-| `@betternotify/whatsapp-meta`    | Meta Cloud API (official) |
-| `@betternotify/whatsapp-baileys` | Baileys (unofficial)      |
-| `@betternotify/whatsapp-bird`    | Bird (MessageBird)        |
+| Provider             | Import                                                           | Status  |
+| -------------------- | ---------------------------------------------------------------- | ------- |
+| Meta Cloud API       | `whatsappMetaTransport` from `@betternotify/whatsapp/transports` | Ready   |
+| Baileys (unofficial) | n/a                                                              | Planned |
+| Bird (MessageBird)   | n/a                                                              | Planned |
 
-For testing, use `createMockTransport` from `@betternotify/core/transports`:
+For testing, use `mockWhatsappTransport` from the transports subpath:
 
 ```ts
-import { createMockTransport } from '@betternotify/core/transports';
-import type { RenderedWhatsApp } from '@betternotify/whatsapp';
+import { mockWhatsappTransport } from '@betternotify/whatsapp/transports';
 
-const mock = createMockTransport<RenderedWhatsApp>({
-  name: 'mock-whatsapp',
-  reply: (rendered) => ({ messageId: `wamid.mock-${rendered.action}` }),
-});
+const mock = mockWhatsappTransport();
 ```
 
 ## Templates
 
-WhatsApp Business templates (Meta-approved pre-registered messages) are a transport-level concern, not a channel action. When using `@betternotify/whatsapp-meta`, template configuration is passed through `TransportDataMap` per-send overrides. See the transport package documentation for details.
+WhatsApp Business templates (Meta-approved pre-registered messages) are a transport-level concern, not a channel action. See the Meta transport documentation for details.
 
 ## License
 

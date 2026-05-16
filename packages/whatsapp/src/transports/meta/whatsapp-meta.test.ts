@@ -1036,14 +1036,36 @@ describe('whatsappMetaTransport', () => {
       });
     });
 
-    it('handles success with missing messages/contacts fields', async () => {
+    it('throws PROVIDER when response omits message ID', async () => {
       const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ messaging_product: 'whatsapp' }));
       vi.stubGlobal('fetch', fetchMock);
 
       const t = whatsappMetaTransport(opts);
+      const promise = t.send({ action: 'text', to: '+5511999999999', body: 'Hi' }, ctx);
+
+      await expect(promise).rejects.toBeInstanceOf(NotifyRpcProviderError);
+      await expect(promise).rejects.toMatchObject({
+        message: 'WhatsApp Cloud API: missing message ID in response',
+        code: 'PROVIDER',
+        provider: 'whatsapp-meta',
+        retriable: true,
+      });
+    });
+
+    it('omits waId when response has no contacts entry', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            jsonResponse({ messaging_product: 'whatsapp', messages: [{ id: 'wamid.no-contact' }] }),
+          ),
+      );
+
+      const t = whatsappMetaTransport(opts);
       const result = await t.send({ action: 'text', to: '+5511999999999', body: 'Hi' }, ctx);
 
-      expect(result).toEqual({ ok: true, data: { messageId: '' } });
+      expect(result).toEqual({ ok: true, data: { messageId: 'wamid.no-contact' } });
     });
 
     it('uses HTTP retry config', async () => {

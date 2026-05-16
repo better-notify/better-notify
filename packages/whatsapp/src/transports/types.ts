@@ -1,4 +1,4 @@
-import type { Transport as CoreTransport } from '@betternotify/core';
+import type { Transport as CoreTransport } from '@betternotify/core/transports';
 import type { RenderedWhatsApp } from '../types.js';
 
 export type WhatsappTransportData = {

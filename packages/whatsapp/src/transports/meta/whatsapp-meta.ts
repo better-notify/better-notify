@@ -362,8 +362,17 @@ export const whatsappMetaTransport = (opts: WhatsappMetaTransportOptions): Trans
         });
       }
 
-      const waMessageId = result.data.messages?.[0]?.id ?? '';
+      const waMessageId = result.data.messages?.[0]?.id;
       const waId = result.data.contacts?.[0]?.wa_id;
+
+      if (!waMessageId) {
+        throw new NotifyRpcProviderError({
+          message: 'WhatsApp Cloud API: missing message ID in response',
+          code: 'PROVIDER',
+          provider: 'whatsapp-meta',
+          retriable: true,
+        });
+      }
 
       return {
         ok: true as const,

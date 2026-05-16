@@ -185,6 +185,7 @@ export const runWhatsAppMeta = async (): Promise<void> => {
     to,
     input: { agentName: 'Maria Silva', agentPhone: '+5511988887777' },
   });
+
   console.log('contacts:', { messageId: contactResult.messageId, data: contactResult.data });
 
   const batchResult = await notify.orderConfirmation.batch([
