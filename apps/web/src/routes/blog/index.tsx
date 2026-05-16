@@ -156,7 +156,7 @@ function BlogIndexPage() {
                             <img
                               src={post.image}
                               alt={post.title}
-                              className="absolute inset-0 h-full w-full object-cover"
+                              className="absolute inset-0 h-full w-full object-cover object-center"
                             />
                           </div>
                         )}

@@ -1,0 +1,200 @@
+---
+title: 'How to Send Email in Node.js with SMTP'
+description: 'Send emails from Node.js using SMTP with typed routes, validated inputs, and middleware. A step-by-step guide using Better-Notify.'
+date: '2026-05-16'
+tags:
+  - guide
+  - smtp
+  - email
+author: Lucas Reis
+image: /blog/nodejs-send-email-smtp.png
+---
+
+Four lines to define a typed email route. Two more to send it over SMTP. This guide walks through every step.
+
+## Install
+
+```package-install
+@betternotify/core @betternotify/email @betternotify/smtp zod
+```
+
+## Send your first email
+
+Define a route, create a client, and send:
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { smtpTransport } from '@betternotify/smtp';
+import { z } from 'zod';
+
+const rpc = createNotify({
+  channels: { email: emailChannel() },
+});
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template(({ input }) => ({
+      html: `<h1>Hey ${input.name}, welcome aboard.</h1>`,
+    })),
+});
+
+const mail = createClient({
+  catalog,
+  transportsByChannel: {
+    email: smtpTransport({
+      host: 'smtp.example.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    }),
+  },
+});
+
+await mail.welcome.send({
+  to: 'ada@example.com',
+  input: { name: 'Ada' },
+});
+```
+
+That is the complete working example. Zod validates the `input` at runtime; TypeScript enforces it at compile time. Pass `{ firstName: 'Ada' }` instead of `{ name: 'Ada' }` and the compiler catches it before the code runs.
+
+**Port 465** with `secure: true` for SSL/TLS, or **port 587** with `secure: false` for STARTTLS. Port 25 is the legacy default; most cloud providers block it.
+
+**Gmail users:** Google requires an app password. Go to your Google Account, then Security, then App passwords, generate one, and set it as `SMTP_PASSWORD`. Regular account passwords will not work.
+
+## Multiple routes in one catalog
+
+Add as many routes as you need. Each one gets its own input schema, subject, and template:
+
+```ts
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template(({ input }) => ({
+      html: `<h1>Hey ${input.name}, welcome aboard.</h1>`,
+    })),
+  receipt: rpc
+    .email()
+    .input(z.object({ orderId: z.string(), total: z.number() }))
+    .subject(({ input }) => `Receipt for order ${input.orderId}`)
+    .template(({ input }) => ({
+      html: `<p>Order ${input.orderId}: $${input.total.toFixed(2)}</p>`,
+    })),
+  passwordReset: rpc
+    .email()
+    .input(z.object({ resetUrl: z.string().url() }))
+    .subject('Reset your password')
+    .template(({ input }) => ({
+      html: `<p><a href="${input.resetUrl}">Click here to reset your password.</a></p>`,
+    })),
+});
+```
+
+Every route becomes a property on `mail`:
+
+```ts
+await mail.welcome.send({ to: 'ada@example.com', input: { name: 'Ada' } });
+await mail.receipt.send({ to: 'ada@example.com', input: { orderId: 'ORD-42', total: 29.99 } });
+await mail.passwordReset.send({
+  to: 'ada@example.com',
+  input: { resetUrl: 'https://example.com/reset/abc123' },
+});
+```
+
+Autocomplete shows you the available routes. Typos are compile errors.
+
+## Add middleware
+
+Stack rate limiting and idempotency on any route:
+
+```ts
+import { withRateLimit, withIdempotency } from '@betternotify/core/middlewares';
+import { inMemoryRateLimitStore } from '@betternotify/core/stores';
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .use(
+      withRateLimit({
+        store: inMemoryRateLimitStore(),
+        key: ({ args }) => String(args.to),
+        max: 3,
+        window: 60_000,
+      }),
+    )
+    .use(
+      withIdempotency({
+        store: inMemoryRateLimitStore(),
+        key: ({ args }) => `welcome-${args.to}`,
+        ttl: 86_400_000,
+      }),
+    )
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template(({ input }) => ({
+      html: `<h1>Hey ${input.name}, welcome aboard.</h1>`,
+    })),
+});
+```
+
+Now `mail.welcome.send()` is rate-limited to 3 per recipient per minute and deduplicated within 24 hours. The send call stays the same. Add or remove middleware per route without changing anything else.
+
+## Provider failover
+
+If your SMTP server goes down, fall back to an API transport automatically:
+
+```ts
+import { resendTransport } from '@betternotify/resend';
+import { multiTransport } from '@betternotify/core/transports';
+
+const mail = createClient({
+  catalog,
+  transportsByChannel: {
+    email: multiTransport({
+      strategy: 'failover',
+      transports: [
+        smtpTransport({ host: 'smtp.example.com', port: 465 }),
+        resendTransport({ apiKey: process.env.RESEND_API_KEY }),
+      ],
+    }),
+  },
+});
+```
+
+`failover` tries the first transport, then the second on failure. `round-robin` distributes load across transports; `mirrored` sends through all of them at once.
+
+## Use React Email templates
+
+Swap the inline template for a React Email component:
+
+```ts
+import { reactEmailAdapter } from '@betternotify/react-email';
+import { WelcomeEmail } from './emails/welcome';
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}!`)
+    .template(reactEmailAdapter(WelcomeEmail)),
+});
+```
+
+The adapter type-checks that `WelcomeEmail` accepts the same props as the route's input schema. If they drift apart, the compiler flags it.
+
+## Get started
+
+```sh
+npx create-better-notify@latest
+```
+
+Or follow the [Quick Start guide](/docs/get-started/quick-start) to send your first typed email in five minutes.
