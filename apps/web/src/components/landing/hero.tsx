@@ -155,6 +155,9 @@ export function Hero() {
                     style={{
                       gridArea: '1 / 1',
                       opacity: visible ? 1 : 0,
+                      maxHeight: visible ? 'none' : '0',
+                      overflow: visible ? 'auto' : 'hidden',
+                      padding: visible ? undefined : '0 1.25rem',
                       transition: 'opacity 200ms var(--ease-out)',
                       pointerEvents: visible ? 'auto' : 'none',
                     }}
