@@ -118,7 +118,7 @@ Stack rate limiting and idempotency on any route:
 
 ```ts
 import { withRateLimit, withIdempotency } from '@betternotify/core/middlewares';
-import { inMemoryRateLimitStore } from '@betternotify/core/stores';
+import { inMemoryRateLimitStore, inMemoryIdempotencyStore } from '@betternotify/core/stores';
 
 const catalog = rpc.catalog({
   welcome: rpc
@@ -134,7 +134,7 @@ const catalog = rpc.catalog({
     )
     .use(
       withIdempotency({
-        store: inMemoryRateLimitStore(),
+        store: inMemoryIdempotencyStore(),
         key: ({ args }) => `welcome-${args.to}`,
         ttl: 86_400_000,
       }),
@@ -168,16 +168,18 @@ const mail = createClient({
     email: multiTransport({
       strategy: 'failover',
       transports: [
-        smtpTransport({
-          host: 'smtp.example.com',
-          port: 465,
-          secure: true,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD,
-          },
-        }),
-        resendTransport({ apiKey: process.env.RESEND_API_KEY }),
+        {
+          transport: smtpTransport({
+            host: 'smtp.example.com',
+            port: 465,
+            secure: true,
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASSWORD,
+            },
+          }),
+        },
+        { transport: resendTransport({ apiKey: process.env.RESEND_API_KEY }) },
       ],
     }),
   },
@@ -197,7 +199,7 @@ Install the React Email adapter:
 Swap the inline template for a React Email component:
 
 ```ts
-import { reactEmailAdapter } from '@betternotify/react-email';
+import { reactEmail } from '@betternotify/react-email';
 import { WelcomeEmail } from './emails/welcome';
 
 const catalog = rpc.catalog({
@@ -205,11 +207,11 @@ const catalog = rpc.catalog({
     .email()
     .input(z.object({ name: z.string() }))
     .subject(({ input }) => `Welcome, ${input.name}!`)
-    .template(reactEmailAdapter(WelcomeEmail)),
+    .template(({ input }) => reactEmail(WelcomeEmail, { name: input.name })),
 });
 ```
 
-The adapter type-checks that `WelcomeEmail` accepts the same props as the route's input schema. If they drift apart, the compiler flags it.
+`input` is fully typed from the route's Zod schema, so mapping it onto `WelcomeEmail`'s props is checked at compile time. If the component's props and the route input drift apart, the compiler flags it.
 
 ## Get started
 
