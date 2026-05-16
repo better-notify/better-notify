@@ -29,6 +29,7 @@ export default defineConfig({
         '**/test-utils.ts',
         'packages/*/src/index.ts',
         'packages/*/src/transports/index.ts',
+        'packages/*/src/transports/*/index.ts',
         'packages/*/src/middlewares/index.ts',
         'packages/*/src/plugins/index.ts',
         'packages/*/src/sinks/index.ts',

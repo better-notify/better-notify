@@ -11,6 +11,7 @@ import {
   Lightning,
   SlackLogo,
   TelegramLogo,
+  WhatsappLogo,
 } from '@phosphor-icons/react';
 
 import { appConfig } from './shared';
@@ -37,6 +38,7 @@ const transportChannels: Record<string, string | string[]> = {
   'onesignal-email': 'email',
   'onesignal-sms': 'sms',
   vapid: 'web-push',
+  'whatsapp-meta': 'whatsapp',
   zapier: 'zapier',
   mock: 'any',
   'multi-transport': 'any',
@@ -51,6 +53,7 @@ const channelBadges: Record<string, ChannelBadge> = {
   slack: { tooltip: 'Slack', icon: SlackLogo },
   telegram: { tooltip: 'Telegram', icon: TelegramLogo },
   sms: { tooltip: 'SMS', icon: DeviceMobile },
+  whatsapp: { tooltip: 'WhatsApp', icon: WhatsappLogo },
   zapier: { tooltip: 'Zapier', icon: Lightning },
   any: { tooltip: 'Any channel', icon: Globe },
 };

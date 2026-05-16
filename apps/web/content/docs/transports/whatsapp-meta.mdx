@@ -1,0 +1,242 @@
+---
+title: WhatsApp Meta
+icon: MetaLogo
+description: Send WhatsApp messages via Meta's Cloud API
+channels: [whatsapp]
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The WhatsApp Meta transport ships in `@betternotify/whatsapp` and calls the [Meta WhatsApp Cloud API](https://developers.facebook.com/documentation/business-messaging/whatsapp/overview) via `fetch`. No SDK dependency, no setup beyond Node 22+ or Bun.
+
+It covers all ten WhatsApp message types (including Meta-approved templates) and two media delivery modes: URL passthrough and binary upload.
+
+## Install
+
+```package-install
+@betternotify/whatsapp
+```
+
+## Usage
+
+```ts
+import { whatsappMetaTransport } from '@betternotify/whatsapp/transports';
+
+const transport = whatsappMetaTransport({
+  accessToken: process.env.WHATSAPP_META_ACCESS_TOKEN,
+  phoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID,
+});
+```
+
+Pass it to `createClient` via `transportsByChannel`:
+
+```ts
+import { createClient } from '@betternotify/core';
+import { whatsappChannel } from '@betternotify/whatsapp';
+import { whatsappMetaTransport } from '@betternotify/whatsapp/transports';
+
+const notify = createClient({
+  catalog,
+  transportsByChannel: {
+    whatsapp: whatsappMetaTransport({
+      accessToken: process.env.WHATSAPP_META_ACCESS_TOKEN,
+      phoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID,
+    }),
+  },
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    accessToken: {
+      description: 'Meta WhatsApp Cloud API access token. Use a System User token for production (never expires) or a temporary token from the API Setup page for testing (24h).',
+      type: 'string',
+    },
+    phoneNumberId: {
+      description: 'The sender phone number ID from your WhatsApp Business Account. Found in the Meta developer dashboard under WhatsApp > API Setup.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Full base URL including API version. Override when Meta releases a new API version or when using a proxy.',
+      type: 'string',
+      default: '"https://graph.facebook.com/v25.0"',
+    },
+    logger: {
+      description: 'Optional logger instance. Defaults to consoleLogger().',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options: timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+  }}
+/>
+
+## Media delivery modes
+
+Media messages (image, video, audio, document) support two modes:
+
+### URL mode
+
+Set `url` on the rendered message. Meta fetches the file from your server.
+
+```ts
+rpc.whatsapp().image()
+  .url(({ input }) => input.photoUrl)
+  .caption('Check this out')
+```
+
+Requirements:
+- URL must be publicly reachable over HTTPS
+- Server must respond with correct `Content-Type` header
+- Meta caches media at the same URL for 10 minutes
+
+### Buffer mode
+
+Set `data` (Buffer/Uint8Array) and `mimeType` on the rendered message. The transport uploads the binary to Meta's media API, then sends the message referencing the returned media ID.
+
+```ts
+rpc.whatsapp().document()
+  .data(({ input }) => input.pdfBuffer)
+  .mimeType('application/pdf')
+  .filename(({ input }) => `invoice-${input.orderId}.pdf`)
+```
+
+## Supported media formats
+
+| Type | Formats | Max size |
+|------|---------|----------|
+| Image | `image/jpeg`, `image/png` | 5 MB |
+| Video | `video/mp4`, `video/3gpp` (H.264 + AAC only) | 16 MB |
+| Audio | `audio/aac`, `audio/mp4`, `audio/mpeg`, `audio/amr`, `audio/ogg; codecs=opus` | 16 MB |
+| Document | Any valid MIME type | 100 MB |
+
+The `mimeType` field provides autocomplete for all supported types via the `WhatsAppMimeType` type.
+
+## Templates
+
+Use `rpc.whatsapp().template()` for Meta-approved business templates. The transport maps the rendered shape to Meta's `type: 'template'` payload:
+
+```json
+{
+  "messaging_product": "whatsapp",
+  "to": "+5511999999999",
+  "type": "template",
+  "template": {
+    "name": "order_shipped",
+    "language": { "code": "pt_BR" },
+    "components": [
+      {
+        "type": "body",
+        "parameters": [
+          { "type": "text", "text": "ORD-1234" },
+          { "type": "text", "text": "BR987654321" }
+        ]
+      },
+      {
+        "type": "button",
+        "sub_type": "url",
+        "index": "0",
+        "parameters": [{ "type": "text", "text": "BR987654321" }]
+      }
+    ]
+  }
+}
+```
+
+The `components` array is passed through verbatim. Component shapes are typed via `WhatsAppTemplateComponent` and match Meta's wire format:
+
+- `header` parameters: `text`, `image`, `video`, `document`, `location`
+- `body` parameters: `text`, `currency`, `date_time`
+- `button` parameters: `text` (for `url` and `copy_code` sub_types) or `payload` (for `quick_reply`)
+
+Templates must be registered and approved in the Meta Business Manager before use. Parameter mismatches against the registered template surface as `VALIDATION` provider errors with codes 132000–132012 (see [Error handling](#error-handling)).
+
+### Reference
+
+- [Send message templates guide](https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates) — Cloud API request shape and walkthrough.
+- [Template components reference](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components) — every header, body, and button parameter type.
+- [Manage message templates](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates) — create, edit, and submit templates for Meta approval.
+- [Cloud API messages reference](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages) — full `template` object schema.
+- [Error codes](https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes) — full Meta error code reference, including the 132000-series template errors.
+
+## Verifying credentials
+
+Call `verify()` at startup to confirm the access token and phone number ID are valid:
+
+```ts
+const transport = whatsappMetaTransport({
+  accessToken: process.env.WHATSAPP_META_ACCESS_TOKEN,
+  phoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID,
+});
+
+const { ok, details } = await transport.verify();
+
+if (!ok) {
+  throw new Error('Invalid WhatsApp credentials');
+}
+
+console.log('Phone:', details);
+// { verified_name: 'My Business', display_phone_number: '+55...', quality_rating: 'GREEN' }
+```
+
+## Error handling
+
+Meta API errors are mapped to BetterNotify error codes:
+
+| Meta code | BetterNotify code | Retriable | Meaning |
+|-----------|------------------|-----------|---------|
+| 190, 200, 4 | `CONFIG` | No | Authentication / permission failure |
+| 130429, 131056 | `RATE_LIMITED` | Yes | Rate limit (throughput or per-user) |
+| 131026, 131047, 131051, 131009, 100 | `VALIDATION` | No | Invalid message parameter |
+| 132000, 132001, 132005, 132007, 132012 | `VALIDATION` | No | Template parameter mismatch, missing template, or policy violation |
+| Other | `PROVIDER` | Yes | Unknown provider error |
+
+A pre-flight `VALIDATION` error is also returned (without contacting Meta) when a media message is sent with neither `url` nor `data`, or when an interactive message has both buttons and sections or neither.
+
+```ts
+import { NotifyRpcProviderError } from '@betternotify/core';
+import { isWhatsappRetriable } from '@betternotify/whatsapp';
+
+try {
+  await notify.orderConfirm.send({ to, input });
+} catch (err) {
+  if (err instanceof NotifyRpcProviderError) {
+    console.error(err.code, err.providerCode, err.retriable);
+  }
+}
+
+// Or use the helper
+const shouldRetry = isWhatsappRetriable(err);
+```
+
+## API version upgrades
+
+The `baseUrl` option includes the API version. When Meta releases a new version, override it:
+
+```ts
+const transport = whatsappMetaTransport({
+  accessToken: '...',
+  phoneNumberId: '...',
+  baseUrl: 'https://graph.facebook.com/v26.0',
+});
+```
+
+## Contact name derivation
+
+Meta requires `first_name` on contact messages even though their docs say only `formatted_name` is required. The transport automatically derives `first_name` and `last_name` from `formatted_name` (splits on first space) when they are not explicitly provided.
+
+## Mock transport
+
+Use `mockWhatsappTransport` from the transports subpath for testing:
+
+```ts
+import { mockWhatsappTransport } from '@betternotify/whatsapp/transports';
+
+const mock = mockWhatsappTransport();
+
+// after sending...
+console.log(mock.messages); // [{ action: 'text', to: '...', body: '...' }]
+```

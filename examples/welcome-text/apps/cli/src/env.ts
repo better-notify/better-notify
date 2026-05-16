@@ -177,6 +177,25 @@ export const env = createEnv({
       .describe('Twilio destination phone number'),
 
     /**
+     * WhatsApp Meta cluster
+     */
+    WHATSAPP_META_ACCESS_TOKEN: z
+      .string()
+      .optional()
+      .default('EAAxxxxx')
+      .describe('Meta WhatsApp Cloud API access token'),
+    WHATSAPP_META_PHONE_NUMBER_ID: z
+      .string()
+      .optional()
+      .default('123456789012345')
+      .describe('Meta WhatsApp sender phone number ID'),
+    WHATSAPP_META_DESTINATION_NUMBER: z
+      .string()
+      .optional()
+      .default('+5511999999999')
+      .describe('WhatsApp destination phone number'),
+
+    /**
      * Zapier cluster
      */
     ZAPIER_WEBHOOK_URL: z

@@ -54,6 +54,8 @@ import { runGithubPrComment } from './examples/github-pr-comment';
 import { runGithubPrLineComment } from './examples/github-pr-line-comment';
 import { runGithubPrReview } from './examples/github-pr-review';
 import { runGithubIssueHandlebars } from './examples/github-issue-handlebars';
+import { runWhatsAppMock } from './examples/whatsapp-mock';
+import { runWhatsAppMeta } from './examples/whatsapp-meta';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -112,6 +114,8 @@ const examples: Record<string, () => Promise<void>> = {
   'github-pr-line-comment': runGithubPrLineComment,
   'github-pr-review': runGithubPrReview,
   'github-issue-handlebars': runGithubIssueHandlebars,
+  'whatsapp-mock': runWhatsAppMock,
+  'whatsapp-meta': runWhatsAppMeta,
 };
 
 const main = async (): Promise<void> => {
