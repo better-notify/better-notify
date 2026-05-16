@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0-beta.14](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.13...@betternotify/web-v1.1.0-beta.14) (2026-05-16)
+
+
+### Features
+
+* **web:** add live GitHub star count to landing header ([#161](https://github.com/better-notify/better-notify/issues/161)) ([0f24b15](https://github.com/better-notify/better-notify/commit/0f24b1538d4680402649aaaf50154f842aed55e2))
+* **web:** add SMTP email guide blog post ([#157](https://github.com/better-notify/better-notify/issues/157)) ([434f82b](https://github.com/better-notify/better-notify/commit/434f82b1d3bc79948de5867a7a3ffaa485b11c3c))
+* **web:** highlight WhatsApp support on landing page ([#162](https://github.com/better-notify/better-notify/issues/162)) ([809b41a](https://github.com/better-notify/better-notify/commit/809b41aced82a03c464dd7c7c860e21e0b95bf0b))
+* **whatsapp:** add WhatsApp channel package ([#156](https://github.com/better-notify/better-notify/issues/156)) ([0c5920e](https://github.com/better-notify/better-notify/commit/0c5920ed98b8a6d5d43a197a94445b1b54a4a439))
+
 ## [1.1.0-beta.13](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.12...@betternotify/web-v1.1.0-beta.13) (2026-05-15)
 
 
