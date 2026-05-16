@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 
 import { LandingHeader } from '@/components/landing/header';
+import { AnnouncementStrip } from '@/components/landing/announcement-strip';
 import { Hero } from '@/components/landing/hero';
 import { Features } from '@/components/landing/features';
 import { Channels } from '@/components/landing/channels';
@@ -26,7 +27,7 @@ export const Route = createFileRoute('/')({
     const { meta, links } = seo({
       title: `${appConfig.name}: Typed Notifications for Node.js, Bun, Cloudflare Workers, and Vercel`,
       description:
-        'Typed notifications for Node.js, Bun, Cloudflare Workers, and Vercel. Send email, SMS, Telegram, Slack, and Discord from one typed catalog with full TypeScript support.',
+        'Send typed notifications across email, WhatsApp, SMS, Telegram, Slack, and Discord from one catalog. Node.js, Bun, Cloudflare Workers, and Vercel.',
       url: appConfig.baseUrl,
       canonicalUrl: appConfig.baseUrl,
     });
@@ -69,6 +70,7 @@ function LandingPage() {
 
   return (
     <Suspense>
+      <AnnouncementStrip />
       <LandingHeader />
       <main>
         <Hero />
