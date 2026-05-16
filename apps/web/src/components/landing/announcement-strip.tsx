@@ -19,7 +19,7 @@ export function AnnouncementStrip() {
         onClick={() =>
           analytics.track('whatsapp').action('click', { destination: '/docs/channels/whatsapp' })
         }
-        className="relative mx-auto flex max-w-[1200px] items-center justify-center gap-2.5 px-5 py-2.5 text-center text-[13px] font-medium text-white/90 no-underline transition-colors hover:text-white"
+        className="group relative mx-auto flex max-w-[1200px] items-center justify-center gap-2.5 px-5 py-2.5 text-center text-[13px] font-medium text-white/90 no-underline transition-colors hover:text-white"
       >
         <WhatsappLogo size={15} weight="fill" className="shrink-0 text-[oklch(78%_0.14_155)]" />
         <span>
