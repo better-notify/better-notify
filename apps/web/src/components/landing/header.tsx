@@ -15,6 +15,7 @@ import { useTheme } from 'fumadocs-ui/provider/base';
 import type { MouseEvent, ReactNode } from 'react';
 import { useRef, useEffect, useState } from 'react';
 import { useAnalytics } from '@/hooks/use-analytics';
+import { useStarCount, formatStarCount } from '@/hooks/use-star-count';
 
 import { LogoShort } from '@libs/ui';
 import { appConfig } from '@/lib/shared';
@@ -83,6 +84,7 @@ export function LandingHeader() {
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const analytics = useAnalytics('header');
+  const starCount = useStarCount(appConfig.git.user, appConfig.git.repo);
   const isDark = resolvedTheme === 'dark';
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === '/';
@@ -252,9 +254,16 @@ export function LandingHeader() {
           >
             <GithubLogoIcon size={14} />
             GitHub
-            <span className="border-border text-muted-foreground ml-0.5 border-l pl-2">
-              <StarIcon size={12} weight="fill" className="inline" />
-            </span>
+            {(starCount.count != null || starCount.isLoading) && (
+              <span className="border-border text-muted-foreground ml-0.5 flex items-center gap-1 border-l pl-2">
+                <StarIcon size={12} weight="fill" className="inline" />
+                {starCount.count != null ? (
+                  formatStarCount(starCount.count)
+                ) : (
+                  <span className="inline-block h-3.5 w-6 animate-pulse rounded-sm bg-bn-slate-200 dark:bg-bn-slate-700" />
+                )}
+              </span>
+            )}
           </a>
 
           <button
