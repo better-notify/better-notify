@@ -6,11 +6,7 @@ description: Send text, media, location, interactive, contact, and reaction mess
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The WhatsApp channel is provided by `@betternotify/whatsapp`. It sends text messages, images, videos, documents, audio, location pins, interactive menus, contact cards, and emoji reactions through a single channel with discriminated builder actions.
-
-## When to use WhatsApp
-
-WhatsApp is the right channel when you need to reach users on the messaging platform they already use daily — especially in markets where WhatsApp is the dominant communication channel (Latin America, India, Southeast Asia, parts of Europe and Africa). Use it for order confirmations, delivery updates, appointment reminders, support replies, feedback collection, or any transactional notification that benefits from rich media and interactive elements.
+The WhatsApp channel ships in `@betternotify/whatsapp`. It exposes nine actions: text, image, video, document, audio, location, reaction, interactive, and contacts.
 
 ```package-install
 @betternotify/whatsapp
@@ -27,7 +23,7 @@ const rpc = createNotify({ channels: { whatsapp: whatsappChannel() } });
 
 ## Actions
 
-Like the GitHub channel, the WhatsApp channel exposes nine distinct actions through a picker:
+Pick an action with `rpc.whatsapp().<action>()`:
 
 ```ts
 rpc.whatsapp().text()          // plain text message
@@ -38,10 +34,10 @@ rpc.whatsapp().audio()         // audio message
 rpc.whatsapp().location()      // location pin
 rpc.whatsapp().reaction()      // emoji reaction to an existing message
 rpc.whatsapp().interactive()   // buttons or list menus
-rpc.whatsapp().contacts()      // share contact cards
+rpc.whatsapp().contacts()      // contact cards
 ```
 
-Each action has its own slots and send arguments. You can mix all nine in a single catalog.
+Each action has its own slots and send arguments. A single catalog can mix any of them.
 
 ## Common send arguments
 
@@ -576,7 +572,7 @@ await notify.ackReaction.send({
 
 ## Recipient addressing
 
-The `to` field is an opaque string — no format is enforced at the channel level. It can be:
+The `to` field is an opaque string. The channel does not enforce a format. It can be:
 
 - An E.164 phone number (`+5511999999999`)
 - A WhatsApp LID (Meta's new non-phone identifier, currently rolling out)
@@ -590,15 +586,15 @@ Meta's pre-approved message templates (required for business-initiated conversat
 
 See the transport package documentation for details on template mapping.
 
-## Transport
+## Transports
 
-This package defines the channel only — no built-in transport is included. Pair it with a transport package:
+The package ships with one transport and reserves room for more:
 
-| Package | Provider | Status |
+| Provider | Import | Status |
 | --- | --- | --- |
-| [`@betternotify/whatsapp`](/docs/transports/whatsapp-meta) | Meta Cloud API (official) | Ready |
-| `@betternotify/whatsapp` (Baileys) | Baileys (unofficial) | Planned |
-| `@betternotify/whatsapp` (Bird) | Bird (MessageBird) | Planned |
+| [Meta Cloud API](/docs/transports/whatsapp-meta) | `whatsappMetaTransport` from `@betternotify/whatsapp/transports` | Ready |
+| Baileys (unofficial) | n/a | Planned |
+| Bird (MessageBird) | n/a | Planned |
 
 ### Mock transport
 

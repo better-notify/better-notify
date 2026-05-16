@@ -7,9 +7,9 @@ channels: [whatsapp]
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-The WhatsApp Meta transport is included in `@betternotify/whatsapp`. It calls the [Meta WhatsApp Cloud API](https://developers.facebook.com/documentation/business-messaging/whatsapp/overview) via `fetch` — no external SDK dependencies required (Node 22+ / Bun built-in).
+The WhatsApp Meta transport ships in `@betternotify/whatsapp` and calls the [Meta WhatsApp Cloud API](https://developers.facebook.com/documentation/business-messaging/whatsapp/overview) via `fetch`. No SDK dependency, no setup beyond Node 22+ or Bun.
 
-It supports all nine WhatsApp message types (text, image, video, document, audio, location, reaction, interactive, contacts) and two media delivery modes: URL passthrough and binary upload.
+It covers all nine WhatsApp message types and two media delivery modes: URL passthrough and binary upload.
 
 ## Install
 
@@ -68,7 +68,7 @@ const notify = createClient({
       type: 'LoggerLike',
     },
     http: {
-      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      description: 'HTTP client options: timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
       type: 'HttpClientBehaviorOptions',
     },
   }}
@@ -95,7 +95,7 @@ Requirements:
 
 ### Buffer mode
 
-Set `data` (Buffer/Uint8Array) and `mimeType` on the rendered message. The transport uploads the binary to Meta's media API and sends the message with the returned media ID — same two-step flow as Slack's file upload.
+Set `data` (Buffer/Uint8Array) and `mimeType` on the rendered message. The transport uploads the binary to Meta's media API, then sends the message referencing the returned media ID.
 
 ```ts
 rpc.whatsapp().document()
