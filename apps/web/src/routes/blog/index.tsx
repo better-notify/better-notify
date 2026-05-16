@@ -130,9 +130,8 @@ function BlogIndexPage() {
                   No posts match the selected filters.
                 </p>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-4">
                   {filtered.map((post, i) => {
-                    const isFeatured = i === 0;
                     return (
                       <Link
                         key={post.slug}
@@ -145,22 +144,19 @@ function BlogIndexPage() {
                             position: i,
                           })
                         }
-                        className={`border-border bg-card group flex overflow-hidden rounded-xl border no-underline transition-all duration-200 hover:border-bn-slate-300 hover:shadow-sm dark:hover:border-bn-slate-700 ${
-                          isFeatured ? 'sm:col-span-2' : ''
-                        }`}
+                        className="border-border bg-card group flex items-center overflow-hidden rounded-xl border no-underline transition-all duration-200 hover:border-bn-slate-300 hover:shadow-sm dark:hover:border-bn-slate-700"
                       >
                         {post.image && (
-                          <div
-                            className={`relative hidden shrink-0 sm:block ${isFeatured ? 'w-56 md:w-72' : 'w-40 md:w-48'}`}
-                          >
+                          <div className="ml-3 hidden aspect-video w-44 shrink-0 self-center overflow-hidden rounded-md sm:block md:w-52">
                             <img
                               src={post.image}
                               alt={post.title}
-                              className="absolute inset-0 h-full w-full object-cover"
+                              className="h-full w-full object-cover object-center"
+                              loading="lazy"
                             />
                           </div>
                         )}
-                        <div className="flex min-w-0 flex-1 flex-col justify-center p-4 md:p-5">
+                        <div className="flex min-w-0 flex-1 flex-col justify-center p-3 md:p-4">
                           <div className="mb-2 flex items-center gap-2">
                             {post.category && (
                               <Badge variant="default" className="capitalize">
@@ -177,9 +173,7 @@ function BlogIndexPage() {
                               })}
                             </span>
                           </div>
-                          <h2
-                            className={`text-foreground group-hover:text-primary mb-1.5 font-semibold tracking-tight transition-colors ${isFeatured ? 'text-xl' : 'text-lg'}`}
-                          >
+                          <h2 className="text-foreground group-hover:text-primary mb-1.5 text-lg font-semibold tracking-tight transition-colors">
                             {post.title}
                           </h2>
                           <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
