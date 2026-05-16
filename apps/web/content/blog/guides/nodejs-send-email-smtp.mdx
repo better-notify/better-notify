@@ -150,7 +150,13 @@ Now `mail.welcome.send()` is rate-limited to 3 per recipient per minute and dedu
 
 ## Provider failover
 
-If your SMTP server goes down, fall back to an API transport automatically:
+If your SMTP server goes down, fall back to an API transport automatically. Install the Resend adapter:
+
+```package-install
+@betternotify/resend
+```
+
+Then wrap both transports in `multiTransport`:
 
 ```ts
 import { resendTransport } from '@betternotify/resend';
@@ -162,7 +168,15 @@ const mail = createClient({
     email: multiTransport({
       strategy: 'failover',
       transports: [
-        smtpTransport({ host: 'smtp.example.com', port: 465 }),
+        smtpTransport({
+          host: 'smtp.example.com',
+          port: 465,
+          secure: true,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD,
+          },
+        }),
         resendTransport({ apiKey: process.env.RESEND_API_KEY }),
       ],
     }),
@@ -173,6 +187,12 @@ const mail = createClient({
 `failover` tries the first transport, then the second on failure. `round-robin` distributes load across transports; `mirrored` sends through all of them at once.
 
 ## Use React Email templates
+
+Install the React Email adapter:
+
+```package-install
+@betternotify/react-email
+```
 
 Swap the inline template for a React Email component:
 
