@@ -184,10 +184,9 @@ function McpHero() {
             <pre className="overflow-x-auto p-5 font-mono text-[11.5px] leading-[1.75] text-bn-slate-700 dark:text-bn-slate-300 md:text-[12px]">
               <K>import</K> {'{ '}createNotify, createClient{' }'} <K>from</K>{' '}
               <S>'@betternotify/core'</S>;{'\n'}
-              <K>import</K> {'{ '}emailChannel{' }'} <K>from</K>{' '}
-              <S>'@betternotify/email'</S>;{'\n'}
-              <K>import</K> {'{ '}resendTransport{' }'} <K>from</K>{' '}
-              <S>'@betternotify/resend'</S>;{'\n'}
+              <K>import</K> {'{ '}emailChannel{' }'} <K>from</K> <S>'@betternotify/email'</S>;{'\n'}
+              <K>import</K> {'{ '}resendTransport{' }'} <K>from</K> <S>'@betternotify/resend'</S>;
+              {'\n'}
               <K>import</K> {'{ '}createMcpServer{' }'} <K>from</K> <S>'@betternotify/mcp'</S>;
               {'\n'}
               {'\n'}
@@ -210,8 +209,8 @@ function McpHero() {
               {'\n'}
               {'  '}catalog<P>,</P>
               {'\n'}
-              {'  '}transportsByChannel<P>:</P> {'{ '}email<P>:</P> <F>resendTransport</F>
-              (<P>{'{ '}</P>apiKey<P>{' }'}</P>){' }'}
+              {'  '}transportsByChannel<P>:</P> {'{ '}email<P>:</P> <F>resendTransport</F>(
+              <P>{'{ '}</P>apiKey<P>{' }'}</P>){' }'}
               <P>,</P>
               {'\n'}
               {'  '}plugins<P>:</P> [mcp.<F>plugin</F>()]<P>,</P>

@@ -228,10 +228,7 @@ describe('createHttpHandler', () => {
       attach: async () => {},
     });
     const res = makeRes();
-    await handler(
-      { headers: {} } as unknown as IncomingMessage,
-      res as unknown as ServerResponse,
-    );
+    await handler({ headers: {} } as unknown as IncomingMessage, res as unknown as ServerResponse);
     expect(res.statusCode).toBe(404);
   });
 });

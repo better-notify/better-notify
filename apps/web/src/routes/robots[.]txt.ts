@@ -11,12 +11,9 @@ export const Route = createFileRoute('/robots.txt')({
 
         const body = isCanary
           ? ['User-agent: *', 'Disallow: /'].join('\n')
-          : [
-              'User-agent: *',
-              'Allow: /',
-              '',
-              `Sitemap: ${appConfig.baseUrl}/sitemap.xml`,
-            ].join('\n');
+          : ['User-agent: *', 'Allow: /', '', `Sitemap: ${appConfig.baseUrl}/sitemap.xml`].join(
+              '\n',
+            );
 
         return new Response(body, {
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
