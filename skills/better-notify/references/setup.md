@@ -1,8 +1,3 @@
----
-name: better-notify/setup
-description: Interactive setup wizard for adding Better Notify to a TypeScript/JavaScript project
----
-
 # Better Notify Setup
 
 Guide for adding typed notifications to TypeScript/JavaScript applications using Better Notify.
@@ -32,27 +27,35 @@ Ask all applicable questions in a single call. Skip any you already answered fro
 
 1. **Notification channels** (always ask, allow multiple)
    - "Which notification channels do you need?"
-   - Options: Email | SMS | Push notifications | Discord | Slack | Telegram | Custom channel
+   - Options: Email | SMS | Push notifications | Web Push | WhatsApp | Discord | Slack | Telegram | GitHub | Custom channel
 
 2. **Email transport** (only if Email selected)
    - "Which email transport will you use?"
-   - Options: SMTP (Nodemailer) | Resend | Mailchimp Transactional (Mandrill) | Cloudflare Email | Mock (for development)
+   - Options: SMTP (Nodemailer) | Resend | Mailchimp Transactional (Mandrill) | Cloudflare Email | Autosend | Selligent (Marigold Engage) | OneSignal | Mock (for development)
 
 3. **SMS transport** (only if SMS selected)
    - "Which SMS transport will you use?"
-   - Options: Twilio | Mock (for development)
+   - Options: Twilio | OneSignal | Mock (for development)
 
-4. **Template engine** (only if Email selected)
+4. **Push transport** (only if Push or Web Push selected)
+   - "Which push transport will you use?"
+   - Options: Web Push (VAPID) | OneSignal | Mock (for development)
+
+5. **Template engine** (only if Email selected)
    - "How do you want to write email templates?"
    - Options: React Email | MJML | Handlebars | Inline HTML (no adapter needed)
 
-5. **Validation library** (skip if detected)
+6. **Validation library** (skip if detected)
    - "Which validation library do you use? Better Notify supports any Standard Schema provider."
    - Options: Zod | Valibot | ArkType
 
-6. **Features** (always ask, allow multiple)
+7. **Features** (always ask, allow multiple)
    - "Which additional features do you need?"
    - Options: Rate limiting | Idempotency (deduplication) | Suppression list | Tracing | Event logging | Dry-run mode | None
+
+8. **MCP server** (always ask)
+   - "Expose this catalog to AI agents as Model Context Protocol tools?"
+   - Options: Yes | No
 
 ### Step 3: Summarize the plan
 
@@ -92,24 +95,36 @@ Only proceed after the user confirms the plan.
 
 **Channels:**
 
-| Package                  | When               |
-| ------------------------ | ------------------ |
-| `@betternotify/email`    | Email channel      |
-| `@betternotify/sms`      | SMS channel        |
-| `@betternotify/push`     | Push notifications |
-| `@betternotify/discord`  | Discord webhooks   |
-| `@betternotify/slack`    | Slack messages     |
-| `@betternotify/telegram` | Telegram bot       |
+| Package                  | When                                      |
+| ------------------------ | ----------------------------------------- |
+| `@betternotify/email`    | Email channel                             |
+| `@betternotify/sms`      | SMS channel                               |
+| `@betternotify/push`     | Push notifications (FCM/APNs token-based) |
+| `@betternotify/webpush`  | Browser Web Push (VAPID)                  |
+| `@betternotify/whatsapp` | WhatsApp Cloud API (action-based)         |
+| `@betternotify/discord`  | Discord webhooks                          |
+| `@betternotify/slack`    | Slack messages                            |
+| `@betternotify/telegram` | Telegram bot                              |
+| `@betternotify/github`   | GitHub issues, PR comments, reviews       |
 
 **Transports:**
 
-| Package                          | When                    |
-| -------------------------------- | ----------------------- |
-| `@betternotify/smtp`             | SMTP email (Nodemailer) |
-| `@betternotify/resend`           | Resend email            |
-| `@betternotify/mailchimp`        | Mailchimp Transactional |
-| `@betternotify/cloudflare-email` | Cloudflare Email        |
-| `@betternotify/twilio`           | Twilio SMS              |
+| Package                          | When                                      |
+| -------------------------------- | ----------------------------------------- |
+| `@betternotify/smtp`             | SMTP email (Nodemailer)                   |
+| `@betternotify/resend`           | Resend email                              |
+| `@betternotify/mailchimp`        | Mailchimp Transactional (Mandrill)        |
+| `@betternotify/cloudflare-email` | Cloudflare Email                          |
+| `@betternotify/autosend`         | Autosend email                            |
+| `@betternotify/selligent`        | Selligent / Marigold Engage email         |
+| `@betternotify/twilio`           | Twilio SMS                                |
+| `@betternotify/onesignal`        | OneSignal push, email, and SMS transports |
+
+**MCP:**
+
+| Package             | When                                         |
+| ------------------- | -------------------------------------------- |
+| `@betternotify/mcp` | Expose the catalog to AI agents as MCP tools |
 
 **Templates:**
 
@@ -302,6 +317,30 @@ assert(mock.sent.length === 1);
 assert(mock.sent[0].subject === 'Welcome, Test!');
 mock.reset();
 ```
+
+### Step 8: Expose catalog as MCP tools (optional)
+
+Install `@betternotify/mcp` and start a server so AI agents can call any catalog route as a tool. Stdio transport is right for local/desktop agents; HTTP for remote ones.
+
+```typescript
+import { createMcpServer, apiKeyAuth } from '@betternotify/mcp';
+import { catalog } from './notify';
+import { mail } from './notify-client';
+
+const apiKey = process.env.MCP_API_KEY;
+if (!apiKey) throw new Error('MCP_API_KEY is required');
+
+const server = createMcpServer({ catalog, name: 'my-app', version: '1.0.0' });
+server.connect(mail);
+
+await server.start({
+  type: 'http',
+  port: 3333,
+  authenticate: apiKeyAuth({ keys: [apiKey] }),
+});
+```
+
+Stdio variant: `await server.start({ type: 'stdio' })`. Use `expose`/`deny` on `createMcpServer` to allow- or block-list specific routes.
 
 ---
 
