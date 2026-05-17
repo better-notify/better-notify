@@ -1,6 +1,10 @@
 ---
 name: better-notify/best-practices
 description: Quick reference for Better Notify configuration, patterns, and common gotchas
+metadata:
+  author: betternotify
+  homepage: https://better-notify.com
+  version: '1.0'
 ---
 
 # Better Notify Quick Reference

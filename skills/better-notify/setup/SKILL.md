@@ -1,6 +1,10 @@
 ---
 name: better-notify/setup
 description: Interactive setup wizard for adding Better Notify to a TypeScript/JavaScript project
+metadata:
+  author: betternotify
+  homepage: https://better-notify.com
+  version: '1.0'
 ---
 
 # Better Notify Setup
