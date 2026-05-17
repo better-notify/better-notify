@@ -8,6 +8,7 @@ import { Hero } from '@/components/landing/hero';
 import { Features } from '@/components/landing/features';
 import { Channels } from '@/components/landing/channels';
 import { Pipeline } from '@/components/landing/pipeline';
+import { Mcp } from '@/components/landing/mcp';
 import { Comparison } from '@/components/landing/comparison';
 import { Install } from '@/components/landing/install';
 import { Cta } from '@/components/landing/faq-cta';
@@ -78,6 +79,7 @@ function LandingPage() {
         <Features />
         <Channels />
         <Pipeline />
+        <Mcp />
         <Comparison />
         <Install />
         <Cta />

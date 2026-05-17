@@ -24,6 +24,7 @@ import { logoSvg, wordmarkSvg } from '@/lib/brand-assets';
 
 const navLinks = [
   { label: 'Docs', href: '/docs' },
+  { label: 'MCP', href: '/mcp' },
   { label: 'Blog', href: '/blog' },
   { label: 'Changelog', href: '/docs/changelog' },
 ] as const;

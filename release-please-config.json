@@ -134,6 +134,12 @@
       "component": "@betternotify/whatsapp",
       "prerelease-type": "beta",
       "bootstrap-sha": "e934968fd054f32357d70ed15bd258df3664a05c"
+    },
+    "packages/mcp": {
+      "release-type": "node",
+      "component": "@betternotify/mcp",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "4690286720627b2ad2d670eceac23f36aaca0ed4"
     }
   }
 }
