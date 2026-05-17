@@ -216,4 +216,22 @@ describe('createHttpHandler', () => {
     );
     expect(res.statusCode).toBe(401);
   });
+
+  it('returns 404 when url is missing and no auth is configured', async () => {
+    const handler = createHttpHandler({
+      path: '/mcp',
+      authenticate: undefined,
+      enableJsonResponse: false,
+      sessions: new Map(),
+      HttpTransportCtor: FakeHttpTransport as never,
+      newSessionId: () => 'sid',
+      attach: async () => {},
+    });
+    const res = makeRes();
+    await handler(
+      { headers: {} } as unknown as IncomingMessage,
+      res as unknown as ServerResponse,
+    );
+    expect(res.statusCode).toBe(404);
+  });
 });
