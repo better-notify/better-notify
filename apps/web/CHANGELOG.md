@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-beta.15](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.14...@betternotify/web-v1.1.0-beta.15) (2026-05-17)
+
+
+### Features
+
+* **mcp:** add MCP server package and surface it across docs and site ([#163](https://github.com/better-notify/better-notify/issues/163)) ([05e8ce3](https://github.com/better-notify/better-notify/commit/05e8ce381f50aa15c6f132fb690504e76d7574de))
+
 ## [1.1.0-beta.14](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.13...@betternotify/web-v1.1.0-beta.14) (2026-05-16)
 
 
