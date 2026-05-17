@@ -324,6 +324,19 @@ describe('createMcpServer', () => {
     });
   });
 
+  describe('start re-entrancy guard', () => {
+    it('throws when start is called twice', async () => {
+      const catalog = makeCatalog(['welcome']);
+      const mcp = createMcpServer({ catalog });
+      const port = await getFreePort();
+      await mcp.start({ type: 'http', port, authenticate: bearerAuth('s') });
+      await expect(
+        mcp.start({ type: 'http', port: port + 1, authenticate: bearerAuth('s') }),
+      ).rejects.toThrow('already started');
+      await mcp.close();
+    });
+  });
+
   describe('start({ type: stdio })', () => {
     afterEach(() => {
       vi.doUnmock('@modelcontextprotocol/sdk/server/stdio.js');

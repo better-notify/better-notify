@@ -114,46 +114,61 @@ export const createMcpServer = <C extends AnyCatalog>(options: McpServerOptions<
   });
 
   const start = async (transport: McpTransportConfig): Promise<void> => {
-    started = true;
-
-    if (transport.type === 'stdio') {
-      const { StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js');
-      await attach(new StdioServerTransport());
-      return;
+    if (started) {
+      throw new Error('MCP server is already started.');
     }
 
-    const { StreamableHTTPServerTransport: HttpTransportCtor } =
-      await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
-    const { createServer } = await import('node:http');
-    const { randomUUID } = await import('node:crypto');
+    try {
+      if (transport.type === 'stdio') {
+        const { StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js');
+        await attach(new StdioServerTransport());
+        started = true;
+        return;
+      }
 
-    const sessions = new Map<string, StreamableHTTPServerTransport>();
-    const handler = createHttpHandler({
-      path: transport.path ?? '/mcp',
-      authenticate: transport.authenticate,
-      enableJsonResponse: transport.enableJsonResponse ?? false,
-      sessions,
-      HttpTransportCtor,
-      newSessionId: () => randomUUID(),
-      attach,
-    });
+      const { StreamableHTTPServerTransport: HttpTransportCtor } =
+        await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
+      const { createServer } = await import('node:http');
+      const { randomUUID } = await import('node:crypto');
 
-    httpServer = createServer((req, res) => {
-      handler(req, res).catch(() => {
-        if (!res.headersSent) res.writeHead(500);
-        res.end();
+      const sessions = new Map<string, StreamableHTTPServerTransport>();
+      const handler = createHttpHandler({
+        path: transport.path ?? '/mcp',
+        authenticate: transport.authenticate,
+        enableJsonResponse: transport.enableJsonResponse ?? false,
+        sessions,
+        HttpTransportCtor,
+        newSessionId: () => randomUUID(),
+        attach,
       });
-    });
 
-    if (!transport.authenticate) {
-      process.stderr.write(
-        `[${name}] MCP server running on port ${transport.port} without authentication\n`,
-      );
+      httpServer = createServer((req, res) => {
+        handler(req, res).catch(() => {
+          if (!res.headersSent) res.writeHead(500);
+          res.end();
+        });
+      });
+
+      if (!transport.authenticate) {
+        process.stderr.write(
+          `[${name}] MCP server running on port ${transport.port} without authentication\n`,
+        );
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        if (!httpServer) return reject(new Error('HTTP server was not created'));
+        httpServer.once('error', reject);
+        httpServer.listen(transport.port, () => {
+          httpServer?.removeListener('error', reject);
+          resolve();
+        });
+      });
+
+      started = true;
+    } catch (error) {
+      started = false;
+      throw error;
     }
-
-    await new Promise<void>((resolve) => {
-      httpServer?.listen(transport.port, resolve);
-    });
   };
 
   const close = async (): Promise<void> => {

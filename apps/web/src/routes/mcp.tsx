@@ -1,14 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ArrowRightIcon, GithubLogoIcon } from '@phosphor-icons/react';
-import { ModelContextProtocol } from '@libs/ui';
-
 import { AnnouncementStrip } from '@/components/landing/announcement-strip';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { seo } from '@/lib/seo';
 import { appConfig } from '@/lib/shared';
 import { useInView } from '@/hooks/use-in-view';
-import { K, F, S, P, C } from '@/components/landing/syntax';
+import { K, F, S, P } from '@/components/landing/syntax';
 
 const packageRepoUrl = `https://github.com/${appConfig.git.user}/${appConfig.git.repo}/tree/main/packages/mcp`;
 

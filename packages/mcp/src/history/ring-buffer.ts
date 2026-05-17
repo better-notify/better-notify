@@ -9,6 +9,9 @@ export type RingBuffer = {
 };
 
 export const createRingBuffer = (maxSize: number): RingBuffer => {
+  if (!Number.isInteger(maxSize) || maxSize <= 0) {
+    throw new Error('maxSize must be a positive integer');
+  }
   const buffer: SendEventRecord[] = [];
 
   return {
@@ -20,7 +23,7 @@ export const createRingBuffer = (maxSize: number): RingBuffer => {
     },
 
     getAll() {
-      return buffer;
+      return buffer.slice();
     },
 
     getByRoute(route) {

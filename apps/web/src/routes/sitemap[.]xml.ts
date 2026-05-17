@@ -33,12 +33,17 @@ export const Route = createFileRoute('/sitemap.xml')({
           })),
         ];
 
+        const escapeXml = (str: string) =>
+          str.replace(/[&<>"']/g, (ch) =>
+            ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch === '"' ? '&quot;' : '&apos;',
+          );
+
         const xml = [
           '<?xml version="1.0" encoding="UTF-8"?>',
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
           ...urls.map(
             (entry) =>
-              `  <url>\n    <loc>${entry.loc}</loc>\n  </url>`,
+              `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>\n  </url>`,
           ),
           '</urlset>',
         ].join('\n');

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowRight, WhatsappLogo } from '@phosphor-icons/react';
 import { ModelContextProtocol } from '@libs/ui';
 import { useAnalytics } from '@/hooks/use-analytics';
@@ -34,10 +34,11 @@ export function AnnouncementStrip() {
   const analytics = useAnalytics('announcement');
   const [index, setIndex] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
+  const timeoutRef = useRef<number>(undefined);
 
   const advance = useCallback(() => {
     setTransitioning(true);
-    setTimeout(() => {
+    timeoutRef.current = window.setTimeout(() => {
       setIndex((i) => (i + 1) % announcements.length);
       setTransitioning(false);
     }, 300);
@@ -45,7 +46,12 @@ export function AnnouncementStrip() {
 
   useEffect(() => {
     const timer = setInterval(advance, 5000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (timeoutRef.current != null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [advance]);
 
   const current = announcements[index];

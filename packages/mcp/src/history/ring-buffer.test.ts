@@ -13,6 +13,21 @@ const makeEvent = (overrides: Partial<SendEventRecord> = {}): SendEventRecord =>
 });
 
 describe('createRingBuffer', () => {
+  it('throws when maxSize is not a positive integer', () => {
+    expect(() => createRingBuffer(0)).toThrow('maxSize must be a positive integer');
+    expect(() => createRingBuffer(-1)).toThrow('maxSize must be a positive integer');
+    expect(() => createRingBuffer(1.5)).toThrow('maxSize must be a positive integer');
+    expect(() => createRingBuffer(NaN)).toThrow('maxSize must be a positive integer');
+  });
+
+  it('returns a snapshot from getAll so mutations do not affect internal state', () => {
+    const buffer = createRingBuffer(10);
+    buffer.push(makeEvent());
+    const snapshot = buffer.getAll();
+    (snapshot as SendEventRecord[]).length = 0;
+    expect(buffer.getAll()).toHaveLength(1);
+  });
+
   it('stores and retrieves events', () => {
     const buffer = createRingBuffer(10);
     const event = makeEvent();

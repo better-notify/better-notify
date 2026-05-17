@@ -113,7 +113,11 @@ describe('registerTools', () => {
       const catalog = makeCatalog(['welcome']);
       registerTools(server as unknown as McpServer, catalog, ['welcome'], () => undefined);
       const { handler } = server.tools.get('welcome.send') ?? {};
-      const result = (await handler?.({})) as { content: Array<{ text: string }> };
+      const result = (await handler?.({})) as {
+        isError?: boolean;
+        content: Array<{ text: string }>;
+      };
+      expect(result.isError).toBe(true);
       expect(JSON.parse(result.content[0]?.text ?? '{}').error).toContain('Client not connected');
     });
 
@@ -123,7 +127,11 @@ describe('registerTools', () => {
       const client = { other: { send: () => Promise.resolve() }, close: async () => {} };
       registerTools(server as unknown as McpServer, catalog, ['welcome'], () => client as never);
       const { handler } = server.tools.get('welcome.send') ?? {};
-      const result = (await handler?.({})) as { content: Array<{ text: string }> };
+      const result = (await handler?.({})) as {
+        isError?: boolean;
+        content: Array<{ text: string }>;
+      };
+      expect(result.isError).toBe(true);
       expect(JSON.parse(result.content[0]?.text ?? '{}').error).toContain('not found on client');
     });
 
@@ -138,7 +146,11 @@ describe('registerTools', () => {
         () => client as never,
       );
       const { handler } = server.tools.get('transactional.welcome.send') ?? {};
-      const result = (await handler?.({})) as { content: Array<{ text: string }> };
+      const result = (await handler?.({})) as {
+        isError?: boolean;
+        content: Array<{ text: string }>;
+      };
+      expect(result.isError).toBe(true);
       expect(JSON.parse(result.content[0]?.text ?? '{}').error).toContain('not found');
     });
 
@@ -201,7 +213,11 @@ describe('registerTools', () => {
       const catalog = makeCatalog(['welcome']);
       registerTools(server as unknown as McpServer, catalog, ['welcome'], () => undefined);
       const { handler } = server.tools.get('welcome.render') ?? {};
-      const result = (await handler?.({})) as { content: Array<{ text: string }> };
+      const result = (await handler?.({})) as {
+        isError?: boolean;
+        content: Array<{ text: string }>;
+      };
+      expect(result.isError).toBe(true);
       expect(JSON.parse(result.content[0]?.text ?? '{}').error).toContain('Client not connected');
     });
 
@@ -211,7 +227,11 @@ describe('registerTools', () => {
       const client = { welcome: { send: () => Promise.resolve() }, close: async () => {} };
       registerTools(server as unknown as McpServer, catalog, ['welcome'], () => client as never);
       const { handler } = server.tools.get('welcome.render') ?? {};
-      const result = (await handler?.({})) as { content: Array<{ text: string }> };
+      const result = (await handler?.({})) as {
+        isError?: boolean;
+        content: Array<{ text: string }>;
+      };
+      expect(result.isError).toBe(true);
       expect(JSON.parse(result.content[0]?.text ?? '{}').error).toContain('does not support');
     });
 

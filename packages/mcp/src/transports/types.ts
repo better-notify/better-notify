@@ -1,4 +1,4 @@
-import type { McpAuth } from '../auth/index.js';
+import type { McpAuth } from '../auth/types.js';
 
 export type StdioTransportConfig = {
   type: 'stdio';

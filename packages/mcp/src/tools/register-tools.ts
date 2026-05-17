@@ -33,13 +33,10 @@ const buildToolConfig = (
   return config;
 };
 
-const errorResult = (message: string, isError = false) => {
-  const result: { content: Array<{ type: 'text'; text: string }>; isError?: boolean } = {
-    content: [{ type: 'text' as const, text: JSON.stringify({ error: message }) }],
-  };
-  if (isError) result.isError = true;
-  return result;
-};
+const errorResult = (message: string) => ({
+  isError: true as const,
+  content: [{ type: 'text' as const, text: JSON.stringify({ error: message }) }],
+});
 
 const okResult = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value) }],
@@ -78,7 +75,7 @@ export const registerTools = (
           return errorResult(`Route "${route}" not found on client`);
         }
         const [err, result] = await handlePromise(methods.send(args) as Promise<unknown>);
-        if (err) return errorResult(err.message, true);
+        if (err) return errorResult(err.message);
         return okResult(result);
       },
     );
@@ -100,7 +97,7 @@ export const registerTools = (
           return errorResult(`Route "${route}" does not support .render()`);
         }
         const [err, result] = await handlePromise(methods.render(args) as Promise<unknown>);
-        if (err) return errorResult(err.message, true);
+        if (err) return errorResult(err.message);
         return okResult(result);
       },
     );

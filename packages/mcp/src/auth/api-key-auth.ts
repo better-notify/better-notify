@@ -10,6 +10,9 @@ export type ApiKeyAuthOptions = {
 const sha256 = (value: string): Buffer => createHash('sha256').update(value).digest();
 
 export const apiKeyAuth = (opts: ApiKeyAuthOptions): McpAuth => {
+  if (opts.keys.length === 0) {
+    throw new Error('apiKeyAuth requires at least one key');
+  }
   const headerName = opts.header ?? 'x-api-key';
   const hashedKeys = opts.keys.map(sha256);
   return createAuth((req) => {

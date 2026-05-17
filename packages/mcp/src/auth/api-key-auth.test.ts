@@ -5,6 +5,10 @@ const makeRequest = (headers: Record<string, string> = {}): Request =>
   new Request('http://localhost/mcp', { headers });
 
 describe('apiKeyAuth', () => {
+  it('throws when keys array is empty', () => {
+    expect(() => apiKeyAuth({ keys: [] })).toThrow('apiKeyAuth requires at least one key');
+  });
+
   it('accepts valid api key with default header', async () => {
     const auth = apiKeyAuth({ keys: ['key-1', 'key-2'] });
     const result = await auth.verify(makeRequest({ 'x-api-key': 'key-1' }));

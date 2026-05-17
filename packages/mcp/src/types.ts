@@ -1,5 +1,5 @@
 import type { AnyCatalog } from '@betternotify/core';
-import type { HistoryOptions } from './history/index.js';
+import type { HistoryOptions } from './history/types.js';
 
 export type JsonSchema = Record<string, unknown>;
 
