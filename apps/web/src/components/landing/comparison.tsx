@@ -59,8 +59,8 @@ export function Comparison() {
             When to reach for it.
           </h2>
           <p className="text-muted-foreground max-w-[620px] text-[17px] leading-relaxed text-pretty">
-            Better-Notify sits between cloud notification platforms and a hand-rolled sendEmail()
-            helper.
+            Better-Notify sits between cloud notification platforms like Novu, Knock, and Courier —
+            and a hand-rolled sendEmail() helper.
           </p>
         </div>
 
@@ -71,6 +71,9 @@ export function Comparison() {
                 <th className="border-border bg-muted/50 text-muted-foreground border-b px-4 py-3.5 text-left font-sans text-[11px] font-semibold uppercase tracking-wider" />
                 <th className="border-border bg-muted/50 text-muted-foreground border-b px-4 py-3.5 text-left font-sans text-[11px] font-semibold uppercase tracking-wider">
                   Cloud platforms
+                  <span className="text-muted-foreground/60 block text-[10px] font-normal normal-case tracking-normal">
+                    Novu · Knock · Courier
+                  </span>
                 </th>
                 <th className="border-border bg-muted/50 text-muted-foreground border-b px-4 py-3.5 text-left font-sans text-[11px] font-semibold uppercase tracking-wider">
                   Hand-rolled
