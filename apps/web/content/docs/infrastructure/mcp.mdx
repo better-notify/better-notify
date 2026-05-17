@@ -1,0 +1,428 @@
+---
+title: MCP Server
+icon: McpLogo
+description: Expose your notification catalog as tools for AI agents via the Model Context Protocol
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The MCP package lets you expose your Better-Notify catalog as a [Model Context Protocol](https://modelcontextprotocol.io) server. AI agents (Claude, Cursor, Copilot, etc.) can discover your notification routes as typed tools: send emails, preview templates, and observe send history.
+
+For a high-level overview and setup walkthrough, see the [MCP server page](/mcp).
+
+## Install
+
+```package-install
+@betternotify/mcp @betternotify/core @modelcontextprotocol/sdk
+```
+
+## How it works
+
+Each route in your catalog becomes two MCP tools:
+
+- **`{route}.send`** sends the notification and returns the result
+- **`{route}.render`** previews the rendered output without sending
+
+The server also exposes MCP resources for observability:
+
+- **`notifications://recent`** recently sent notifications
+- **`notifications://routes/{routeId}/history`** per-route send history
+- **`notifications://stats`** aggregated send statistics
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel, mockTransport } from '@betternotify/email';
+import { createMcpServer } from '@betternotify/mcp';
+import { z } from 'zod';
+
+const email = emailChannel({ defaults: { from: 'hello@example.com' } });
+const rpc = createNotify({ channels: { email } });
+
+const catalog = rpc.catalog({
+  welcome: rpc
+    .email()
+    .input(z.object({ name: z.string() }))
+    .subject(({ input }) => `Welcome, ${input.name}`)
+    .template({ render: async ({ input }) => ({ html: `<h1>Hi ${input.name}</h1>` }) }),
+});
+
+// 1. Create the MCP server
+const mcp = createMcpServer({ catalog });
+
+// 2. Wire it into the client via plugin
+const mail = createClient({
+  catalog,
+  transportsByChannel: { email: mockTransport() },
+  plugins: [mcp.plugin()],
+});
+
+// 3. Connect the client and start
+mcp.connect(mail);
+await mcp.start({ type: 'stdio' });
+```
+
+An AI agent connecting to this server would see:
+
+```
+Tools:
+  welcome.send    Send email notification via welcome
+  welcome.render  Preview email notification for welcome without sending
+
+Resources:
+  notifications://recent
+  notifications://routes/welcome/history
+  notifications://stats
+```
+
+## Options
+
+<TypeTable
+  type={{
+    catalog: {
+      description: 'The notification catalog used to generate tools. Required.',
+      type: 'AnyCatalog',
+    },
+    name: {
+      description: 'MCP server name shown to clients.',
+      type: 'string',
+      default: '"betternotify"',
+    },
+    version: {
+      description: 'MCP server version.',
+      type: 'string',
+      default: '"1.0.0"',
+    },
+    expose: {
+      description: 'Glob patterns. Only matching routes become tools. Supports `*` (single segment) and `**` (any depth).',
+      type: 'string[]',
+    },
+    deny: {
+      description: 'Glob patterns. Matching routes are excluded. Deny takes precedence over expose.',
+      type: 'string[]',
+    },
+    history: {
+      description: 'Ring buffer configuration for the internal event recorder.',
+      type: '{ maxSize?: number }',
+      default: '{ maxSize: 200 }',
+    },
+    inputSchemas: {
+      description: 'Per-route JSON Schema overrides shown to AI agents in tools/list. Required for non-Zod Standard Schemas (Valibot, ArkType, …); optional for Zod (auto-derived by the MCP SDK).',
+      type: 'Partial<Record<Route, JsonSchema>>',
+    },
+  }}
+/>
+
+## Schema handling
+
+The MCP SDK derives JSON Schema only from [Zod](https://zod.dev) definitions. Better-Notify accepts any [Standard Schema](https://standardschema.dev) (Valibot, ArkType, Effect Schema, etc.), so the package bridges the gap:
+
+- **Zod schemas** pass through directly; the SDK builds the JSON Schema that agents see in `tools/list`.
+- **Other Standard Schemas** are withheld from the SDK (which would throw). Agents see an empty `{ type: 'object' }` placeholder unless you supply an `inputSchemas` override.
+
+Runtime validation always runs through the Standard Schema you defined on the route, regardless of what MCP advertises. The `inputSchemas` override only affects what the agent sees during tool discovery.
+
+```ts
+import { type } from 'arktype';
+
+const Input = type({ name: 'string', email: 'string.email' });
+
+const catalog = rpc.catalog({
+  welcome: rpc.email().input(Input).subject(/* ... */).template(/* ... */),
+});
+
+const mcp = createMcpServer({
+  catalog,
+  inputSchemas: {
+    welcome: Input.toJsonSchema(),
+  },
+});
+```
+
+Use your vendor's JSON Schema export (`type.toJsonSchema()` for ArkType, `toJsonSchema(schema)` from `@valibot/to-json-schema`) or hand-author the schema for precise control over tool discovery.
+
+## Route filtering
+
+Control which routes are exposed to AI agents:
+
+```ts
+const mcp = createMcpServer({
+  catalog,
+  // Only expose transactional routes
+  expose: ['transactional.*'],
+  // Except the password reset route
+  deny: ['transactional.resetPassword'],
+});
+```
+
+`expose` and `deny` accept glob patterns:
+- `*` matches a single segment: `transactional.*` matches `transactional.welcome` but not `transactional.onboarding.step1`
+- `**` matches any depth: `transactional.**` matches everything nested under `transactional`
+
+TypeScript infers route names from the catalog type, so your editor autocompletes them.
+
+## Transport
+
+### stdio
+
+Use stdio when the MCP server runs as a local subprocess spawned by your AI tool:
+
+```ts
+await mcp.start({ type: 'stdio' });
+```
+
+### Streamable HTTP
+
+Use the HTTP transport when the MCP server runs as a network service. It implements the [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http): a single endpoint that multiplexes sessions via the `mcp-session-id` header and streams responses over SSE.
+
+```ts
+import { bearerAuth } from '@betternotify/mcp';
+
+await mcp.start({
+  type: 'http',
+  port: 3100,
+  authenticate: bearerAuth(process.env.MCP_SECRET),
+});
+```
+
+Optional fields:
+
+- `path` endpoint path (defaults to `/mcp`)
+- `enableJsonResponse` return plain JSON instead of SSE streams (off by default)
+
+<Callout type="warn">
+  If you start an HTTP server without authentication, a warning is logged. Always use authentication in production.
+</Callout>
+
+## Authentication
+
+Authentication applies only to the HTTP transport. Three options:
+
+### Bearer token
+
+```ts
+import { bearerAuth } from '@betternotify/mcp';
+
+await mcp.start({
+  type: 'http',
+  port: 3100,
+  authenticate: bearerAuth(process.env.MCP_SECRET),
+});
+```
+
+### API key
+
+```ts
+import { apiKeyAuth } from '@betternotify/mcp';
+
+await mcp.start({
+  type: 'http',
+  port: 3100,
+  authenticate: apiKeyAuth({ header: 'x-api-key', keys: ['key-1', 'key-2'] }),
+});
+```
+
+### Custom
+
+Use `createAuth` for any custom authentication logic:
+
+```ts
+import { createAuth } from '@betternotify/mcp';
+
+const dbAuth = createAuth(async (req) => {
+  const token = req.headers.get('authorization')?.replace('Bearer ', '');
+  const user = await db.apiKeys.findByToken(token);
+  if (!user) return { ok: false, reason: 'invalid token' };
+  return { ok: true, context: { userId: user.id } };
+});
+
+await mcp.start({
+  type: 'http',
+  port: 3100,
+  authenticate: dbAuth,
+});
+```
+
+The `context` from a successful auth result is available for audit logging and per-user restrictions.
+
+## Observability
+
+The MCP server records send events via a plugin that hooks into `onAfterSend` and `onError`. These events power the MCP resources listed above.
+
+Wire the plugin into your client:
+
+```ts
+const mail = createClient({
+  catalog,
+  transportsByChannel: { email: resendTransport({ apiKey }) },
+  plugins: [mcp.plugin()],
+});
+```
+
+The internal ring buffer holds the last 200 events by default and evicts the oldest when full.
+
+## Composing with existing MCP servers
+
+Most AI tools support multiple MCP servers. If you already run an MCP server with your own tools, add Better-Notify as a second server rather than merging them into one.
+
+**Claude Code** (`.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "my-tools": {
+      "command": "node",
+      "args": ["my-mcp-server.js"]
+    },
+    "betternotify": {
+      "command": "npx",
+      "args": ["tsx", "path/to/your/mcp-server.ts"]
+    }
+  }
+}
+```
+
+The AI agent sees tools from both servers in a single unified list.
+
+### Shared transport with `attach()`
+
+If you manage your own transport layer and need to connect the Better-Notify server to it directly, use `attach()` instead of `start()`:
+
+```ts
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+
+const mcp = createMcpServer({ catalog });
+mcp.connect(mail);
+
+const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+await mcp.attach(transport);
+```
+
+This gives you full control over how the transport is created and managed (useful when integrating into an existing HTTP framework or reverse proxy).
+
+## Testing
+
+### With Claude Code
+
+Add the MCP server to your project's `.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "betternotify": {
+      "command": "npx",
+      "args": ["tsx", "path/to/your/mcp-server.ts"]
+    }
+  }
+}
+```
+
+Restart Claude Code and the notification tools will appear automatically. Ask Claude to "send a welcome email to alice@example.com" and it'll call `transactional.welcome.send`.
+
+### With Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+```json
+{
+  "mcpServers": {
+    "betternotify": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/your/mcp-server.ts"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. Tools will appear in the hammer icon.
+
+### Remote HTTP server
+
+When the MCP server runs on a remote host, point your AI tool at the URL instead of spawning a subprocess.
+
+**Claude Code** (`.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "betternotify": {
+      "type": "streamable-http",
+      "url": "https://mcp.yourapp.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+**Claude Desktop** (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "betternotify": {
+      "type": "streamable-http",
+      "url": "https://mcp.yourapp.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "betternotify": {
+      "url": "https://mcp.yourapp.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+Replace the URL with your deployment's endpoint and the token with a value from your `authenticate` configuration.
+
+### With the MCP Inspector
+
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a web UI for testing any MCP server interactively. Start your server in HTTP mode, then connect:
+
+```sh
+# Terminal 1: start the server
+node your-mcp-server.js --http
+
+# Terminal 2: open the inspector
+npx @modelcontextprotocol/inspector
+```
+
+Enter your server URL (e.g., `http://localhost:3100/mcp`) in the inspector and you can browse tools, call them, read resources, and see results in real time.
+
+### Programmatic testing
+
+Use the MCP SDK client to connect and call tools from a script:
+
+```ts
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+
+const transport = new StreamableHTTPClientTransport(new URL('http://localhost:3100/mcp'));
+const client = new Client({ name: 'test-client', version: '1.0.0' });
+await client.connect(transport);
+
+const { tools } = await client.listTools();
+console.log(tools.map(t => t.name));
+// → ['transactional.welcome.send', 'transactional.welcome.render', ...]
+
+const result = await client.callTool({
+  name: 'transactional.welcome.send',
+  arguments: { name: 'Alice', email: 'alice@example.com' },
+});
+console.log(result);
+```

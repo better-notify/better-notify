@@ -59,6 +59,7 @@ import {
   WebhooksLogo,
   Wrench,
 } from '@phosphor-icons/react';
+import { ModelContextProtocol } from '@libs/ui';
 import { createElement } from 'react';
 
 const TwilioLogo = ({ size = 18 }: { size?: string | number }) =>
@@ -219,6 +220,7 @@ export const iconMap = {
   Layout,
   Lightbulb,
   Lightning,
+  McpLogo: ModelContextProtocol,
   MailchimpLogo,
   MetaLogo,
   Megaphone,

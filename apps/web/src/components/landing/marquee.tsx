@@ -8,6 +8,7 @@ import {
   WhatsappLogoIcon,
   LightningIcon,
 } from '@phosphor-icons/react';
+import { ModelContextProtocol } from '@libs/ui';
 
 import type { ReactNode } from 'react';
 
@@ -215,6 +216,10 @@ const providers: { name: string; icon: ReactNode }[] = [
   { name: 'SMTP', icon: <AtIcon size={20} weight="fill" className="text-[#999]" /> },
   { name: 'SMS', icon: <PhoneIcon size={20} weight="fill" className="text-[#999]" /> },
   { name: 'Push', icon: <BellIcon size={20} weight="fill" className="text-[#999]" /> },
+  {
+    name: 'MCP',
+    icon: <ModelContextProtocol width={20} height={20} className="dark:fill-white fill-black" />,
+  },
 ];
 
 export function Marquee() {

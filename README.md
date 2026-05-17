@@ -72,6 +72,8 @@ await mail.welcome.send({ to: 'john@example.com', input: { name: 'John' } });
 | [`@betternotify/telegram`](https://www.npmjs.com/package/@betternotify/telegram) | [`@betternotify/autosend`](https://www.npmjs.com/package/@betternotify/autosend)                 |                                                                                        |
 | [`@betternotify/zapier`](https://www.npmjs.com/package/@betternotify/zapier)     |                                                                                                  |                                                                                        |
 
+Integrations: [`@betternotify/mcp`](https://www.npmjs.com/package/@betternotify/mcp) (Model Context Protocol server for AI agents)
+
 Scaffolding: [`create-better-notify`](https://www.npmjs.com/package/create-better-notify)
 
 ```sh
