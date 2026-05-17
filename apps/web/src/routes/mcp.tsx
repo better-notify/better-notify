@@ -10,18 +10,19 @@ import { appConfig } from '@/lib/shared';
 import { useInView } from '@/hooks/use-in-view';
 import { K, F, S, P, C } from '@/components/landing/syntax';
 
+const packageRepoUrl = `https://github.com/${appConfig.git.user}/${appConfig.git.repo}/tree/main/packages/mcp`;
+
 export const Route = createFileRoute('/mcp')({
   component: McpPage,
   head: () => {
     const url = `${appConfig.baseUrl}/mcp`;
+    const description =
+      'Turn your notification catalog into MCP tools. Claude, Cursor, and Copilot send emails, SMS, and push notifications through the Model Context Protocol.';
     const { meta, links } = seo({
-      title: `${appConfig.name}: MCP Server for Notifications`,
-      description:
-        'Turn your notification catalog into MCP tools. Claude, Cursor, and Copilot send emails, SMS, and push notifications through the Model Context Protocol.',
+      title: `MCP Server for Notifications — ${appConfig.name}`,
+      description,
       url,
       canonicalUrl: url,
-      keywords:
-        'mcp server notifications, model context protocol email, ai agent notifications, mcp send email, claude mcp notifications, cursor mcp server',
     });
     return {
       meta,
@@ -31,16 +32,73 @@ export const Route = createFileRoute('/mcp')({
           type: 'application/ld+json',
           children: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'WebPage',
-            name: `${appConfig.name} MCP Server`,
-            url,
-            description:
-              'Turn your notification catalog into MCP tools that AI agents can call to send emails, SMS, and push notifications.',
-            about: {
-              '@type': 'SoftwareApplication',
-              name: appConfig.name,
-              applicationCategory: 'DeveloperApplication',
-            },
+            '@graph': [
+              {
+                '@type': 'WebPage',
+                '@id': `${url}#webpage`,
+                url,
+                name: `MCP Server for Notifications — ${appConfig.name}`,
+                description,
+                inLanguage: appConfig.locale.bcp47,
+                isPartOf: { '@id': `${appConfig.baseUrl}#website` },
+                primaryImageOfPage: { '@id': `${url}#primaryimage` },
+                breadcrumb: { '@id': `${url}#breadcrumb` },
+              },
+              {
+                '@type': 'BreadcrumbList',
+                '@id': `${url}#breadcrumb`,
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: appConfig.baseUrl },
+                  { '@type': 'ListItem', position: 2, name: 'MCP', item: url },
+                ],
+              },
+              {
+                '@type': 'SoftwareApplication',
+                '@id': `${url}#software`,
+                name: `${appConfig.name} MCP Server`,
+                applicationCategory: 'DeveloperApplication',
+                operatingSystem: 'Cross-platform',
+                url,
+                codeRepository: packageRepoUrl,
+                programmingLanguage: 'TypeScript',
+                description,
+                offers: {
+                  '@type': 'Offer',
+                  price: '0',
+                  priceCurrency: 'USD',
+                },
+              },
+              {
+                '@type': 'FAQPage',
+                '@id': `${url}#faq`,
+                mainEntity: [
+                  {
+                    '@type': 'Question',
+                    name: 'How do I run the MCP server locally during development?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Start the server with the stdio transport and add it to your AI client config (Claude Code, Cursor, Windsurf). The server runs as a child process and exposes each catalog route as a typed MCP tool.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'How do I deploy the MCP server in production?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Start it with the HTTP transport to deploy as a network service. Authenticate with bearer tokens, API keys, or a custom auth function. Sessions multiplex over a single Streamable HTTP endpoint.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Can I limit which notification routes AI agents can call?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. The expose and deny options accept glob patterns over catalog route IDs, so you can lock agents to transactional routes while keeping marketing routes code-only.',
+                    },
+                  },
+                ],
+              },
+            ],
           }),
         },
       ],

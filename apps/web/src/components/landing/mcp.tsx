@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from '@phosphor-icons/react';
 import { ModelContextProtocol } from '@libs/ui';
 
 import { useInView } from '@/hooks/use-in-view';
@@ -201,6 +202,20 @@ export function Mcp() {
               streaming.
             </p>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <a
+            href="/mcp"
+            className="text-primary hover:text-primary/80 group inline-flex items-center gap-1.5 text-[14px] font-medium no-underline transition-colors"
+          >
+            Learn more about the MCP server
+            <ArrowRightIcon
+              size={14}
+              weight="bold"
+              className="transition-transform group-hover:translate-x-0.5"
+            />
+          </a>
         </div>
       </div>
     </section>

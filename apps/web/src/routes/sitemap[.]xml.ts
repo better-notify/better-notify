@@ -14,6 +14,7 @@ export const Route = createFileRoute('/sitemap.xml')({
 
         const urls = [
           { loc: `${appConfig.baseUrl}/`, changefreq: 'daily', priority: '1.0' },
+          { loc: `${appConfig.baseUrl}/mcp`, changefreq: 'weekly', priority: '0.9' },
           ...pages.map((page) => ({
             loc: `${appConfig.baseUrl}${page.url}`,
             changefreq: 'weekly',
