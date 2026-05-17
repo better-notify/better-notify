@@ -1,12 +1,3 @@
----
-name: better-notify/setup
-description: Interactive setup wizard for adding Better Notify to a TypeScript/JavaScript project
-metadata:
-  author: betternotify
-  homepage: https://better-notify.com
-  version: '1.0'
----
-
 # Better Notify Setup
 
 Guide for adding typed notifications to TypeScript/JavaScript applications using Better Notify.
@@ -336,13 +327,16 @@ import { createMcpServer, apiKeyAuth } from '@betternotify/mcp';
 import { catalog } from './notify';
 import { mail } from './notify-client';
 
+const apiKey = process.env.MCP_API_KEY;
+if (!apiKey) throw new Error('MCP_API_KEY is required');
+
 const server = createMcpServer({ catalog, name: 'my-app', version: '1.0.0' });
 server.connect(mail);
 
 await server.start({
   type: 'http',
   port: 3333,
-  authenticate: apiKeyAuth({ keys: [process.env.MCP_API_KEY ?? ''] }),
+  authenticate: apiKeyAuth({ keys: [apiKey] }),
 });
 ```
 

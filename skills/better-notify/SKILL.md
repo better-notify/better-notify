@@ -1,24 +1,20 @@
 ---
 name: better-notify
-description: Context and API guidance for Better Notify — end-to-end typed notification infrastructure for Node.js
+description: End-to-end typed notification infrastructure for Node.js — typed catalog of email, SMS, push, web push, WhatsApp, Slack, Discord, Telegram, and GitHub notifications with provider-agnostic transports. Use when the user wants to set up notifications, define a notification catalog, send transactional email or other notifications, add a new provider/transport, expose notifications to AI agents via MCP, or asks about any `@betternotify/*` package (core, email, sms, push, webpush, whatsapp, github, smtp, resend, twilio, onesignal, mcp, etc.).
 metadata:
   author: betternotify
   homepage: https://better-notify.com
-  version: '1.0'
+  version: '1.1'
 ---
 
 # Better Notify
 
 End-to-end typed notification infrastructure for Node.js (ESM-only, Node >= 22). A single catalog type drives the typed sender and webhook router — analogous to tRPC, but for notifications.
 
-## When to use
+## References
 
-When setting up typed notifications, adding email/SMS/push transports, defining notification catalogs, or answering questions about `@betternotify/*` packages.
-
-## Skills
-
-- **[setup](./setup/SKILL.md)** — Interactive setup wizard. Scans your project, asks what channels/transports you need, and scaffolds the catalog + client.
-- **[best-practices](./best-practices/SKILL.md)** — Quick reference for configuration, channel slots, subpath imports, middleware, hooks, and common gotchas.
+- **`references/setup.md`** — Load when the user wants to add Better Notify to a project, scaffold a catalog/client, install channel or transport packages, or wire up an MCP server. Contains an interactive setup wizard, install tables, and end-to-end code snippets.
+- **`references/best-practices.md`** — Load when the user is configuring an existing Better Notify install: slot tables for a specific channel, middleware/hooks, subpath imports, multi-transport strategies, MCP `createMcpServer` options, error classes, and common gotchas.
 
 ## Core Concepts
 

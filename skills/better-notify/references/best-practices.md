@@ -1,12 +1,3 @@
----
-name: better-notify/best-practices
-description: Quick reference for Better Notify configuration, patterns, and common gotchas
-metadata:
-  author: betternotify
-  homepage: https://better-notify.com
-  version: '1.0'
----
-
 # Better Notify Quick Reference
 
 **Always consult [better-notify.com/docs](https://better-notify.com/docs) for latest API.**
@@ -317,6 +308,9 @@ import { createMcpServer, apiKeyAuth, bearerAuth, createAuth } from '@betternoti
 import { catalog } from './notify';
 import { mail } from './notify-client';
 
+const apiKey = process.env.MCP_API_KEY;
+if (!apiKey) throw new Error('MCP_API_KEY is required');
+
 const server = createMcpServer({
   catalog,
   name: 'my-app',
@@ -341,7 +335,7 @@ await server.start({
   type: 'http',
   port: 3333,
   path: '/mcp',
-  authenticate: apiKeyAuth({ keys: [process.env.MCP_API_KEY ?? ''] }),
+  authenticate: apiKeyAuth({ keys: [apiKey] }),
 });
 
 // graceful shutdown
@@ -350,19 +344,19 @@ await server.close();
 
 **`createMcpServer` options:**
 
-| Option          | Type                        | Purpose                                           |
-| --------------- | --------------------------- | ------------------------------------------------- |
-| `catalog`       | `AnyCatalog`                | The catalog whose routes become MCP tools         |
-| `name?`         | `string`                    | Server name (default: `'betternotify'`)           |
-| `version?`      | `string`                    | Server version (default: `'1.0.0'`)               |
-| `expose?`       | `Array<RouteId>`            | Allowlist of routes to expose                     |
-| `deny?`         | `Array<RouteId>`            | Blocklist of routes to hide                       |
-| `history?`      | `{ maxSize?: number }`      | Ring-buffer of recent send events                 |
-| `inputSchemas?` | `Partial<Record<Route, …>>` | Override the JSON Schema for specific tool inputs |
+| Option          | Type                          | Purpose                                           |
+| --------------- | ----------------------------- | ------------------------------------------------- |
+| `catalog`       | `AnyCatalog`                  | The catalog whose routes become MCP tools         |
+| `name?`         | `string`                      | Server name (default: `'betternotify'`)           |
+| `version?`      | `string`                      | Server version (default: `'1.0.0'`)               |
+| `expose?`       | `Array<RouteId>`              | Allowlist of routes to expose                     |
+| `deny?`         | `Array<RouteId>`              | Blocklist of routes to hide                       |
+| `history?`      | `{ maxSize?: number }`        | Ring-buffer of recent send events                 |
+| `inputSchemas?` | `Partial<Record<RouteId, …>>` | Override the JSON Schema for specific tool inputs |
 
 **Transports:** `{ type: 'stdio' }` for local agents; `{ type: 'http', port, path?, authenticate?, enableJsonResponse? }` for remote.
 
-**Auth helpers:** `apiKeyAuth({ keys })`, `bearerAuth({ tokens })`, or `createAuth(fn)` for fully custom verification. Auth only applies to the HTTP transport.
+**Auth helpers:** `apiKeyAuth({ keys, header? })`, `bearerAuth(secret)`, or `createAuth(fn)` for fully custom verification. Auth only applies to the HTTP transport.
 
 **Returned API:** `{ start, close, connect, plugin, attach, routes, history }`. `server.plugin()` returns a Better Notify plugin that hooks into the client's lifecycle so the history ring buffer captures sends automatically. `history.recent()` / `history.byRoute(id)` / `history.stats()` read the buffer directly.
 
