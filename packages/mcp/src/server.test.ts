@@ -406,6 +406,26 @@ describe('createMcpServer', () => {
       await mcp.close();
     });
 
+    it('resets started flag when the HTTP server fails to bind', async () => {
+      const catalog = makeCatalog(['welcome']);
+      const mcp = createMcpServer({ catalog });
+      const port = await getFreePort();
+      const { createServer } = await import('node:net');
+      const blocker = createServer();
+      await new Promise<void>((resolve) => blocker.listen(port, resolve));
+      try {
+        await expect(
+          mcp.start({ type: 'http', port, authenticate: bearerAuth('s') }),
+        ).rejects.toThrow();
+        const mcp2 = createMcpServer({ catalog });
+        const freePort = await getFreePort();
+        await mcp2.start({ type: 'http', port: freePort, authenticate: bearerAuth('s') });
+        await mcp2.close();
+      } finally {
+        await new Promise<void>((resolve) => blocker.close(() => resolve()));
+      }
+    });
+
     it('logs a warning when started without authentication', async () => {
       const writes: string[] = [];
       const original = process.stderr.write.bind(process.stderr);

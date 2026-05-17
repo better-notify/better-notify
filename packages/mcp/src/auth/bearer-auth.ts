@@ -6,6 +6,7 @@ const BEARER_PREFIX = /^Bearer\s+(.+)$/i;
 
 const sha256 = (value: string): Buffer => createHash('sha256').update(value).digest();
 
+/** Creates an auth strategy that validates `Authorization: Bearer <token>` headers using timing-safe comparison. */
 export const bearerAuth = (secret: string): McpAuth => {
   const expected = sha256(secret);
   return createAuth((req) => {

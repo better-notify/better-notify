@@ -11,6 +11,7 @@ import type { McpServerOptions } from './types.js';
 
 type AnyClient = Record<string, unknown> & { close: () => Promise<void> };
 
+/** Builds an MCP server that exposes catalog routes as AI-agent tools and notification history as resources. */
 export const createMcpServer = <C extends AnyCatalog>(options: McpServerOptions<C>) => {
   const { catalog, name = 'betternotify', version = '1.0.0' } = options;
 
@@ -155,11 +156,11 @@ export const createMcpServer = <C extends AnyCatalog>(options: McpServerOptions<
         );
       }
 
+      const server = httpServer;
       await new Promise<void>((resolve, reject) => {
-        if (!httpServer) return reject(new Error('HTTP server was not created'));
-        httpServer.once('error', reject);
-        httpServer.listen(transport.port, () => {
-          httpServer?.removeListener('error', reject);
+        server.once('error', reject);
+        server.listen(transport.port, () => {
+          server.removeListener('error', reject);
           resolve();
         });
       });
