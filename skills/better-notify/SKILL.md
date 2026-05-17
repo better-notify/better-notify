@@ -37,11 +37,13 @@ When setting up typed notifications, adding email/SMS/push transports, defining 
 
 **Core:** `@betternotify/core` — contracts, client, middleware, hooks, webhook router. Subpath exports: `/transports`, `/middlewares`, `/stores`, `/sinks`, `/tracers`, `/logger`, `/plugins`, `/config`.
 
-**Channels:** `@betternotify/{email, sms, push, discord, slack, telegram}`, `@betternotify/zapier` (channel + email transport)
+**Channels:** `@betternotify/{email, sms, push, webpush, discord, slack, telegram, whatsapp, github}`, `@betternotify/zapier` (channel + email transport)
 
-**Transports:** `@betternotify/smtp` (Nodemailer), `@betternotify/{resend, cloudflare-email, twilio}`, `@betternotify/mailchimp` (Mandrill)
+**Transports:** `@betternotify/smtp` (Nodemailer), `@betternotify/{resend, cloudflare-email, twilio, autosend, selligent}`, `@betternotify/mailchimp` (Mandrill), `@betternotify/onesignal` (push + email + SMS)
 
 **Templates:** `@betternotify/{react-email, mjml, handlebars}`
+
+**MCP:** `@betternotify/mcp` — exposes a catalog as Model Context Protocol tools so AI agents can send notifications
 
 **CLI:** `create-better-notify` — scaffolding tool (`npx create-better-notify`)
 

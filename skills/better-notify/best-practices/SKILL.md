@@ -71,6 +71,24 @@ Each channel has typed slots set via the builder:
 
 **Send args:** `{ to: string \| string[], input }` (device tokens)
 
+### Web Push (`@betternotify/webpush`)
+
+| Slot                 | Type                                           | Required |
+| -------------------- | ---------------------------------------------- | -------- |
+| `.input(schema)`     | Standard Schema                                | Yes      |
+| `.title(resolver)`   | `string` or `(args) => string`                 | Yes      |
+| `.body(resolver)`    | `string` or `(args) => string`                 | Yes      |
+| `.icon(resolver)`    | `string` (URL)                                 | No       |
+| `.badge(resolver)`   | `string` (URL)                                 | No       |
+| `.image(resolver)`   | `string` (URL)                                 | No       |
+| `.tag(resolver)`     | `string`                                       | No       |
+| `.data(resolver)`    | `Record<string, unknown>`                      | No       |
+| `.actions(resolver)` | `WebPushAction[]` (`{ action, title, icon? }`) | No       |
+
+**Send args:** `{ to: WebPushSubscription \| WebPushSubscription[], input }`
+
+`WebPushSubscription` is the browser-issued `{ endpoint, keys: { p256dh, auth } }` object. Use `generateVapidKeys()` (exported from `@betternotify/webpush`) once at setup to produce a VAPID keypair for the transport.
+
 ### Slack (`@betternotify/slack`)
 
 | Slot                | Type                           | Required |
@@ -103,6 +121,39 @@ Each channel has typed slots set via the builder:
 | `.attachment(resolver)` | `TelegramAttachment`                   | No       |
 
 **Send args:** `{ to: string \| number, input }` (chat ID)
+
+### WhatsApp (`@betternotify/whatsapp`) — action-based
+
+The WhatsApp channel is **action-based**: each procedure picks one action via the builder (e.g. `rpc.whatsapp().text()...` or `rpc.whatsapp().template()...`). Each action exposes its own slot shape — see [docs](https://better-notify.com/docs) for per-action slots.
+
+| Action        | Purpose                                                         |
+| ------------- | --------------------------------------------------------------- |
+| `text`        | Plain text message                                              |
+| `image`       | Image with optional caption                                     |
+| `video`       | Video with optional caption                                     |
+| `document`    | File attachment (PDF, etc.)                                     |
+| `audio`       | Voice or audio clip                                             |
+| `location`    | Latitude/longitude pin with optional name/address               |
+| `reaction`    | Emoji reaction to a prior message                               |
+| `interactive` | Buttons or list pickers                                         |
+| `contacts`    | One or more vCard-style contact cards                           |
+| `template`    | Pre-approved template message (required for business-initiated) |
+
+**Send args:** `{ to: string, input }` (WhatsApp phone number, E.164 format)
+
+### GitHub (`@betternotify/github`) — action-based
+
+The GitHub channel is **action-based**: each procedure picks one action via the builder (e.g. `rpc.github().issue()...`, `rpc.github().prReview()...`).
+
+| Action            | Purpose                                              |
+| ----------------- | ---------------------------------------------------- |
+| `issue`           | Open a new issue (supports `labels`, `assignees`)    |
+| `comment`         | Comment on an existing issue                         |
+| `pr-comment`      | Top-level conversation comment on a pull request     |
+| `pr-line-comment` | Inline review comment on a specific PR diff line     |
+| `pr-review`       | Full PR review (approve / request changes / comment) |
+
+**Send args:** flat per action — `{ repo?, input, ...refs }`. `issue` takes `labels?`, `assignees?`, `milestone?`; `comment` takes `issueNumber`; `pr-comment` and `pr-review` take `prNumber` (review also takes `event: 'APPROVE' \| 'REQUEST_CHANGES' \| 'COMMENT'`); `pr-line-comment` takes `prNumber`, `commitId`, `path`, optional `line`/`startLine`/`side`/`startSide`/`subjectType`. `repo` falls back to the channel default. See docs.
 
 ---
 
@@ -250,6 +301,68 @@ multiTransport({
 | `race`        | Send via all, return first success         |
 | `parallel`    | Send via all, wait for all                 |
 | `mirrored`    | Send via all, return primary result        |
+
+---
+
+## MCP Server (`@betternotify/mcp`)
+
+Exposes a catalog as Model Context Protocol tools so AI agents (Claude, etc.) can call routes directly. Each catalog route becomes a typed MCP tool; recent sends are exposed as MCP resources.
+
+```typescript
+import { createMcpServer, apiKeyAuth, bearerAuth, createAuth } from '@betternotify/mcp';
+import { catalog } from './notify';
+import { mail } from './notify-client';
+
+const server = createMcpServer({
+  catalog,
+  name: 'my-app',
+  version: '1.0.0',
+  expose: ['transactional.welcome', 'marketing.newsletter'],
+  deny: ['internal.debug'],
+  history: { maxSize: 200 },
+  inputSchemas: {
+    'transactional.welcome': {
+      /* JSON Schema override */
+    },
+  },
+});
+
+server.connect(mail);
+
+// stdio (local/desktop agents)
+await server.start({ type: 'stdio' });
+
+// HTTP (remote agents)
+await server.start({
+  type: 'http',
+  port: 3333,
+  path: '/mcp',
+  authenticate: apiKeyAuth({ keys: [process.env.MCP_API_KEY ?? ''] }),
+});
+
+// graceful shutdown
+await server.close();
+```
+
+**`createMcpServer` options:**
+
+| Option          | Type                        | Purpose                                           |
+| --------------- | --------------------------- | ------------------------------------------------- |
+| `catalog`       | `AnyCatalog`                | The catalog whose routes become MCP tools         |
+| `name?`         | `string`                    | Server name (default: `'betternotify'`)           |
+| `version?`      | `string`                    | Server version (default: `'1.0.0'`)               |
+| `expose?`       | `Array<RouteId>`            | Allowlist of routes to expose                     |
+| `deny?`         | `Array<RouteId>`            | Blocklist of routes to hide                       |
+| `history?`      | `{ maxSize?: number }`      | Ring-buffer of recent send events                 |
+| `inputSchemas?` | `Partial<Record<Route, …>>` | Override the JSON Schema for specific tool inputs |
+
+**Transports:** `{ type: 'stdio' }` for local agents; `{ type: 'http', port, path?, authenticate?, enableJsonResponse? }` for remote.
+
+**Auth helpers:** `apiKeyAuth({ keys })`, `bearerAuth({ tokens })`, or `createAuth(fn)` for fully custom verification. Auth only applies to the HTTP transport.
+
+**Returned API:** `{ start, close, connect, plugin, attach, routes, history }`. `server.plugin()` returns a Better Notify plugin that hooks into the client's lifecycle so the history ring buffer captures sends automatically. `history.recent()` / `history.byRoute(id)` / `history.stats()` read the buffer directly.
+
+**Resources auto-exposed:** `notifications://recent`, `notifications://routes/{routeId}/history`, `notifications://stats`.
 
 ---
 
