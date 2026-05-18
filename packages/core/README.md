@@ -29,7 +29,8 @@ npm install @betternotify/core
 - **`Transport<TRendered, TData>`** — wire-level send adapter. Returns `TransportResult<TData> = { ok: true, data } | { ok: false, error }`.
 - **`createTransport<TRendered, TData>(...)`** / **`multiTransport<TRendered, TData>(...)`** / **`createMockTransport<TRendered, TData>(...)`** — generic transport factories. Channel packages re-export these pre-parameterized.
 - **`NotifyRpcError`** + subclasses — framework error class with `code`, `route`, `messageId`. JSON-serializable.
-- **Middleware**: `withDryRun`, `withTagInject`, `withEventLogger`, `withSuppressionList`, `withRateLimit`, `withIdempotency`, `withTracing`.
+- **Middleware**: `withDryRun`, `withTagInject`, `withEventLogger`, `withRateLimit`, `withIdempotency`, `withTracing`.
+- **Plugins**: `createPlugin` factory + `Plugin` type.
 - **Stores**: in-memory implementations for suppression / rate-limit / idempotency.
 - **Sinks**: event sink contract + in-memory and console implementations.
 - **Tracers**: in-memory tracer for `withTracing`.
@@ -271,6 +272,7 @@ All framework errors extend `NotifyRpcError` and are JSON-serializable. Each car
 | ------------------------------ | --------------------------------------- |
 | `NotifyRpcError`               | any of `ErrorCode`                      |
 | `NotifyRpcValidationError`     | `'VALIDATION'` + `issues`               |
+| `NotifyRpcProviderError`       | `'PROVIDER'`                            |
 | `NotifyRpcRateLimitedError`    | `'RATE_LIMITED'` + `key`/`retryAfterMs` |
 | `NotifyRpcNotImplementedError` | `'NOT_IMPLEMENTED'`                     |
 
