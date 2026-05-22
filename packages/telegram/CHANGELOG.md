@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.0-beta.3](https://github.com/better-notify/better-notify/compare/@betternotify/telegram-v1.0.0-beta.2...@betternotify/telegram-v1.0.0-beta.3) (2026-05-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.8
+
 ## [1.0.0-beta.2](https://github.com/better-notify/better-notify/compare/@betternotify/telegram-v1.0.0-beta.1...@betternotify/telegram-v1.0.0-beta.2) (2026-05-22)
 
 

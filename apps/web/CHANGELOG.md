@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.1.0-beta.17](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.16...@betternotify/web-v1.1.0-beta.17) (2026-05-22)
+
 ## [1.1.0-beta.16](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.15...@betternotify/web-v1.1.0-beta.16) (2026-05-22)
 
 

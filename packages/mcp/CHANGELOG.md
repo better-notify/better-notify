@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.0-beta.3](https://github.com/better-notify/better-notify/compare/@betternotify/mcp-v0.0.0-beta.2...@betternotify/mcp-v0.0.0-beta.3) (2026-05-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.8
+
 ## [0.0.0-beta.2](https://github.com/better-notify/better-notify/compare/@betternotify/mcp-v0.0.0-beta.1...@betternotify/mcp-v0.0.0-beta.2) (2026-05-22)
 
 
