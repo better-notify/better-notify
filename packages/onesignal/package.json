@@ -27,10 +27,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@betternotify/core": "workspace:*",
-    "@betternotify/email": "workspace:*",
-    "@betternotify/push": "workspace:*",
-    "@betternotify/sms": "workspace:*"
+    "@betternotify/core": "workspace:^",
+    "@betternotify/email": "workspace:^",
+    "@betternotify/push": "workspace:^",
+    "@betternotify/sms": "workspace:^"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",

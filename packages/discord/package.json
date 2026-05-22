@@ -27,7 +27,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@betternotify/core": "workspace:*",
+    "@betternotify/core": "workspace:^",
     "@standard-schema/spec": "catalog:",
     "zod": "catalog:"
   },

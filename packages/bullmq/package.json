@@ -28,7 +28,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@betternotify/core": "workspace:*"
+    "@betternotify/core": "workspace:^"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",

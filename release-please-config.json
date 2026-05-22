@@ -6,6 +6,13 @@
   "prerelease": true,
   "include-component-in-tag": true,
   "separate-pull-requests": false,
+  "plugins": [
+    {
+      "type": "node-workspace",
+      "updateAllPackages": true,
+      "always-link-local": true
+    }
+  ],
   "packages": {
     "packages/core": {
       "release-type": "node",

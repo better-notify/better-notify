@@ -27,8 +27,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@betternotify/core": "workspace:*",
-    "@betternotify/email": "workspace:*",
+    "@betternotify/core": "workspace:^",
+    "@betternotify/email": "workspace:^",
     "@standard-schema/spec": "catalog:",
     "zod": "catalog:"
   },

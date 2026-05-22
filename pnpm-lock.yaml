@@ -505,10 +505,10 @@ importers:
   packages/autosend:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -530,7 +530,7 @@ importers:
   packages/bullmq:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       '@internal/rolldown-config':
@@ -552,10 +552,10 @@ importers:
   packages/cloudflare-email:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -633,7 +633,7 @@ importers:
   packages/discord:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -661,7 +661,7 @@ importers:
   packages/email:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -689,7 +689,7 @@ importers:
   packages/github:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -717,10 +717,10 @@ importers:
   packages/handlebars:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -745,10 +745,10 @@ importers:
   packages/mailchimp:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -770,7 +770,7 @@ importers:
   packages/mcp:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       zod:
         specifier: 'catalog:'
@@ -798,10 +798,10 @@ importers:
   packages/mjml:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -832,16 +832,16 @@ importers:
   packages/onesignal:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
       '@betternotify/push':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../push
       '@betternotify/sms':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../sms
     devDependencies:
       '@internal/rolldown-config':
@@ -863,7 +863,7 @@ importers:
   packages/push:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -891,10 +891,10 @@ importers:
   packages/react-email:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -934,10 +934,10 @@ importers:
   packages/resend:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -959,10 +959,10 @@ importers:
   packages/selligent:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
     devDependencies:
       '@internal/rolldown-config':
@@ -984,7 +984,7 @@ importers:
   packages/slack:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -1012,7 +1012,7 @@ importers:
   packages/sms:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -1040,10 +1040,10 @@ importers:
   packages/smtp:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
       nodemailer:
         specifier: 'catalog:'
@@ -1071,7 +1071,7 @@ importers:
   packages/telegram:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -1099,10 +1099,10 @@ importers:
   packages/twilio:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/sms':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../sms
     devDependencies:
       '@internal/rolldown-config':
@@ -1124,7 +1124,7 @@ importers:
   packages/webpush:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -1152,7 +1152,7 @@ importers:
   packages/whatsapp:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@standard-schema/spec':
         specifier: 'catalog:'
@@ -1180,10 +1180,10 @@ importers:
   packages/zapier:
     dependencies:
       '@betternotify/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@betternotify/email':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../email
       '@standard-schema/spec':
         specifier: 'catalog:'

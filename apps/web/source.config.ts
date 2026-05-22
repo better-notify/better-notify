@@ -3,12 +3,14 @@ import { pageSchema } from 'fumadocs-core/source/schema';
 import { remarkNpm } from 'fumadocs-core/mdx-plugins';
 import { z } from 'zod';
 
+const docsSchema = pageSchema.extend({
+  channels: z.array(z.string()).optional(),
+});
+
 export const docs = defineDocs({
   dir: 'content/docs',
   docs: {
-    schema: pageSchema.extend({
-      channels: z.array(z.string()).optional(),
-    }),
+    schema: docsSchema,
     postprocess: {
       includeProcessedMarkdown: true,
     },
