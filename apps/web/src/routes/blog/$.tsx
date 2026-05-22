@@ -67,8 +67,11 @@ const serverLoader = createServerFn({
 
     let redirectTo: string | null = null;
     if (!page && slugs.length === 1) {
-      page = pages.find((p) => p.slugs.at(-1) === slugs[0]);
-      if (page) redirectTo = page.slugs.join('/');
+      const tailMatches = pages.filter((p) => p.slugs.at(-1) === slugs[0]);
+      if (tailMatches.length === 1) {
+        page = tailMatches[0];
+        redirectTo = tailMatches[0]?.slugs.join('/') ?? null;
+      }
     }
 
     if (!page) throw notFound();
