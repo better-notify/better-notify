@@ -9,7 +9,8 @@
   "plugins": [
     {
       "type": "node-workspace",
-      "updateAllPackages": true
+      "updateAllPackages": true,
+      "always-link-local": true
     }
   ],
   "packages": {
