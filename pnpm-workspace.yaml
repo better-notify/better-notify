@@ -41,7 +41,7 @@ catalog:
   'fumadocs-ui': 16.8.11
   'handlebars': 4.7.9
   'ioredis': 5.0.0
-  'mjml': 4.15.0
+  'mjml': 5.2.2
   'nodemailer': 8.0.7
   'oxfmt': 0.46.0
   'oxlint': 1.63.0

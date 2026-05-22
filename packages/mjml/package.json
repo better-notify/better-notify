@@ -33,7 +33,7 @@
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
-    "@types/mjml": "4.7.4",
+    "@types/mjml": "5.0.0",
     "handlebars": "catalog:",
     "mjml": "catalog:",
     "rolldown": "catalog:",
