@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0-beta.16](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.15...@betternotify/web-v1.1.0-beta.16) (2026-05-22)
+
+
+### Bug Fixes
+
+* **deps:** use caret ranges for workspace deps to prevent duplicate core installs ([#172](https://github.com/better-notify/better-notify/issues/172)) ([cc1a713](https://github.com/better-notify/better-notify/commit/cc1a7135e8b7354538128d0b0ed825b00ac5d3b5))
+* **web:** resolve blog 404 errors on nested category paths ([#169](https://github.com/better-notify/better-notify/issues/169)) ([e1f4027](https://github.com/better-notify/better-notify/commit/e1f4027b8fbde0317c4f3909cea79b6046745685))
+
 ## [1.1.0-beta.15](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.14...@betternotify/web-v1.1.0-beta.15) (2026-05-17)
 
 

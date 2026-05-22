@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/onesignal",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "OneSignal push, email, and SMS transports for Better-Notify.",
   "license": "MIT",
   "repository": {

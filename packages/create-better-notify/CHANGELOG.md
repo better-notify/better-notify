@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.0.0-beta.4](https://github.com/better-notify/better-notify/compare/create-better-notify-v1.0.0-beta.3...create-better-notify-v1.0.0-beta.4) (2026-05-22)
+
 ## [1.0.0-beta.3](https://github.com/better-notify/better-notify/compare/create-better-notify-v1.0.0-beta.2...create-better-notify-v1.0.0-beta.3) (2026-05-13)
 
 
