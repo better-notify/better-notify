@@ -7,6 +7,7 @@ permissions:
   contents: read
 
 env:
+  NODE_OPTIONS: '--max-old-space-size=6144'
   DO_NOT_TRACK: '1'
   TURBO_TELEMETRY_DISABLED: '1'
   TURBO_TELEMETRY_MESSAGE_DISABLED: '1'
