@@ -28,8 +28,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@betternotify/core": "workspace:*",
-    "@betternotify/email": "workspace:*"
+    "@betternotify/core": "workspace:^",
+    "@betternotify/email": "workspace:^"
   },
   "devDependencies": {
     "@internal/rolldown-config": "workspace:*",
