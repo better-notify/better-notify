@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useAnalytics } from '@/hooks/use-analytics';
@@ -12,10 +12,18 @@ import { useMDXComponents } from '@/components/mdx';
 import { seo } from '@/lib/seo';
 import { appConfig } from '@/lib/shared';
 
-export const Route = createFileRoute('/blog/$slug')({
+export const Route = createFileRoute('/blog/$')({
   component: BlogArticlePage,
   loader: async ({ params }) => {
-    const data = await serverLoader({ data: params.slug });
+    const slugs = params._splat?.split('/') ?? [];
+    const data = await serverLoader({ data: slugs });
+    if (data.redirectTo) {
+      throw redirect({
+        to: '/blog/$',
+        params: { _splat: data.redirectTo },
+        statusCode: 301,
+      });
+    }
     if (typeof window !== 'undefined') await clientLoader.preload(data.path);
     return data;
   },
@@ -49,10 +57,20 @@ export const Route = createFileRoute('/blog/$slug')({
 const serverLoader = createServerFn({
   method: 'GET',
 })
-  .inputValidator((slug: string) => slug)
-  .handler(async ({ data: slug }) => {
+  .inputValidator((slugs: string[]) => slugs)
+  .handler(async ({ data: slugs }) => {
     const pages = blogSource.getPages();
-    const page = pages.find((p) => p.slugs[p.slugs.length - 1] === slug);
+
+    let page = pages.find(
+      (p) => p.slugs.length === slugs.length && p.slugs.every((s, i) => s === slugs[i]),
+    );
+
+    let redirectTo: string | null = null;
+    if (!page && slugs.length === 1) {
+      page = pages.find((p) => p.slugs.at(-1) === slugs[0]);
+      if (page) redirectTo = page.slugs.join('/');
+    }
+
     if (!page) throw notFound();
 
     const post = mapPageToPost(page);
@@ -61,6 +79,7 @@ const serverLoader = createServerFn({
     return {
       path: page.path,
       slug: post.slug,
+      redirectTo,
       pageTitle: post.title,
       pageDescription: post.description || null,
       pageDate: post.date,
@@ -87,7 +106,7 @@ const clientLoader = browserCollections.blogPosts.createClientLoader({
 function ArticleFooter({ title, slug }: { title: string; slug: string }) {
   const [copied, setCopied] = useState(false);
   const analytics = useAnalytics('blog');
-  const articleUrl = `${appConfig.baseUrl}/blog/${slug}/`;
+  const articleUrl = `${appConfig.baseUrl}/blog/${slug}`;
 
   const shareOnX = useCallback(() => {
     analytics.track('share').action('click', { slug, platform: 'x' });

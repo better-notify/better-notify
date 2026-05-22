@@ -135,8 +135,8 @@ function BlogIndexPage() {
                     return (
                       <Link
                         key={post.slug}
-                        to="/blog/$slug"
-                        params={{ slug: post.slug }}
+                        to="/blog/$"
+                        params={{ _splat: post.slug }}
                         onClick={() =>
                           analytics.track('article').action('click', {
                             slug: post.slug,

@@ -74,8 +74,8 @@ export function BlogAndAuthor({ posts }: { posts: BlogPreviewPost[] }) {
               {posts.map((post) => (
                 <Link
                   key={post.slug}
-                  to="/blog/$slug"
-                  params={{ slug: post.slug }}
+                  to="/blog/$"
+                  params={{ _splat: post.slug }}
                   className="border-border group rounded-lg border bg-white/60 p-4 no-underline transition-colors hover:bg-white/90 dark:bg-bn-slate-900/40 dark:hover:bg-bn-slate-900/70"
                 >
                   <div className="mb-2 flex items-center justify-between">

@@ -36,7 +36,7 @@ const assertUniqueSlugs = (posts: BlogPost[]): void => {
 export const mapPageToPost = (page: (typeof blogSource)['$inferPage']): BlogPost => {
   const data = page.data as unknown as Record<string, unknown>;
   return {
-    slug: page.slugs.at(-1) ?? '',
+    slug: page.slugs.join('/'),
     title: page.data.title,
     description: (page.data.description as string) ?? '',
     date:

@@ -24,7 +24,7 @@ import { Route as OgSplatRouteImport } from './routes/og.$'
 import { Route as IntegrationsSlugRouteImport } from './routes/integrations/$slug'
 import { Route as ForSlugRouteImport } from './routes/for/$slug'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
-import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as BlogSplatRouteImport } from './routes/blog/$'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as LlmsDotmdxDocsSplatRouteImport } from './routes/llms[.]mdx.docs.$'
 
@@ -103,9 +103,9 @@ const DocsSplatRoute = DocsSplatRouteImport.update({
   path: '/docs/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/blog/$slug',
-  path: '/blog/$slug',
+const BlogSplatRoute = BlogSplatRouteImport.update({
+  id: '/blog/$',
+  path: '/blog/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
@@ -128,7 +128,7 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/$': typeof BlogSplatRoute
   '/docs/$': typeof DocsSplatRoute
   '/for/$slug': typeof ForSlugRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
@@ -148,7 +148,7 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/$': typeof BlogSplatRoute
   '/docs/$': typeof DocsSplatRoute
   '/for/$slug': typeof ForSlugRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
@@ -169,7 +169,7 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/search': typeof ApiSearchRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/$': typeof BlogSplatRoute
   '/docs/$': typeof DocsSplatRoute
   '/for/$slug': typeof ForSlugRoute
   '/integrations/$slug': typeof IntegrationsSlugRoute
@@ -191,7 +191,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/api/search'
-    | '/blog/$slug'
+    | '/blog/$'
     | '/docs/$'
     | '/for/$slug'
     | '/integrations/$slug'
@@ -211,7 +211,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/api/search'
-    | '/blog/$slug'
+    | '/blog/$'
     | '/docs/$'
     | '/for/$slug'
     | '/integrations/$slug'
@@ -231,7 +231,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/api/search'
-    | '/blog/$slug'
+    | '/blog/$'
     | '/docs/$'
     | '/for/$slug'
     | '/integrations/$slug'
@@ -252,7 +252,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSearchRoute: typeof ApiSearchRoute
-  BlogSlugRoute: typeof BlogSlugRoute
+  BlogSplatRoute: typeof BlogSplatRoute
   DocsSplatRoute: typeof DocsSplatRoute
   ForSlugRoute: typeof ForSlugRoute
   IntegrationsSlugRoute: typeof IntegrationsSlugRoute
@@ -371,11 +371,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/blog/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
+    '/blog/$': {
+      id: '/blog/$'
+      path: '/blog/$'
+      fullPath: '/blog/$'
+      preLoaderRoute: typeof BlogSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/search': {
@@ -404,7 +404,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSearchRoute: ApiSearchRoute,
-  BlogSlugRoute: BlogSlugRoute,
+  BlogSplatRoute: BlogSplatRoute,
   DocsSplatRoute: DocsSplatRoute,
   ForSlugRoute: ForSlugRoute,
   IntegrationsSlugRoute: IntegrationsSlugRoute,
