@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/react-email",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "React Email adapter for Better-Notify.",
   "license": "MIT",
   "repository": {

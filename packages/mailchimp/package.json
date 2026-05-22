@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/mailchimp",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "Mailchimp Transactional (Mandrill) transport for Better-Notify.",
   "license": "MIT",
   "repository": {

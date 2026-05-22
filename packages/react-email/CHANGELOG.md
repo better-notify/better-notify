@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0-beta.3](https://github.com/better-notify/better-notify/compare/@betternotify/react-email-v1.0.0-beta.2...@betternotify/react-email-v1.0.0-beta.3) (2026-05-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.8
+    * @betternotify/email bumped to 1.0.0-beta.4
+
 ## [1.0.0-beta.2](https://github.com/better-notify/better-notify/compare/@betternotify/react-email-v1.0.0-beta.1...@betternotify/react-email-v1.0.0-beta.2) (2026-05-22)
 
 

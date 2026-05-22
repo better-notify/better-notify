@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.5](https://github.com/better-notify/better-notify/compare/create-better-notify-v1.0.0-beta.4...create-better-notify-v1.0.0-beta.5) (2026-05-22)
+
+
+### Bug Fixes
+
+* **deps:** update all minor dependencies ([#81](https://github.com/better-notify/better-notify/issues/81)) ([751c8ab](https://github.com/better-notify/better-notify/commit/751c8abef2df6177049a2dbb1bae47d5b234f02c))
+
 ## [1.0.0-beta.4](https://github.com/better-notify/better-notify/compare/create-better-notify-v1.0.0-beta.3...create-better-notify-v1.0.0-beta.4) (2026-05-22)
 
 ## [1.0.0-beta.3](https://github.com/better-notify/better-notify/compare/create-better-notify-v1.0.0-beta.2...create-better-notify-v1.0.0-beta.3) (2026-05-13)
