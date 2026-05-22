@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/core",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "End-to-end typed email contracts, sender, and webhook router for Node.js and Bun.",
   "license": "MIT",
   "repository": {

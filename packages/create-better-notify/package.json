@@ -1,6 +1,6 @@
 {
   "name": "create-better-notify",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "description": "Scaffold a better-notify project with your preferred framework and RPC layer.",
   "license": "MIT",
   "repository": {
