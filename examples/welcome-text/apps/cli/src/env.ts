@@ -177,6 +177,21 @@ export const env = createEnv({
       .describe('Twilio destination phone number'),
 
     /**
+     * Unosend cluster
+     */
+    UNOSEND_API_KEY: z.string().optional().default('un_test_123').describe('Unosend API key'),
+    UNOSEND_FROM_EMAIL: z
+      .string()
+      .optional()
+      .default('noreply@example.com')
+      .describe('Unosend from email'),
+    UNOSEND_DESTINATION_EMAIL: z
+      .string()
+      .optional()
+      .default('example@email.com')
+      .describe('Unosend destination email'),
+
+    /**
      * WhatsApp Meta cluster
      */
     WHATSAPP_META_ACCESS_TOKEN: z

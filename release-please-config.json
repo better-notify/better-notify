@@ -147,6 +147,12 @@
       "component": "@betternotify/mcp",
       "prerelease-type": "beta",
       "bootstrap-sha": "4690286720627b2ad2d670eceac23f36aaca0ed4"
+    },
+    "packages/unosend": {
+      "release-type": "node",
+      "component": "@betternotify/unosend",
+      "prerelease-type": "beta",
+      "bootstrap-sha": "3db89b7ed35d20e31ecb4ee21c6666843f5eed0f"
     }
   }
 }

@@ -8,7 +8,7 @@ import {
   WhatsappLogoIcon,
   LightningIcon,
 } from '@phosphor-icons/react';
-import { ModelContextProtocol } from '@libs/ui';
+import { ModelContextProtocol, Unosend } from '@libs/ui';
 
 import type { ReactNode } from 'react';
 
@@ -207,6 +207,10 @@ const providers: { name: string; icon: ReactNode }[] = [
         ></path>
       </svg>
     ),
+  },
+  {
+    name: 'Unosend',
+    icon: <Unosend width={20} height={20} className="dark:fill-white fill-black" />,
   },
   {
     name: 'Selligent',

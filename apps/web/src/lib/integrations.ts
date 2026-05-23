@@ -151,6 +151,39 @@ await mail.welcome.send({ to: 'user@example.com', input: { name: 'Alice' } });`,
     related: ['resend', 'smtp', 'cloudflare-email'],
   },
   {
+    slug: 'unosend',
+    name: 'Unosend',
+    channel: 'email',
+    channelLabel: 'Email',
+    tagline: 'Send transactional email with Unosend and Better-Notify',
+    description:
+      "Deliver transactional email through Unosend's REST API. Better-Notify handles validation, rendering, and middleware — Unosend handles delivery.",
+    package: '@betternotify/unosend',
+    importStatement: "import { unosendTransport } from '@betternotify/unosend';",
+    installCmd: 'pnpm add @betternotify/unosend',
+    codeExample: `import { createClient } from '@betternotify/core';
+import { unosendTransport } from '@betternotify/unosend';
+
+const mail = createClient({
+  catalog,
+  transportsByChannel: {
+    email: unosendTransport({ apiKey: process.env.UNOSEND_API_KEY }),
+  },
+});
+
+await mail.welcome.send({ to: 'user@example.com', input: { name: 'Alice' } });`,
+    features: [
+      'Simple API key authentication',
+      'Priority and scheduled sending',
+      'Open and click tracking toggles',
+      'Tags for analytics',
+      'Attachments support',
+      'CC/BCC support',
+    ],
+    docsPath: '/docs/transports/unosend',
+    related: ['resend', 'smtp', 'autosend'],
+  },
+  {
     slug: 'twilio',
     name: 'Twilio',
     channel: 'sms',

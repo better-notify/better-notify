@@ -56,6 +56,7 @@ import { runGithubPrReview } from './examples/github-pr-review';
 import { runGithubIssueHandlebars } from './examples/github-issue-handlebars';
 import { runWhatsAppMock } from './examples/whatsapp-mock';
 import { runWhatsAppMeta } from './examples/whatsapp-meta';
+import { runEmailUnosend } from './examples/email-unosend';
 
 const examples: Record<string, () => Promise<void>> = {
   single: runSingle,
@@ -116,6 +117,7 @@ const examples: Record<string, () => Promise<void>> = {
   'github-issue-handlebars': runGithubIssueHandlebars,
   'whatsapp-mock': runWhatsAppMock,
   'whatsapp-meta': runWhatsAppMeta,
+  'email-unosend': runEmailUnosend,
 };
 
 const main = async (): Promise<void> => {
