@@ -18,7 +18,7 @@ allowBuilds:
 catalog:
   '@better-fetch/fetch': 1.1.21
   '@modelcontextprotocol/sdk': 1.29.0
-  '@cloudflare/vite-plugin': 1.37.2
+  '@cloudflare/vite-plugin': 1.37.3
   '@phosphor-icons/react': 2.1.10
   '@react-email/components': 0.0.30
   '@standard-schema/spec': 1.1.0
@@ -50,16 +50,16 @@ catalog:
   'react-dom': 19.2.6
   'react-email': 6.0.0
   'shiki': 4.0.2
-  'rolldown': 1.0.1
+  'rolldown': 1.0.2
   'rolldown-plugin-dts': 0.25.1
   'tailwindcss': 4.2.4
   'tslib': 2.8.1
   'tsx': 4.22.3
   'turbo': 2.9.14
   'typescript': 6.0.3
-  'vite': 8.0.13
+  'vite': 8.0.14
   'vitest': 2.1.9
-  'wrangler': 4.93.0
+  'wrangler': 4.93.1
   'zod': 4.4.3
 
 catalogs:
