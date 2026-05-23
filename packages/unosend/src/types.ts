@@ -15,6 +15,8 @@ export type UnosendPerSendData = {
     open?: boolean;
     click?: boolean;
   };
+  template_id?: string;
+  template_data?: Record<string, unknown>;
 };
 
 export type UnosendAttachment = {
@@ -43,6 +45,8 @@ export type UnosendRequest = {
   priority?: 'high' | 'normal' | 'low';
   scheduled_for?: string;
   tracking?: { open?: boolean; click?: boolean };
+  template_id?: string;
+  template_data?: Record<string, unknown>;
 };
 
 export type UnosendSuccessResponse = {

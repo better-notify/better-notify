@@ -212,6 +212,25 @@ describe('unosendTransport — per-send overrides', () => {
     expect(body.tracking).toEqual({ open: false, click: true });
   });
 
+  it('merges template_id and template_data from ctx.transport.unosend into request body', async () => {
+    const { unosendTransport } = await import('./index.js');
+    mockFetchOk();
+    const t = unosendTransport({ apiKey: 'un_test_123' });
+    await t.send(baseMessage, {
+      ...baseCtx,
+      transport: {
+        unosend: {
+          template_id: 'tmpl_welcome_001',
+          template_data: { name: 'Alice', company: 'Acme' },
+        },
+      },
+    } as SendContext);
+
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.template_id).toBe('tmpl_welcome_001');
+    expect(body.template_data).toEqual({ name: 'Alice', company: 'Acme' });
+  });
+
   it('does not add override fields when ctx.transport.unosend is absent', async () => {
     const { unosendTransport } = await import('./index.js');
     mockFetchOk();
@@ -222,6 +241,8 @@ describe('unosendTransport — per-send overrides', () => {
     expect(body.priority).toBeUndefined();
     expect(body.scheduled_for).toBeUndefined();
     expect(body.tracking).toBeUndefined();
+    expect(body.template_id).toBeUndefined();
+    expect(body.template_data).toBeUndefined();
   });
 });
 

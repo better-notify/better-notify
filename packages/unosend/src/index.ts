@@ -97,6 +97,8 @@ export const unosendTransport = (opts: UnosendTransportOptions) => {
       if (overrides?.priority) body.priority = overrides.priority;
       if (overrides?.scheduled_for) body.scheduled_for = overrides.scheduled_for;
       if (overrides?.tracking) body.tracking = overrides.tracking;
+      if (overrides?.template_id) body.template_id = overrides.template_id;
+      if (overrides?.template_data) body.template_data = overrides.template_data;
 
       const result = await http.request<UnosendSuccessResponse, UnosendErrorResponse>(url, {
         method: 'POST',
