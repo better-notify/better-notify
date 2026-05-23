@@ -17,6 +17,7 @@ const catalog = rpc.catalog({
     .subject(({ input }) => `Welcome, ${input.name}!`)
     .template({
       render: async ({ input }) => ({
+        html: `<p>Welcome, ${input.name}! <a href="${input.verifyUrl}">Verify</a></p>`,
         text: `Welcome, ${input.name}! Verify here: ${input.verifyUrl}`,
       }),
     }),
