@@ -181,7 +181,7 @@ await mail.welcome.send({ to: 'user@example.com', input: { name: 'Alice' } });`,
       'CC/BCC support',
     ],
     docsPath: '/docs/transports/unosend',
-    related: ['resend', 'smtp', 'autosend'],
+    related: ['resend', 'smtp', 'cloudflare-email'],
   },
   {
     slug: 'twilio',

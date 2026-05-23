@@ -20,6 +20,7 @@ export type {
   UnosendSuccessResponse,
   UnosendErrorResponse,
   UnosendTag,
+  UnosendPerSendData,
 } from './types.js';
 
 export { isUnosendRetriable } from './is-retriable.js';
@@ -179,6 +180,6 @@ export const unosendAdapter = (_opts: UnosendAdapterOptions = {}): WebhookAdapte
 declare module '@betternotify/core' {
   // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires interface
   interface TransportDataMap {
-    unosend: import('./types.js').UnosendPerSendData;
+    unosend: import('@betternotify/unosend').UnosendPerSendData;
   }
 }
