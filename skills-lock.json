@@ -11,7 +11,7 @@
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
-      "computedHash": "de38608ceb9573c3142306babd9057a240791c4e4d6647f874a4650c996cb37e"
+      "computedHash": "aac6a8636095cc169ec2841b5b72704bc9414e4b44374dce6e860979ee883800"
     },
     "writing-clearly-and-concisely": {
       "source": "softaworks/agent-toolkit",

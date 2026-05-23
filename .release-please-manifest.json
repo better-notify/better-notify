@@ -23,5 +23,6 @@
   "packages/twilio": "1.0.0-beta.4",
   "packages/webpush": "1.0.0-beta.4",
   "packages/whatsapp": "1.0.0-beta.3",
-  "packages/zapier": "1.0.0-beta.4"
+  "packages/zapier": "1.0.0-beta.4",
+  "packages/unosend": "1.0.0-beta.0"
 }

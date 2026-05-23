@@ -410,6 +410,9 @@ importers:
       '@betternotify/twilio':
         specifier: workspace:*
         version: link:../../../../packages/twilio
+      '@betternotify/unosend':
+        specifier: workspace:*
+        version: link:../../../../packages/unosend
       '@betternotify/whatsapp':
         specifier: workspace:*
         version: link:../../../../packages/whatsapp
@@ -1104,6 +1107,31 @@ importers:
       '@betternotify/sms':
         specifier: workspace:^
         version: link:../sms
+    devDependencies:
+      '@internal/rolldown-config':
+        specifier: workspace:*
+        version: link:../../internal/rolldown-config
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../internal/tsconfig
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.0.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@25.9.1)(lightningcss@1.32.0)(msw@2.14.6(@types/node@25.9.1)(typescript@6.0.3))
+
+  packages/unosend:
+    dependencies:
+      '@betternotify/core':
+        specifier: workspace:^
+        version: link:../core
+      '@betternotify/email':
+        specifier: workspace:^
+        version: link:../email
     devDependencies:
       '@internal/rolldown-config':
         specifier: workspace:*

@@ -5,35 +5,22 @@ description: Use when the user wants to design, redesign, shape, critique, audit
 
 Designs and iterates production-grade frontend interfaces. Real working code, committed design choices, exceptional craft.
 
-## Setup (non-optional)
+## Setup
 
-Before any design work or file edits, pass these gates. Skipping them produces generic output that ignores the project.
+Before any design work or file edits:
 
-| Gate     | Required check                                                                                                    | If fail                                                                                                                   |
-| -------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Context  | The PRODUCT.md / DESIGN.md loader result is known from `node .agents/skills/impeccable/scripts/load-context.mjs`. | Run the loader before continuing.                                                                                         |
-| Product  | PRODUCT.md exists and is not empty or placeholder (`[TODO]` markers, <200 chars).                                 | Run `$impeccable teach`, refresh context, then resume. Never synthesize PRODUCT.md from the user's original prompt alone. |
-| Command  | The matching command reference is loaded when a sub-command is used.                                              | Load the reference before continuing.                                                                                     |
-| Craft    | `$impeccable craft` has a user-confirmed shape brief for this task. `teach` / PRODUCT.md never counts as shape.   | Run `$impeccable shape` and wait for explicit brief confirmation.                                                         |
-| Image    | Required visual probes / mocks are generated or skipped with a reason.                                            | Resolve the image-generation gate in `shape.md` or `craft.md` before code.                                                |
-| Mutation | All active gates above pass.                                                                                      | Do not edit project files yet.                                                                                            |
+1. Load context (PRODUCT.md / DESIGN.md) via the loader script.
+2. Identify the register and load the matching register reference (brand.md or product.md).
+3. **If the user invoked a sub-command (e.g. `craft`, `shape`, `audit`), load its reference file too.** This is non-negotiable: `craft` without `craft.md` loaded means you'll skip the shape-and-confirm step the user expects.
 
-Codex-style agents must state this before editing files:
-
-```text
-IMPECCABLE_PREFLIGHT: context=pass product=pass command_reference=pass shape=pass|not_required image_gate=pass|skipped:<reason> mutation=open
-```
-
-For `$impeccable craft`, `shape=pass` is only valid after a separate user response approving the shape design brief, or when the user provided an already-confirmed brief in the request. Do not mark `shape=pass` after writing PRODUCT.md, summarizing assumptions, or drafting an unconfirmed brief yourself.
-
-Other harnesses should follow the same checklist when they can expose this state.
+Skipping these produces generic output that ignores the project.
 
 ### 1. Context gathering
 
 Two files, case-insensitive. The loader looks at the project root by default and falls back to `.agents/context/` and `docs/` if the root is clean. Override with `IMPECCABLE_CONTEXT_DIR=path/to/dir` (absolute or relative to cwd).
 
-- **PRODUCT.md** — required. Users, brand, tone, anti-references, strategic principles.
-- **DESIGN.md** — optional, strongly recommended. Colors, typography, elevation, components.
+- **PRODUCT.md**: required. Users, brand, tone, anti-references, strategic principles.
+- **DESIGN.md**: optional, strongly recommended. Colors, typography, elevation, components.
 
 Load both in one call:
 
@@ -45,7 +32,7 @@ Consume the full JSON output. Never pipe through `head`, `tail`, `grep`, or `jq`
 
 If the output is already in this session's conversation history, don't re-run. Exceptions requiring a fresh load: you just ran `$impeccable teach` or `$impeccable document` (they rewrite the files), or the user manually edited one.
 
-`$impeccable live` already warms context via `live.mjs` — if you've run `live.mjs`, don't also run `load-context.mjs` this session.
+`$impeccable live` already warms context via `live.mjs`. If you've run `live.mjs`, don't also run `load-context.mjs` this session.
 
 If PRODUCT.md is missing, empty, or placeholder (`[TODO]` markers, <200 chars): run `$impeccable teach`, then resume the user's original task with the fresh context. If the original task was `$impeccable craft`, resume into `$impeccable shape` before any implementation work.
 
@@ -53,7 +40,7 @@ If DESIGN.md is missing: nudge once per session (_"Run `$impeccable document` fo
 
 ### 2. Register
 
-Every design task is **brand** (marketing, landing, campaign, long-form content, portfolio — design IS the product) or **product** (app UI, admin, dashboard, tool — design SERVES the product).
+Every design task is **brand** (marketing, landing, campaign, long-form content, portfolio: design IS the product) or **product** (app UI, admin, dashboard, tool: design SERVES the product).
 
 Identify before designing. Priority: (1) cue in the task itself ("landing page" vs "dashboard"); (2) the surface in focus (the page, file, or route being worked on); (3) `register` field in PRODUCT.md. First match wins.
 
@@ -63,24 +50,24 @@ Load the matching reference: [reference/brand.md](reference/brand.md) or [refere
 
 ## Shared design laws
 
-Apply to every design, both registers. Match implementation complexity to the aesthetic vision — maximalism needs elaborate code, minimalism needs precision. Interpret creatively. Vary across projects; never converge on the same choices. GPT is capable of extraordinary work — don't hold back.
+Apply to every design, both registers. Match implementation complexity to the aesthetic vision: maximalism needs elaborate code, minimalism needs precision. Interpret creatively. Vary across projects; never converge on the same choices. GPT is capable of extraordinary work. Don't hold back.
 
 ### Color
 
-- Use OKLCH. Reduce chroma as lightness approaches 0 or 100 — high chroma at extremes looks garish.
+- Use OKLCH. Reduce chroma as lightness approaches 0 or 100; high chroma at extremes looks garish.
 - Never use `#000` or `#fff`. Tint every neutral toward the brand hue (chroma 0.005–0.01 is enough).
 - Pick a **color strategy** before picking colors. Four steps on the commitment axis:
-  - **Restrained** — tinted neutrals + one accent ≤10%. Product default; brand minimalism.
-  - **Committed** — one saturated color carries 30–60% of the surface. Brand default for identity-driven pages.
-  - **Full palette** — 3–4 named roles, each used deliberately. Brand campaigns; product data viz.
-  - **Drenched** — the surface IS the color. Brand heroes, campaign pages.
+  - **Restrained**: tinted neutrals + one accent ≤10%. Product default; brand minimalism.
+  - **Committed**: one saturated color carries 30–60% of the surface. Brand default for identity-driven pages.
+  - **Full palette**: 3–4 named roles, each used deliberately. Brand campaigns; product data viz.
+  - **Drenched**: the surface IS the color. Brand heroes, campaign pages.
 - The "one accent ≤10%" rule is Restrained only. Committed / Full palette / Drenched exceed it on purpose. Don't collapse every design to Restrained by reflex.
 
 ### Theme
 
 Dark vs. light is never a default. Not dark "because tools look cool dark." Not light "to be safe."
 
-Before choosing, write one sentence of physical scene: who uses this, where, under what ambient light, in what mood. If the sentence doesn't force the answer, it's not concrete enough — add detail until it does.
+Before choosing, write one sentence of physical scene: who uses this, where, under what ambient light, in what mood. If the sentence doesn't force the answer, it's not concrete enough. Add detail until it does.
 
 "Observability dashboard" does not force an answer. "SRE glancing at incident severity on a 27-inch monitor at 2am in a dim room" does. Run the sentence, not the category.
 
@@ -120,10 +107,10 @@ Match-and-refuse. If you're about to write any of these, rewrite the element wit
 
 If someone could look at this interface and say "AI made that" without doubt, it's failed. Cross-register failures are the absolute bans above. Register-specific failures live in each reference.
 
-**Category-reflex check.** Run at two altitudes — the second one catches what the first one misses.
+**Category-reflex check.** Run at two altitudes; the second one catches what the first one misses.
 
-- **First-order:** if someone could guess the theme + palette from the category alone — "observability → dark blue", "healthcare → white + teal", "finance → navy + gold", "crypto → neon on black" — it's the first training-data reflex. Rework the scene sentence and color strategy until the answer isn't obvious from the domain.
-- **Second-order:** if someone could guess the aesthetic family from category-plus-anti-references — "AI workflow tool that's not SaaS-cream → editorial-typographic", "fintech that's not navy-and-gold → terminal-native dark mode" — it's the trap one tier deeper. The first reflex was avoided; the second wasn't. Rework until both answers are not obvious. The brand register's [reflex-reject aesthetic lanes](reference/brand.md) list catches the currently-saturated families.
+- **First-order:** if someone could guess the theme + palette from the category alone ("observability → dark blue", "healthcare → white + teal", "finance → navy + gold", "crypto → neon on black"), it's the first training-data reflex. Rework the scene sentence and color strategy until the answer isn't obvious from the domain.
+- **Second-order:** if someone could guess the aesthetic family from category-plus-anti-references ("AI workflow tool that's not SaaS-cream → editorial-typographic", "fintech that's not navy-and-gold → terminal-native dark mode"), it's the trap one tier deeper. The first reflex was avoided; the second wasn't. Rework until both answers are not obvious. The brand register's [reflex-reject aesthetic lanes](reference/brand.md) list catches the currently-saturated families.
 
 ## Commands
 
@@ -153,13 +140,13 @@ If someone could look at this interface and say "AI made that" without doubt, it
 | `optimize [target]`  | Fix      | Diagnose and fix UI performance                                          | [reference/optimize.md](reference/optimize.md)   |
 | `live`               | Iterate  | Visual variant mode: pick elements in the browser, generate alternatives | [reference/live.md](reference/live.md)           |
 
-Plus two management commands — `pin <command>` and `unpin <command>`, detailed below.
+Plus two management commands: `pin <command>` and `unpin <command>`, detailed below.
 
 ### Routing rules
 
-1. **No argument** — render the table above as the user-facing command menu, grouped by category. Ask what they'd like to do.
-2. **First word matches a command** — load its reference file and follow its instructions. Everything after the command name is the target.
-3. **First word doesn't match** — general design invocation. Apply the setup steps, shared design laws, and the loaded register reference, using the full argument as context.
+1. **No argument**: render the table above as the user-facing command menu, grouped by category. Ask what they'd like to do.
+2. **First word matches a command**: load its reference file and follow its instructions. Everything after the command name is the target.
+3. **First word doesn't match**: general design invocation. Apply the setup steps, shared design laws, and the loaded register reference, using the full argument as context.
 
 Setup (context gathering, register) is already loaded by then; sub-commands don't re-invoke `$impeccable`.
 
@@ -173,4 +160,4 @@ If the first word is `craft`, setup still runs first, but [reference/craft.md](r
 node .agents/skills/impeccable/scripts/pin.mjs <pin|unpin> <command>
 ```
 
-Valid `<command>` is any command from the table above. Report the script's result concisely — confirm the new shortcut on success, relay stderr verbatim on error.
+Valid `<command>` is any command from the table above. Report the script's result concisely. Confirm the new shortcut on success, relay stderr verbatim on error.

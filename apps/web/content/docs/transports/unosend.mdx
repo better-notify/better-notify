@@ -1,0 +1,173 @@
+---
+title: Unosend
+icon: UnosendLogo
+description: Send transactional emails via the Unosend HTTP API
+channels: [email]
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The Unosend transport is an official Better-Notify package that sends transactional email through the [Unosend](https://www.unosend.co) HTTP API. It uses plain `fetch()` with zero external dependencies, so it works in Node.js, Bun, Cloudflare Workers, and any runtime with a global `fetch`.
+
+## Install
+
+```package-install
+@betternotify/unosend @betternotify/core @betternotify/email
+```
+
+## Getting your API key
+
+1. Sign up or log in at [unosend.co](https://www.unosend.co).
+2. Go to **API Keys** in your dashboard.
+3. Create a new API key and copy it — it starts with `un_`.
+
+Store it as an environment variable:
+
+```sh
+UNOSEND_API_KEY=un_xxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Callout type="info">
+  You must verify your sending domain before sending emails through Unosend.
+</Callout>
+
+## Usage
+
+```ts
+import { createNotify, createClient } from '@betternotify/core';
+import { emailChannel } from '@betternotify/email';
+import { unosendTransport } from '@betternotify/unosend';
+
+const email = emailChannel({
+  defaults: { from: { name: 'My App', email: 'noreply@example.com' } },
+});
+
+const rpc = createNotify({ channels: { email } });
+const catalog = rpc.catalog({
+  /* routes */
+});
+
+const mail = createClient({
+  catalog,
+  transportsByChannel: {
+    email: unosendTransport({
+      apiKey: process.env.UNOSEND_API_KEY!,
+    }),
+  },
+});
+```
+
+## Options
+
+<TypeTable
+  type={{
+    apiKey: {
+      description: 'Unosend API key (starts with un_). Required.',
+      type: 'string',
+    },
+    baseUrl: {
+      description: 'Override the Unosend API base URL. Useful for testing.',
+      type: 'string',
+      default: '"https://api.unosend.co"',
+    },
+    logger: {
+      description: 'Override the default logger.',
+      type: 'LoggerLike',
+    },
+    http: {
+      description: 'HTTP client options — timeout, retry, and request lifecycle hooks. See [HTTP configuration](/docs/transports#http-configuration).',
+      type: 'HttpClientBehaviorOptions',
+    },
+  }}
+/>
+
+## Error handling
+
+The transport maps Unosend HTTP status codes to Better-Notify error codes:
+
+| HTTP status | Better-Notify code | Retriable |
+| --- | --- | --- |
+| 400 | `VALIDATION` | No |
+| 401 | `CONFIG` | No |
+| 403 | `CONFIG` | No |
+| 422 | `VALIDATION` | No |
+| 429 | `RATE_LIMITED` | Yes |
+| 500+ | `PROVIDER` | Yes |
+
+Network failures and unparseable responses are wrapped as `PROVIDER` errors. Timeouts are wrapped as `TIMEOUT` errors.
+
+## Per-send overrides
+
+Unosend supports priority, scheduled sending, and tracking toggles as per-send overrides via `TransportDataMap`:
+
+```ts
+await mail.welcome.send({
+  to: 'user@example.com',
+  input: { name: 'Alice' },
+  transport: {
+    unosend: {
+      priority: 'high',
+      scheduled_for: '2026-06-01T10:00:00Z',
+      tracking: { open: false, click: true },
+    },
+  },
+});
+```
+
+<TypeTable
+  type={{
+    priority: {
+      description: 'Email priority level.',
+      type: '"high" | "normal" | "low"',
+    },
+    scheduled_for: {
+      description: 'Schedule the email for future delivery. ISO 8601 datetime string.',
+      type: 'string',
+    },
+    tracking: {
+      description: 'Override open and click tracking. Both default to true on Unosend.',
+      type: '{ open?: boolean; click?: boolean }',
+    },
+  }}
+/>
+
+## Tags
+
+Better-Notify's `tags` field (a `Record<string, string | number | boolean>`) is converted to Unosend's `Array<{ name, value }>` format automatically:
+
+```ts
+await mail.welcome.send({
+  to: 'user@example.com',
+  input: { name: 'Alice' },
+  tags: { campaign: 'onboarding', version: 2 },
+});
+// Sent as: [{ name: "campaign", value: "onboarding" }, { name: "version", value: "2" }]
+```
+
+## Attachments
+
+The transport base64-encodes attachment content before sending:
+
+```ts
+await mail.invoice.send({
+  to: 'user@example.com',
+  input: { orderId: '12345' },
+  attachments: [
+    { filename: 'invoice.pdf', content: pdfBuffer, contentType: 'application/pdf' },
+  ],
+});
+```
+
+## Examples
+
+<Cards>
+  <Card title="Basic — React Email template" href="https://github.com/better-notify/better-notify/blob/main/examples/welcome-text/apps/cli/src/examples/email-unosend.ts">
+    Send a welcome email rendered with React Email through Unosend.
+  </Card>
+  <Card title="Attachments" href="https://github.com/better-notify/better-notify/blob/main/examples/welcome-text/apps/cli/src/examples/email-unosend-attachment.ts">
+    Send an invoice email with a PDF attachment.
+  </Card>
+  <Card title="Server-side templates" href="https://github.com/better-notify/better-notify/blob/main/examples/welcome-text/apps/cli/src/examples/email-unosend-template.ts">
+    Use Unosend's server-side templates via per-send overrides.
+  </Card>
+</Cards>
