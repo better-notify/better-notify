@@ -59,7 +59,7 @@ import {
   WebhooksLogo,
   Wrench,
 } from '@phosphor-icons/react';
-import { ModelContextProtocol } from '@libs/ui';
+import { ModelContextProtocol, Unosend } from '@libs/ui';
 import { createElement } from 'react';
 
 const TwilioLogo = ({ size = 18 }: { size?: string | number }) =>
@@ -241,6 +241,7 @@ export const iconMap = {
   Tag,
   TelegramLogo,
   TwilioLogo,
+  UnosendLogo: Unosend,
   WhatsappLogo,
   Terminal,
   TestTube,
