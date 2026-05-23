@@ -6,7 +6,7 @@ Cognitive load is the total mental effort required to use an interface. Overload
 
 ## Three Types of Cognitive Load
 
-### Intrinsic Load — The Task Itself
+### Intrinsic Load: The Task Itself
 
 Complexity inherent to what the user is trying to do. You can't eliminate this, but you can structure it.
 
@@ -14,12 +14,12 @@ Complexity inherent to what the user is trying to do. You can't eliminate this, 
 
 - Breaking complex tasks into discrete steps
 - Providing scaffolding (templates, defaults, examples)
-- Progressive disclosure — show what's needed now, hide the rest
+- Progressive disclosure: show what's needed now, hide the rest
 - Grouping related decisions together
 
-### Extraneous Load — Bad Design
+### Extraneous Load: Bad Design
 
-Mental effort caused by poor design choices. **Eliminate this ruthlessly** — it's pure waste.
+Mental effort caused by poor design choices. **Eliminate this ruthlessly.** It's pure waste.
 
 **Common sources**:
 
@@ -29,9 +29,9 @@ Mental effort caused by poor design choices. **Eliminate this ruthlessly** — i
 - Inconsistent patterns that prevent learning
 - Unnecessary steps between user intent and result
 
-### Germane Load — Learning Effort
+### Germane Load: Learning Effort
 
-Mental effort spent building understanding. This is _good_ cognitive load — it leads to mastery.
+Mental effort spent building understanding. This is _good_ cognitive load; it leads to mastery.
 
 **Support it by**:
 
@@ -65,9 +65,9 @@ Evaluate the interface against these 8 items:
 
 At any decision point, count the number of distinct options, actions, or pieces of information a user must simultaneously consider:
 
-- **≤4 items**: Within working memory limits — manageable
-- **5–7 items**: Pushing the boundary — consider grouping or progressive disclosure
-- **8+ items**: Overloaded — users will skip, misclick, or abandon
+- **≤4 items**: Within working memory limits, manageable
+- **5–7 items**: Pushing the boundary; consider grouping or progressive disclosure
+- **8+ items**: Overloaded; users will skip, misclick, or abandon
 
 **Practical applications**:
 
@@ -103,7 +103,7 @@ At any decision point, count the number of distinct options, actions, or pieces 
 
 ### 5. The Visual Noise Floor
 
-**Problem**: Every element has the same visual weight — nothing stands out.
+**Problem**: Every element has the same visual weight; nothing stands out.
 **Fix**: Establish clear hierarchy: one primary element, 2–3 secondary, everything else muted.
 
 ### 6. The Inconsistent Pattern
