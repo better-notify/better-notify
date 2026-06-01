@@ -4,6 +4,7 @@ import { createClient } from './client.js';
 import { defineChannel, slot } from './channel/define-channel.js';
 import { createNotify } from './notify.js';
 import { NotifyRpcError } from './errors.js';
+import { createMockQueue } from './queue/worker.js';
 import type { AnyChannel, AnyCatalog, ChannelDefinition } from './index.js';
 
 type TestRendered = { body: string; to: string };
@@ -1253,6 +1254,173 @@ describe('createClient multi-channel', () => {
       await expect(mail.ping.send({ to: 'a@x.com', input: { name: 'A' } })).rejects.toThrow(
         /No channel registered/,
       );
+    });
+  });
+
+  describe('createClient .queue()', () => {
+    it('enqueues an envelope when a queue producer is configured', async () => {
+      const catalog = buildTestCatalog();
+      const q = createMockQueue();
+      const mail = createClient({
+        catalog,
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+        queue: q.producer,
+      }) as unknown as { ping: { queue: (a: unknown) => Promise<{ id: string }> } };
+
+      const { id } = await mail.ping.queue({ to: 'a@b.c', input: { name: 'Ada' } });
+      expect(q.pending).toHaveLength(1);
+      expect(q.pending[0]?.route).toBe('ping');
+      expect(q.pending[0]?.id).toBe(id);
+      expect(q.pending[0]?.args).toEqual({ to: 'a@b.c', input: { name: 'Ada' } });
+      expect(q.pending[0]?.attempt).toBe(0);
+    });
+
+    it('rejects with CHANNEL_NOT_QUEUEABLE when no queue is configured', async () => {
+      const catalog = buildTestCatalog();
+      const mail = createClient({
+        catalog,
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+      }) as unknown as { ping: { queue: (a: unknown) => Promise<{ id: string }> } };
+      const { handlePromise } = await import('./lib/handle-promise.js');
+      const [err] = await handlePromise(mail.ping.queue({ to: 'a@b.c', input: { name: 'Ada' } }));
+      expect((err as { code?: string })?.code).toBe('CHANNEL_NOT_QUEUEABLE');
+    });
+
+    it('rejects with VALIDATION error on invalid input and does not enqueue', async () => {
+      const catalog = buildTestCatalog();
+      const q = createMockQueue();
+      const mail = createClient({
+        catalog,
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+        queue: q.producer,
+      }) as unknown as { ping: { queue: (a: unknown) => Promise<{ id: string }> } };
+      const { handlePromise } = await import('./lib/handle-promise.js');
+      const [err] = await handlePromise(mail.ping.queue({ to: 'a@b.c', input: { name: 42 } }));
+      expect((err as { code?: string })?.code).toBe('VALIDATION');
+      expect(q.pending).toHaveLength(0);
+    });
+  });
+
+  describe('createClient .queueBatch()', () => {
+    type QueueBatchClient = {
+      ping: {
+        queueBatch: (entries: ReadonlyArray<unknown>) => Promise<{
+          okCount: number;
+          errorCount: number;
+          results: ReadonlyArray<
+            | { status: 'ok'; index: number; result: { id: string } }
+            | { status: 'error'; index: number; error: { code?: string } }
+          >;
+        }>;
+      };
+    };
+
+    it('enqueues many entries via the producer enqueueBatch in one call', async () => {
+      const q = createMockQueue();
+      const mail = createClient({
+        catalog: buildTestCatalog(),
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+        queue: q.producer,
+      }) as unknown as QueueBatchClient;
+
+      const res = await mail.ping.queueBatch([
+        { to: 'a@b.c', input: { name: 'Ada' } },
+        { to: 'b@b.c', input: { name: 'Bo' } },
+      ]);
+      expect(res.okCount).toBe(2);
+      expect(res.errorCount).toBe(0);
+      expect(q.pending).toHaveLength(2);
+      expect(q.pending[0]?.route).toBe('ping');
+      const firstOk = res.results[0];
+      expect(firstOk?.status === 'ok' && firstOk.result.id).toBe(q.pending[0]?.id);
+    });
+
+    it('reports per-entry validation failures and enqueues only the valid ones', async () => {
+      const q = createMockQueue();
+      const mail = createClient({
+        catalog: buildTestCatalog(),
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+        queue: q.producer,
+      }) as unknown as QueueBatchClient;
+
+      const res = await mail.ping.queueBatch([
+        { to: 'a@b.c', input: { name: 'Ada' } },
+        { to: 'b@b.c', input: { name: 42 } },
+      ]);
+      expect(res.okCount).toBe(1);
+      expect(res.errorCount).toBe(1);
+      expect(q.pending).toHaveLength(1);
+      const bad = res.results.find((r) => r.status === 'error');
+      expect(bad?.status === 'error' && bad.error.code).toBe('VALIDATION');
+    });
+
+    it('enqueues nothing when every entry is invalid', async () => {
+      const q = createMockQueue();
+      const mail = createClient({
+        catalog: buildTestCatalog(),
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+        queue: q.producer,
+      }) as unknown as QueueBatchClient;
+
+      const res = await mail.ping.queueBatch([{ to: 'a@b.c', input: { name: 42 } }]);
+      expect(res.okCount).toBe(0);
+      expect(res.errorCount).toBe(1);
+      expect(q.pending).toHaveLength(0);
+    });
+
+    it('falls back to per-envelope enqueue when the producer has no enqueueBatch', async () => {
+      const pending: Array<{ id: string }> = [];
+      const producer = {
+        enqueue: async (envelope: { id: string }) => {
+          pending.push(envelope);
+          return { id: envelope.id };
+        },
+      };
+      const mail = createClient({
+        catalog: buildTestCatalog(),
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+        queue: producer,
+      }) as unknown as QueueBatchClient;
+
+      const res = await mail.ping.queueBatch([
+        { to: 'a@b.c', input: { name: 'Ada' } },
+        { to: 'b@b.c', input: { name: 'Bo' } },
+      ]);
+      expect(res.okCount).toBe(2);
+      expect(pending).toHaveLength(2);
+    });
+
+    it('rejects with CHANNEL_NOT_QUEUEABLE when no queue is configured', async () => {
+      const mail = createClient({
+        catalog: buildTestCatalog(),
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+      }) as unknown as QueueBatchClient;
+      const { handlePromise } = await import('./lib/handle-promise.js');
+      const [err] = await handlePromise(
+        mail.ping.queueBatch([{ to: 'a@b.c', input: { name: 'Ada' } }]),
+      );
+      expect((err as { code?: string })?.code).toBe('CHANNEL_NOT_QUEUEABLE');
+    });
+
+    it('rejects with BATCH_EMPTY when entries is empty', async () => {
+      const q = createMockQueue();
+      const mail = createClient({
+        catalog: buildTestCatalog(),
+        channels: { test: testChannel() },
+        transportsByChannel: { test: createTestTransport() },
+        queue: q.producer,
+      }) as unknown as QueueBatchClient;
+      const { handlePromise } = await import('./lib/handle-promise.js');
+      const [err] = await handlePromise(mail.ping.queueBatch([]));
+      expect((err as { code?: string })?.code).toBe('BATCH_EMPTY');
     });
   });
 });

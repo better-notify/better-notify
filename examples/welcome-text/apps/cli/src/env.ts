@@ -19,6 +19,14 @@ export const env = createEnv({
       .describe('Autosend destination email'),
 
     /**
+     * BullMQ cluster
+     */
+    REDIS_URL: z
+      .string()
+      .optional()
+      .describe('Redis connection URL for the BullMQ queue example; unset skips the live run'),
+
+    /**
      * Cloudflare cluster
      */
     CF_ACCOUNT_ID: z.string().optional().default('account-id').describe('Cloudflare account ID'),

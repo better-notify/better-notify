@@ -1,0 +1,386 @@
+---
+title: Queue & Workers
+icon: Queue
+description: Send notifications later through any queue, with one shared pipeline
+---
+
+import { QueueFlow } from '@/components/queue-flow';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+A queued send is not a different send. It runs the same validation, middleware, hooks, render, and transport as `.send()`, only later, on another process. Better-Notify guarantees this by extracting the send pipeline into one function that both the client and the worker call. Write the per-job logic once; every queue adapter is a thin shim over it.
+
+The contract serves two consumer shapes:
+
+- **Pull**: a long-lived process asks for the next jobs, sends them, then acks or retries. BullMQ, Postgres, SQS, Redis.
+- **Push**: the platform hands you a batch and you process it inline; there is no loop of your own. Cloudflare Queues, Lambda with an SQS event source.
+
+<QueueFlow />
+
+## Enqueueing
+
+Pass a `QueueProducer` to `createClient` as `queue`. With it wired, every procedure's `.queue(args, opts)` serializes the send and hands it to the producer instead of rejecting:
+
+```ts
+import { createClient } from '@betternotify/core';
+
+const mail = createClient({
+  catalog,
+  transportsByChannel: { email: smtpTransport({ host: '...' }) },
+  queue: producer,
+});
+
+const { id } = await mail.transactional.welcome.queue({
+  to: 'ada@example.com',
+  input: { name: 'Ada', verifyUrl: 'https://...' },
+});
+```
+
+`.queue()` takes the same arguments as `.send()`, plus an optional provider-specific options object covered [below](#enqueue-options), and returns the job id. It validates `input` against the procedure's schema before enqueueing, so a malformed payload fails fast at the call site rather than on a worker minutes later.
+
+Without `queue` configured, `.queue()` rejects with a `CHANNEL_NOT_QUEUEABLE` error. The producer is the only thing the client needs to enqueue; the consuming side lives in a separate process.
+
+<Callout>
+Enqueue-time validation covers `input` only. The worker re-validates the full args on pickup, so a schema change between enqueue and dequeue is still caught.
+</Callout>
+
+### Enqueue options
+
+The second argument to `.queue()` is `EnqueueOptions`, a provider-specific passthrough. BullMQ exposes `delay`, `attempts`, and `backoff`; Cloudflare exposes `delaySeconds` and `contentType`. Adapters register their option type through declaration merging on `QueueDataMap`, so each adapter gives you typed autocomplete for its own keys:
+
+```ts
+import type { JobsOptions } from 'bullmq';
+
+declare module '@betternotify/core' {
+  interface QueueDataMap {
+    bullmq: Pick<JobsOptions, 'delay' | 'attempts' | 'backoff'>;
+  }
+}
+```
+
+### Batch enqueueing
+
+To enqueue many sends at once, use `.queueBatch(entries, opts)`. When the producer's adapter has a native bulk API (BullMQ `addBulk`, Cloudflare `sendBatch`), all entries are written in a single operation; otherwise the client falls back to one `enqueue` per entry.
+
+```ts
+const { okCount, errorCount, results } = await mail.transactional.welcome.queueBatch([
+  { to: 'ada@example.com', input: { name: 'Ada' } },
+  { to: 'bo@example.com', input: { name: 'Bo' } },
+]);
+```
+
+Each entry is validated against the procedure's schema before enqueueing, exactly like `.queue()`. Validation is per-entry: invalid entries are reported as errors while the valid ones are still enqueued — the call does not reject as a whole. The result mirrors `.batch()`:
+
+<TypeTable
+  type={{
+    okCount: {
+      description: 'Number of entries successfully enqueued.',
+      type: 'number',
+    },
+    errorCount: {
+      description: 'Number of entries that failed validation.',
+      type: 'number',
+    },
+    results: {
+      description: 'Per-entry outcome, each tagged with its original index: { status: "ok"; result: { id } } or { status: "error"; error }.',
+      type: 'Array<BatchEntryResult<{ id: string }>>',
+    },
+  }}
+/>
+
+Like `.queue()`, `queueBatch` rejects with `CHANNEL_NOT_QUEUEABLE` when no `queue` is configured, and `BATCH_EMPTY` when given an empty array.
+
+## The job envelope
+
+Every queued send is serialized into a `JobEnvelope`, a JSON-safe record carrying everything the worker needs to replay the send:
+
+<TypeTable
+  type={{
+    id: {
+      description: 'Unique id for the job. Used for dedup, ack, and correlation.',
+      type: 'string',
+    },
+    route: {
+      description: 'Canonical dot-path route id, e.g. "transactional.welcome".',
+      type: 'string',
+    },
+    args: {
+      description: 'The full args passed to .queue(), the same shape .send() takes ({ to, input, ... }), replayed verbatim.',
+      type: 'unknown',
+    },
+    attempt: {
+      description: 'Delivery attempt count. 0 on first enqueue, incremented on retry.',
+      type: 'number',
+    },
+    enqueuedAt: {
+      description: 'ISO-8601 timestamp of when the job was enqueued.',
+      type: 'string',
+    },
+  }}
+/>
+
+The envelope carries no context. Context that existed at enqueue time (request ids, tenant handles, live database connections) is gone on the consumer and often non-serializable. The worker rebuilds it per job instead. See [Context reconstruction](#context-reconstruction).
+
+## The job processor
+
+`createJobProcessor` is the per-job function that every adapter reuses. It has no lifecycle and no polling: it processes one envelope and returns a `JobResult`. It never throws.
+
+```ts
+import { createJobProcessor } from '@betternotify/core/queue';
+
+const processor = createJobProcessor({
+  catalog,
+  transportsByChannel: { email: smtpTransport({ host: '...' }) },
+});
+
+const result = await processor.process(envelope);
+```
+
+`process()` looks up the route, rebuilds context, runs the shared send pipeline (re-validate → middleware → hooks → render → transport), then classifies the outcome:
+
+<TypeTable
+  type={{
+    sent: {
+      description: 'Delivered. Ack and forget.',
+      type: '{ status: "sent"; messageId: string }',
+    },
+    retry: {
+      description: 'A retriable transport error. Put the job back for another attempt.',
+      type: '{ status: "retry"; error: SerializedError }',
+    },
+    dlq: {
+      description: 'Terminal failure. Park in the dead-letter store; replaying cannot fix it.',
+      type: '{ status: "dlq"; reason; error: SerializedError }',
+    },
+  }}
+/>
+
+Because `process()` returns a result rather than throwing, push handlers and pull loops branch on the same three outcomes.
+
+## Push consumers
+
+A push platform hands you a batch and expects you to ack or retry each message. Hold a processor and call it inside the handler. There is no worker and no consumer driver:
+
+```ts
+import { createJobProcessor } from '@betternotify/core/queue';
+
+const processor = createJobProcessor({ catalog, transportsByChannel });
+
+export default {
+  async queue(batch, env) {
+    for (const message of batch.messages) {
+      const result = await processor.process(message.body);
+      if (result.status === 'retry') message.retry();
+      else message.ack();
+    }
+  },
+};
+```
+
+`sent` and `dlq` both ack. The message is done, whether it succeeded or died terminally. Only `retry` goes back. The platform's own retry cap (Cloudflare's `max_retries`, for example) decides when an endlessly retrying message moves to its dead-letter queue.
+
+## Pull workers
+
+For platforms without their own loop, `createQueueWorker` is a generic pull-loop runner. It owns concurrency, lifecycle, and events; you supply a four-method `QueueConsumer` driver and never write a loop yourself:
+
+```ts
+import { createQueueWorker } from '@betternotify/core/queue';
+
+const worker = createQueueWorker({
+  catalog,
+  transportsByChannel: { email: smtpTransport({ host: '...' }) },
+  consumer: postgresConsumer(db),
+  concurrency: 10,
+  maxAttempts: 5,
+});
+
+worker.on('completed', (result, job) => log.info({ job }, 'sent'));
+worker.on('failed', (result, job) => log.warn({ result }, 'failed'));
+
+await worker.start();
+```
+
+The loop pulls up to `concurrency` jobs, processes each through the internal processor, and branches on the result to `ack`, `retry`, or `deadLetter` on the consumer.
+
+<TypeTable
+  type={{
+    concurrency: {
+      description: 'Max jobs pulled and processed per loop tick.',
+      type: 'number',
+      default: '1',
+    },
+    idleDelayMs: {
+      description: 'Delay between polls when the queue is empty or a pull fails.',
+      type: 'number',
+      default: '50',
+    },
+    maxAttempts: {
+      description: 'Max delivery attempts before a retriable failure is dead-lettered as retries_exhausted.',
+      type: 'number',
+      default: '3',
+    },
+  }}
+/>
+
+### The consumer driver
+
+A `QueueConsumer` translates four storage transitions into your store's vocabulary. These are imperative: each one must move the message, or the queue stalls:
+
+<TypeTable
+  type={{
+    pull: {
+      description: 'Fetch up to limit jobs to process. Return [] when the queue is empty.',
+      type: '(limit: number, signal: AbortSignal) => Promise<PulledJob[]>',
+    },
+    ack: {
+      description: 'Mark a delivered job done. Remove it from the queue.',
+      type: '(job: PulledJob) => Promise<void>',
+    },
+    retry: {
+      description: 'Return a transiently-failed job for another attempt, typically with attempt + 1.',
+      type: '(job: PulledJob, error: SerializedError) => Promise<void>',
+    },
+    deadLetter: {
+      description: 'Park a terminally-failed job in the dead-letter store, out of the main queue.',
+      type: '(job: PulledJob, result: JobResult) => Promise<void>',
+    },
+  }}
+/>
+
+Each `PulledJob` pairs the decoded `envelope` with a `raw` store-native handle, so your driver can ack or delete the exact underlying message. Call `worker.close()` to abort the loop and wait for in-flight jobs to settle.
+
+## Context reconstruction
+
+Catalogs are generic over a context type. To rebuild that context on the consumer, pass a `context` factory to the processor or worker. It runs once per job and its return value flows into the pipeline as `createClient`'s `ctx` does on a direct send:
+
+```ts
+const processor = createJobProcessor({
+  catalog,
+  transportsByChannel,
+  context: async (job) => ({
+    tenant: await loadTenant(job.route),
+    db: getConnection(),
+  }),
+});
+```
+
+Serializable data the job needs at send time belongs in `input`, where it travels inside the validated envelope. Live handles belong in the `context` factory, where they are reconstructed fresh. If the factory throws, the job is dead-lettered as `send_failed`.
+
+## Error handling and the DLQ
+
+Errors that cross the queue boundary are stored as `SerializedError` (the JSON shape of `NotifyRpcError`) so the reason a job retried or died survives the trip into a store or dead-letter queue. The processor maps each error to one outcome:
+
+<TypeTable
+  type={{
+    schema_mismatch: {
+      description: 'args.input failed re-validation on pickup. The schema changed since enqueue. Terminal.',
+      type: 'dlq',
+    },
+    unknown_route: {
+      description: 'The route is not in the catalog, or has no channel or transport. Terminal.',
+      type: 'dlq',
+    },
+    send_failed: {
+      description: 'A non-retriable transport, render, or context error. Terminal.',
+      type: 'dlq',
+    },
+    retries_exhausted: {
+      description: 'A retriable error exceeded the worker maxAttempts cap. Terminal.',
+      type: 'dlq',
+    },
+    retry: {
+      description: 'A retriable provider error. Requeued for another attempt.',
+      type: 'retry',
+    },
+  }}
+/>
+
+The first three reasons are terminal because replaying them cannot help: a bad schema, a missing route, or a non-retriable provider rejection will fail identically next time. Only a retriable provider error returns to the queue. On a pull worker, `retries_exhausted` is what a retry becomes once `attempt + 1` reaches `maxAttempts`; on a push platform, the platform's own retry cap plays that role.
+
+Lifecycle hooks (`onBeforeSend`, `onExecute`, `onAfterSend`, `onError`) fire on the worker exactly as on a direct send. Rate-limit and idempotency middleware run on queued sends too.
+
+## Scaling across catalogs
+
+The default scaling unit is one catalog per queue. Give each catalog its own queue with its own throughput settings, and a marketing backlog can never starve transactional sends.
+
+A push batch identifies its source queue as a plain string, which cannot be narrowed to a key at compile time. `createQueueRouter` returns the matching processor or `undefined`, forcing you to handle the unknown-queue case:
+
+```ts
+import { createJobProcessor, createQueueRouter } from '@betternotify/core/queue';
+
+const router = createQueueRouter({
+  'tx-emails': createJobProcessor({ catalog: txCatalog, transportsByChannel }),
+  'mkt-emails': createJobProcessor({ catalog: mktCatalog, transportsByChannel }),
+});
+
+export default {
+  async queue(batch, env) {
+    const processor = router.route(batch.queue);
+    if (!processor) {
+      log.error({ queue: batch.queue }, 'no processor for queue');
+      return;
+    }
+    for (const message of batch.messages) {
+      const result = await processor.process(message.body);
+      if (result.status === 'retry') message.retry();
+      else message.ack();
+    }
+  },
+};
+```
+
+## Testing locally
+
+`createMockQueue` returns a linked producer and consumer over in-heap arrays, so you can exercise the full enqueue → process → ack/retry/dlq cycle with no infrastructure:
+
+```ts
+import { createMockQueue, createQueueWorker } from '@betternotify/core/queue';
+import { createClient } from '@betternotify/core';
+
+const queue = createMockQueue();
+
+const mail = createClient({ catalog, transportsByChannel, queue: queue.producer });
+const worker = createQueueWorker({ catalog, transportsByChannel, consumer: queue.consumer });
+
+await mail.transactional.welcome.queue({ to: 'ada@example.com', input: { name: 'Ada' } });
+await worker.start();
+```
+
+It exposes `pending` and `dlq` arrays for assertions. State lives in memory and is lost on restart; durable persistence is an adapter's job.
+
+<Callout type="warn">
+`createMockQueue` is for tests and local development only. It is not durable and not safe across processes.
+</Callout>
+
+## Advanced examples
+
+Middleware and plugins run on the worker exactly as on a direct `.send()`, so rate-limit, idempotency, tag injection, and plugin hooks all apply to a backlog flush. Both examples below run on the in-memory queue to show that parity, with no infrastructure:
+
+<Cards>
+  <Card href="https://github.com/better-notify/better-notify/blob/main/examples/welcome-text/apps/cli/src/examples/queue/advanced-middleware.ts" title="Middleware on the worker">
+    Idempotency dedupes a repeated job and tag injection composes downstream, both on dequeue.
+  </Card>
+  <Card href="https://github.com/better-notify/better-notify/blob/main/examples/welcome-text/apps/cli/src/examples/queue/advanced-plugins.ts" title="Plugins on the worker">
+    A plugin's middleware and hooks fire per job, with context rebuilt on the consumer.
+  </Card>
+</Cards>
+
+## Adapter recipes
+
+A queue adapter is thin glue, not a wrapper — Cloudflare is ~15 lines, BullMQ ~40. So Better-Notify does not ship first-party adapter packages. The durable, supported surface is the `QueueProducer` / `QueueConsumer` contract above; the recipes below are reference implementations of it that you copy into your own project. Install the provider library yourself and own its version in your own `package.json`.
+
+<Callout>
+We intentionally do not publish `@betternotify/bullmq` or `@betternotify/cloudflare-queue`. A published adapter would have to re-version in lockstep with the core contract for ~40 lines of glue, and provider-lib churn is better owned by the developer who picked the provider. See the rationale in [issue #181](https://github.com/better-notify/better-notify/issues/181). Both recipes are also kept honest as runnable examples in the `examples/welcome-text` queue folder (`src/examples/queue/bullmq.ts` and `cloudflare.ts`, alongside an in-memory `mock.ts`), so they build and typecheck in CI against the current contract.
+</Callout>
+
+Adapters split along the pull-vs-push line. Pull adapters (Postgres, SQS, Redis) implement the four-method `QueueConsumer` and reuse `createQueueWorker` unchanged. Push adapters (Cloudflare Queues, Lambda) wire a `JobProcessor` into the platform's handler and own no loop. **BullMQ is the exception:** although it is a pull-style broker, it ships its own `Worker`, so its recipe plugs `processor.process()` into BullMQ's native worker rather than `createQueueWorker`.
+
+<Cards>
+  <Card href="/docs/infrastructure/queue-and-workers/bullmq" title="BullMQ">
+    Redis-backed pull broker. Uses BullMQ's native Worker for retry and backoff.
+  </Card>
+  <Card href="/docs/infrastructure/queue-and-workers/cloudflare" title="Cloudflare Queues">
+    Push platform. A processor inside the Worker's queue() handler — no loop of your own.
+  </Card>
+</Cards>
+
+Targeting Postgres, SQS, or a custom store? Implement the four-method `QueueConsumer` against the contract above and hand it to `createQueueWorker` — the same loop, events, and retry cap apply unchanged.

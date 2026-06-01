@@ -1,0 +1,5 @@
+{
+  "title": "Queues",
+  "icon": "Queue",
+  "pages": ["index", "bullmq", "cloudflare"]
+}

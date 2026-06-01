@@ -7,7 +7,7 @@ description: Define and organize your notification procedures
 import { Mermaid } from '@/components/mermaid';
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-A **procedure** is a contract for one notification. It binds a channel, an input schema, and the configuration needed to render and deliver the message. A **catalog** is a typed map of procedures — the single object that every other layer in Better-Notify derives its types from.
+A **procedure** is a contract for one notification. It binds a channel, an input schema, and the configuration needed to render and deliver the message. A **catalog** is a typed map of procedures, the single object that every other layer in Better-Notify derives its types from.
 
 <div className="border-fd-border bg-fd-card/50 rounded-xl border p-5">
   <span className="text-fd-muted-foreground mb-4 block font-mono text-[11px] font-semibold uppercase tracking-widest">catalog</span>
@@ -68,7 +68,7 @@ const welcome = rpc
   });
 ```
 
-Each builder call returns a new builder with the accumulated state — nothing is mutated. The procedure does not exist as a finalized definition until you pass it into `.catalog()`.
+Each builder call returns a new builder with the accumulated state. Nothing is mutated. The procedure does not exist as a finalized definition until you pass it into `.catalog()`.
 
 The slots available on the builder (`.subject()`, `.template()`, `.from()`, `.tags()`, etc.) are defined by the channel. Email has its set, SMS has `.body()`, push has `.title()` and `.body()`. See [Channels](/docs/concepts/channels) for the full slot API per channel.
 
@@ -96,11 +96,11 @@ const catalog = rpc.catalog({
 });
 ```
 
-The keys become the route IDs — the canonical identifiers used throughout the system. `createClient` uses them to build the typed client surface — `mail.welcome.send(...)`, `mail.passwordReset.send(...)`.
+The keys become the route IDs, the canonical identifiers used throughout the system. `createClient` uses them to build the typed client surface: `mail.welcome.send(...)`, `mail.passwordReset.send(...)`.
 
 ## Merging catalogs
 
-`.catalog()` accepts both procedures and other catalogs at the same level. Each catalog is a standalone unit — you merge them into a bigger catalog to build the full notification surface:
+`.catalog()` accepts both procedures and other catalogs at the same level. Each catalog is standalone; you merge them into a bigger catalog for the full notification surface:
 
 ```ts
 const transactional = rpc.catalog({
@@ -119,7 +119,7 @@ const catalog = rpc.catalog({
 });
 ```
 
-When catalogs merge, the nesting flattens into dot-path route IDs — a flat map of canonical identifiers:
+When catalogs merge, the nesting flattens into dot-path route IDs:
 
 <Mermaid
   code={`
@@ -159,7 +159,7 @@ flowchart LR
 The route ID is the canonical identifier for a procedure across the entire system. It appears as:
 
 - The `route` field in logger output
-- The job name in BullMQ queues
+- The `route` on a queued `JobEnvelope`
 - The correlation key in webhook events
 - The `route` parameter in middleware and hooks
 
@@ -210,7 +210,7 @@ const preview = await mail.transactional.welcome.render(
 
 ## Batch sends
 
-Every procedure exposes `.batch()` — it sends to multiple recipients sequentially and collects per-entry results. This works on any channel, not just email:
+Every procedure exposes `.batch()`. It sends to multiple recipients sequentially and collects per-entry results. This works on any channel, not just email:
 
 ```ts
 const batch = await mail.marketing.newsletter.batch(
@@ -225,7 +225,7 @@ console.log(batch.okCount);    // number of successful sends
 console.log(batch.errorCount); // number of failed sends
 ```
 
-Each entry runs through the full pipeline independently — validation, middleware, render, transport. A failure on one entry does not stop the rest. The result contains per-entry outcomes:
+Each entry runs through the full pipeline independently: validation, middleware, render, transport. A failure on one entry does not stop the rest. The result contains per-entry outcomes:
 
 ```ts
 for (const entry of batch.results) {
@@ -282,25 +282,20 @@ if (failed.length > 0) {
 }
 ```
 
-For automated retries, push failed entries into a job queue so they can be retried with backoff:
+For automated retries, enqueue failed entries through `.queue()` so a worker retries them with backoff:
 
 ```ts
 for (const failure of failed) {
-  await queue.add('retry-notification', {
-    procedure: 'marketing.newsletter',
-    args: originalEntries[failure.index],
-    error: failure.error.toJSON(),
-    attemptNumber: 1,
-  }, {
+  await mail.marketing.newsletter.queue(originalEntries[failure.index], {
     delay: 60_000,
-    attempts: 3,
-    backoff: { type: 'exponential', delay: 60_000 },
   });
 }
 ```
 
+This requires a `queue` producer on the client. See [Queue & Workers](/docs/infrastructure/queue-and-workers) for the full enqueue, worker, and dead-letter model.
+
 <Callout>
-Batch does not retry internally — each entry gets one attempt. If you need automatic retries with backoff, use a queue worker or wrap the batch call with your own retry logic.
+Batch does not retry internally; each entry gets one attempt. If you need automatic retries with backoff, enqueue failed entries with `.queue()` or wrap the batch call with your own retry logic.
 </Callout>
 
 ## Type inference
@@ -330,7 +325,7 @@ const rpc = createNotify({ channels: { email } })
   });
 ```
 
-After `.use()`, the `Ctx` type parameter narrows. Every procedure in the catalog can access `ctx.tenantId`, and the type system enforces that the middleware provides it. Multiple `.use()` calls chain — each one merges its additions into the context type.
+After `.use()`, the `Ctx` type parameter narrows. Every procedure in the catalog can access `ctx.tenantId`, and the type system enforces that the middleware provides it. Multiple `.use()` calls chain; each one merges its additions into the context type.
 
 <Callout>
 For a full walkthrough of building procedures, merging catalogs, and a working client from scratch, see [Your First Email](/docs/get-started/quick-start).
