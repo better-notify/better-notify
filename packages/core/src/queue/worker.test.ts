@@ -573,6 +573,41 @@ describe('createQueueWorker pull-loop', () => {
     expect(pullCalls).toBeGreaterThan(0);
   });
 
+  it('starts each run with a fresh, non-aborted AbortSignal so restart works', async () => {
+    const abortedAtPull: boolean[] = [];
+    const consumer: QueueConsumer = {
+      pull: async (_limit, signal) => {
+        abortedAtPull.push(signal.aborted);
+        return [];
+      },
+      ack: async () => {},
+      retry: async () => {},
+      deadLetter: async () => {},
+    };
+    const worker = createQueueWorker({
+      catalog: buildCatalog(),
+      channels,
+      transportsByChannel: { test: okTransport() },
+      consumer,
+      idleDelayMs: 1,
+    });
+
+    const p1 = worker.start();
+    await new Promise((r) => setTimeout(r, 10));
+    await worker.close();
+    await p1;
+    const afterFirstRun = abortedAtPull.length;
+
+    const p2 = worker.start();
+    await new Promise((r) => setTimeout(r, 10));
+    await worker.close();
+    await p2;
+
+    expect(afterFirstRun).toBeGreaterThan(0);
+    expect(abortedAtPull.length).toBeGreaterThan(afterFirstRun);
+    expect(abortedAtPull.every((aborted) => aborted === false)).toBe(true);
+  });
+
   it('continues when consumer.pull rejects', async () => {
     let calls = 0;
     const consumer: QueueConsumer = {

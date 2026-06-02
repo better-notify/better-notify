@@ -184,7 +184,7 @@ export const createQueueWorker = <R extends AnyCatalog, Ctx = {}>(
     completed: [] as Array<(r: JobResult, j: PulledJob) => void>,
     failed: [] as Array<(r: JobResult, j: PulledJob) => void>,
   };
-  const controller = new AbortController();
+  let controller: AbortController | null = null;
   let running = false;
   let loopDone: Promise<void> = Promise.resolve();
 
@@ -212,11 +212,9 @@ export const createQueueWorker = <R extends AnyCatalog, Ctx = {}>(
     }
   };
 
-  const loop = async (): Promise<void> => {
+  const loop = async (signal: AbortSignal): Promise<void> => {
     while (running) {
-      const [pullErr, jobs] = await handlePromise(
-        opts.consumer.pull(concurrency, controller.signal),
-      );
+      const [pullErr, jobs] = await handlePromise(opts.consumer.pull(concurrency, signal));
       if (pullErr) {
         if (running) await new Promise((r) => setTimeout(r, idleDelayMs));
         continue;
@@ -239,13 +237,16 @@ export const createQueueWorker = <R extends AnyCatalog, Ctx = {}>(
   const start = async (): Promise<void> => {
     if (running) return;
     running = true;
-    loopDone = loop();
+    const current = new AbortController();
+    controller = current;
+    loopDone = loop(current.signal);
     await loopDone;
   };
 
   const close = async (): Promise<void> => {
     running = false;
-    controller.abort();
+    controller?.abort();
+    controller = null;
     await loopDone;
   };
 
