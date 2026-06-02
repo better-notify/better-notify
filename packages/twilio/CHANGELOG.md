@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0-beta.5](https://github.com/better-notify/better-notify/compare/@betternotify/twilio-v1.0.0-beta.4...@betternotify/twilio-v1.0.0-beta.5) (2026-06-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.9
+    * @betternotify/sms bumped to 1.0.0-beta.4
+
 ## [1.0.0-beta.4](https://github.com/better-notify/better-notify/compare/@betternotify/twilio-v1.0.0-beta.3...@betternotify/twilio-v1.0.0-beta.4) (2026-05-22)
 
 

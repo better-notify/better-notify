@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0-beta.18](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.17...@betternotify/web-v1.1.0-beta.18) (2026-06-02)
+
+
+### Features
+
+* **core:** add queue contract, worker, and BullMQ/Cloudflare recipes ([#182](https://github.com/better-notify/better-notify/issues/182)) ([a01c235](https://github.com/better-notify/better-notify/commit/a01c235412f3662adc5726b1621cf9bd29280049))
+* **unosend:** add Unosend email transport ([#176](https://github.com/better-notify/better-notify/issues/176)) ([1a9b474](https://github.com/better-notify/better-notify/commit/1a9b4746d2dabf30f50106edeb6ef5470e7b017b))
+
 ## [1.1.0-beta.17](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.16...@betternotify/web-v1.1.0-beta.17) (2026-05-22)
 
 ## [1.1.0-beta.16](https://github.com/better-notify/better-notify/compare/@betternotify/web-v1.1.0-beta.15...@betternotify/web-v1.1.0-beta.16) (2026-05-22)

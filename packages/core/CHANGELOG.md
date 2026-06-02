@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.9](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.8...@betternotify/core-v1.0.0-beta.9) (2026-06-02)
+
+
+### Features
+
+* **core:** add queue contract, worker, and BullMQ/Cloudflare recipes ([#182](https://github.com/better-notify/better-notify/issues/182)) ([a01c235](https://github.com/better-notify/better-notify/commit/a01c235412f3662adc5726b1621cf9bd29280049))
+
 ## [1.0.0-beta.8](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.7...@betternotify/core-v1.0.0-beta.8) (2026-05-22)
 
 ## [1.0.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.6...@betternotify/core-v1.0.0-beta.7) (2026-05-22)
