@@ -230,6 +230,7 @@ export const runSendPipeline = async (
   rawArgs: unknown,
   flatKey: string,
   ctx: unknown,
+  attempt: number = 1,
 ): Promise<ChannelSendResult> => {
   const channel = deps.channels[channelDef.channel] ?? channelDef.channelRef;
   if (!channel) {
@@ -279,8 +280,18 @@ export const runSendPipeline = async (
     reportHookError(deps.hooks.onError, beforeSendParams, e, log, 'onBeforeSend'),
   );
   if (beforeErr) {
-    markHandled(beforeErr);
-    throw beforeErr;
+    const wrapped =
+      beforeErr instanceof NotifyRpcError
+        ? beforeErr
+        : new NotifyRpcError({
+            message: beforeErr.message,
+            code: 'UNKNOWN',
+            route: flatKey,
+            messageId,
+            cause: beforeErr,
+          });
+    markHandled(wrapped);
+    throw wrapped;
   }
 
   const timing = { renderMs: 0, sendMs: 0 };
@@ -316,8 +327,18 @@ export const runSendPipeline = async (
       reportHookError(deps.hooks.onError, executeParams, e, log, 'onExecute'),
     );
     if (executeErr) {
-      markHandled(executeErr);
-      throw executeErr;
+      const wrapped =
+        executeErr instanceof NotifyRpcError
+          ? executeErr
+          : new NotifyRpcError({
+              message: executeErr.message,
+              code: 'UNKNOWN',
+              route: flatKey,
+              messageId,
+              cause: executeErr,
+            });
+      markHandled(wrapped);
+      throw wrapped;
     }
 
     const sendStart = performance.now();
@@ -326,7 +347,7 @@ export const runSendPipeline = async (
     const sendCtx: SendContext = {
       route: flatKey,
       messageId,
-      attempt: 1,
+      attempt,
       ...(transportData && { transport: transportData }),
     };
     const sendTuple = await handlePromise(transport.send(rendered, sendCtx));

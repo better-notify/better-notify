@@ -13,7 +13,22 @@ import {
 import type { AnyChannel, AnyCatalog, ChannelDefinition } from '../index.js';
 import type { Transport } from '../transport.js';
 import type { JobResult } from './types.js';
+import type { LoggerLike } from '../logger.js';
 import { NotifyRpcError, NotifyRpcProviderError } from '../errors.js';
+
+const captureLogger = (): { logger: LoggerLike; errors: string[] } => {
+  const errors: string[] = [];
+  const logger: LoggerLike = {
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: (message) => {
+      errors.push(message);
+    },
+    child: () => logger,
+  };
+  return { logger, errors };
+};
 
 type TArgs = { to: string; input: { name: string } };
 
@@ -219,6 +234,23 @@ describe('createJobProcessor', () => {
     if (r.status === 'dlq') expect(r.reason).toBe('send_failed');
   });
 
+  it('wraps a non-NotifyRpcError from the pipeline (validateArgs throws) into send_failed dlq', async () => {
+    const p = createJobProcessor({
+      catalog: buildCatalog(),
+      channels,
+      transportsByChannel: { test: okTransport() },
+    });
+    const r = await p.process({
+      id: 'no-to',
+      route: 'welcome',
+      args: { input: { name: 'Ada' } },
+      attempt: 0,
+      enqueuedAt: 't',
+    });
+    expect(r.status).toBe('dlq');
+    if (r.status === 'dlq') expect(r.reason).toBe('send_failed');
+  });
+
   it('DLQs unknown_route via classify when no channel registered (CONFIG code from pipeline)', async () => {
     const p = createJobProcessor({
       catalog: buildCatalog(),
@@ -332,6 +364,30 @@ describe('createJobProcessor', () => {
     expect(hookFired).toEqual(['after']);
   });
 
+  it('threads envelope.attempt + 1 into the transport SendContext', async () => {
+    const seen: number[] = [];
+    const recording: Transport = {
+      name: 'rec',
+      send: async (_rendered, ctx) => {
+        seen.push(ctx.attempt);
+        return { ok: true, data: { id: 'x' } };
+      },
+    };
+    const p = createJobProcessor({
+      catalog: buildCatalog(),
+      channels,
+      transportsByChannel: { test: recording },
+    });
+    await p.process({
+      id: 'a',
+      route: 'welcome',
+      args: { to: 'a@b.c', input: { name: 'Ada' } },
+      attempt: 2,
+      enqueuedAt: 't',
+    });
+    expect(seen).toEqual([3]);
+  });
+
   it('plugin without middleware or hooks does not crash', async () => {
     const plugin = { name: 'bare-plugin' };
     const p = createJobProcessor({
@@ -396,6 +452,50 @@ describe('createQueueWorker pull-loop', () => {
     expect(dead.map((d) => d.envelope.id)).toContain('bad');
     expect(completed.some((c) => c.status === 'sent')).toBe(true);
     expect(failed.some((f) => f.status === 'dlq')).toBe(true);
+  });
+
+  it('logs (does not swallow) a failing storage transition and keeps polling', async () => {
+    const { logger, errors } = captureLogger();
+    let pulls = 0;
+    const consumer: QueueConsumer = {
+      pull: async () => {
+        pulls++;
+        if (pulls === 1) {
+          return [
+            {
+              envelope: {
+                id: 'ack-fail',
+                route: 'welcome',
+                args: { to: 'a@b.c', input: { name: 'Ada' } },
+                attempt: 0,
+                enqueuedAt: 't',
+              },
+              raw: 'ack-fail',
+            },
+          ];
+        }
+        return [];
+      },
+      ack: async () => {
+        throw new Error('ack boom');
+      },
+      retry: async () => {},
+      deadLetter: async () => {},
+    };
+    const worker = createQueueWorker({
+      catalog: buildCatalog(),
+      channels,
+      transportsByChannel: { test: okTransport() },
+      consumer,
+      idleDelayMs: 1,
+      logger,
+    });
+    const p = worker.start();
+    await new Promise((r) => setTimeout(r, 20));
+    await worker.close();
+    await p;
+    expect(errors).toContain('storage transition failed');
+    expect(pulls).toBeGreaterThan(1);
   });
 
   it('calls consumer.retry when a job result is retry', async () => {

@@ -108,7 +108,7 @@ export const createJobProcessor = <R extends AnyCatalog, Ctx = {}>(
     }
 
     const [sendErr, result] = await handlePromise(
-      runSendPipeline(deps, def, envelope.args, envelope.route, ctx),
+      runSendPipeline(deps, def, envelope.args, envelope.route, ctx, envelope.attempt + 1),
     );
     if (!sendErr) return { status: 'sent', messageId: result.messageId };
     const asRpc =
@@ -176,6 +176,7 @@ export const createQueueWorker = <R extends AnyCatalog, Ctx = {}>(
   opts: CreateQueueWorkerOptions<R, Ctx>,
 ): QueueWorker => {
   const processor = createJobProcessor(opts);
+  const logger = (opts.logger ?? consoleLogger()).child({ component: 'worker' });
   const concurrency = opts.concurrency ?? 1;
   const idleDelayMs = opts.idleDelayMs ?? 50;
   const maxAttempts = opts.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
@@ -224,7 +225,14 @@ export const createQueueWorker = <R extends AnyCatalog, Ctx = {}>(
         if (running) await new Promise((r) => setTimeout(r, idleDelayMs));
         continue;
       }
-      await Promise.all(jobs.map((j) => handlePromise(handle(j))));
+      await Promise.all(
+        jobs.map(async (j) => {
+          const [handleErr] = await handlePromise(handle(j));
+          if (handleErr) {
+            logger.error('storage transition failed', { err: handleErr, jobId: j.envelope.id });
+          }
+        }),
+      );
     }
   };
 

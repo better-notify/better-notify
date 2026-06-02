@@ -276,7 +276,7 @@ Errors that cross the queue boundary are stored as `SerializedError` (the JSON s
       type: 'dlq',
     },
     unknown_route: {
-      description: 'The route is not in the catalog, or has no channel or transport. Terminal.',
+      description: 'The route is not in the catalog, or has no channel. Terminal.',
       type: 'dlq',
     },
     send_failed: {
@@ -342,7 +342,11 @@ const mail = createClient({ catalog, transportsByChannel, queue: queue.producer 
 const worker = createQueueWorker({ catalog, transportsByChannel, consumer: queue.consumer });
 
 await mail.transactional.welcome.queue({ to: 'ada@example.com', input: { name: 'Ada' } });
-await worker.start();
+
+const running = worker.start();
+while (queue.pending.length > 0) await new Promise((r) => setTimeout(r, 10));
+await worker.close();
+await running;
 ```
 
 It exposes `pending` and `dlq` arrays for assertions. State lives in memory and is lost on restart; durable persistence is an adapter's job.

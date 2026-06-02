@@ -287,7 +287,7 @@ For automated retries, enqueue failed entries through `.queue()` so a worker ret
 ```ts
 for (const failure of failed) {
   await mail.marketing.newsletter.queue(originalEntries[failure.index], {
-    delay: 60_000,
+    bullmq: { delay: 60_000 },
   });
 }
 ```

@@ -240,6 +240,7 @@ export function QueueFlow() {
   const [scenario, setScenario] = useState<ScenarioKey | null>(null);
   const [running, setRunning] = useState(false);
 
+  const runningRef = useRef(false);
   const abortRef = useRef({ aborted: false });
   const pulseRef = useRef<SVGCircleElement | null>(null);
   const pathRefs = useRef<Map<string, SVGPathElement>>(new Map());
@@ -305,7 +306,8 @@ export function QueueFlow() {
 
   const handleRun = useCallback(
     async (sc: ScenarioDef) => {
-      if (running) return;
+      if (runningRef.current) return;
+      runningRef.current = true;
       setRunning(true);
       setScenario(sc.key);
       abortRef.current = { aborted: false };
@@ -361,9 +363,10 @@ export function QueueFlow() {
 
       if (pulseRef.current) pulseRef.current.setAttribute('opacity', '0');
       await wait(SETTLE_MS);
+      runningRef.current = false;
       setRunning(false);
     },
-    [running, resetVisuals, animatePulse],
+    [resetVisuals, animatePulse],
   );
 
   const settleColor: Record<WireSettle, string> = {
@@ -652,6 +655,7 @@ export function QueueFlow() {
             return (
               <button
                 key={sc.key}
+                type="button"
                 onClick={() => handleRun(sc)}
                 disabled={running}
                 className={cn(
