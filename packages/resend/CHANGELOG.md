@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0-beta.5](https://github.com/better-notify/better-notify/compare/@betternotify/resend-v1.0.0-beta.4...@betternotify/resend-v1.0.0-beta.5) (2026-06-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.9
+    * @betternotify/email bumped to 1.0.0-beta.5
+
 ## [1.0.0-beta.4](https://github.com/better-notify/better-notify/compare/@betternotify/resend-v1.0.0-beta.3...@betternotify/resend-v1.0.0-beta.4) (2026-05-22)
 
 
