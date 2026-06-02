@@ -1,0 +1,139 @@
+---
+title: BullMQ
+icon: Database
+description: Process queued sends with BullMQ and Redis through the QueueProducer contract
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+[BullMQ](https://docs.bullmq.io) is a Redis-backed job queue for Node.js. It connects to Better-Notify in two pieces: a **producer** that enqueues sends onto a BullMQ `Queue`, and a **worker** that runs each job through [`createJobProcessor`](/docs/infrastructure/queue-and-workers#the-job-processor). The glue is about forty lines, shown step by step below. To read the whole file at once instead, open the runnable example.
+
+<Cards>
+  <Card href="https://github.com/better-notify/better-notify/blob/main/examples/welcome-text/apps/cli/src/examples/queue/bullmq.ts" title="Runnable example">
+    The complete producer and worker from this page, typechecked in CI.
+  </Card>
+</Cards>
+
+<Callout>
+There is no `@betternotify/bullmq` package. The queue contract ships in `@betternotify/core/queue`; you install `bullmq` and `ioredis` yourself and pin their versions in your own `package.json`. See the [rationale](https://github.com/better-notify/better-notify/issues/181) for why adapters stay user-owned.
+</Callout>
+
+## Install
+
+```package-install
+bullmq ioredis
+```
+
+You also need a reachable Redis instance. The recipe reads its address from `REDIS_URL`.
+
+## How retries work
+
+BullMQ is a pull broker, but unlike a bare Postgres or SQS store it ships its own `Worker` with retry and backoff built in. So this recipe does **not** use [`createQueueWorker`](/docs/infrastructure/queue-and-workers#pull-workers) or its `maxAttempts` cap. It builds a job processor and feeds `processor.process()` into BullMQ's `Worker`, letting BullMQ's native `attempts` and `backoff` drive retries. The processor decides each job's fate; BullMQ schedules the redelivery.
+
+## Walkthrough
+
+This assumes you already have a `catalog` and a `transportsByChannel` map. If you don't, build them first in [Catalog & Procedures](/docs/concepts/catalog-and-procedures).
+
+<Steps>
+
+<Step>
+
+### Register BullMQ's enqueue options
+
+Tell the `.queue()` types which scheduling fields BullMQ accepts. Declaration merging on `QueueDataMap` adds a typed `bullmq` key to [`EnqueueOptions`](/docs/infrastructure/queue-and-workers#enqueue-options):
+
+```ts
+import type { JobsOptions } from 'bullmq';
+
+declare module '@betternotify/core' {
+  interface QueueDataMap {
+    bullmq: Pick<JobsOptions, 'delay' | 'attempts' | 'backoff'>;
+  }
+}
+```
+
+</Step>
+
+<Step>
+
+### Connect to Redis and build the producer
+
+A `QueueProducer` maps the contract's `enqueue` onto BullMQ's `Queue.add`. Implement `enqueueBatch` too so `.queueBatch()` uses BullMQ's native `addBulk` instead of one round-trip per job:
+
+```ts
+import { createQueueProducer } from '@betternotify/core/queue';
+import { Queue } from 'bullmq';
+import IORedis from 'ioredis';
+
+const connection = new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+const queue = new Queue('tx-emails', { connection });
+
+const producer = createQueueProducer({
+  enqueue: async (envelope, opts) => {
+    await queue.add(envelope.route, envelope, opts?.bullmq);
+    return { id: envelope.id };
+  },
+  enqueueBatch: async (envelopes, opts) => {
+    await queue.addBulk(
+      envelopes.map((e) => ({ name: e.route, data: e, opts: opts?.bullmq })),
+    );
+    return envelopes.map((e) => ({ id: e.id }));
+  },
+});
+```
+
+</Step>
+
+<Step>
+
+### Enqueue from your client
+
+Pass the producer to `createClient` as `queue`. Every procedure's `.queue()` now serializes the send and hands it to BullMQ. The second argument carries the `bullmq` options you registered in step 1:
+
+```ts
+import { createClient } from '@betternotify/core';
+
+const mail = createClient({ catalog, transportsByChannel, queue: producer });
+
+await mail.welcome.queue(
+  { to: 'ada@example.com', input: { name: 'Ada', verifyUrl: 'https://example.com/verify' } },
+  { bullmq: { delay: 1000, attempts: 3, backoff: { type: 'exponential', delay: 500 } } },
+);
+```
+
+</Step>
+
+<Step>
+
+### Process jobs in a BullMQ worker
+
+Build the processor once, then run it inside BullMQ's `Worker` on the **same queue name**. Throw on `retry` so BullMQ reschedules with its backoff; on `dlq` the failure is terminal, so complete the job and move it to a dead-letter queue rather than letting BullMQ retry it:
+
+```ts
+import { createJobProcessor, type JobEnvelope } from '@betternotify/core/queue';
+import { Queue, Worker } from 'bullmq';
+
+const processor = createJobProcessor({ catalog, transportsByChannel });
+const deadLetters = new Queue('tx-emails-dlq', { connection });
+
+const worker = new Worker(
+  'tx-emails',
+  async (job) => {
+    const result = await processor.process(job.data as JobEnvelope);
+    if (result.status === 'retry') throw new Error(result.error.message);
+    if (result.status === 'dlq') await deadLetters.add(job.name, { job: job.data, result });
+  },
+  { connection },
+);
+
+worker.on('completed', (job) => console.log(`sent → ${job.id}`));
+worker.on('failed', (job, err) => console.warn(`failed → ${job?.id} (${err.message})`));
+```
+
+</Step>
+
+</Steps>
+
+## Tuning retries
+
+Because BullMQ owns redelivery, the `attempts` and `backoff` you pass to `.queue()` decide how many times a `retry` job runs before BullMQ marks it failed. The core `maxAttempts` cap does not apply here. Set `attempts` on the enqueue, or as a worker default through BullMQ's own options, not through Better-Notify.

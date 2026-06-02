@@ -20,9 +20,9 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./worker": {
-      "types": "./dist/worker.d.ts",
-      "default": "./dist/worker.js"
+    "./queue": {
+      "types": "./dist/queue.d.ts",
+      "default": "./dist/queue.js"
     },
     "./webhook": {
       "types": "./dist/webhook.d.ts",

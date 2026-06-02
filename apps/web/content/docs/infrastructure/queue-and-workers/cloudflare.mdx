@@ -1,0 +1,182 @@
+---
+title: Cloudflare Queues
+icon: Cloud
+description: Run queued sends on Cloudflare Queues with a push consumer in the Workers queue() handler
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+[Cloudflare Queues](https://developers.cloudflare.com/queues/) is a push-based queue for Cloudflare Workers. It connects to Better-Notify in two pieces: a **producer** over a `Queue` binding that enqueues sends, and a **push consumer** in the Worker's `queue()` handler. The glue is about fifteen lines, shown step by step below. To read the whole file at once instead, open the runnable example.
+
+<Cards>
+  <Card href="https://github.com/better-notify/better-notify/blob/main/examples/welcome-text/apps/cli/src/examples/queue/cloudflare.ts" title="Runnable example">
+    The complete producer and Worker from this page, typechecked in CI.
+  </Card>
+</Cards>
+
+<Callout>
+There is no `@betternotify/cloudflare-queue` package. The queue contract ships in `@betternotify/core/queue`; you own the Workers runtime types and `wrangler` config in your own project. See the [rationale](https://github.com/better-notify/better-notify/issues/181) for why adapters stay user-owned.
+</Callout>
+
+## Install
+
+The contract needs nothing beyond `@betternotify/core`. Add the Workers type definitions as a dev dependency so `Queue` and `MessageBatch` resolve:
+
+```package-install
+@cloudflare/workers-types
+```
+
+Then reference them from `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types"]
+  }
+}
+```
+
+## Push, not pull
+
+Cloudflare invokes your Worker's `queue()` handler with a batch and expects you to `ack` or `retry` each message inline. There is no loop of your own and no `QueueConsumer` driver: you hold one [`createJobProcessor`](/docs/infrastructure/queue-and-workers#the-job-processor) and call it per message. Cloudflare's `max_retries` plays the role [`maxAttempts`](/docs/infrastructure/queue-and-workers#pull-workers) does on a pull worker, and an exhausted message lands in the dead-letter queue you configure in `wrangler.toml`.
+
+## Walkthrough
+
+This assumes you already have a `catalog` and a `transportsByChannel` map defined at module scope. If you don't, build them first in [Catalog & Procedures](/docs/concepts/catalog-and-procedures).
+
+<Steps>
+
+<Step>
+
+### Create the queue and bind it
+
+Create the main queue and a dead-letter queue, then bind them in `wrangler.toml`. The Worker is both producer and consumer of the same queue:
+
+```sh
+npx wrangler queues create tx-emails
+npx wrangler queues create tx-emails-dlq
+```
+
+```toml
+[[queues.producers]]
+queue = "tx-emails"
+binding = "QUEUE"
+
+[[queues.consumers]]
+queue = "tx-emails"
+max_retries = 3
+dead_letter_queue = "tx-emails-dlq"
+```
+
+</Step>
+
+<Step>
+
+### Register Cloudflare's enqueue options
+
+Declaration merging on `QueueDataMap` adds a typed `cloudflare` key to [`EnqueueOptions`](/docs/infrastructure/queue-and-workers#enqueue-options), so `.queue()` accepts Cloudflare's `delaySeconds` and `contentType`:
+
+```ts
+declare module '@betternotify/core' {
+  interface QueueDataMap {
+    cloudflare: { delaySeconds?: number; contentType?: string };
+  }
+}
+```
+
+</Step>
+
+<Step>
+
+### Build the producer over the binding
+
+A `QueueProducer` maps `enqueue` onto the binding's `send`. Implement `enqueueBatch` too so `.queueBatch()` uses Cloudflare's native `sendBatch`:
+
+```ts
+import { createQueueProducer } from '@betternotify/core/queue';
+import type { JobEnvelope } from '@betternotify/core/queue';
+
+type Env = { QUEUE: Queue<JobEnvelope> };
+
+const makeProducer = (queue: Queue<JobEnvelope>) =>
+  createQueueProducer({
+    enqueue: async (envelope, opts) => {
+      await queue.send(envelope, opts?.cloudflare);
+      return { id: envelope.id };
+    },
+    enqueueBatch: async (envelopes, opts) => {
+      await queue.sendBatch(envelopes.map((body) => ({ body, ...opts?.cloudflare })));
+      return envelopes.map((e) => ({ id: e.id }));
+    },
+  });
+```
+
+</Step>
+
+<Step>
+
+### Wire the Worker
+
+The binding lives on `env`, so build the client inside the request handler and enqueue there. Build the processor once at module scope and call it from the `queue()` handler. Both handlers live on the same `export default`:
+
+```ts
+import { createClient } from '@betternotify/core';
+import { createJobProcessor } from '@betternotify/core/queue';
+
+const processor = createJobProcessor({ catalog, transportsByChannel });
+
+export default {
+  async fetch(req: Request, env: Env): Promise<Response> {
+    const mail = createClient({ catalog, transportsByChannel, queue: makeProducer(env.QUEUE) });
+    await mail.welcome.queue(
+      { to: 'ada@example.com', input: { name: 'Ada', verifyUrl: 'https://example.com/verify' } },
+      { cloudflare: { delaySeconds: 30 } },
+    );
+    return new Response('queued');
+  },
+
+  async queue(batch: MessageBatch<JobEnvelope>, env: Env): Promise<void> {
+    for (const message of batch.messages) {
+      const result = await processor.process(message.body);
+      if (result.status === 'retry') message.retry();
+      else message.ack();
+    }
+  },
+};
+```
+
+`sent` and `dlq` both `ack()`: the message is done either way, and a terminal failure should not be redelivered. Only `retry` calls `message.retry()`, after which Cloudflare reschedules until `max_retries`, then moves the message to `tx-emails-dlq`.
+
+</Step>
+
+</Steps>
+
+## Scaling across catalogs
+
+When one Worker serves several catalogs, give each its own queue so a marketing backlog never starves transactional sends, and replace the single-queue `queue()` handler above with a router. A push batch names its source queue as a plain string, so [`createQueueRouter`](/docs/infrastructure/queue-and-workers#scaling-across-catalogs) resolves it to the right processor and returns `undefined` for unknown queues, forcing you to handle the miss:
+
+```ts
+import { createJobProcessor, createQueueRouter, type JobEnvelope } from '@betternotify/core/queue';
+
+const router = createQueueRouter({
+  'tx-emails': createJobProcessor({ catalog: txCatalog, transportsByChannel }),
+  'mkt-emails': createJobProcessor({ catalog: mktCatalog, transportsByChannel }),
+});
+
+export default {
+  async queue(batch: MessageBatch<JobEnvelope>, env: Env): Promise<void> {
+    const processor = router.route(batch.queue);
+    if (!processor) {
+      console.error(`no processor for queue "${batch.queue}"`);
+      return;
+    }
+    for (const message of batch.messages) {
+      const result = await processor.process(message.body);
+      if (result.status === 'retry') message.retry();
+      else message.ack();
+    }
+  },
+};
+```
+
+Bind each queue to its own consumer in `wrangler.toml`, and Cloudflare routes every batch to this one handler tagged with its `batch.queue` name.

@@ -13,9 +13,11 @@ export default defineConfig({
       exclude: [
         '**/*.test.ts',
         '**/*.test-d.ts',
-        'src/types.ts',
+        '**/types.ts',
+        '**/*.types.ts',
         'src/template.ts',
         'src/plugin.ts',
+        'src/queue/index.ts',
       ],
     },
   },

@@ -12,6 +12,9 @@ import { runObservability } from './examples/with-observability';
 import { runKitchenSink } from './examples/kitchen-sink';
 import { runReactEmail } from './examples/react-email';
 import { runBatch } from './examples/batch';
+import { runQueue } from './examples/queue/mock';
+import { runQueueAdvancedMiddleware } from './examples/queue/advanced-middleware';
+import { runQueueAdvancedPlugins } from './examples/queue/advanced-plugins';
 import { runHooks } from './examples/hooks';
 import { runPlugins } from './examples/plugins';
 import { runHttpTransport } from './examples/http-transport';
@@ -75,6 +78,9 @@ const examples: Record<string, () => Promise<void>> = {
   'kitchen-sink': runKitchenSink,
   'react-email': runReactEmail,
   batch: runBatch,
+  queue: runQueue,
+  'queue-middleware': runQueueAdvancedMiddleware,
+  'queue-plugins': runQueueAdvancedPlugins,
   hooks: runHooks,
   plugins: runPlugins,
   'http-transport': runHttpTransport,

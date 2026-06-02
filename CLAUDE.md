@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Better-Notify is an end-to-end typed email infrastructure for Node.js (ESM-only, Node ≥ 22). A single `EmailCatalog` type drives the typed sender, queue worker, and webhook router — analogous to tRPC/oRPC, but for email. The canonical design spec lives at `plan/betternotify-spec.md` (gitignored, kept locally); the active per-feature design and execution docs live under `docs/superpowers/{specs,plans}/` (also gitignored). Treat the spec as the source of truth when behavior is ambiguous.
 
-Status: v0.1.0-alpha. Layer 1 (typed contracts in `@betternotify/core`) plus build/release tooling are real. Adapter packages (`react-email`, `mjml`, `handlebars`, `ses`, `bullmq`) and Layers 5–6 are stubs filled in over the v0.2+ roadmap.
+Status: v0.1.0-alpha. Layer 1 (typed contracts in `@betternotify/core`) and Layer 5 (queue contract + worker in `@betternotify/core/queue`) plus build/release tooling are real. Remaining adapter packages (`react-email`, `mjml`, `handlebars`, `ses`) and Layer 6 are stubs filled in over the v0.2+ roadmap. Queue adapters (BullMQ, Cloudflare) ship as examples/recipes, not packages.
 
 ## Commands
 
@@ -45,7 +45,7 @@ Six conceptual layers, each consuming the layer above through types (see spec §
 2. **Sender** (`@betternotify/core/sender`) — `createSender<EmailCatalog>({ catalog, provider, queue?, defaults })` exposes `mail.<route>(input)`, `mail.<route>.queue(input, opts)`, `mail.<route>.render(input)` for each route.
 3. **Transport** (`@betternotify/core/transports` + `@betternotify/{smtp,ses,resend}`) — `Transport` type with `send(message, ctx)`. Built-ins: `mockTransport`, `multiTransport`. Heavy peers split into separate packages (`smtpTransport` lives in `@betternotify/smtp`).
 4. **Middleware + Hooks** — middleware (`.use()`) can mutate context / short-circuit; hooks (`onBeforeSend` / `onExecute` / `onAfterSend` / `onError` / `onEnqueue` / `onDequeue`) only observe. **Rule of thumb: if removing it would change whether the email goes out, it must be middleware, not a hook.**
-5. **Queue + worker** (`@betternotify/core/worker` + `@betternotify/bullmq`) — workers re-validate jobs on pickup; mismatched schemas DLQ.
+5. **Queue + worker** (`@betternotify/core/queue`) — `createClient({ queue })` enqueues via `.queue()`/`.queueBatch()`; `createQueueWorker` (pull) and `createJobProcessor` (push) re-run the full send pipeline on pickup (middleware/plugins/hooks included) and re-validate jobs, mismatched schemas DLQ. Adapters are recipes, not packages.
 6. **Webhook router** (`@betternotify/core/webhook`) — `rpc.webhookRouter({...})` with provider adapters for signature verification.
 
 Validation runs through **Standard Schema** (Zod 3.24+, Valibot, ArkType), so `@betternotify/core` has zero hard validator dependency.
@@ -56,8 +56,8 @@ Errors all subclass `BetterNotifyError` and are JSON-serializable for queue pers
 
 ## Monorepo layout
 
-- `packages/core` — published as `@betternotify/core`. Subpath exports under `./sender`, `./worker`, `./webhook`, `./transports`, `./template`, `./queue`, `./middlewares`, `./plugins`, `./config`. Source in `src/` (tests collocated as `*.test.ts`).
-- `packages/{react-email,mjml,handlebars,smtp,ses,resend,bullmq}` — published adapters; each pulls a single non-trivial peer.
+- `packages/core` — published as `@betternotify/core`. Subpath exports under `./sender`, `./queue`, `./webhook`, `./transports`, `./template`, `./middlewares`, `./plugins`, `./config`. Source in `src/` (tests collocated as `*.test.ts`).
+- `packages/{react-email,mjml,handlebars,smtp,ses,resend}` — published adapters; each pulls a single non-trivial peer. (`packages/bullmq` is a `private: true` stub, kept out of release-please and never published — queue adapters are recipes, not packages.)
 - `internal/{tsconfig,rolldown-config,fixtures}` — `private: true`, never published, consumed via `workspace:*`.
 - `examples/*` — sample apps; ignored by changesets.
 
@@ -106,7 +106,7 @@ Rolldown bundles each package via the shared `internal/rolldown-config/base.ts`.
 
 ## Architectural decisions
 
-- **Logger is built into core**, not opt-in. `createClient`/`createWorker`/`createWebhookRouter` accept `logger?: LoggerLike`; defaults to `consoleLogger({ level: 'warn' })` (silent on success, errors visible). BYO via the structural `LoggerLike` type — no hard pino dep, mirroring the Standard Schema philosophy. Pino interop via `fromPino()`. Per-send child binds `{ component, route, messageId }`. **Errors always go under the `err` key** (pino's `stdSerializers.err` requires it; spreading `{ error }` makes pino render `{}`).
+- **Logger is built into core**, not opt-in. `createClient`/`createQueueWorker`/`createWebhookRouter` accept `logger?: LoggerLike`; defaults to `consoleLogger({ level: 'warn' })` (silent on success, errors visible). BYO via the structural `LoggerLike` type — no hard pino dep, mirroring the Standard Schema philosophy. Pino interop via `fromPino()`. Per-send child binds `{ component, route, messageId }`. **Errors always go under the `err` key** (pino's `stdSerializers.err` requires it; spreading `{ error }` makes pino render `{}`).
 - **Address shape**: `Address = string | { name?: string; email: string }`. Field is `email`, not `address` — RFC 5322 calls them "addresses" but in user-land builder code `email` reads naturally and avoids confusion with the wider word.
 - **`.from()` and `defaults.from`** both accept `FromInput = string | { name?: string; email?: string }` (both fields optional). They shallow-merge per-field at send time via `resolveFrom()` in `client.ts` — per-email overrides, defaults fill in gaps. Transports always receive a complete `Address` with `email` resolved.
 - **Transport contract is dumb**: transports receive a fully-resolved `RenderedMessage` and just deliver it. No re-validation, no re-rendering, no re-resolving addresses — that's the pipeline's job upstream. Use `formatAddress` / `normalizeAddress` from `@betternotify/core/transports` instead of duplicating address-handling code in adapter packages.

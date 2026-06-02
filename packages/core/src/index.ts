@@ -15,13 +15,10 @@ export { handlePromise } from './lib/handle-promise.js';
 export { waitFor } from './lib/wait-for.js';
 export { obscureString } from './lib/obscure-string.js';
 export { obscureEmail } from './lib/obscure-email.js';
+export type { CreateClientOptions, SendOptions, RenderOptions, Client } from './client.js';
 export type {
   ClientHooks,
-  CreateClientOptions,
-  SendOptions,
   SendArgs,
-  RenderOptions,
-  Client,
   HookFn,
   RouteUnion,
   BeforeSendCtx,
@@ -30,7 +27,7 @@ export type {
   ErrorCtx,
   ErrorPhase,
   ChannelSendResult,
-} from './client.js';
+} from './pipeline.js';
 
 export type { Plugin } from './plugins/index.js';
 export { createPlugin } from './plugins/index.js';
@@ -45,6 +42,15 @@ export type {
   TransportOverrides,
   PerChannel,
 } from './transport.js';
+
+export type {
+  SerializedError,
+  JobEnvelope,
+  JobResult,
+  QueueDataMap,
+  EnqueueOptions,
+  QueueProducer,
+} from './queue/types.js';
 
 export type {
   TransportEntry,

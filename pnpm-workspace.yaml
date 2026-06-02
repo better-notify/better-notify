@@ -10,6 +10,7 @@ packages:
 allowBuilds:
   core-js: true
   esbuild: false
+  msgpackr-extract: false
   msw: true
   protobufjs: true
   sharp: true

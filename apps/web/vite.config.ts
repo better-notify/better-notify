@@ -8,6 +8,9 @@ import { cloudflare } from '@cloudflare/vite-plugin';
 export default defineConfig({
   server: {
     port: 4265,
+    fs: {
+      strict: false,
+    },
     proxy: {
       '/ph/static': {
         target: 'https://eu-assets.i.posthog.com',
