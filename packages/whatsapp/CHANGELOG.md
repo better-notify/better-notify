@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.0-beta.5](https://github.com/better-notify/better-notify/compare/@betternotify/whatsapp-v1.0.0-beta.4...@betternotify/whatsapp-v1.0.0-beta.5) (2026-06-22)
+
+
+### Bug Fixes
+
+* **core:** make channel input slot optional when not defined ([#185](https://github.com/better-notify/better-notify/issues/185)) ([f13b9f3](https://github.com/better-notify/better-notify/commit/f13b9f30f52bee39033712666d4380be231ad6b7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.10
+
 ## [1.0.0-beta.4](https://github.com/better-notify/better-notify/compare/@betternotify/whatsapp-v1.0.0-beta.3...@betternotify/whatsapp-v1.0.0-beta.4) (2026-06-02)
 
 

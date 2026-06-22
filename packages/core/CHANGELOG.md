@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0-beta.10](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.9...@betternotify/core-v1.0.0-beta.10) (2026-06-22)
+
+
+### Bug Fixes
+
+* **core:** make channel input slot optional when not defined ([#185](https://github.com/better-notify/better-notify/issues/185)) ([f13b9f3](https://github.com/better-notify/better-notify/commit/f13b9f30f52bee39033712666d4380be231ad6b7))
+
 ## [1.0.0-beta.9](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.8...@betternotify/core-v1.0.0-beta.9) (2026-06-02)
 
 
