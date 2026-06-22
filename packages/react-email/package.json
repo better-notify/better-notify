@@ -8,6 +8,10 @@
     "url": "https://github.com/better-notify/better-notify",
     "directory": "packages/react-email"
   },
+  "homepage": "https://github.com/better-notify/better-notify/tree/main/packages/react-email#readme",
+  "bugs": {
+    "url": "https://github.com/better-notify/better-notify/issues"
+  },
   "files": [
     "dist",
     "README.md",
