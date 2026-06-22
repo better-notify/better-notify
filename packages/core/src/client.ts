@@ -48,8 +48,10 @@ type TransportOverridesArg<TChannel extends string = string> = {
   transport?: TransportOverrides<TChannel>;
 };
 
+type SendArgTuple<T> = {} extends T ? [args?: T] : [args: T];
+
 type ChannelRouteMethods<TArgs, TChannel extends string = string> = {
-  send(args: TArgs & TransportOverridesArg<TChannel>): Promise<ChannelSendResult>;
+  send(...args: SendArgTuple<TArgs & TransportOverridesArg<TChannel>>): Promise<ChannelSendResult>;
   batch(
     entries: ReadonlyArray<TArgs & TransportOverridesArg<TChannel>>,
     opts?: BatchOptions,
@@ -131,7 +133,7 @@ export const createClient = <R extends AnyCatalog>(
 
   const buildProcMethods = (channelDef: ChannelDefinition<unknown, unknown>, flatKey: string) =>
     Object.freeze({
-      send: (rawArgs: unknown) => executeChannelSend(channelDef, rawArgs, flatKey),
+      send: (rawArgs?: unknown) => executeChannelSend(channelDef, rawArgs ?? {}, flatKey),
       batch: async (entries: ReadonlyArray<unknown>, batchOpts?: BatchOptions) => {
         if (entries.length === 0) {
           throw new NotifyRpcError({

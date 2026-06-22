@@ -4,6 +4,12 @@ import type { AnyMiddleware, Middleware } from '../middlewares/types.js';
 import type { Transport } from '../transport.js';
 import type { AnyChannel, Channel, ChannelBuilderCtx, ChannelDefinition } from './types.js';
 
+export type UnsetInput = { readonly __betternotifyUnsetInput: 'unset' };
+
+type ArgsOf<TArgsBase, TInput> = [TInput] extends [UnsetInput]
+  ? TArgsBase
+  : TArgsBase & { input: TInput };
+
 export type ResolverSlot<TValue> = TValue | ((args: { input: any; ctx: unknown }) => TValue);
 
 export type SlotKind = 'resolver' | 'value';
@@ -30,7 +36,7 @@ export type ChannelBuilder<
 > = {
   readonly _channel: TChannel;
   readonly _state: BuilderState;
-  readonly _args: TArgsBase & { input: TInput };
+  readonly _args: ArgsOf<TArgsBase, TInput>;
   readonly _rendered: TRendered;
   input<TSchema extends AnyStandardSchema>(
     schema: TSchema,
@@ -38,7 +44,7 @@ export type ChannelBuilder<
   use<TCtxOut = unknown>(
     middleware: Middleware<TInput, unknown, TCtxOut>,
   ): ChannelBuilder<TInput, TSlotValues, TSlotConfig, TArgsBase, TRendered, TChannel>;
-  _finalize(id: string): ChannelDefinition<TArgsBase & { input: TInput }, TRendered>;
+  _finalize(id: string): ChannelDefinition<ArgsOf<TArgsBase, TInput>, TRendered>;
 } & {
   [K in keyof TSlotValues & keyof TSlotConfig & string]: (
     value: SlotValueType<TSlotConfig[K], TSlotValues[K], TInput>,
@@ -86,6 +92,14 @@ export type DefineChannelOptions<
 
 const isStandardSchema = (v: unknown): v is AnyStandardSchema =>
   !!v && typeof v === 'object' && '~standard' in v;
+
+const passthroughSchema: AnyStandardSchema = {
+  '~standard': {
+    version: 1,
+    vendor: 'betternotify',
+    validate: (value) => ({ value }),
+  },
+};
 
 const resolveRuntime = (
   rawRuntime: Record<string, unknown>,
@@ -144,10 +158,7 @@ const buildBuilder = <
     use(mw: AnyMiddleware) {
       return next({ middleware: [...state.middleware, mw] });
     },
-    _finalize(id: string): ChannelDefinition<TArgsBase & { input: TInput }, TRendered> {
-      if (!state.schema) {
-        throw new Error(`Channel "${channelName}" route "${id}" missing required slot: input.`);
-      }
+    _finalize(id: string): ChannelDefinition<ArgsOf<TArgsBase, TInput>, TRendered> {
       for (const key of Object.keys(slots)) {
         if (slots[key]?.required && state.runtime[key] === undefined) {
           throw new Error(`Channel "${channelName}" route "${id}" missing required slot: ${key}.`);
@@ -156,7 +167,7 @@ const buildBuilder = <
       return {
         id,
         channel: channelName,
-        schema: state.schema,
+        schema: state.schema ?? passthroughSchema,
         middleware: state.middleware,
         runtime: state.runtime,
         channelRef: getChannelRef(),
@@ -195,7 +206,7 @@ export const defineChannel = <
 ): Channel<
   TName,
   ChannelBuilder<
-    unknown,
+    UnsetInput,
     SlotValuesOf<TSlotConfig>,
     TSlotConfig,
     ArgsBase<ArgsFromValidator<TValidator>>,
@@ -209,7 +220,7 @@ export const defineChannel = <
   const channel: Channel<
     TName,
     ChannelBuilder<
-      unknown,
+      UnsetInput,
       SlotValuesOf<TSlotConfig>,
       TSlotConfig,
       ArgsBase<ArgsFromValidator<TValidator>>,
@@ -223,7 +234,7 @@ export const defineChannel = <
     name: opts.name,
     createBuilder: (ctx: ChannelBuilderCtx) =>
       buildBuilder<
-        unknown,
+        UnsetInput,
         SlotValuesOf<TSlotConfig>,
         TSlotConfig,
         ArgsBase<ArgsFromValidator<TValidator>>,
@@ -242,7 +253,7 @@ export const defineChannel = <
     finalize: (state, id) =>
       (
         state as ChannelBuilder<
-          unknown,
+          UnsetInput,
           SlotValuesOf<TSlotConfig>,
           TSlotConfig,
           ArgsBase<ArgsFromValidator<TValidator>>,
