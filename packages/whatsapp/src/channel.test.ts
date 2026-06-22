@@ -98,9 +98,10 @@ describe('whatsappChannel', () => {
       expect(() => ch.finalize(builder, 'r')).toThrow(/missing required slot: body/);
     });
 
-    it('finalize throws when input is missing', () => {
+    it('finalize succeeds when input is omitted (input slot is optional)', () => {
       const builder = picker().text().body('B');
-      expect(() => ch.finalize(builder, 'r')).toThrow(/missing required slot: input/);
+      const def = ch.finalize(builder, 'r');
+      expect(def.schema).toBeDefined();
     });
   });
 

@@ -41,10 +41,16 @@ describe('defineChannel', () => {
     expect(() => b.body('again' as never)).toThrow(/already set/);
   });
 
-  it('_finalize throws when input slot is missing', () => {
+  it('_finalize succeeds when input is omitted, defaulting to a passthrough schema', () => {
     const ch = buildSimpleChannel();
-    const b = ch.createBuilder({ ctx: undefined, rootMiddleware: [] });
-    expect(() => b._finalize('r1')).toThrow(/missing required slot: input/);
+    const def = ch
+      .createBuilder({ ctx: undefined, rootMiddleware: [] })
+      .body('hi')
+      .tag('m')
+      ._finalize('r1');
+    expect(def.schema).toBeDefined();
+    expect(def.schema['~standard'].validate({ anything: 1 })).toEqual({ value: { anything: 1 } });
+    expect(def.schema['~standard'].validate(undefined)).toEqual({ value: undefined });
   });
 
   it('_finalize throws when a declared slot is missing', () => {
