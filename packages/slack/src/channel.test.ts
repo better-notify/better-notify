@@ -47,6 +47,23 @@ describe('slackChannel', () => {
     });
   });
 
+  it('validateArgs accepts unfurlLinks and unfurlMedia', () => {
+    const ch = slackChannel();
+    expect(
+      ch.validateArgs({
+        to: '#general',
+        unfurlLinks: false,
+        unfurlMedia: true,
+        input: {},
+      }),
+    ).toEqual({
+      to: '#general',
+      unfurlLinks: false,
+      unfurlMedia: true,
+      input: {},
+    });
+  });
+
   it('render returns { text, to } from a function text resolver', async () => {
     const ch = slackChannel();
     const builder = buildBuilder(ch).text(({ input }) => `Hi ${(input as { name: string }).name}`);
@@ -92,6 +109,28 @@ describe('slackChannel', () => {
       {},
     );
     expect(out).toEqual({ text: 'reply', to: '#general', threadTs: '1111.2222' });
+  });
+
+  it('render includes unfurlLinks and unfurlMedia from args', async () => {
+    const ch = slackChannel();
+    const builder = buildBuilder(ch).text('no previews');
+    const def = ch.finalize(builder, 'link');
+    const out = await ch.render(
+      def,
+      {
+        to: '#general',
+        unfurlLinks: false,
+        unfurlMedia: false,
+        input: { name: 'X' },
+      },
+      {},
+    );
+    expect(out).toEqual({
+      text: 'no previews',
+      to: '#general',
+      unfurlLinks: false,
+      unfurlMedia: false,
+    });
   });
 
   it('render includes file when set', async () => {

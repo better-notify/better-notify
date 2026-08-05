@@ -117,4 +117,35 @@ describe('slack channel end-to-end', () => {
       threadTs: '1111.2222',
     });
   });
+
+  it('sends unfurlLinks and unfurlMedia through the pipeline', async () => {
+    const rpc = createNotify({ channels: { slack: slackChannel() } });
+
+    const catalog = rpc.catalog({
+      share: rpc
+        .slack()
+        .input(z.object({ url: z.string() }))
+        .text(({ input }) => input.url),
+    });
+
+    const transport = mockSlackTransport();
+    const notify = createClient({
+      catalog,
+      channels: { slack: slackChannel() },
+      transportsByChannel: { slack: transport },
+    });
+
+    await notify.share.send({
+      to: '#general',
+      unfurlLinks: false,
+      unfurlMedia: false,
+      input: { url: 'https://example.com' },
+    });
+    expect(transport.messages[0]).toMatchObject({
+      text: 'https://example.com',
+      to: '#general',
+      unfurlLinks: false,
+      unfurlMedia: false,
+    });
+  });
 });

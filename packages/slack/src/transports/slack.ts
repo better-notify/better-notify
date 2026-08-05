@@ -267,6 +267,14 @@ export const slackTransport = (opts: SlackTransportOptions): Transport => {
         body.thread_ts = rendered.threadTs;
       }
 
+      if (rendered.unfurlLinks !== undefined) {
+        body.unfurl_links = rendered.unfurlLinks;
+      }
+
+      if (rendered.unfurlMedia !== undefined) {
+        body.unfurl_media = rendered.unfurlMedia;
+      }
+
       log.debug('calling Slack API', { method: 'chat.postMessage', channel });
 
       const json = await callApi('chat.postMessage', body);

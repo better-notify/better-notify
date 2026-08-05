@@ -72,6 +72,9 @@ Plus `.input(schema)` and `.use(mw)`.
 ```ts
 notify.deployAlert.send({
   to: string, // Slack webhook URL or channel ID
+  threadTs?: string, // reply in a thread
+  unfurlLinks?: boolean, // enable/disable link unfurling (chat.postMessage)
+  unfurlMedia?: boolean, // enable/disable media unfurling (chat.postMessage)
   input: TInput,
 });
 ```

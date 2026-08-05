@@ -65,6 +65,35 @@ describe('slackTransport', () => {
     expect(body.thread_ts).toBe('1111.2222');
   });
 
+  it('includes unfurl_links and unfurl_media when set (including false)', async () => {
+    const fetchMock = mockFetch({ ok: true, ts: '1.3', channel: 'C1' });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    await t.send(
+      { text: 'https://example.com', to: '#general', unfurlLinks: false, unfurlMedia: false },
+      ctx,
+    );
+
+    const call = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(call[1].body as string);
+    expect(body.unfurl_links).toBe(false);
+    expect(body.unfurl_media).toBe(false);
+  });
+
+  it('omits unfurl fields when not set', async () => {
+    const fetchMock = mockFetch({ ok: true, ts: '1.3', channel: 'C1' });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const t = slackTransport({ token: 'xoxb-test' });
+    await t.send({ text: 'https://example.com', to: '#general' }, ctx);
+
+    const call = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(call[1].body as string);
+    expect(body).not.toHaveProperty('unfurl_links');
+    expect(body).not.toHaveProperty('unfurl_media');
+  });
+
   it('uses defaultChannel when rendered.to is not set', async () => {
     const fetchMock = mockFetch({ ok: true, ts: '1.4', channel: 'C999' });
     vi.stubGlobal('fetch', fetchMock);
