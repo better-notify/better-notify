@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.0.0-beta.11](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.10...@betternotify/core-v1.0.0-beta.11) (2026-08-18)
+
 ## [1.0.0-beta.10](https://github.com/better-notify/better-notify/compare/@betternotify/core-v1.0.0-beta.9...@betternotify/core-v1.0.0-beta.10) (2026-06-22)
 
 

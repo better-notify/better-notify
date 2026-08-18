@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/twilio",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "Twilio SMS transport for Better-Notify.",
   "license": "MIT",
   "repository": {
