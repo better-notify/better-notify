@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/slack-v1.0.0-beta.6...@betternotify/slack-v1.0.0-beta.7) (2026-08-18)
+
+
+### Features
+
+* **slack:** add unfurlLinks and unfurlMedia send options ([#188](https://github.com/better-notify/better-notify/issues/188)) ([d04f532](https://github.com/better-notify/better-notify/commit/d04f5320f4d2b821058900758ca93a4934160145))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.11
+
 ## [1.0.0-beta.6](https://github.com/better-notify/better-notify/compare/@betternotify/slack-v1.0.0-beta.5...@betternotify/slack-v1.0.0-beta.6) (2026-06-22)
 
 

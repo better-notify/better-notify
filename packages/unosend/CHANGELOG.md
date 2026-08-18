@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0-beta.3](https://github.com/better-notify/better-notify/compare/@betternotify/unosend-v1.0.0-beta.2...@betternotify/unosend-v1.0.0-beta.3) (2026-08-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.11
+    * @betternotify/email bumped to 1.0.0-beta.7
+
 ## [1.0.0-beta.2](https://github.com/better-notify/better-notify/compare/@betternotify/unosend-v1.0.0-beta.1...@betternotify/unosend-v1.0.0-beta.2) (2026-06-22)
 
 

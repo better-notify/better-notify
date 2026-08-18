@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/cloudflare-email",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "Cloudflare Email Service transport for Better-Notify.",
   "license": "MIT",
   "repository": {

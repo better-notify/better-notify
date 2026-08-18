@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/email-v1.0.0-beta.6...@betternotify/email-v1.0.0-beta.7) (2026-08-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.11
+
 ## [1.0.0-beta.6](https://github.com/better-notify/better-notify/compare/@betternotify/email-v1.0.0-beta.5...@betternotify/email-v1.0.0-beta.6) (2026-06-22)
 
 

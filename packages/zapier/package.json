@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/zapier",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "Zapier channel and email transport for betternotify.",
   "license": "MIT",
   "repository": {

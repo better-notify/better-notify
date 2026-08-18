@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/mcp",
-  "version": "0.0.0-beta.5",
+  "version": "0.0.0-beta.6",
   "description": "Model Context Protocol (MCP) server for Better-Notify — expose your notification catalog as AI agent tools.",
   "license": "MIT",
   "repository": {
