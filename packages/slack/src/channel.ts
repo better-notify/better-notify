@@ -15,6 +15,8 @@ export type FileResolver<TInput> =
 const slackArgsSchema = z.object({
   to: z.string().min(1).optional(),
   threadTs: z.string().optional(),
+  unfurlLinks: z.boolean().optional(),
+  unfurlMedia: z.boolean().optional(),
   input: z.unknown(),
 });
 
@@ -46,6 +48,8 @@ export const slackChannel = () =>
     render: ({ runtime, args }): RenderedSlack => {
       const result: RenderedSlack = { text: runtime.text, to: args.to };
       if (args.threadTs !== undefined) result.threadTs = args.threadTs;
+      if (args.unfurlLinks !== undefined) result.unfurlLinks = args.unfurlLinks;
+      if (args.unfurlMedia !== undefined) result.unfurlMedia = args.unfurlMedia;
       if (runtime.blocks !== undefined) result.blocks = runtime.blocks;
       if (runtime.file !== undefined) result.file = runtime.file;
       return result;

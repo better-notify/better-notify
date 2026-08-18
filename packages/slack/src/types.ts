@@ -272,6 +272,8 @@ export type SlackFile = {
 export type SlackSendArgs<TInput = unknown> = {
   to?: string;
   threadTs?: string;
+  unfurlLinks?: boolean;
+  unfurlMedia?: boolean;
   input: TInput;
 };
 
@@ -280,5 +282,7 @@ export type RenderedSlack = {
   to?: string;
   blocks?: SlackBlock[];
   threadTs?: string;
+  unfurlLinks?: boolean;
+  unfurlMedia?: boolean;
   file?: SlackFile;
 };
