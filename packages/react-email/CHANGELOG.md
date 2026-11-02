@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/react-email-v1.0.0-beta.6...@betternotify/react-email-v1.0.0-beta.7) (2026-11-02)
+
+
+### Bug Fixes
+
+* **react-email:** externalize react-dom and react-email so the adapter runs on Cloudflare Workers ([#198](https://github.com/better-notify/better-notify/issues/198)) ([4eb71d1](https://github.com/better-notify/better-notify/commit/4eb71d1d687858ad893e8afeb62fd5d88a2d6295))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.12
+    * @betternotify/email bumped to 1.0.0-beta.8
+
 ## [1.0.0-beta.6](https://github.com/better-notify/better-notify/compare/@betternotify/react-email-v1.0.0-beta.5...@betternotify/react-email-v1.0.0-beta.6) (2026-08-18)
 
 

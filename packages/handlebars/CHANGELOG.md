@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/handlebars-v1.0.0-beta.6...@betternotify/handlebars-v1.0.0-beta.7) (2026-11-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.12
+    * @betternotify/email bumped to 1.0.0-beta.8
+
 ## [1.0.0-beta.6](https://github.com/better-notify/better-notify/compare/@betternotify/handlebars-v1.0.0-beta.5...@betternotify/handlebars-v1.0.0-beta.6) (2026-08-18)
 
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0-beta.8](https://github.com/better-notify/better-notify/compare/@betternotify/autosend-v1.0.0-beta.7...@betternotify/autosend-v1.0.0-beta.8) (2026-11-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @betternotify/core bumped to 1.0.0-beta.12
+    * @betternotify/email bumped to 1.0.0-beta.8
+
 ## [1.0.0-beta.7](https://github.com/better-notify/better-notify/compare/@betternotify/autosend-v1.0.0-beta.6...@betternotify/autosend-v1.0.0-beta.7) (2026-08-18)
 
 

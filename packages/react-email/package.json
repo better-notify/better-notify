@@ -1,6 +1,6 @@
 {
   "name": "@betternotify/react-email",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "React Email adapter for Better-Notify.",
   "homepage": "https://github.com/better-notify/better-notify/tree/main/packages/react-email#readme",
   "bugs": {
