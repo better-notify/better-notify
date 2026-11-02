@@ -44,8 +44,7 @@ export const reactEmail = async <TProps extends object>(
 ): Promise<RenderedOutput> => {
   const element = createElement(Component, props);
   const rawHtml = await render(element);
-  const document = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">${rawHtml}`;
-  const html = opts?.pretty ? await pretty(document) : document;
+  const html = opts?.pretty ? await pretty(rawHtml) : rawHtml;
   if (opts?.plainText) {
     const text = toPlainText(rawHtml, { selectors: NO_UPPERCASE_SELECTORS });
     return { html, text };

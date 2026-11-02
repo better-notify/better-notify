@@ -51,6 +51,7 @@ describe('reactEmail', () => {
     expect(result.html).toMatch(
       /^<!DOCTYPE html PUBLIC "-\/\/W3C\/\/DTD XHTML 1\.0 Transitional\/\/EN"/,
     );
+    expect(result.html.match(/<!DOCTYPE/g)).toHaveLength(1);
   });
 
   it('preserves heading case in plain-text output (NO_UPPERCASE_SELECTORS)', async () => {
